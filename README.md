@@ -17,7 +17,7 @@ never executed.
 
 ## Install
 
-Requires a Go toolchain, 1.23 or newer.
+Requires a Go toolchain, 1.24 or newer. The Go it generates needs 1.23.
 
 ```
 make build      # builds ./bin/perl2go
