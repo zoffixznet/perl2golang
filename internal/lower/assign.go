@@ -108,7 +108,20 @@ func (l *Lowerer) declareSingle(v *ast.Var, n *ast.Assign) []ir.Stmt {
 		l.observe(b, typeOrAny(value))
 	}
 
-	st := assign(":=", []ir.Expr{ir.NewIdent(b.Go, b.Type)}, []ir.Expr{l.assignable(value, b.Type, n.RHS)})
+	coerced := l.assignable(value, b.Type, n.RHS)
+
+	// The short declaration form takes its type from the initialiser, so it
+	// only says what the binding wants when the two agree. Where they do not,
+	// which is what happens whenever inference settled on `any`, the type has
+	// to be written out or the variable ends up narrower than its later uses.
+	if b.Type != nil && !typeOrAny(coerced).Equal(b.Type) {
+		st := &ir.DeclStmt{Names: []string{b.Go}, Type: b.Type, Values: []ir.Expr{coerced}}
+		l.setProv(st, n)
+		l.explainDeclaration(st, b, v)
+		return []ir.Stmt{st}
+	}
+
+	st := assign(":=", []ir.Expr{ir.NewIdent(b.Go, b.Type)}, []ir.Expr{coerced})
 	l.setProv(st, n)
 	l.explainDeclaration(st, b, v)
 	return []ir.Stmt{st}

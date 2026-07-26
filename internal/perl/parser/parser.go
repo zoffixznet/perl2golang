@@ -528,7 +528,7 @@ func (p *parser) parseReturn() ast.Stmt {
 	p.next()
 	n := &ast.Return{}
 	if !isStatementEnd(p.cur()) && !isStatementModifierKeyword(p.cur()) {
-		n.Exprs = p.parseCommaList(token.Semi)
+		n.Exprs = p.parseListOpArgs(token.Semi)
 	}
 	st := p.finishSimpleStatement(n, start, func(inner ast.Stmt) {})
 	return st

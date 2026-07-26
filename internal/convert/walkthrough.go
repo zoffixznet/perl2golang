@@ -90,18 +90,66 @@ func mainSegments(fn *ir.FuncDecl, lines []string) []teach.Segment {
 		// its text is the best title available.
 		if c, ok := st.(*ir.CommentStmt); ok {
 			flush()
-			if len(c.Lines) > 0 {
-				title = strings.TrimSpace(c.Lines[0])
-			}
+			title = joinTitle(c.Lines)
 			continue
 		}
-		group = append(group, st)
-		if len(group) >= 8 {
+		// A region ends at a statement boundary in the original, never in the
+		// middle of one construct's worth of Go. Waiting for the source line
+		// to move on keeps the two halves of a section describing the same
+		// thing.
+		if len(group) >= 8 && startsNewSourceLine(group, st) {
 			flush()
 		}
+		group = append(group, st)
 	}
 	flush()
+
+	// One statement's source range can cover a later one's, because a loop
+	// spans everything inside it. Clipping each region at the next one's start
+	// keeps the tour reading top to bottom with nothing shown twice.
+	for i := range out {
+		if i+1 < len(out) && out[i+1].PerlFrom > out[i].PerlFrom {
+			if end := out[i+1].PerlFrom - 1; end < out[i].PerlTo {
+				out[i].PerlTo = end
+				out[i].Perl = sourceLines(lines, out[i].PerlFrom, end)
+			}
+		}
+	}
 	return out
+}
+
+// startsNewSourceLine reports whether a statement comes from further down the
+// original than everything already in the group.
+func startsNewSourceLine(group []ir.Stmt, st ir.Stmt) bool {
+	m := ir.MetaOf(st)
+	if m == nil || !m.Prov.Valid() {
+		return false
+	}
+	max := 0
+	for _, s := range group {
+		if gm := ir.MetaOf(s); gm != nil && gm.Prov.Valid() && gm.Prov.Line > max {
+			max = gm.Prov.Line
+		}
+	}
+	return m.Prov.Line > max
+}
+
+// joinTitle turns a comment block into a section heading: one line, whole
+// words, short enough to read in a table of contents.
+func joinTitle(lines []string) string {
+	joined := strings.TrimSpace(strings.Join(lines, " "))
+	if i := strings.IndexAny(joined, ".;"); i > 12 {
+		joined = joined[:i]
+	}
+	const limit = 64
+	if len(joined) <= limit {
+		return joined
+	}
+	cut := strings.LastIndex(joined[:limit], " ")
+	if cut < 20 {
+		cut = limit
+	}
+	return strings.TrimRight(joined[:cut], " ,")
 }
 
 // groupSegment renders one region.

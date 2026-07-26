@@ -7,6 +7,7 @@
 package convert
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"path"
@@ -40,6 +41,11 @@ type Options struct {
 	// NoDocs skips the teaching bundle, which the snippet mode uses when it
 	// only wants the code and the notes.
 	NoDocs bool
+	// Improve is an optional pass over the generated artefacts. Its output is
+	// checked before it is accepted, so it can improve the result or leave it
+	// alone but never corrupt it. Nil means the deterministic output is the
+	// output, which is the default and the only behaviour v0.1 ships.
+	Improve Improver
 }
 
 // Result is one finished conversion.
@@ -146,7 +152,6 @@ func Convert(src []byte, opts Options) (result *Result, err error) {
 		res.Annotated["helpers.go"] = annotated
 	}
 
-	res.verify()
 	res.Walkthrough = walkthrough(low, src)
 
 	if !opts.NoDocs {
@@ -166,6 +171,12 @@ func Convert(src []byte, opts Options) (result *Result, err error) {
 		}
 		res.Docs = docs
 	}
+
+	// An optional improvement pass runs last, over finished artefacts, and
+	// only where one was supplied. Verification then covers whatever it
+	// produced as well as what the converter produced.
+	res.improve(context.Background(), opts.Improve)
+	res.verify()
 
 	res.Report.SortEntries()
 	return res, nil
@@ -268,11 +279,12 @@ func (r *Result) Bundle() map[string][]byte {
 // GoMod renders the generated module file.
 //
 // The generated program has no dependencies at all, so the module file says
-// nothing but its own name and the language version it needs. Go 1.22 is the
-// floor because the emitted support code uses generics and the current
-// per-iteration loop variable semantics.
+// nothing but its own name and the language version it needs. Go 1.23 is the
+// floor: the emitted code uses generics, the per-iteration loop variable
+// semantics of 1.22, and the iterator forms of maps.Keys and slices.Sorted
+// that arrived in 1.23.
 func GoMod(module string) string {
-	return "module " + module + "\n\ngo 1.22\n"
+	return "module " + module + "\n\ngo 1.23\n"
 }
 
 // programName turns an input path into an identifier-safe program name.

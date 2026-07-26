@@ -103,6 +103,9 @@ type Lowerer struct {
 	captureStack []*captureFrame
 	// usedExit records that the program calls os.Exit somewhere.
 	usedExit bool
+	// errVar names the error variable in scope, so $! resolves to the error
+	// the failing call actually returned.
+	errVar string
 }
 
 // captureFrame is one active regex match whose groups are in scope.

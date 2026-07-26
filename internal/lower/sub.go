@@ -369,6 +369,40 @@ func (l *Lowerer) settleSubs() {
 	}
 }
 
+// multiResultCall handles a call to a sub that returns several values.
+//
+// Go allows a multi-valued call only where all of its results are consumed at
+// once, so anywhere Perl would have taken the list apart, the call is hoisted
+// into its own statement first. In list context the results become the list;
+// in scalar context Perl yields the last value of the returned list, and so
+// does this.
+func (l *Lowerer) multiResultCall(c *ast.Call, wantList bool) (ir.Expr, bool) {
+	s, ok := l.subs[c.Name]
+	if !ok || len(s.Results) < 2 || isBuiltinName(c.Name) {
+		return nil, false
+	}
+	value := l.callSub(s, c)
+
+	names := make([]ir.Expr, len(s.Results))
+	for i := range s.Results {
+		names[i] = ir.NewIdent(l.tmp("r"), s.Results[i])
+	}
+	st := assign(":=", names, []ir.Expr{value})
+	l.setProv(st, c)
+	l.note(st, "A Go function that returns several values can only be called where "+
+		"all of them are taken at once, so the call gets its own statement and the "+
+		"results are named. Perl would have flattened them into the surrounding "+
+		"expression.",
+		"multiple-return-values")
+	l.emit(st)
+
+	if wantList {
+		t := joinAll(s.Results)
+		return composite(ir.SliceOf(t), nil, names), true
+	}
+	return names[len(names)-1], true
+}
+
 // callSub lowers a call to a user-declared subroutine.
 func (l *Lowerer) callSub(s *Sub, n *ast.Call) ir.Expr {
 	s.CallSites++

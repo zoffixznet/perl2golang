@@ -214,10 +214,47 @@ func (l *Lowerer) specialVar(v *ast.Var) ir.Expr {
 		return l.ident(b)
 
 	case "$!":
-		b := l.lookup('$', "_errno", v)
-		b.Perl = "$!"
-		b.Type = ir.TString
-		return l.ident(b)
+		// Inside a failure branch, $! is the error the call actually returned.
+		// Everywhere else there is nothing for it to name: Go keeps no global
+		// record of the last failure.
+		if l.errVar != "" {
+			out := ir.NewIdent(l.errVar, ir.TError)
+			l.note(out, "$! is a global holding the last system error, which any "+
+				"later call can overwrite before you read it. Go hands the error back "+
+				"from the call that failed, so this one belongs to this open and to "+
+				"nothing else.",
+				"errors-are-values")
+			return out
+		}
+		return l.todoExpr(v, "P2G6017", "$!",
+			"the last system error is not available here",
+			"$! holds the error from the most recent failed system call, globally "+
+				"and until something else overwrites it. Go has no such variable: an "+
+				"error is a value returned by the call that produced it, so outside the "+
+				"branch that handled a failure there is nothing to read.",
+			"Use the error returned by the call you are checking. Where the value "+
+				"has to travel, wrap it with fmt.Errorf and %w so the original survives.",
+			"errors-are-values", "error-wrapping")
+
+	case "$.":
+		return l.todoExpr(v, "P2G6015", "$.",
+			"the input line counter is not implemented",
+			"$. holds the line number of the last line read from the handle that was "+
+				"read most recently. It is global, it changes whenever any handle is read, "+
+				"and it survives past the end of the loop. Go's readers keep no such "+
+				"counter.",
+			"Keep your own counter next to the loop. It is one more line and it says "+
+				"which handle it is counting, which $. never did.")
+
+	case "$;", "$,", "$\\", "$/", "$\"", "$|":
+		return l.todoExpr(v, "P2G6016", name,
+			"this output formatting variable is not implemented",
+			"Perl has global variables that change how print and split behave: the "+
+				"output field separator, the record separator, the list separator, and "+
+				"output buffering. Go has no global state of that kind; each call says "+
+				"what it does.",
+			"Pass the separator to the call that needs it. strings.Join takes one, "+
+				"and bufio.Writer with an explicit Flush replaces $| entirely.")
 	}
 
 	if v.Sigil == '%' && v.Name == "ENV" {

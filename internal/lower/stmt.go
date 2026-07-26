@@ -165,7 +165,7 @@ func (l *Lowerer) exprStatement(e ast.Expr) []ir.Stmt {
 			// negated truth test, because error handling is the thing a Perl
 			// developer most needs to see written out.
 			if c, isCall := n.L.(*ast.Call); isCall && c.Name == "open" {
-				if sts, ok := l.openGuarded(c, l.exprStatement(n.R)); ok {
+				if sts, ok := l.openGuarded(c, n.R); ok {
 					return sts
 				}
 			}

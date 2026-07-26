@@ -233,17 +233,13 @@ func scanInterpVar(raw string, i int) int {
 			return i
 		}
 		start := j
-		for j < len(raw) && isNameByte(raw[j]) {
-			j++
-		}
+		j = scanQualifiedName(raw, j)
 		if j == start {
 			return i
 		}
 		return j
 	case isNameStartByte(c):
-		for j < len(raw) && isNameByte(raw[j]) {
-			j++
-		}
+		j = scanQualifiedName(raw, j)
 		return scanInterpSubscripts(raw, j)
 	case c >= '0' && c <= '9':
 		if sig != '$' {
@@ -259,6 +255,27 @@ func scanInterpVar(raw string, i int) int {
 		}
 		return i
 	}
+}
+
+// scanQualifiedName scans a variable name, which may be package qualified.
+// A single colon is not part of a name, so "$path: " interpolates $path and
+// leaves the colon as literal text; only a doubled colon continues the name.
+func scanQualifiedName(raw string, j int) int {
+	for j < len(raw) {
+		c := raw[j]
+		if c == ':' {
+			if j+1 < len(raw) && raw[j+1] == ':' && j+2 < len(raw) && isNameStartByte(raw[j+2]) {
+				j += 2
+				continue
+			}
+			return j
+		}
+		if !isNameByte(c) {
+			return j
+		}
+		j++
+	}
+	return j
 }
 
 // scanInterpSubscripts extends a variable with [..], {..} and -> chains.

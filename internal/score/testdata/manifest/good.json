@@ -1,0 +1,50 @@
+[
+  {
+    "tier": "tier4",
+    "name": "01-eval",
+    "path": "corpus/tier4/01-eval",
+    "args": [],
+    "has_stdin": false,
+    "has_files": false,
+    "allow_stderr": false,
+    "expected_exit": 0,
+    "deterministic": true,
+    "kind": "honest-failure"
+  },
+  {
+    "tier": "tier1",
+    "name": "02-args",
+    "path": "corpus/tier1/02-args",
+    "args": ["--flag", "a b"],
+    "has_stdin": true,
+    "has_files": true,
+    "allow_stderr": true,
+    "expected_exit": 3,
+    "deterministic": true,
+    "kind": "convert"
+  },
+  {
+    "tier": "tier1",
+    "name": "01-hello",
+    "path": "corpus/tier1/01-hello",
+    "args": [],
+    "has_stdin": false,
+    "has_files": false,
+    "allow_stderr": false,
+    "expected_exit": 0,
+    "deterministic": true,
+    "kind": "convert"
+  },
+  {
+    "tier": "zdomain",
+    "name": "01-report",
+    "path": "corpus/zdomain/01-report",
+    "args": [],
+    "has_stdin": false,
+    "has_files": false,
+    "allow_stderr": false,
+    "expected_exit": 0,
+    "deterministic": true,
+    "kind": "convert"
+  }
+]

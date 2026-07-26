@@ -21,6 +21,14 @@ import "perl2go/internal/ir"
 
 // join returns the least type that can hold both a and b.
 func join(a, b *ir.Type) *ir.Type {
+	// A void or invalid contribution carries no information at all, so it is
+	// treated as no observation rather than as a type to reconcile.
+	if a != nil && (a.Kind == ir.Void || a.Kind == ir.Invalid) {
+		a = nil
+	}
+	if b != nil && (b.Kind == ir.Void || b.Kind == ir.Invalid) {
+		b = nil
+	}
 	switch {
 	case a == nil:
 		return b
@@ -44,14 +52,6 @@ func join(a, b *ir.Type) *ir.Type {
 	}
 	if a.Kind == ir.Pointer && b.Kind == ir.Pointer {
 		return ir.PointerTo(join(a.Elem, b.Elem))
-	}
-
-	// A void or invalid contribution carries no information.
-	if a.Kind == ir.Void || a.Kind == ir.Invalid {
-		return b
-	}
-	if b.Kind == ir.Void || b.Kind == ir.Invalid {
-		return a
 	}
 
 	return ir.TAny

@@ -30,12 +30,30 @@ func (l *Lowerer) openCall(n *ast.Call) []ir.Stmt {
 
 // openGuarded lowers `open(...) or FAILURE`, which is the shape almost every
 // real script uses.
-func (l *Lowerer) openGuarded(n *ast.Call, onFail []ir.Stmt) ([]ir.Stmt, bool) {
-	return l.openStatements(n, onFail)
+//
+// The failure branch is lowered here rather than by the caller so that $! can
+// be bound to the error the open actually returned. `open ... or die "...: $!"`
+// is the single most common line of Perl I/O there is, and it should read
+// correctly in the Go.
+func (l *Lowerer) openGuarded(n *ast.Call, onFail ast.Expr) ([]ir.Stmt, bool) {
+	return l.openStatements(n, func(errName string) []ir.Stmt {
+		saved := l.errVar
+		l.errVar = errName
+		defer func() { l.errVar = saved }()
+
+		savedPre := l.pre
+		l.pre = nil
+		body := l.exprStatement(onFail)
+		inner := l.takePre()
+		l.pre = savedPre
+		return append(inner, body...)
+	})
 }
 
-// openStatements builds the open, the error check, and the close.
-func (l *Lowerer) openStatements(n *ast.Call, onFail []ir.Stmt) ([]ir.Stmt, bool) {
+// openStatements builds the open, the error check, and the close. onFail is
+// called with the name of the error variable to build the failure branch, and
+// may be nil.
+func (l *Lowerer) openStatements(n *ast.Call, onFail func(errName string) []ir.Stmt) ([]ir.Stmt, bool) {
 	args := flatten(argList(n))
 	if len(args) < 2 {
 		return nil, false
@@ -85,8 +103,12 @@ func (l *Lowerer) openStatements(n *ast.Call, onFail []ir.Stmt) ([]ir.Stmt, bool
 		"the compiler will not let you forget is there.",
 		"errors-are-values", "multiple-return-values", "if-err-nil-rhythm")
 
-	if onFail == nil {
-		onFail = []ir.Stmt{
+	var failBody []ir.Stmt
+	if onFail != nil {
+		failBody = onFail(errName)
+	}
+	if len(failBody) == 0 {
+		failBody = []ir.Stmt{
 			exprStmt(call("fmt", "fmt", "Fprintln", ir.TVoid, ir.Pkg("os", "os", "Stderr", nil),
 				ir.NewIdent(errName, ir.TError))),
 			exprStmt(call("os", "os", "Exit", ir.TVoid, ir.IntLit("255"))),
@@ -102,7 +124,7 @@ func (l *Lowerer) openStatements(n *ast.Call, onFail []ir.Stmt) ([]ir.Stmt, bool
 	}
 	check := &ir.If{
 		Cond: ir.Bin("!=", ir.NewIdent(errName, ir.TError), ir.Nil(ir.TError), ir.TBool),
-		Then: &ir.Block{Stmts: onFail},
+		Then: &ir.Block{Stmts: failBody},
 	}
 	l.note(check, "`if err != nil` immediately after the call is the rhythm of Go "+
 		"code. It reads as noise at first and becomes invisible quickly, and it puts "+

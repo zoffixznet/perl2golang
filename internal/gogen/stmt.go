@@ -326,7 +326,13 @@ func (e *Emitter) varSpec(keyword string, names []string, t *ir.Type, values []i
 		return ""
 	}
 	line := keyword + " " + strings.Join(names, ", ")
-	typ := e.typ(t)
+	// A nil type means the type was left to the initialiser, which is what
+	// `var x = value` says. Writing `any` there instead would be a different
+	// and much worse declaration.
+	typ := ""
+	if t != nil && t.Kind != ir.Invalid && t.Kind != ir.Void {
+		typ = e.typ(t)
+	}
 	if typ != "" {
 		line += " " + typ
 	}

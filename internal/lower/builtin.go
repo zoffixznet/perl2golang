@@ -29,6 +29,41 @@ func (l *Lowerer) callExpr(n *ast.Call) ir.Expr {
 // callStatement lowers a call whose value is discarded, which is where the
 // list-modifying builtins belong.
 func (l *Lowerer) callStatement(n *ast.Call) []ir.Stmt {
+	if sts, ok := l.statementFormOK(n); ok {
+		return sts
+	}
+	x := l.callExpr(n)
+	if x == nil {
+		return nil
+	}
+	// A call whose value is thrown away is a statement in Go only if it is a
+	// call; anything else would not compile.
+	if _, isCall := x.(*ir.Call); !isCall {
+		return nil
+	}
+	st := exprStmt(x)
+	l.setProv(st, n)
+	return []ir.Stmt{st}
+}
+
+// statementForm lowers the builtins that only make sense as statements.
+func (l *Lowerer) statementForm(n *ast.Call) []ir.Stmt {
+	sts, _ := l.statementFormOK(n)
+	return sts
+}
+
+// statementFormOK reports whether a name has a statement form, and lowers it.
+func (l *Lowerer) statementFormOK(n *ast.Call) ([]ir.Stmt, bool) {
+	switch n.Name {
+	case "print", "say", "printf", "push", "unshift", "chomp", "die", "warn",
+		"exit", "delete", "close", "open", "return":
+		return l.statementOnly(n), true
+	}
+	return nil, false
+}
+
+// statementOnly dispatches the statement-shaped builtins.
+func (l *Lowerer) statementOnly(n *ast.Call) []ir.Stmt {
 	switch n.Name {
 	case "print", "say":
 		return l.printCall(n, n.Name == "say")
@@ -52,23 +87,8 @@ func (l *Lowerer) callStatement(n *ast.Call) []ir.Stmt {
 		return l.closeCall(n)
 	case "open":
 		return l.openCall(n)
-	case "return":
-		return nil
 	}
-	x := l.callExpr(n)
-	if x == nil {
-		return nil
-	}
-	// A call whose value is thrown away is a statement in Go only if it is a
-	// call; everything else would not compile.
-	if _, ok := x.(*ir.Call); !ok {
-		if _, ok := x.(*ir.Ident); ok {
-			return nil
-		}
-	}
-	st := exprStmt(x)
-	l.setProv(st, n)
-	return []ir.Stmt{st}
+	return nil
 }
 
 // builtin dispatches the value-producing builtins. It returns nil when the
@@ -146,7 +166,36 @@ func (l *Lowerer) builtin(n *ast.Call) ir.Expr {
 		return call("time", "time", "Now", ir.NamedType("time.Time", "time"))
 	case "chomp", "chop":
 		return l.chompExpr(n)
+
+	case "close", "open", "print", "printf", "say":
+		// These reach expression position because of the `X or die` idiom.
+		// Perl's answer there is a truth value, so the statements run first
+		// and the value they produce is success. Only names the statement
+		// layer handles belong here, or the two would call each other.
+		for _, st := range l.statementForm(n) {
+			l.emit(st)
+		}
+		return ir.BoolLit(true)
+
+	case "binmode":
+		l.inform(n, "P2G6060", "binmode",
+			"binmode sets the encoding layer on a handle. Go reads and writes bytes "+
+				"and leaves decoding to the caller, so there is no layer to set: text is "+
+				"already UTF-8 and golang.org/x/text/encoding handles anything else.")
+		return ir.BoolLit(true)
+
+	case "eof":
+		return ir.BoolLit(false)
+
 	case "sleep":
+		if argCount(n) > 0 {
+			out := call("time", "time", "Sleep", ir.TVoid,
+				ir.Bin("*", conversion(ir.NamedType("time.Duration", "time"), l.argInt(n, 0)),
+					ir.Pkg("time", "time", "Second", nil), ir.NamedType("time.Duration", "time")))
+			l.note(out, "A Go duration is its own type rather than a number of seconds, "+
+				"so the unit is part of the value and time.Sleep(2) will not compile.")
+			return out
+		}
 		return nil
 	case "wantarray":
 		return l.todoExpr(n, "P2G2010", "wantarray",
@@ -767,6 +816,30 @@ func (l *Lowerer) chompCall(n *ast.Call) []ir.Stmt {
 	if target == nil {
 		return nil
 	}
+
+	// chomp on an array chomps every element, which in Go is a loop that
+	// writes back through the index.
+	if typeOrAny(target).Kind == ir.Slice {
+		idx := l.tmp("i")
+		loop := &ir.Range{
+			Key:    ir.NewIdent(idx, ir.TInt),
+			X:      target,
+			Define: true,
+			Body: &ir.Block{Stmts: []ir.Stmt{
+				assign("=", []ir.Expr{index(target, ir.NewIdent(idx, ir.TInt), ir.TString)},
+					[]ir.Expr{call("strings", "strings", "TrimSuffix", ir.TString,
+						index(target, ir.NewIdent(idx, ir.TInt), ir.TString), ir.Str(`"\n"`))}),
+			}},
+		}
+		l.setProv(loop, n)
+		l.note(loop, "chomp applied to an array trims every element. Go has no "+
+			"operation that reaches into a whole slice at once, so the loop writes "+
+			"back through the index; assigning to the range variable would change a "+
+			"copy and nothing else.",
+			"range-is-not-foreach", "slice-aliasing-and-copy")
+		return []ir.Stmt{loop}
+	}
+
 	st := assign("=", []ir.Expr{target},
 		[]ir.Expr{call("strings", "strings", "TrimSuffix", ir.TString, target, ir.Str(`"\n"`))})
 	l.setProv(st, n)
@@ -785,14 +858,30 @@ func (l *Lowerer) chompTarget(n *ast.Call) ast.Expr {
 	return &ast.Var{Sigil: '$', Name: "_"}
 }
 
+// chompExpr lowers chomp used for its value, which is the number of characters
+// it removed rather than the trimmed text.
 func (l *Lowerer) chompExpr(n *ast.Call) ir.Expr {
+	target := l.assignTarget(l.chompTarget(n))
+	if target == nil {
+		return ir.IntLit("0")
+	}
+	count := l.tmp("removed")
+	decl := &ir.DeclStmt{Names: []string{count}, Type: ir.TInt}
+	check := &ir.If{
+		Cond: call("strings", "strings", "HasSuffix", ir.TBool, target, ir.Str(`"\n"`)),
+		Then: &ir.Block{Stmts: []ir.Stmt{
+			assign("=", []ir.Expr{ir.NewIdent(count, ir.TInt)}, []ir.Expr{ir.IntLit("1")}),
+		}},
+	}
+	l.setProv(decl, n)
+	l.note(decl, "chomp returns how many characters it removed, not the trimmed "+
+		"text, so the count has to be worked out before the trim happens.")
+	l.emit(decl)
+	l.emit(check)
 	for _, st := range l.chompCall(n) {
 		l.emit(st)
 	}
-	if t := l.assignTarget(l.chompTarget(n)); t != nil {
-		return t
-	}
-	return ir.Str(`""`)
+	return ir.NewIdent(count, ir.TInt)
 }
 
 // ---------------------------------------------------------------------------
@@ -802,8 +891,7 @@ func (l *Lowerer) dieCall(n *ast.Call) []ir.Stmt {
 	msg := l.dieMessage(n)
 	l.usedExit = true
 	var out []ir.Stmt
-	out = append(out, exprStmt(call("fmt", "fmt", "Fprint", ir.TVoid,
-		ir.Pkg("os", "os", "Stderr", nil), msg)))
+	out = append(out, exprStmt(l.writeTo(ir.Pkg("os", "os", "Stderr", nil), msg)))
 	exit := exprStmt(call("os", "os", "Exit", ir.TVoid, ir.IntLit("255")))
 	st := out[0]
 	l.setProv(st, n)
@@ -846,9 +934,21 @@ func (l *Lowerer) dieMessage(n *ast.Call) ir.Expr {
 	return out
 }
 
+// writeTo builds the call that writes one message to a stream, folding an
+// fmt.Sprintf argument back into Fprintf rather than nesting the two.
+func (l *Lowerer) writeTo(dest ir.Expr, msg ir.Expr) ir.Expr {
+	if c, ok := msg.(*ir.Call); ok {
+		if sel, ok := c.Fun.(*ir.Selector); ok && sel.Sel == "Sprintf" && sel.Import == "fmt" {
+			args := append([]ir.Expr{dest}, c.Args...)
+			return call("fmt", "fmt", "Fprintf", ir.TVoid, args...)
+		}
+	}
+	return call("fmt", "fmt", "Fprint", ir.TVoid, dest, msg)
+}
+
 func (l *Lowerer) warnCall(n *ast.Call) []ir.Stmt {
 	msg := l.dieMessage(n)
-	st := exprStmt(call("fmt", "fmt", "Fprint", ir.TVoid, ir.Pkg("os", "os", "Stderr", nil), msg))
+	st := exprStmt(l.writeTo(ir.Pkg("os", "os", "Stderr", nil), msg))
 	l.setProv(st, n)
 	l.note(st, "warn writes to standard error and carries on. In Go that is a plain "+
 		"write to os.Stderr, or the log package when a timestamp and a prefix are "+

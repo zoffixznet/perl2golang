@@ -137,6 +137,9 @@ func (l *Lowerer) scalar(e ast.Expr) ir.Expr {
 			return out
 		}
 	case *ast.Call:
+		if x, ok := l.multiResultCall(n, false); ok {
+			return x
+		}
 		if isListBuiltin(n.Name) {
 			x := l.expr(e)
 			if typeOrAny(x).Kind == ir.Slice {
@@ -170,8 +173,23 @@ func (l *Lowerer) scalar(e ast.Expr) ir.Expr {
 func (l *Lowerer) list(e ast.Expr) ir.Expr {
 	parts, t := l.listParts([]ast.Expr{e})
 	if len(parts) == 1 {
-		if p := parts[0]; p.Type() != nil && p.Type().Kind == ir.Slice {
+		p := parts[0]
+		if p.Type() != nil && p.Type().Kind == ir.Slice {
 			return p
+		}
+		// A value whose type inference did not resolve may be holding a list
+		// at run time, and Go cannot tell. Treating it as a single element is
+		// the only thing that compiles, and it is not necessarily right.
+		if typeOrAny(p).Kind == ir.Any {
+			l.approximate(e, "P2G3010", "a dynamic value used as a list",
+				"a value of unknown type is being treated as one element",
+				"This value's type did not resolve, so it is declared as `any`. Perl "+
+					"would flatten it into the surrounding list if it held one; Go cannot "+
+					"know whether it does, so it is used as a single element.",
+				"Give the variable a concrete type at its declaration. Where the value "+
+					"really is a list, declaring it as a slice makes this line correct and "+
+					"removes the need for the conversions around it.",
+				"type-assertions-and-switches", "static-types-and-zero-values")
 		}
 	}
 	return composite(ir.SliceOf(t), nil, parts)
@@ -203,6 +221,12 @@ func (l *Lowerer) listParts(es []ast.Expr) ([]ir.Expr, *ir.Type) {
 			// A global match in list context yields every match, not a truth
 			// value, which is a different Go call entirely.
 			if x, ok := l.globalMatch(n); ok {
+				out = append(out, x)
+				t = join(t, elemOf(typeOrAny(x)))
+				return
+			}
+		case *ast.Call:
+			if x, ok := l.multiResultCall(n, true); ok {
 				out = append(out, x)
 				t = join(t, elemOf(typeOrAny(x)))
 				return
@@ -278,6 +302,12 @@ func numberLit(text string) ir.Expr {
 // listLit lowers a parenthesised list.
 func (l *Lowerer) listLit(n *ast.List) ir.Expr {
 	parts, t := l.listParts(n.Elems)
+	// A list holding one thing that is already a list is that list: Perl
+	// flattens, so (@a) and @a are the same. Wrapping it in a slice literal
+	// would build a slice of slices.
+	if len(parts) == 1 && typeOrAny(parts[0]).Kind == ir.Slice {
+		return parts[0]
+	}
 	return composite(ir.SliceOf(t), nil, parts)
 }
 
@@ -450,7 +480,10 @@ func (l *Lowerer) sprintfParts(pieces []interpPiece) (string, []ir.Expr) {
 // something plausible and wrong.
 func (l *Lowerer) todoExpr(n ast.Node, code, construct, short, message, advice string, concepts ...string) ir.Expr {
 	todo := l.refuse(n, code, construct, short, message, advice, concepts...)
-	x := ir.CallOf(ir.NewIdent("panic", nil), ir.TAny, ir.Str(strconv.Quote(short)))
+	// Go's panic is a statement and yields nothing, so in a position that
+	// wants a value it has to be wrapped. The program stops here rather than
+	// carrying on with something plausible and wrong.
+	x := ir.Raw("func() any { panic("+strconv.Quote(short)+") }()", ir.TAny)
 	m := ir.MetaOf(x)
 	m.Todo = &todo
 	return x

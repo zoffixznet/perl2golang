@@ -205,6 +205,19 @@ func (p *parser) parseLowList(stop token.Kind, minPrec int) []ast.Expr {
 	return elems
 }
 
+// parseListOpArgs parses the arguments of a list operator.
+//
+// `or`, `and`, `xor` and `not` bind looser than a list operator, so
+// `open my $fh, '<', $path or die` is `(open my $fh, '<', $path) or die` and
+// the argument list has to stop before the `or`. Inside parentheses the
+// closing paren already ends the list, and folding there is correct.
+func (p *parser) parseListOpArgs(stop token.Kind) []ast.Expr {
+	if stop == token.Semi {
+		return p.parseSimpleList(stop)
+	}
+	return p.parseCommaList(stop)
+}
+
 // parseSimpleList parses comma-separated elements only, with no low-operator
 // folding.
 func (p *parser) parseSimpleList(stop token.Kind) []ast.Expr {
@@ -985,7 +998,7 @@ func (p *parser) parseIdentTerm() ast.Expr {
 		p.next()
 		var args []ast.Expr
 		if p.startsTerm() {
-			args = p.parseCommaList(token.Semi)
+			args = p.parseListOpArgs(token.Semi)
 		}
 		n := &ast.Call{Name: "return", Args: args}
 		setSpan(n, start, p.prevEnd())
@@ -1023,7 +1036,7 @@ func (p *parser) parseIdentTerm() ast.Expr {
 		n := &ast.Call{Name: name, Block: body}
 		p.accept(token.Comma)
 		if p.startsTerm() {
-			n.Args = p.parseCommaList(token.Semi)
+			n.Args = p.parseListOpArgs(token.Semi)
 		}
 		setSpan(n, start, p.prevEnd())
 		return n
@@ -1078,7 +1091,7 @@ func (p *parser) parseIdentTerm() ast.Expr {
 			p.next()
 			p.accept(token.Comma)
 		}
-		args = append(args, p.parseCommaList(token.Semi)...)
+		args = append(args, p.parseListOpArgs(token.Semi)...)
 		n := &ast.Call{Name: name, Args: args}
 		setSpan(n, start, p.prevEnd())
 		return n
@@ -1180,7 +1193,7 @@ func (p *parser) parsePrint() ast.Expr {
 	if paren {
 		stop = token.RParen
 	}
-	n.Args = append(n.Args, p.parseCommaList(stop)...)
+	n.Args = append(n.Args, p.parseListOpArgs(stop)...)
 	if paren {
 		p.expect(token.RParen, ")")
 	}
@@ -1222,22 +1235,22 @@ func (p *parser) parseSortMapGrep() ast.Expr {
 	case p.kind() == token.LBrace && p.blockNotHash():
 		body := p.parseBlockBody()
 		n.Block = body
-		n.Args = p.parseCommaList(stop)
+		n.Args = p.parseListOpArgs(stop)
 	case name == "sort" && p.kind() == token.Ident && !isBuiltin(p.cur().Text) &&
 		p.peekAt(1).Kind != token.Comma && p.peekAt(1).Kind != token.LParen &&
 		startsTermKind(p.peekAt(1).Kind):
 		n.SortSub = p.cur().Text
 		p.next()
-		n.Args = p.parseCommaList(stop)
+		n.Args = p.parseListOpArgs(stop)
 	default:
 		if name == "sort" {
-			n.Args = p.parseCommaList(stop)
+			n.Args = p.parseListOpArgs(stop)
 		} else {
 			// map EXPR, LIST
 			first := p.parseExpr(precAssign)
 			n.Args = append(n.Args, first)
 			if p.accept(token.Comma) {
-				n.Args = append(n.Args, p.parseCommaList(stop)...)
+				n.Args = append(n.Args, p.parseListOpArgs(stop)...)
 			}
 		}
 	}
