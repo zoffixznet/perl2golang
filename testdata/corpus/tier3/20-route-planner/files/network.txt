@@ -1,0 +1,14 @@
+# station connections: A B minutes (bidirectional unless marked ">")
+Central Riverside 4
+Central Museum 7
+Riverside Docks 3
+Museum Docks 2
+Museum Uptown 5
+Docks Airport 12
+Uptown Airport 6
+Central Oldtown 2
+Oldtown Museum 3
+Riverside Stadium 8
+Stadium Airport 9
+> Depot Central 1
+Island Lighthouse 2

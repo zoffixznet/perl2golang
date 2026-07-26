@@ -1,0 +1,14 @@
+in: BEGIN
+in:   line one
+in:   line two
+in: END
+in: BEGIN
+in:   second block
+in: END
+state=1 BEGIN
+state=2   line one
+state=3   line two
+state=4E0 END
+state=1 BEGIN
+state=2   second block
+state=3E0 END

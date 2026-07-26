@@ -1,0 +1,16 @@
+==========================================================
+ Welcome to WidgetWorks (staging)
+==========================================================
+Console:   https://app.staging.eu-west-1.example.net
+API:       https://api.staging.eu-west-1.example.net/v3
+Region:    eu-west-1
+Cluster:   standalone
+Owner:     ops@example.com
+Broken:    [[UNRESOLVED:loop_a]]
+Missing:   [[UNRESOLVED:no_such_var]]
+----------------------------------------------------------
+Generated for staging by motd-gen; do not edit by hand.
+# --- expansion report ---
+# line 9   circular reference: loop_a -> loop_b -> loop_a
+# line 10  undefined variable 'no_such_var'
+# 2 error(s)

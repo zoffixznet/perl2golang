@@ -1,0 +1,21 @@
+name|email|phone|joined|state
+Jane Doe|jane.doe@example.com|(555) 010-0134|2019-03-12|TX
+Bob Smith|bob.smith@example.com|555-0175|2019-12-03|TX
+Pat O'Neil|pat@example.org|(555) 010-0142|2019-12-03|CA
+Kim Lee|kim.lee@example com|555-0199|2019-12-03|CA
+Ana Maria Ionescu|ana@example.net|555-0102|2020-02-30|NY
+Sam McGregor|sam@example.org|555-0110|2021-07-04|NY
+Max Weber|max@@example.de|01761|silly-date|Bavaria
+# --- cleaning report ---
+# rows: 7
+# name     7 value(s) rewritten
+# email    1 value(s) rewritten
+# phone    6 value(s) rewritten
+# joined   4 value(s) rewritten
+# state    5 value(s) rewritten
+# UNFIXABLE row 4 email: bad email 'kim.lee@examplecom'
+# UNFIXABLE row 5 joined: impossible date '2020-02-30'
+# UNFIXABLE row 7 email: bad email 'max@@example.de'
+# UNFIXABLE row 7 phone: phone has 5 digits
+# UNFIXABLE row 7 joined: unparseable date 'silly-date'
+# UNFIXABLE row 7 state: unknown state 'Bavaria'

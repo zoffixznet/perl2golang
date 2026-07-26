@@ -1,0 +1,5 @@
+postgres	up	primary db
+apache2	up	frontend
+redis	up	session cache
+worker-queue	down	background jobs, restarted nightly by design
+mailer	up	outbound mail

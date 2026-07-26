@@ -1,0 +1,19 @@
+PEAK     SPAN                SCORE  OVERLAPPING GENES
+peak_01  chr1:901-1200          87  ABC1(+,201bp)
+peak_02  chr1:4401-4600        154  ABC1(+,200bp), DEF2(-,101bp)
+peak_03  chr1:7901-12100        66  GHI3(+,101bp), DEF2(-,100bp)
+peak_04  chr1:20001-21000       12  -
+peak_05  chr2:9301-9450        201  MNO5(-,150bp), PQR6(+,51bp)
+peak_06  chr2:101-400           44  -
+peak_07  chr3:851-950           93  STU7(+,50bp)
+peak_08  chr4:101-200            5  -
+
+peaks: 8, with overlap: 5, without: 3
+orphan peaks: peak_04 peak_06 peak_08
+coverage per gene (bp under peaks):
+  ABC1     401
+  DEF2     201
+  MNO5     150
+  GHI3     101
+  PQR6      51
+  STU7      50

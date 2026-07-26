@@ -1,0 +1,9 @@
+LVL   USE%       SIZE       USED      AVAIL  MOUNT
+CRIT   96%        20G      18.9G     874.1M  /var
+CRIT   95%       500G       475G        25G  /mnt/shared
+WARN   85%      39.2G      31.4G       5.8G  /
+ok     53%       100G        50G      44.9G  /home
+ok     24%     975.9M     213.3M     695.4M  /boot
+ok      4%         5G       158M       4.6G  /tmp
+
+6 filesystems, 575.7G used total; crit=2 warn=1 ok=3

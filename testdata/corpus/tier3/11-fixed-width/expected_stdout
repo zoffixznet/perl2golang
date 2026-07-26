@@ -1,0 +1,23 @@
+ledger for BRANCH-042 on 2024-06-01
+trailer count: 6 (ok)
+trailer net:   3442.99 (ok)
+----------------------------------------------
+101 DEP  Opening deposit        1250.00
+102 WDR  ATM withdrawal          -40.00
+103 DEP  Payroll June           3105.50
+104 FEE  Account fee              -2.50
+105 WDR  Rent payment           -950.00
+106 DEP  Refund: shoes            79.99
+----------------------------------------------
+DEP  x3   4435.49
+FEE  x1      2.50
+WDR  x2    990.00
+net movement:   3442.99
+avg per txn:     573.83 (floor'd)
+--- deposits-only file ---
+HDR20240601BRANCH-042
+TXN000101DEP Opening deposit     0000125000
+TXN000103DEP Payroll June        0000310550
+TXN000106DEP Refund: shoes       0000007999
+TRL0000030000443549
+emitted 174 bytes

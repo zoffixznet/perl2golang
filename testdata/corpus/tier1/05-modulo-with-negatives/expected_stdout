@@ -1,0 +1,19 @@
+   7 % 3    =    1     int(7/3) =    2
+  -7 % 3    =    2     int(-7/3) =   -2
+   7 % -3   =   -2     int(7/-3) =   -2
+  -7 % -3   =   -1     int(-7/-3) =    2
+  10 % 4    =    2     int(10/4) =    2
+ -10 % 4    =    2     int(-10/4) =   -2
+  13 % 5    =    3     int(13/5) =    2
+ -13 % 5    =    2     int(-13/5) =   -2
+--- the identity Perl guarantees ---
+13:5    mod=  3  floor-quotient=  2  q*d+m=  13
+-13:5   mod=  2  floor-quotient= -3  q*d+m= -13
+13:-5   mod= -2  floor-quotient= -3  q*d+m=  13
+-13:-5  mod= -3  floor-quotient=  2  q*d+m= -13
+--- truncating semantics via use integer ---
+use integer:  -7 % 3 = -1
+use integer:   7 % -3 = 1
+use integer:  -7 / 3 = -2
+no integer:   -7 % 3 = 2
+no integer:    7 % -3 = -2

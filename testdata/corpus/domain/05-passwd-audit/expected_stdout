@@ -1,0 +1,12 @@
+passwd-audit: 19 accounts loaded
+
+CRIT (line 17)              malformed line: mmalformedline
+CRIT svc_deploy             empty password field
+CRIT toor                   UID 0 account that is not root
+WARN jdoe+qa_shared         shared UID 1001
+WARN legacyapp              shell not in shells file: /usr/local/bin/appsh
+
+CRIT: 3
+WARN: 2
+INFO: 0
+review-for-removal: old_intern

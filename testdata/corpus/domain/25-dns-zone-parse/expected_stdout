@@ -1,0 +1,26 @@
+zone: 12 names, A=9, AAAA=1, CNAME=4, MX=2, NS=2, SOA=1, TXT=1
+
+records:
+  example.com.               3600 A      192.0.2.10
+  example.com.               3600 MX     10 mail.example.com.
+  example.com.               3600 MX     20 mail2.example.com.
+  example.com.               3600 NS     ns1.example.com.
+  example.com.               3600 NS     ns2.example.com.
+  example.com.               3600 SOA    ns1.example.com. hostmaster.example.com. serial=2026081401 refresh=7200 retry=900 expire=1209600 min=300
+  ns1.example.com.           3600 A      192.0.2.53
+  ns2.example.com.           3600 A      198.51.100.53
+  mail.example.com.          3600 A      192.0.2.25
+  mail.example.com.          3600 TXT    "v=spf1 mx -all"
+  mail2.example.com.        86400 A      198.51.100.25
+  www.example.com.           3600 CNAME  @
+  shop.example.com.          3600 CNAME  www
+  ftp.example.com.           3600 CNAME  files.example.net.
+  files.example.com.         3600 A      192.0.2.80
+  files.example.com.         3600 AAAA   2001:db8::80
+  old-portal.example.com.    3600 A      192.0.2.99
+  old-portal.example.com.    3600 CNAME  portal
+  www.eu.example.com.        3600 A      192.0.2.110
+  api.eu.example.com.         300 A      192.0.2.111
+
+problems: 1
+  old-portal.example.com.: CNAME coexists with A

@@ -1,0 +1,24 @@
+Return-Path: <bounces@lists.example.org>
+Received: from mx2.example.net (mx2.example.net [192.0.2.44])
+	by mail.example.com (Postfix) with ESMTPS id 4XYZ99
+	for <jane.doe@example.com>; Thu, 13 Aug 2026 09:15:22 +0000
+Received: from lists.example.org (unknown [198.51.100.9])
+	by mx2.example.net (Postfix) with ESMTP id 7ABC01
+	for <jane.doe@example.com>; Thu, 13 Aug 2026 09:15:20 +0000
+DKIM-Signature: v=1; a=rsa-sha256; d=lists.example.org; s=mail;
+	h=from:to:subject:date; bh=abc123=; b=def456==
+From: "Release Bot" <releases@lists.example.org>
+To: jane.doe@example.com,
+	announce@lists.example.org
+Subject: =?UTF-8?Q?Release_2026.08_=E2=80=93_now_with_20=25_fewer_bugs?=
+Date: Thu, 13 Aug 2026 09:15:19 +0000
+Message-ID: <20260813091519.GA2210@lists.example.org>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+X-Spam-Score: 0.1
+X-Mailer: listadmin 4.2
+received: from localhost by lists.example.org with local id 9QQ12
+	for <announce@lists.example.org>; Thu, 13 Aug 2026 09:15:18 +0000
+
+This is the body. Everything after the blank line must be ignored,
+including lines that look: like headers.

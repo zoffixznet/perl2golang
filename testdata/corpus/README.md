@@ -1,0 +1,158 @@
+# Perl conversion corpus
+
+155 self-contained Perl programs with recorded expectations. They are the
+reference material the converter is measured against: every entry pairs a
+real Perl program with the exact output real perl produces for it, so a
+change to the converter can be scored instead of argued about.
+
+Nothing here needs the network, a database, a particular user account, a
+particular hostname, a particular timezone, or any file outside the entry's
+own directory.
+
+## Tiers
+
+| Directory | Entries | Purpose |
+|---|---|---|
+| `tier1/` | 35 | Language fundamentals: scalars, numbers, arrays, hashes, control flow, sorting, strings, output, context, exit status. Small programs, one topic each. |
+| `tier2/` | 35 | Script-shaped programs: subroutines, references, nested data, closures, regex, file and stdin I/O, command-line handling, error handling, core modules. |
+| `tier3/` | 25 | Full programs of the kind that decide whether the converter is any good: object systems, operator overloading, parsers, schedulers, template engines, process control. Several span more than one file. |
+| `tier4/` | 35 | Adversarial constructs. These exist to prove the converter **fails honestly** — see below. |
+| `domain/` | 25 | Sysadmin, text-wrangling, bioinformatics and release-engineering scripts, each reading fixtures under its own `files/` directory. |
+
+Tiers 1-3 and `domain/` are conversion targets: the converter should produce
+Go that reproduces the recorded output. Tier 4 is different — an entry there
+passes when the tool says the right true thing about the file, which may be a
+refusal.
+
+## Layout of an entry
+
+Each entry is one directory. Not every file appears in every entry.
+
+```
+NN-short-slug/
+  input.pl          the program
+  cmd               one line of arguments for the program (empty file = no arguments)
+  stdin             stdin to feed the program (absent = no stdin)
+  files/            input fixtures the program reads by relative path
+  expected_stdout   byte-exact stdout
+  expected_exit     exit status, a bare integer plus a newline
+  allow_stderr      present only when writing to stderr is intentional
+  notes.md          what the entry exercises and what it costs to convert
+  expectation.md    tier4 only: what the tool must report about this file
+```
+
+A few entries also carry `.pm` modules or a module subdirectory next to
+`input.pl`; those are part of the program, not fixtures.
+
+## Running an entry
+
+The contract is exact, and the harness follows it:
+
+1. The working directory is the entry directory, so `files/...` resolves.
+2. `cmd` is split into words the way a shell would (quotes and backslashes
+   honoured), and those words become the program's arguments. `cmd` does
+   **not** contain the script name. It is never handed to a shell.
+3. The program is run as `perl input.pl ARGS...`.
+4. `stdin` is fed on standard input when the file exists; otherwise stdin is
+   empty.
+5. stdout must equal `expected_stdout` byte for byte, and the exit status must
+   equal the integer in `expected_exit`.
+6. stderr must be empty unless the entry has an `allow_stderr` marker.
+
+An entry must leave its own directory exactly as it found it. Entries that
+create files clean up after themselves or write under a temporary directory.
+
+## How the expectations were produced
+
+`expected_stdout` and `expected_exit` are captured from a run of real perl —
+5.42.2 on x86_64 Linux — never written by hand. Each program is run twice and
+the two runs compared byte for byte, which is what makes the recorded output a
+fact rather than a guess.
+
+Everything that could differ between two runs or two machines has been driven
+out of the programs themselves: timestamps come from a pinned epoch or a
+command-line argument, hash keys reach the output only through `sort`, the
+time locale is pinned where month and day names are printed, environment
+variables that would change behaviour are cleared by the program that reads
+them, and no program depends on where it is checked out.
+
+One entry is exempt: `tier4/25-hash-order` prints hash keys in Perl's
+per-process random order on purpose, so it has an `expected_exit` but no
+`expected_stdout`. It is checked against invariants described in its
+`expectation.md` instead of a byte diff.
+
+## Tier 4: honest failure
+
+Tier 4 covers constructs a converter cannot translate faithfully, or can only
+translate with a change in meaning: string `eval`, symbolic references,
+typeglob assignment, `AUTOLOAD`, `tie`, `format`/`write`, prototypes that
+change parsing, and the arithmetic and coercion rules where a token-for-token
+translation compiles and then quietly gives wrong answers.
+
+Every tier 4 entry has an `expectation.md` stating what the tool must do, in
+one of six categories:
+
+- `refuse-file` — decline the whole file, with a diagnostic explaining why.
+- `refuse-statement` — convert the rest; replace the construct with a stub
+  that panics if reached, and diagnose each site.
+- `todo` — emit compilable Go plus a marked TODO at the site and a report
+  entry; behaviour knowingly diverges until a human acts.
+- `shim` — emit or call a runtime helper that reproduces the Perl semantics
+  exactly, and note the shim in the report.
+- `approximate` — convert with a documented, reported difference in meaning.
+- `convert-verify` — full conversion expected; passes only if the built
+  program reproduces `expected_stdout` and `expected_exit`.
+
+`expectation.md` also lists the tripwires: the specific output lines that
+separate a correct conversion from a plausible-looking wrong one.
+
+## MANIFEST.json
+
+`MANIFEST.json` is the machine-readable index of the corpus and the file the
+Go test harness reads. It is a JSON array sorted by tier then entry name, one
+object per entry:
+
+| Field | Meaning |
+|---|---|
+| `tier` | `tier1`, `tier2`, `tier3`, `tier4` or `domain` |
+| `name` | entry directory name |
+| `path` | entry path relative to the repository root |
+| `args` | `cmd` already split into an argument list |
+| `has_stdin` | entry has a `stdin` file |
+| `has_files` | entry has a `files/` directory |
+| `allow_stderr` | stderr output is intentional |
+| `expected_exit` | expected exit status |
+| `deterministic` | stdout is reproducible run to run |
+| `kind` | `convert` for tiers 1-3 and `domain`, `honest-failure` for tier 4 |
+
+Regenerate it whenever an entry is added, removed or renamed, and keep it
+sorted; the harness treats it as the list of entries that exist.
+
+## Adding an entry
+
+```sh
+scripts/corpus-add.sh tier2 my-new-case
+```
+
+That creates the directory with a stub `input.pl` and an empty `cmd`, and
+records `expected_stdout` and `expected_exit` by running perl. Then:
+
+1. Write the real program in `input.pl`. Keep `use strict; use warnings;` and
+   keep it to core modules.
+2. Put any input files under `files/` and read them by relative path. Put
+   arguments in `cmd` and any standard input in `stdin`.
+3. Make it deterministic. Sort hash keys before printing them, take "now"
+   from an argument or a pinned constant, never read `/etc`, `/proc` or the
+   user's home directory, and never print a path that depends on where the
+   repository lives.
+4. Re-record the expectations by running the program from inside its own
+   directory, then run it a second time and confirm the two captures are
+   identical.
+5. If it writes to stderr on purpose, create an empty `allow_stderr` file.
+6. Write `notes.md`: what the entry exercises, and what makes it hard to
+   convert.
+7. Add the entry to `MANIFEST.json`.
+
+An entry that cannot be made deterministic does not belong in tiers 1-3 or
+`domain`. If the non-determinism is the point, it belongs in `tier4/` with an
+`expectation.md` describing the invariants to check instead of a byte diff.

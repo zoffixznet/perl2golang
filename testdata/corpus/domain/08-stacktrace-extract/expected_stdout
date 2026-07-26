@@ -1,0 +1,20 @@
+4 traces, 3 distinct
+
+2x java.lang.NullPointerException
+    message:   Cannot invoke "com.example.shop.Cart.total()" because "cart" is null
+    app frame: com.example.shop.api.OrderCtl.submit (OrderCtl.java:142)
+    depth:     5 frames
+    at lines:  4, 12
+
+1x com.example.shop.db.StaleConnectionException
+    message:   connection aged out after 1800s
+    app frame: com.example.shop.db.Pool.acquire (Pool.java:88)
+    depth:     5 frames, caused by java.net.SocketException
+    at lines:  19
+
+1x java.lang.IllegalArgumentException
+    message:   page size 5000 exceeds maximum 500
+    app frame: com.example.shop.api.SearchCtl.list (SearchCtl.java:77)
+    depth:     3 frames
+    at lines:  29
+

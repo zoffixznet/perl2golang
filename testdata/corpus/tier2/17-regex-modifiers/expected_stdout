@@ -1,0 +1,19 @@
+line starts: 2023-11-14 2023-11-15 2023-11-16
+lines ending in 'failed': 1
+without /m: 1
+error tokens (as written): ERROR Error
+case-insensitive error count: 2
+without /s: no match
+with /s:    matched 8 chars
+10.0.0.1         valid
+255.255.255.255  valid
+256.1.1.1        invalid
+1.2.3            invalid
+192.168.001.1    invalid
+long words: Quick Brown Jumps
+lines starting uppercase: 2
+took 1500ms    value=1500   unit=ms
+ran for 2.5S   value=2.5    unit=s
+waited 3 H     value=3      unit=h
+nothing here   no duration
+nums=123 456 alpha=abc def

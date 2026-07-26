@@ -1,0 +1,17 @@
+USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+root           1  0.0  0.1 171304 13124 ?        Ss   Jan04   4:22 /usr/lib/systemd/systemd --switched-root --system --deserialize 31
+root           2  0.0  0.0      0     0 ?        S    Jan04   0:00 [kthreadd]
+root         912  0.0  0.2  98764 18344 ?        Ss   Jan04   1:11 /usr/sbin/sshd -D
+root        1044  0.2  0.5 812340 44120 ?        Ssl  Jan04  88:02 /usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock
+postgres    1290  1.4  4.2 3244880 348212 ?      Ss   Jan04 412:44 /usr/pgsql-14/bin/postgres -D /var/lib/pgsql/14/data
+postgres    1301  0.1  0.8 3245320 68touch ?     Ss   Jan04   9:15 postgres: checkpointer
+postgres    1302  0.3  1.1 3245984 92412 ?       Ss   Jan04  44:09 postgres: walwriter
+www-data    2210  2.1  1.9 442100 158900 ?       S    Feb11 201:33 /usr/sbin/apache2 -k start
+www-data    2211  1.9  1.8 441800 152212 ?       S    Feb11 189:12 /usr/sbin/apache2 -k start
+www-data    2212  0.0  1.8 441800 151004 ?       Z    Feb11   0:41 [apache2] <defunct>
+deploy      4501  0.0  0.1  21456 11220 pts/0    Ss   09:14   0:00 -bash
+deploy      4590 12.5  6.3 1893244 522788 pts/0  Sl+  09:20  14:02 /opt/app/bin/app-server --config /etc/app/prod.yml
+deploy      4611  0.0  0.0  38924  3856 pts/1    R+   09:31   0:00 ps aux
+backup      5100  3.2  0.4 118232 33240 ?        D    03:00  11:58 /usr/bin/rsync -a /var/lib/pgsql /backup/pgsql
+root        5322  0.0  0.0      0     0 ?        Z    07:12   0:00 [cron] <defunct>
+munin       6001  0.4  0.2  84520 17112 ?        S    09:25   0:05 /usr/bin/perl /usr/share/munin/munin-node

@@ -1,0 +1,16 @@
+10.0.0.5 - alice [12/Mar/2024:06:25:01 +0000] "GET /index.html HTTP/1.1" 200 5120
+10.0.0.9 - - [12/Mar/2024:06:25:04 +0000] "GET /api/v1/users HTTP/1.1" 200 923
+10.0.0.5 - alice [12/Mar/2024:06:26:11 +0000] "POST /api/v1/orders HTTP/1.1" 201 312
+172.16.3.2 - bob [12/Mar/2024:06:27:45 +0000] "GET /missing.png HTTP/1.1" 404 233
+10.0.0.9 - - [12/Mar/2024:06:28:02 +0000] "GET /api/v1/users/42 HTTP/1.1" 200 1873
+172.16.3.2 - bob [12/Mar/2024:06:29:19 +0000] "GET /admin HTTP/1.1" 403 199
+10.0.0.11 - - [12/Mar/2024:06:30:00 +0000] "HEAD /health HTTP/1.1" 200 0
+10.0.0.5 - alice [12/Mar/2024:06:31:33 +0000] "GET /api/v1/orders HTTP/1.1" 500 88
+this line is corrupt and should be counted as malformed
+10.0.0.11 - - [12/Mar/2024:06:32:00 +0000] "HEAD /health HTTP/1.1" 200 0
+172.16.3.2 - bob [12/Mar/2024:06:33:41 +0000] "GET /index.html HTTP/1.1" 200 5120
+10.0.0.9 - - [12/Mar/2024:06:34:12 +0000] "DELETE /api/v1/users/42 HTTP/1.1" 204 0
+10.0.0.5 - alice [12/Mar/2024:06:35:55 +0000] "GET /api/v1/orders HTTP/1.1" 500 91
+10.0.0.13 - carol [12/Mar/2024:06:36:20 +0000] "GET /index.html HTTP/1.1" 304 0
+172.16.3.2 - bob [12/Mar/2024:06:38:09 +0000] "POST /login HTTP/1.1" 401 154
+10.0.0.13 - carol [12/Mar/2024:06:39:47 +0000] "GET /api/v1/reports HTTP/1.1" 200 20480

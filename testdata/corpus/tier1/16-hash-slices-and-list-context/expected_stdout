@@ -1,0 +1,21 @@
+slice:        localhost 8080
+unpacked:     h=localhost p=8080
+keys now:     debug,host,name,pass,port,user
+sub host=localhost
+sub port=8080
+after delete slice: host,name,port,user
+--- hash in list context ---
+flattened to 4 elements
+rebuilt keys: host,port
+inverted keys: 8080,localhost
+--- building a hash from two arrays ---
+blue -> #00f
+green -> #0f0
+red -> #f00
+--- merging with later keys winning ---
+opt color=red
+opt qty=3
+opt size=L
+--- a set built from a list ---
+distinct: a,b,c
+is 'b' present: yes

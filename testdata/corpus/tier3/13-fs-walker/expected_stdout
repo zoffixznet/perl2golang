@@ -1,0 +1,31 @@
+scanned 5 dirs, 7 files, 221 bytes
+
+TREE (relative, sorted)
+    VERSION                          12
+    INSTALL.txt                      33
+    README.md                        27
+    main.pl                          31
+      Helper.pm                        35
+      Log.pm                           46
+    basic.t                          37
+
+BY EXTENSION
+  .pm       2 file(s)    81 bytes
+  .t        1 file(s)    37 bytes
+  .txt      1 file(s)    33 bytes
+  .pl       1 file(s)    31 bytes
+  .md       1 file(s)    27 bytes
+  (none)    1 file(s)    12 bytes
+
+TOP 3 LARGEST
+  src/util/Log.pm          46
+  t/basic.t                37
+  src/util/Helper.pm       35
+
+PATH OPS
+  dirname:  files/project/src/util
+  basename: Helper.pm
+  splitpath leaf: Helper.pm
+  updir join: files/project/src/util/../lib
+  is_absolute('files/project/src/util/Helper.pm'): no
+  Helper.pm lines: 3, first: package Util;

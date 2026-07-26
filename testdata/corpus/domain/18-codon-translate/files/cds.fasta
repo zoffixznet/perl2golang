@@ -1,0 +1,12 @@
+>orf1 table=standard strand=+ frame=0
+ATGGCTGACGAAGGCTTCAAAGATCTGTAA
+>orf2_revstrand table=standard strand=- frame=0
+TTACAGATCTTTGAAGCCTTCGTCAGCCAT
+>orf3_offset table=standard strand=+ frame=1
+GATGGCTGACGAAGGCTTCAAAGATCTGTAAC
+>mt_orf table=mito strand=+ frame=0
+ATAGCTGACGAAGGCTGATTCAAAGATCTGAGA
+>with_ns table=standard strand=+ frame=0
+ATGGCNGACGANGGCTTCAAAGATCTGTAA
+>bad_table table=plastid strand=+ frame=0
+ATGGCTGACGAAGGC

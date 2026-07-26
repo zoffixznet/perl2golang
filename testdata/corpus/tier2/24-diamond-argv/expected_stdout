@@ -1,0 +1,16 @@
+program: input.pl
+inputs:  files/site-a.log files/site-b.log
+files/site-a.log     1 GET    /index.html        200    812
+files/site-a.log     2 GET    /style.css         200   1204
+files/site-a.log     3 POST   /login             302      0
+files/site-b.log     1 GET    /index.html        404    155
+files/site-b.log     2 GET    /api/v1/status     200     42
+files/site-b.log     3 GET    /api/v1/status     500     88
+files/site-b.log     4 GET    /favicon.ico       404      0
+------------------------------------------------------------
+files/site-a.log   lines=3 bytes=2016
+files/site-b.log   lines=4 bytes=285
+statuses: 200=3 302=1 404=2 500=1
+total bytes: 2301
+@ARGV is now empty: yes
+error responses: 3 (42.9%)

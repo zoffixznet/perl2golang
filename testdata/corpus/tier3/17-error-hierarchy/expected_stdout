@@ -1,0 +1,12 @@
+clean-run: succeeded (ok:42)
+fetch-feed: timeout [App::Error::Timeout] no response in 5s (job=fetch-feed) retry=yes
+parse-config: parse [App::Error::Parse] unexpected token } (job=parse-config) retry=no
+plain-die: generic [App::Error] string death, not an object (promoted in job=plain-die) retry=no
+read-cache: io [App::Error::IO] cache file missing (job=read-cache) retry=yes
+--- clobber demo ---
+careful=0 -> caught: [App::Error::IO] disk on fire
+  log: guard racy released (sloppy)
+careful=1 -> caught: [App::Error::IO] disk on fire
+  log: guard safe released (careful)
+falling back after: primary down
+recovered value: fallback-value

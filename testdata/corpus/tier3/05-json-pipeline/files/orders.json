@@ -1,0 +1,39 @@
+{
+  "generated": "2024-11-02T00:00:00Z",
+  "currency": "EUR",
+  "orders": [
+    {
+      "id": 1001,
+      "customer": {"name": "Ada", "tier": "gold"},
+      "items": [
+        {"sku": "TEA-EG", "qty": 2, "unit_price": 4.5},
+        {"sku": "MUG-01", "qty": 1, "unit_price": 9.0}
+      ],
+      "shipped": true
+    },
+    {
+      "id": 1002,
+      "customer": {"name": "Grace", "tier": "silver"},
+      "items": [
+        {"sku": "TEA-EG", "qty": 5, "unit_price": 4.5}
+      ],
+      "shipped": false
+    },
+    {
+      "id": 1003,
+      "customer": {"name": "Ada", "tier": "gold"},
+      "items": [
+        {"sku": "KET-77", "qty": 1, "unit_price": 32.25},
+        {"sku": "TEA-LG", "qty": 3, "unit_price": 5.0},
+        {"sku": "MUG-01", "qty": 2, "unit_price": 9.0}
+      ],
+      "shipped": true
+    },
+    {
+      "id": 1004,
+      "customer": {"name": "Linus", "tier": "bronze"},
+      "items": [],
+      "shipped": false
+    }
+  ]
+}

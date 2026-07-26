@@ -1,0 +1,19 @@
+--- catalogue ---
+#1 rectangle  area=  12.000 perimeter=  14.000
+#2 wheel      area=  19.635 perimeter=  15.708
+#3 square     area=  25.000 perimeter=  20.000 [square]
+#4 plank      area=   5.000 perimeter=  21.000
+--- by area ---
+plank (Rectangle)
+rectangle (Rectangle)
+wheel (Circle)
+square (Square)
+total area: 61.635
+square isa Square    : yes
+square isa Rectangle : yes
+square isa Shape     : yes
+square isa Circle    : no
+square can(is_square): yes
+rejected: Shape is abstract; instantiate a subclass
+rejected: Rectangle needs positive width/height
+virtual: Blob does not implement area()

@@ -1,0 +1,33 @@
+2026-08-13 02:10:11,201 INFO  [main] c.e.shop.Boot - started in 4.2s
+2026-08-13 02:11:40,913 WARN  [pool-2] c.e.shop.cache.Warmer - cache warm incomplete
+2026-08-13 02:12:03,004 ERROR [http-9] c.e.shop.api.OrderCtl - request failed
+java.lang.NullPointerException: Cannot invoke "com.example.shop.Cart.total()" because "cart" is null
+	at com.example.shop.api.OrderCtl.submit(OrderCtl.java:142)
+	at com.example.shop.api.BaseCtl.handle(BaseCtl.java:61)
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1089)
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:205)
+	at java.base/java.lang.Thread.run(Thread.java:840)
+2026-08-13 02:12:09,551 INFO  [http-9] c.e.shop.api.OrderCtl - retry scheduled
+2026-08-13 02:14:22,102 ERROR [http-4] c.e.shop.api.OrderCtl - request failed
+java.lang.NullPointerException: Cannot invoke "com.example.shop.Cart.total()" because "cart" is null
+	at com.example.shop.api.OrderCtl.submit(OrderCtl.java:142)
+	at com.example.shop.api.BaseCtl.handle(BaseCtl.java:61)
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1089)
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:205)
+	at java.base/java.lang.Thread.run(Thread.java:840)
+2026-08-13 02:20:15,000 ERROR [sched-1] c.e.shop.jobs.Invoicer - job crashed
+com.example.shop.db.StaleConnectionException: connection aged out after 1800s
+	at com.example.shop.db.Pool.acquire(Pool.java:88)
+	at com.example.shop.jobs.Invoicer.run(Invoicer.java:33)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:539)
+Caused by: java.net.SocketException: Connection reset
+	at java.base/sun.nio.ch.NioSocketImpl.implRead(NioSocketImpl.java:330)
+	at com.example.shop.db.Wire.read(Wire.java:12)
+	... 3 more
+2026-08-13 02:21:00,441 INFO  [sched-1] c.e.shop.jobs.Invoicer - restarted
+2026-08-13 03:05:59,913 ERROR [http-2] c.e.shop.api.SearchCtl - request failed
+java.lang.IllegalArgumentException: page size 5000 exceeds maximum 500
+	at com.example.shop.api.SearchCtl.list(SearchCtl.java:77)
+	at com.example.shop.api.BaseCtl.handle(BaseCtl.java:61)
+	at java.base/java.lang.Thread.run(Thread.java:840)
+2026-08-13 03:06:01,001 INFO  [http-2] c.e.shop.api.SearchCtl - recovered

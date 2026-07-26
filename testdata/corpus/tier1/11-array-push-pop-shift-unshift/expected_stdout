@@ -1,0 +1,15 @@
+stack: 1 2 3
+popped 3, left: 1 2
+queue: a b c d
+shifted a, left: b c d
+pop on empty array: undef
+empty array still has 0 elements
+--- push returns the new length ---
+push returned 4, array is 1 2 3 4
+unshift returned 5, array is 0 1 2 3 4
+--- push flattens ---
+b = 1 2 3 4 5 6 (6 elements)
+--- a queue drained front to back ---
+handling 10, 2 left
+handling 20, 1 left
+handling 30, 0 left

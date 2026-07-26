@@ -1,0 +1,553 @@
+package lower
+
+import (
+	"strings"
+
+	"perl2go/internal/ir"
+	"perl2go/internal/perl/ast"
+)
+
+// stmts lowers a statement list, flushing whatever setup each statement needed.
+func (l *Lowerer) stmts(list []ast.Stmt) []ir.Stmt {
+	var out []ir.Stmt
+	for _, st := range list {
+		savedPre := l.pre
+		l.pre = nil
+
+		lead := leadComments(st)
+		body := l.stmt(st)
+		pre := l.takePre()
+		l.pre = savedPre
+
+		if len(lead) > 0 {
+			out = append(out, &ir.CommentStmt{Lines: lead})
+		}
+		out = append(out, pre...)
+		out = append(out, body...)
+	}
+	return out
+}
+
+// block lowers a statement list in its own lexical scope.
+func (l *Lowerer) block(list []ast.Stmt) *ir.Block {
+	saved := l.scope
+	l.scope = newScope(saved)
+	b := &ir.Block{Stmts: l.stmts(list)}
+	l.scope = saved
+	return b
+}
+
+// leadComments extracts the developer's own comments above a statement. They
+// are carried into both output variants, because the developer wrote them and
+// they are usually the best documentation in the file.
+func leadComments(st ast.Stmt) []string {
+	var c *ast.StmtComments
+	switch n := st.(type) {
+	case *ast.ExprStmt:
+		c = &n.StmtComments
+	case *ast.If:
+		c = &n.StmtComments
+	case *ast.While:
+		c = &n.StmtComments
+	case *ast.ForC:
+		c = &n.StmtComments
+	case *ast.Foreach:
+		c = &n.StmtComments
+	case *ast.Block:
+		c = &n.StmtComments
+	case *ast.SubDecl:
+		c = &n.StmtComments
+	case *ast.PackageDecl:
+		c = &n.StmtComments
+	case *ast.Use:
+		c = &n.StmtComments
+	case *ast.Return:
+		c = &n.StmtComments
+	case *ast.LoopCtl:
+		c = &n.StmtComments
+	case *ast.Untranslated:
+		c = &n.StmtComments
+	}
+	if c == nil {
+		return nil
+	}
+	var out []string
+	for _, cm := range c.Lead {
+		if cm.Pod {
+			continue
+		}
+		raw := strings.TrimSpace(cm.Text)
+		// The shebang is an instruction to the operating system about which
+		// interpreter to run, not a comment about the program. A compiled
+		// binary has no use for it.
+		if strings.HasPrefix(raw, "#!") {
+			continue
+		}
+		out = append(out, strings.TrimSpace(strings.TrimPrefix(raw, "#")))
+	}
+	return out
+}
+
+// stmt lowers one statement.
+func (l *Lowerer) stmt(st ast.Stmt) []ir.Stmt {
+	if l.pass == 2 {
+		l.rep.Stats.Statements++
+	}
+	switch n := st.(type) {
+	case nil:
+		return nil
+	case *ast.ExprStmt:
+		return l.exprStatement(n.X)
+	case *ast.If:
+		return []ir.Stmt{l.ifStmt(n)}
+	case *ast.While:
+		return l.whileStmt(n)
+	case *ast.ForC:
+		return l.forStmt(n)
+	case *ast.Foreach:
+		return l.foreachStmt(n)
+	case *ast.Block:
+		out := &ir.BlockStmt{Body: l.block(n.Body)}
+		l.setProv(out, n)
+		l.note(out, "A bare block in Perl exists to scope its variables. Go blocks "+
+			"do the same, and this one is kept so the variables inside stay local.")
+		return []ir.Stmt{out}
+	case *ast.SubDecl:
+		l.lowerSubDecl(n)
+		return nil
+	case *ast.Use:
+		return l.useStmt(n)
+	case *ast.Return:
+		return l.returnStmt(n)
+	case *ast.LoopCtl:
+		return l.loopCtl(n)
+	case *ast.PackageDecl:
+		return l.packageStmt(n)
+	case *ast.Untranslated:
+		return []ir.Stmt{l.todoStmt(n, "P2G1514", "unparsed statement",
+			"this statement was not understood",
+			"The parser could not read this statement: "+n.Reason+".",
+			"Translate it by hand. The original is quoted above it.")}
+	}
+	return []ir.Stmt{l.todoStmt(st, "P2G3599", "statement",
+		"this statement is not implemented",
+		"The converter has no rule for this kind of statement.",
+		"Translate it by hand.")}
+}
+
+// exprStatement lowers an expression evaluated for effect.
+func (l *Lowerer) exprStatement(e ast.Expr) []ir.Stmt {
+	switch n := e.(type) {
+	case nil:
+		return nil
+
+	case *ast.Assign:
+		return l.assignStmts(n)
+
+	case *ast.My:
+		return l.declarationOnly(n)
+
+	case *ast.UnOp:
+		if n.Op == "++" || n.Op == "--" {
+			return l.incDecStmt(n)
+		}
+
+	case *ast.BinOp:
+		switch n.Op {
+		case ",":
+			var out []ir.Stmt
+			for _, part := range flatten(n) {
+				out = append(out, l.exprStatement(part)...)
+			}
+			return out
+		case "or", "||":
+			// `open(...) or die "..."` deserves the real Go shape rather than a
+			// negated truth test, because error handling is the thing a Perl
+			// developer most needs to see written out.
+			if c, isCall := n.L.(*ast.Call); isCall && c.Name == "open" {
+				if sts, ok := l.openGuarded(c, l.exprStatement(n.R)); ok {
+					return sts
+				}
+			}
+			// The `something() or die "..."` idiom: a guard, not a value.
+			guard := &ir.If{
+				Cond: ir.Un("!", l.cond(n.L), ir.TBool),
+				Then: &ir.Block{Stmts: l.exprStatement(n.R)},
+			}
+			l.setProv(guard, n)
+			l.note(guard, "Perl's `X or die` reads as a sentence and works because or "+
+				"short-circuits. Go has no statement form of it: the test is written as "+
+				"an if, which is the same shape every error check in Go takes.",
+				"errors-are-values", "if-err-nil-rhythm")
+			return []ir.Stmt{guard}
+		case "and", "&&":
+			guard := &ir.If{Cond: l.cond(n.L), Then: &ir.Block{Stmts: l.exprStatement(n.R)}}
+			l.setProv(guard, n)
+			return []ir.Stmt{guard}
+		}
+
+	case *ast.Call:
+		return l.callStatement(n)
+
+	case *ast.Subst:
+		return l.substStmt(n)
+
+	case *ast.Trans:
+		return l.transStmt(n)
+	}
+
+	x := l.expr(e)
+	if x == nil {
+		return nil
+	}
+	st := exprStmt(x)
+	l.setProv(st, e)
+	return []ir.Stmt{st}
+}
+
+// declarationOnly lowers `my $x;` and `my ($a, $b);` with no initialiser.
+func (l *Lowerer) declarationOnly(n *ast.My) []ir.Stmt {
+	var out []ir.Stmt
+	for _, v := range declaredVars(n) {
+		b := l.declare(v, KindLocal)
+		st := &ir.DeclStmt{Names: []string{b.Go}, Type: b.Type}
+		if b.Type != nil && b.Type.Kind == ir.Map {
+			st.Values = []ir.Expr{composite(b.Type, nil, nil)}
+			l.note(st, "A Go map has to be made before anything can be written to it. "+
+				"A declared but unmade map is nil, and writing to a nil map panics, "+
+				"which is one of the first surprises coming from Perl.",
+				"nil-slices-vs-nil-maps")
+		} else {
+			l.note(st, "A Perl variable starts out undef. A Go variable starts at its "+
+				"type's zero value: 0, the empty string, false, or nil, depending on the "+
+				"type. There is no separate undefined state.",
+				"static-types-and-zero-values", "nil-vs-undef")
+		}
+		l.setProv(st, v)
+		out = append(out, st)
+	}
+	return out
+}
+
+// incDecStmt lowers ++ and -- in statement position, which is where Go allows
+// them.
+func (l *Lowerer) incDecStmt(n *ast.UnOp) []ir.Stmt {
+	target := l.assignTarget(n.X)
+	if target == nil {
+		return []ir.Stmt{exprStmt(l.expr(n))}
+	}
+	if typeOrAny(target).Kind == ir.String && n.Op == "++" {
+		return []ir.Stmt{exprStmt(l.incDecExpr(n))}
+	}
+	st := &ir.IncDec{X: target, Dec: n.Op == "--"}
+	l.setProv(st, n)
+	if b := l.bindingOfTarget(n.X); b != nil {
+		l.observe(b, ir.TInt)
+	}
+	if _, isHash := n.X.(*ast.HashIndex); isHash {
+		l.note(st, "Incrementing a missing map key works because reading a missing key "+
+			"gives the value type's zero value: counters need no initialisation, exactly "+
+			"as in Perl. The map itself still has to exist.",
+			"nil-slices-vs-nil-maps")
+	}
+	return []ir.Stmt{st}
+}
+
+// ifStmt lowers if/elsif/else and unless.
+func (l *Lowerer) ifStmt(n *ast.If) ir.Stmt {
+	depth := l.captureDepth()
+	defer l.restoreCaptures(depth)
+
+	cond := l.cond(n.Cond)
+	if n.Unless {
+		cond = ir.Un("!", cond, ir.TBool)
+	}
+	// The condition may have needed setup; it belongs before the if.
+	setup := l.takePre()
+
+	out := &ir.If{Cond: cond, Then: l.block(n.Then)}
+	l.setProv(out, n)
+
+	// Build the elsif chain from the back so each one nests in the previous.
+	var tail ir.Stmt
+	if len(n.Else) > 0 {
+		tail = l.block(n.Else)
+	}
+	for i := len(n.ElseIfs) - 1; i >= 0; i-- {
+		ei := n.ElseIfs[i]
+		branch := &ir.If{Cond: l.cond(ei.Cond), Then: l.block(ei.Then)}
+		branch.Else = tail
+		tail = branch
+	}
+	out.Else = tail
+
+	if n.Unless {
+		l.note(out, "unless is if with the condition negated. Go has no unless, and "+
+			"negating at the top is the closest reading of the original.")
+	}
+	if len(setup) == 1 {
+		// A single setup statement fits in the if's own init clause, which is
+		// the Go idiom for scoping a value to the branch that uses it.
+		if a, ok := setup[0].(*ir.Assign); ok && a.Op == ":=" {
+			out.Init = a
+			return out
+		}
+	}
+	if len(setup) > 0 {
+		return &ir.BlockStmt{Body: &ir.Block{Stmts: append(setup, out)}}
+	}
+	return out
+}
+
+// whileStmt lowers while, until, and do-while.
+func (l *Lowerer) whileStmt(n *ast.While) []ir.Stmt {
+	if n.DoWhile {
+		return l.doWhile(n)
+	}
+	if st, ok := l.readLoop(n); ok {
+		return st
+	}
+
+	depth := l.captureDepth()
+	defer l.restoreCaptures(depth)
+
+	cond := l.cond(n.Cond)
+	if n.Until {
+		cond = ir.Un("!", cond, ir.TBool)
+	}
+	setup := l.takePre()
+
+	out := &ir.For{Cond: cond, Body: l.block(n.Body), Label: n.Label}
+	l.setProv(out, n)
+	l.note(out, "Go has one loop keyword. `for cond { }` is its while, `for { }` is "+
+		"its infinite loop, and there is no do-while and no until.",
+		"range-is-not-foreach")
+
+	if len(setup) > 0 {
+		// The condition needs work on every iteration, so the setup has to be
+		// inside the loop with an explicit break.
+		body := out.Body
+		out.Cond = nil
+		out.Body = &ir.Block{Stmts: append(append(setup, &ir.If{
+			Cond: ir.Un("!", cond, ir.TBool),
+			Then: &ir.Block{Stmts: []ir.Stmt{&ir.Branch{Kind: "break"}}},
+		}), body.Stmts...)}
+	}
+	return []ir.Stmt{out}
+}
+
+// doWhile lowers `do { ... } while COND`, which Go has no form of.
+func (l *Lowerer) doWhile(n *ast.While) []ir.Stmt {
+	cond := l.cond(n.Cond)
+	if n.Until {
+		cond = ir.Un("!", cond, ir.TBool)
+	}
+	body := l.block(n.Body)
+	body.Stmts = append(body.Stmts, &ir.If{
+		Cond: ir.Un("!", cond, ir.TBool),
+		Then: &ir.Block{Stmts: []ir.Stmt{&ir.Branch{Kind: "break"}}},
+	})
+	out := &ir.For{Body: body, Label: n.Label}
+	l.setProv(out, n)
+	l.note(out, "Go has no do-while. The body-first shape is written as an "+
+		"unconditional for loop that breaks at the bottom, which runs the body at "+
+		"least once exactly as the original did.")
+	return []ir.Stmt{out}
+}
+
+// forStmt lowers a C-style for loop, which Go writes almost identically.
+func (l *Lowerer) forStmt(n *ast.ForC) []ir.Stmt {
+	saved := l.scope
+	l.scope = newScope(saved)
+	defer func() { l.scope = saved }()
+
+	var init ir.Stmt
+	if n.Init != nil {
+		sts := l.exprStatement(n.Init)
+		if len(sts) == 1 {
+			init = sts[0]
+		} else if len(sts) > 1 {
+			for _, s := range sts[:len(sts)-1] {
+				l.emit(s)
+			}
+			init = sts[len(sts)-1]
+		}
+	}
+	var cond ir.Expr
+	if n.Cond != nil {
+		cond = l.cond(n.Cond)
+	}
+	var post ir.Stmt
+	if n.Post != nil {
+		sts := l.exprStatement(n.Post)
+		if len(sts) == 1 {
+			post = sts[0]
+		} else if len(sts) > 1 {
+			l.approximate(n, "P2G3530", "for loop with several post expressions",
+				"only one post expression fits a Go for header",
+				"Perl allows a comma expression in the third slot of a C-style for. "+
+					"Go allows exactly one statement there.",
+				"The extra expressions were moved to the end of the loop body, which "+
+					"behaves the same unless the body uses next.")
+			post = sts[0]
+		}
+	}
+
+	out := &ir.For{Init: init, Cond: cond, Post: post, Body: l.block(n.Body), Label: n.Label}
+	l.setProv(out, n)
+	l.note(out, "A C-style for loop carries over almost unchanged. Go drops the "+
+		"parentheses around the header and requires the braces.")
+	return []ir.Stmt{out}
+}
+
+// packageStmt handles a package declaration.
+func (l *Lowerer) packageStmt(n *ast.PackageDecl) []ir.Stmt {
+	if n.Name == "main" {
+		return nil
+	}
+	return []ir.Stmt{l.todoStmt(n, "P2G7010", "package "+n.Name,
+		"a second package in one file is not implemented",
+		"Perl can declare several packages in one file, and a package plus bless is "+
+			"how Perl classes are written. Go maps one package to one directory, and "+
+			"types rather than packages are what carry methods.",
+		"Put the type in its own file with methods on it, or split the package into "+
+			"its own directory under the module.",
+		"packages-and-exported-names", "methods-and-receivers")}
+}
+
+// loopCtl lowers last, next, and redo.
+func (l *Lowerer) loopCtl(n *ast.LoopCtl) []ir.Stmt {
+	switch n.Op {
+	case "last":
+		out := &ir.Branch{Kind: "break", Label: n.Label}
+		l.setProv(out, n)
+		return []ir.Stmt{out}
+	case "next":
+		out := &ir.Branch{Kind: "continue", Label: n.Label}
+		l.setProv(out, n)
+		return []ir.Stmt{out}
+	}
+	return []ir.Stmt{l.todoStmt(n, "P2G3540", "redo",
+		"redo has no Go equivalent",
+		"redo restarts the current iteration without re-evaluating the loop "+
+			"condition or the increment. Go has break and continue and nothing that "+
+			"restarts an iteration.",
+		"Wrap the body in an inner `for { ... }` and use continue to restart it, "+
+			"with a break at the end so it runs once by default.")}
+}
+
+// returnStmt lowers `return`.
+func (l *Lowerer) returnStmt(n *ast.Return) []ir.Stmt {
+	s := l.curSub
+	if s == nil {
+		// A return at file scope ends the program.
+		out := &ir.Return{}
+		l.setProv(out, n)
+		return []ir.Stmt{out}
+	}
+
+	var results []ir.Expr
+	var kinds []*ir.Type
+	if len(n.Exprs) > 0 {
+		flat := flatten(n.Exprs[0])
+		if len(n.Exprs) > 1 {
+			flat = nil
+			for _, e := range n.Exprs {
+				flat = append(flat, flatten(e)...)
+			}
+		}
+		for _, e := range flat {
+			x := l.scalar(e)
+			results = append(results, x)
+			kinds = append(kinds, typeOrAny(x))
+		}
+	}
+	if l.pass == 1 {
+		s.ResultEvidence = append(s.ResultEvidence, kinds)
+	}
+
+	// Pad or trim to the sub's settled shape so the Go function keeps its
+	// promise about how many values it returns.
+	if l.pass == 2 {
+		for len(results) < len(s.Results) {
+			i := len(results)
+			results = append(results, zeroOf(s.Results[i]))
+		}
+		if len(results) > len(s.Results) {
+			results = results[:len(s.Results)]
+		}
+		for i := range results {
+			results[i] = l.assignable(results[i], s.Results[i], nil)
+		}
+		if len(n.Exprs) == 0 && len(s.Results) > 0 {
+			l.approximate(n, "P2G2120", "bare return in a sub that returns values",
+				"a bare return becomes explicit zero values",
+				"A bare return in Perl yields the empty list in list context and undef "+
+					"in scalar context, so the caller can tell it apart from a real result. "+
+					"A Go function always returns the number of values it declares.",
+				"If the caller needs to tell 'no result' from a real one, add an error "+
+					"or a bool result and check it, which is the Go convention.",
+				"multiple-return-values", "comma-ok-idiom")
+		}
+	}
+
+	out := &ir.Return{Results: results}
+	l.setProv(out, n)
+	return []ir.Stmt{out}
+}
+
+// todoStmt records a refusal and produces the statement that stands in for the
+// construct. The generated code panics rather than continuing, because
+// silently skipping a statement would change the program's meaning invisibly.
+func (l *Lowerer) todoStmt(n ast.Node, code, construct, short, message, advice string, concepts ...string) ir.Stmt {
+	todo := l.refuse(n, code, construct, short, message, advice, concepts...)
+	st := &ir.TodoStmt{Info: todo, Panic: true}
+	line, col := posOf(n)
+	st.Meta.Prov = ir.Provenance{Line: line, Col: col, Text: todo.Perl}
+	return st
+}
+
+// globalDecl builds the package-level declaration for a binding that outlived
+// its block.
+func (l *Lowerer) globalDecl(b *Binding) ir.Decl {
+	d := &ir.VarDecl{Names: []string{b.Go}, Type: b.Type}
+	if b.Type != nil && b.Type.Kind == ir.Map {
+		d.Values = []ir.Expr{composite(b.Type, nil, nil)}
+	}
+	d.Doc = []string{b.Go + " holds " + typeWords(b.Type) + "."}
+	if l.pass == 2 {
+		ir.Annotate(d, "This was a package variable in the original, reachable from "+
+			"every sub in the file. Go's package-level variables work the same way, "+
+			"and a name starting with a lower-case letter is visible only inside this "+
+			"package.",
+			"packages-and-exported-names")
+	}
+	return d
+}
+
+// patternDecl builds the package-level compiled regular expression.
+func (l *Lowerer) patternDecl(p *patternVar) ir.Decl {
+	d := &ir.VarDecl{
+		Names:  []string{p.Name},
+		Values: []ir.Expr{call("regexp", "regexp", "MustCompile", ir.NamedType("*regexp.Regexp", "regexp"), ir.Str(quote(p.GoRegex)))},
+		Doc:    []string{p.Name + " matches " + describePattern(p.Perl) + "."},
+	}
+	if l.pass == 2 {
+		ir.Annotate(d, "Perl compiles a literal pattern once and caches it. Go makes "+
+			"that explicit: regexp.MustCompile at package level compiles the pattern "+
+			"when the program starts, and panics immediately if the pattern is bad, "+
+			"rather than failing on the first line of input.",
+			"mustcompile-pattern", "regexp-is-re2")
+	}
+	return d
+}
+
+// describePattern gives a package-level pattern variable a doc comment that
+// says something, without pretending to explain the regex.
+func describePattern(perl string) string {
+	trimmed := strings.TrimSpace(perl)
+	if len(trimmed) > 48 {
+		trimmed = trimmed[:45] + "..."
+	}
+	return "the pattern " + trimmed
+}

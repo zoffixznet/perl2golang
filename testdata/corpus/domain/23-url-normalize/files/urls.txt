@@ -1,0 +1,15 @@
+HTTP://Shop.Example.COM:80/products/../products/9912?b=2&a=1
+http://shop.example.com/products/9912?a=1&b=2
+https://shop.example.com/products/9912?a=1&b=2
+http://shop.example.com/a/b/./c/../d/
+http://shop.example.com/a/b/d/
+http://shop.example.com/%7ejane/%70rofile#section-2
+http://shop.example.com/~jane/profile
+https://api.example.com:8443/v3/orders?limit=10
+https://api.example.com:443/v3/orders?limit=10&
+ftp://files.example.com/pub/../pub/readme.txt
+not-a-url-at-all
+http://user:secret@shop.example.com/account
+gopher://old.example.com/1/menu
+http:///missing-host
+http://shop.example.com/search?q=%2Fetc%2Fpasswd&sort=

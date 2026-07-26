@@ -1,0 +1,40 @@
+LABEL           REF      REFTYPE  BLESSED  NUMERIC
+plain string    -        -        -        no
+integer         -        -        -        yes
+float string    -        -        -        yes
+exp string      -        -        -        yes
+hex string      -        -        -        no
+padded number   -        -        -        yes
+not a number    -        -        -        no
+undef           -        -        -        no
+arrayref        ARRAY    ARRAY    -        no
+hashref         HASH     HASH     -        no
+coderef         CODE     CODE     -        no
+scalarref       SCALAR   SCALAR   -        no
+Widget object   Widget   HASH     Widget   no
+Gadget object   Gadget   HASH     Gadget   no
+Counter object  Counter  SCALAR   Counter  no
+a Widget subclass: Widget
+a Widget subclass: Gadget
+an unblessed ARRAY
+not a reference
+VALUE        FLOOR     CEIL      INT    ROUND
+3.7            3.0      4.0        3        4
+-3.7          -4.0     -3.0       -3       -4
+2.5            2.0      3.0        2        2
+-2.5          -3.0     -2.0       -2       -2
+10            10.0     10.0       10       10
+0.001          0.0      1.0        0        0
+fmod(17, 5)=2.00 fmod(-17, 5)=-2.00 17%5=2
+round_to: 3.14 2.718 1
+iso:      2023-11-14T22:13:20Z
+human:    Tuesday, 14 November 2023
+compact:  20231114-221320
+day 318 of year, week 46, weekday 2
+  +0       2023-11-14 22:13:20
+  +3600    2023-11-14 23:13:20
+  +86400   2023-11-15 22:13:20
+  +604800  2023-11-21 22:13:20
+valid: '10','-3.5','1e2','NaN','0'
+invalid: 'twelve',''
+sum of plain decimals: 6.5

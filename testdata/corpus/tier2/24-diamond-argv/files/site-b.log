@@ -1,0 +1,4 @@
+GET /index.html 404 155
+GET /api/v1/status 200 42
+GET /api/v1/status 500 88
+GET /favicon.ico 404 0

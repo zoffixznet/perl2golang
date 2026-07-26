@@ -1,0 +1,41 @@
+c-style 0
+c-style 1
+c-style 2
+c-style 3
+c-style 4
+step 10
+step 7
+step 4
+step 1
+converge 0 10
+converge 1 9
+converge 2 8
+converge 3 7
+converge 4 6
+--- foreach ---
+named  red
+named  green
+named  blue
+topic  red
+topic  green
+topic  blue
+for is foreach: red
+for is foreach: green
+for is foreach: blue
+--- index-driven ---
+0 => red
+1 => green
+2 => blue
+--- the loop variable aliases the element ---
+after aliasing loop: 10 20 30 40
+after topic aliasing: a! b! c!
+--- nested ---
+1	2	3	4
+2	4	6	8
+3	6	9	12
+--- ranges and reverse ---
+1,2,3,4,5
+5,4,3,2,1
+aa,ab,ac,ad
+--- the topic is restored after the loop ---
+topic is still 'outer'

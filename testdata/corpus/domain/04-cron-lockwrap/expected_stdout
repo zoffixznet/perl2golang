@@ -1,0 +1,9 @@
+[nightly-backup] stale lock (pid 4242, 7200s old > 1800s) -- would break it
+[nightly-backup] FAILED (exit 1)
+  4 sets checked
+  pgsql: expected 77 files, found 76
+[health-check] FAILED (exit 2)
+  down=1 up=4
+  DOWN: worker-queue (background jobs, restarted nightly by design)
+[report-rollup] SKIP: locked by pid 9911 on web01, 300s old (fresh)
+cronwrap: done, worst exit 75

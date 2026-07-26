@@ -1,0 +1,29 @@
+; zone file for example.com -- managed by hand since 1998, edit with care
+$TTL 3600
+$ORIGIN example.com.
+@	IN	SOA	ns1.example.com. hostmaster.example.com. (
+			2026081401	; serial (YYYYMMDDnn)
+			7200		; refresh
+			900		; retry
+			1209600		; expire
+			300 )		; minimum
+	IN	NS	ns1.example.com.
+	IN	NS	ns2.example.com.
+	IN	MX	10 mail.example.com.
+	IN	MX	20 mail2.example.com.
+	IN	A	192.0.2.10
+ns1	IN	A	192.0.2.53
+ns2	IN	A	198.51.100.53
+mail	IN	A	192.0.2.25
+	IN	TXT	"v=spf1 mx -all"
+mail2	86400	IN	A	198.51.100.25
+www	IN	CNAME	@
+shop	IN	CNAME	www
+ftp	IN	CNAME	files.example.net.
+files	IN	A	192.0.2.80
+	IN	AAAA	2001:db8::80
+old-portal	IN	CNAME	portal
+old-portal	IN	A	192.0.2.99
+$ORIGIN eu.example.com.
+www	IN	A	192.0.2.110
+api	300	IN	A	192.0.2.111

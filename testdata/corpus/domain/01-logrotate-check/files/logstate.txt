@@ -1,0 +1,7 @@
+# path <TAB> size_bytes <TAB> mtime_epoch   (snapshot taken by collector cron)
+/var/log/httpd/access.log	52428800	1755040000
+/var/log/httpd/error.log	1048576	1755100000
+/var/log/app/app.log	209715200	1754800000
+/var/log/mail/mail.log	4096	1755110000
+/var/log/audit/audit.log	8388608	1752000000
+/var/log/unmanaged/rogue.log	999424	1755100000

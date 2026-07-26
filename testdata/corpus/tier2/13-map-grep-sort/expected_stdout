@@ -1,0 +1,18 @@
+flat count: 10
+edsger dijkstra    professor  1930 c20
+grace hopper       admiral    1906 c20
+barbara liskov     professor  1939 c20
+ada lovelace       analyst    1815 c19
+alan turing        logician   1912 c20
+modern non-admirals: turing, dijkstra, liskov
+professors: 2
+1939 liskov
+1930 dijkstra
+1912 turing
+1906 hopper
+1815 lovelace
+by length: alan turing | ada lovelace | grace hopper | barbara liskov | edsger dijkstra
+admiral:1906,analyst:1815,logician:1912,professor:1930,professor:1939
+admiral => hopper; analyst => lovelace; logician => turing; professor => dijkstra,liskov
+sum of 20th century years: 7687
+reverse alpha: TURING LOVELACE LISKOV HOPPER DIJKSTRA

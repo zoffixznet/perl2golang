@@ -1,0 +1,8 @@
+normalised: [alpha][beta][gamma]
+distinct=3 a=3 b=2 c=1
+queue len=5 contents=1 2 3 4 5
+after increment_args: x=11 y=21 z=31 touched=3
+after swap: left=starboard right=port
+limits: cpu=8 mem=2048
+hosts: web1 web2 web3
+queue now=x y

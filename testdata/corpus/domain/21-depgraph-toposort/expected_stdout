@@ -1,0 +1,15 @@
+== files/deps.txt
+level 1: docs libcore
+level 2: libdb libjson libnet libtls
+level 3: app-worker libhttp
+level 4: app-api app-cli
+level 5: installer
+build order: docs libcore libdb libjson libnet libtls app-worker libhttp app-api app-cli installer
+11 targets in 5 levels
+
+== files/deps-broken.txt
+FAILED: cycle detected: libcore -> libutil -> libformat -> libcore
+
+== files/deps-typo.txt
+FAILED: undeclared dependencies: app -> libmagick, app -> libmagic
+

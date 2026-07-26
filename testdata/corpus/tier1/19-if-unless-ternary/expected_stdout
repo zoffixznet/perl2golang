@@ -1,0 +1,20 @@
+ 95 -> A
+ 82 -> B
+ 71 -> C
+ 64 -> D
+ 50 -> F
+--- unless ---
+n is false
+not big
+list is empty
+--- ternary ---
+1 is odd
+2 is even
+3 is odd
+4 is even
+5 is positive
+-3: negative
+ 0: zero
+ 3: positive
+--- ternary as an lvalue target picker ---
+evens=12 odds=9

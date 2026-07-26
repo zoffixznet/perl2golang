@@ -1,0 +1,9 @@
+001001Doe, Jane           Springfield          1523.75prefers "quiet" hours   
+001002Bob Smith           Cape Town             -42.10                        
+001003O'Neil, Pat         Lisbon                  0.00address line 1 | address
+001004Ana-Maria Ionescu   Cluj-Napoca      99999999.99VIP account with a very 
+001005Lee, Kim            Seoul                 203.40tab inside              
+----------
+5 records, 2 truncation(s)
+  record 3 field notes: 31 chars
+  record 4 field notes: 51 chars

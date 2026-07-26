@@ -1,0 +1,14 @@
+HOST       CPU  DISK   MEM
+cache1      12     9    33
+db1         25    71    88
+web1        42    30    61
+web2        91    55    74
+cpu   avg= 42.5 max= 91 (web2)
+disk  avg= 41.2 max= 71 (db1)
+mem   avg= 64.0 max= 88 (db1)
+db1: disk=warning mem=critical
+web1: mem=warning
+web2: cpu=critical mem=warning
+web1 has swap? no
+cache1 keys now: cpu,mem
+host count: 4

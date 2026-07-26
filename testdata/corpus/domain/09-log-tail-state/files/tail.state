@@ -1,0 +1,6 @@
+# state written by log-tail; do not edit by hand
+file=files/current.log
+offset=234
+sig=c720953cbdd8646e6a20b12cfb889a92
+siglen=64
+runs=17

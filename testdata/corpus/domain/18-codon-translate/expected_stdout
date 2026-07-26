@@ -1,0 +1,14 @@
+>orf1 len=10
+MADEGFKDL*
+>orf2_revstrand len=10
+MADEGFKDL*
+>orf3_offset len=10 partial-tail=1bp
+MADEGFKDL*
+>mt_orf len=11
+MADEGWFKDL*
+>with_ns len=10
+MXDXGFKDL*
+# translated 5/6 records
+# FAILED: bad_table: unknown codon table 'plastid'
+# top residues: D=10 *=5 F=5 G=5 K=5
+# tables available: mito, standard

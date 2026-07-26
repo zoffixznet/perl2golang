@@ -1,0 +1,19 @@
+from 4:        'quick brown fox'
+4 for 5:       'quick'
+last 3:        'fox'
+-9 for 5:      'brown'
+0 to -4:       'The quick brown'
+beyond end:    'quick brown fox'
+zero length:   ''
+--- 4-argument replacement ---
+replaced 'quick' with 'lazy' -> The lazy brown fox
+prefixed:      >> The quick brown fox
+suffixed:      >> The quick brown fox <<
+--- lvalue substr ---
+lvalue assign: The slow! brown fox
+tail assign:   The slow! brown cat
+--- fixed width field extraction ---
+date=2024-01-15 name=ACME     qty=4
+--- building fixed width output ---
+[ab        ][00007]
+[abcdefgh  ][01234]

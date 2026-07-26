@@ -1,0 +1,15 @@
+list           | alpha=3 beta=7
+get alpha      | alpha=3
+set gamma 11   | set gamma=11
+incr beta 5    | beta now 12
+incr gamma     | gamma now 12
+del alpha      | deleted alpha (was 3)
+get alpha      | alpha is unset
+frobnicate x   | ERROR: unknown command 'frobnicate'
+list           | beta=12 gamma=12
+known verbs: del,get,incr,list,set
+arrays=2 hashes=2 leaves=report|ada|1|2|yes|3|4
+add(9,4)=13
+mul(9,4)=36
+sub_(9,4)=5
+chained: 42 / n/a

@@ -1,0 +1,13 @@
+Filesystem           1K-blocks      Used Available Use% Mounted on
+/dev/mapper/vg00-root
+                      41153856  32923084   6115396  85% /
+devtmpfs               8123456         0   8123456   0% /dev
+tmpfs                  8135224    102400   8032824   2% /dev/shm
+/dev/sda1               999320    218456    712052  24% /boot
+/dev/mapper/vg00-var  20961280  19864320    895104  96% /var
+/dev/mapper/vg00-home
+                     104806400  52403200  47034368  53% /home
+nfs01.example.com:/export/shared
+                     524288000 498073600  26214400  95% /mnt/shared
+/dev/mapper/vg00-tmp   5232640    161792   4799488   4% /tmp
+tmpfs                  1626624         4   1626620   1% /run/user/1000

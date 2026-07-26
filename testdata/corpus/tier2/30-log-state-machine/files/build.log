@@ -1,0 +1,21 @@
+[00:00] starting build pipeline
+BEGIN STAGE checkout
+[00:01] cloning repository
+[00:04] checked out commit deadbeef
+END STAGE checkout ok
+BEGIN STAGE compile
+[00:05] compiling module core
+[00:11] compiling module net
+WARNING deprecated api used in net
+[00:19] compiling module ui
+END STAGE compile ok
+BEGIN STAGE test
+[00:20] running unit tests
+FAILURE test net::timeout
+[00:31] running integration tests
+FAILURE test ui::render
+END STAGE test failed
+BEGIN STAGE package
+[00:32] skipped because tests failed
+END STAGE package skipped
+[00:33] pipeline finished

@@ -1,0 +1,17 @@
+basename: access.log.1
+stripped 'access.log' (1 substitution)
+once=a;b,,c,,d all=a;b;;c;;d
+replaced 3 occurrences -> FATAL FATAL WARN FATAL
+reformatted: 14/11/2023
+converted: disk=2.0MiB mem=0.5MiB swap=1.0MiB
+filled: Hello Ada, you have 3 messages in inbox.
+missing: Hi <who?>, see <nothing?>.
+orig=[  padded  ] trimmed=[padded]
+title: Grace Hopper Wrote Compilers
+complement of GATTACA is CTAATGT
+vowels=11 spaces=8 letters=35
+digits only: 122333
+squeezed: abca
+upper: MIXED CASE TEXT
+slug: hello-world-again
+slug: perl2go-a-converter-v2

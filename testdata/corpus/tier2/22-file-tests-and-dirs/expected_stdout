@@ -1,0 +1,14 @@
+NAME         TYPE      SIZE NOTE
+archive      dir          0 directory
+empty.log    file         0 empty file
+notes.md     file        29 has content
+report.csv   file        39 has content
+files/report.csv     exists=y file=y dir=n nonempty=y readable=y
+files/archive        exists=y file=n dir=y nonempty=y readable=y
+files/empty.log      exists=y file=y dir=n nonempty=n readable=y
+files/missing.txt    exists=n file=n dir=n nonempty=n readable=n
+csv      2: files/archive/old.csv files/report.csv
+log      1: files/empty.log
+md       1: files/notes.md
+files/report.csv is a non-empty regular file of 39 bytes
+total bytes: 93

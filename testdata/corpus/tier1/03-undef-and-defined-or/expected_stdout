@@ -1,0 +1,12 @@
+undef
+fallback
+defined-or=0  logical-or=dflt
+empty // : 
+empty ||  : dflt
+port=0
+user=anonymous
+count=1
+name=unnamed
+total=9 missing=2
+now: set
+undef again

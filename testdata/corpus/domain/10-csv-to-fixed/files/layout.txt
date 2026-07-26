@@ -1,0 +1,7 @@
+# field:width:align[:pad]
+# The mainframe intake job (yes, still) wants exactly these widths.
+id:6:right:zero
+name:20:left
+city:14:left
+balance:14:right
+notes:24:left

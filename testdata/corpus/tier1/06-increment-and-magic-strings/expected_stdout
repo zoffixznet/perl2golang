@@ -1,0 +1,22 @@
+post-inc returned 5, i is now 6
+pre-inc returned 7, i is now 7
+post-dec returned 7, i is now 6
+pre-dec returned 5, i is now 5
+--- magic string autoincrement ---
+aa incremented 3 times: ad
+Az ++ -> Ba
+zz ++ -> aaa
+a9 ++ -> b0
+Zz9 ++ -> AAa0
+ID001 ++ -> ID002
+aa9 ++ -> ab0
+ID001 after 5 increments: ID006
+--- compound assignment ---
++= 1  -> 10
+-= 3  -> 7
+*= 4  -> 28
+/= 2  -> 14
+**= 2 -> 196
+%= 7  -> 0
+concat assign: abcd
+repeat assign: abcdabcd

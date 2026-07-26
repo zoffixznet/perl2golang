@@ -1,0 +1,8 @@
+etc/nginx/nginx.conf 2048
+etc/nginx/sites/default 512
+etc/hosts 310
+var/log/syslog 91234
+var/log/nginx/access.log 5120
+var/log/nginx/error.log 800
+var/lib/db/data.mdb 1048576
+usr/bin/perl 12000

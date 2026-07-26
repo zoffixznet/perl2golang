@@ -1,0 +1,24 @@
+&& -> no
+|| -> yes
+!  -> yes
+--- these return an operand, not a boolean ---
+'' || 'default'   = 'default'
+'alpha' && 'beta' = 'beta'
+0 || ''           = ''
+--- short circuiting ---
+after 0&&f and 1||f, calls=0
+after 1&&f and 0||f, calls=2
+--- low precedence word forms ---
+note: 'or' binds looser than '=', so $r was already assigned
+r='0'
+x is big
+x is not huge
+not-form
+--- combined ---
+1: divisible by three or is one
+2: neither
+3: divisible by three or is one
+4: even and above two
+5: neither
+6: even and above two
+xor: true false

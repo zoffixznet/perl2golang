@@ -1,0 +1,16 @@
+bumping 1.4.2 -> 1.5.0 (minor) in files/src
+
+--- Makefile line 2
+-VERSION := 1.4.2
++VERSION := 1.5.0
+--- README.md line 3
+-Current release: **1.4.2**
++Current release: **1.5.0**
+--- Widgetd.pm line 5
+-our $VERSION = '1.4.2';
++our $VERSION = '1.5.0';
+--- widgetd.spec line 2
+-Version:        1.4.2
++Version:        1.5.0
+
+dry-run, would write 4 file(s)

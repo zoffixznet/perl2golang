@@ -1,0 +1,15 @@
+make_path created 7 directories
+second make_path created 0
+scratch tempfile matches template: yes
+--- workspace audit ---
+shipit/Makefile     18 bytes
+shipit/bin/shipit   35 bytes
+shipit/data/cache/.keep   0 bytes (placeholder)
+shipit/lib/App.pm   46 bytes
+shipit/t/00-load.t  42 bytes
+total (sans scratch): 141 bytes
+App.pm declares package: App
+cache dir exists: yes
+.keep is empty: yes
+bin/shipit executable bit: no (not set; we never chmod'd)
+make_path through a file failed as expected: yes

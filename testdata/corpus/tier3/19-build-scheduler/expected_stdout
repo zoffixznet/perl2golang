@@ -1,0 +1,22 @@
+topological order (priority tie-break):
+   1. fetch-src      p=5 d=3
+   2. gen-proto      p=8 d=2
+   3. compile-core   p=9 d=5
+   4. unit-tests     p=7 d=4
+   5. compile-cli    p=4 d=3
+   6. int-tests      p=6 d=6
+   7. docs           p=1 d=2
+   8. package        p=9 d=1
+   9. publish        p=9 d=1
+t= 0.. 3 w0 fetch-src
+t= 3.. 5 w1 gen-proto
+t= 5..10 w0 compile-core
+t=10..14 w1 unit-tests
+t=10..13 w0 compile-cli
+t=14..20 w0 int-tests
+t=14..16 w1 docs
+t=20..21 w1 package
+t=21..22 w0 publish
+makespan: 22 time units
+critical path: 22 units (ends at publish)
+corrupt graph: cycle detected involving: compile-cli compile-core docs fetch-src gen-proto int-tests package publish unit-tests

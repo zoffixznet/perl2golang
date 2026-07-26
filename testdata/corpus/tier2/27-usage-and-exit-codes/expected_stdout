@@ -1,0 +1,6 @@
+program: input.pl
+mode:    avg
+strict:  1
+inputs:  10 20 abc 30
+non-numeric input: abc
+strict mode: refusing to continue

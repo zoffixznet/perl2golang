@@ -1,0 +1,5 @@
+# set	expected_files	found_files
+etc	312	312
+home	14890	14890
+pgsql	77	76
+www	2051	2051

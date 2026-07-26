@@ -1,0 +1,7 @@
+# widgetd 1.4.2 release manifest
+# md5  size  path
+0fe1c34cb38cf4109c4407ad26605574  41  bin/widgetd
+deadbeefdeadbeefdeadbeefdeadbeef  41  etc/widgetd.conf
+b5170f2ef0578d2fbf63814c09215860  39  share/doc/README
+c94f9406457821714facaa0f1b2a6972  13  share/doc/LICENSE
+9d2a73f8b1c04e55871f0a2b3c4d5e6f  512  share/doc/CHANGELOG

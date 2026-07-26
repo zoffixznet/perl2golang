@@ -1,0 +1,5 @@
+(a(b)c): balanced
+(a(b)c: NOT balanced
+((())): balanced
+code block ran 1 time(s)
+sum harvested by regex: 60

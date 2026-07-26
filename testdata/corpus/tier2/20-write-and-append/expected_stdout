@@ -1,0 +1,12 @@
+REGION      TOTAL
+-----------------
+east         1543
+north        1840
+south         980
+west          771
+-----------------
+TOTAL        5134
+regions in file order: north,south,east,west
+report is 189 bytes across 9 lines
+in-memory buffer holds 21 bytes / 3 lines
+unlinked 1 file(s); still present? no

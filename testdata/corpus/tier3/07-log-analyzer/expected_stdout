@@ -1,0 +1,26 @@
+TOP 4 PATHS (of 9)
+PATH             COUNT      BYTES
+/api/v1/orders       3        491
+/index.html          3      10240
+/api/v1/users/42     2       1873
+/health              2          0
+
+STATUS CLASSES
+  client-error 3
+  ok           9
+  redirect     1
+  server-error 2
+
+USERS
+  (anon)   5
+  alice    4
+  bob      4
+  carol    2
+
+BIG TRANSFERS (>= 4096 bytes)
+  /api/v1/reports (20480)
+  /index.html (5120)
+  /index.html (5120)
+
+malformed lines: 1
+total bytes: 34593 (avg 2306.2)

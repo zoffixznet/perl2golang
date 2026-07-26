@@ -1,0 +1,13 @@
+2026-08-14 00:00:04 INFO  request /health 200 1ms
+2026-08-14 00:00:19 INFO  request /api/v1/orders 201 44ms
+2026-08-14 00:00:31 WARN  slow query 1204ms: SELECT * FROM orders WHERE ...
+2026-08-14 00:00:44 INFO  request /health 200 1ms
+2026-08-14 00:01:02 ERROR upstream db-03 timeout after 3000ms
+2026-08-14 00:01:03 INFO  request /api/v1/orders 500 3010ms
+2026-08-14 00:01:20 INFO  request /health 200 1ms
+2026-08-14 00:01:41 ERROR payment gateway 502 for order 118907
+2026-08-14 00:02:00 INFO  request /health 200 1ms
+2026-08-14 00:02:13 WARN  retry 2/5 for order 118907
+2026-08-14 00:02:29 INFO  request /api/v1/cart 200 12ms
+2026-08-14 00:02:55 ERROR payment gateway 502 for order 118907
+2026-08-14 00:03:10 INFO  payment settled for order 118907 on retry 3

@@ -1,0 +1,19 @@
+argc: 6
+argv[0] = [build] (5 chars)
+argv[1] = [-v] (2 chars)
+argv[2] = [--name] (6 chars)
+argv[3] = [my project] (10 chars)
+argv[4] = [42] (2 chars)
+argv[5] = [extra] (5 chars)
+--- $0 is the script name, not an argument ---
+script name is a string: yes
+--- consuming arguments ---
+command: build
+remaining: -v,--name,my project,42,extra
+--- a flag-and-value scan ---
+opt name = my project
+opt verbose = 1
+positional: build|42|extra
+--- numeric use of an argument ---
+first all-digit argument as a number: 42
+doubled: 84

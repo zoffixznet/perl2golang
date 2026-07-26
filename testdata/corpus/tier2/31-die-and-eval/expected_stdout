@@ -1,0 +1,16 @@
+loaded 4 settings: name,retries,timeout,workers
+workers  = 8
+timeout  FAILED: timeout must be an integer, got 'notanumber'
+retries  = 3
+port     FAILED: missing value for port
+effective: workers=8 timeout=30
+100/4 -> 25
+100/0 -> error: Illegal division by zero
+100/2 -> 50
+outer(9) = 3.0
+caught: outer(): while handling -1: inner() refuses negatives
+WARN: checked_sqrt: clamping -5 to 0
+sqrt: 4.00 0.00
+after cleaned, $@ still: original failure
+after a successful eval, $@ is (empty)
+done

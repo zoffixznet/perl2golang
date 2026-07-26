@@ -1,0 +1,14 @@
+Hello, Ada!
+You have 3 messages and pen book lamp in your bag.
+Math is not interpolated: 1+1
+Literal heredoc: $name is not interpolated.
+A backslash-n stays as-is: \n
+And so does \t and \$name.
+This indented heredoc has its common leading
+whitespace stripped, based on the terminator.
+  This line keeps two extra spaces.
+first chunk for Ada
+second chunk, 3 of them
+keep $this literal
+and this \n too
+that heredoc was 7 bytes

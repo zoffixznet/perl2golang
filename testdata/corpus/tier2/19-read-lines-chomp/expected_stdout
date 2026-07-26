@@ -1,0 +1,17 @@
+read 9 lines: 5 entries, 3 comments, 1 blank
+  2  127.0.0.1    localhost
+  3  ::1          localhost ip6-localhost
+  5  10.0.0.1     web1 web1.internal
+  6  10.0.0.2     web2
+  9  10.0.0.10    db1 db1.internal db-primary
+slurped 9 lines, longest is 39 chars
+db-primary         -> 10.0.0.10
+db1                -> 10.0.0.10
+db1.internal       -> 10.0.0.10
+ip6-localhost      -> ::1
+localhost          -> ::1
+web1               -> 10.0.0.1
+web1.internal      -> 10.0.0.1
+web2               -> 10.0.0.2
+last IPv4 entry was on line 9
+chomp removed 1 char(s), left 16

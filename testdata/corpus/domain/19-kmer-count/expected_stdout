@@ -1,0 +1,22 @@
+reads=6 bases=162 k=6
+kmers: 126 total, 21 distinct, 1 singletons, 6 skipped (non-ACGT)
+multiplicity histogram:
+    1x 1 kmer(s)
+    2x 3 kmer(s)
+    3x 6 kmer(s)
+    5x 3 kmer(s)
+    6x 3 kmer(s)
+    7x 1 kmer(s)
+   11x 1 kmer(s)
+   14x 1 kmer(s)
+   15x 1 kmer(s)
+   21x 1 kmer(s)
+top 8 canonical kmers:
+  GATCGA   21
+  CCCCCC   15
+  CGATCG   14
+  ATCGAT   11
+  GATCGC    7
+  AGCGCG    6
+  CGCTAG    6
+  GCGCTA    6

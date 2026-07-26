@@ -1,0 +1,14 @@
+generated before: []
+can(title) before: no
+title:  Higher-Order Perl
+author: MJD
+generated after: [title,author]
+can(title) after: yes
+can(rating) still: no
+Higher-Order Perl by MJD (2006) ****
+generated final: [title,author,rating,year]
+caught: no such accessor 'isbn' on Record
+[signed] HOP by MJD (2005) *****
+signed isa Record: yes
+title  => HOP
+year   => 2005

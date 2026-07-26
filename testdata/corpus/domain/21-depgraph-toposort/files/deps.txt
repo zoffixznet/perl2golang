@@ -1,0 +1,13 @@
+# build dependency declarations: target: dep dep dep
+# (order of lines is whatever the last person to edit left behind)
+libcore:
+libnet: libcore
+libjson: libcore
+libhttp: libnet libjson libtls
+libtls: libcore
+app-api: libhttp libdb
+libdb: libcore
+app-worker: libdb libjson
+app-cli: libhttp
+installer: app-api app-worker app-cli
+docs:

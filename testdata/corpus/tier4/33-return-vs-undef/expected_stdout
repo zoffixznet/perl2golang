@@ -1,0 +1,5 @@
+bare in list:  0 elements
+undef in list: 1 elements
+keys:  30,name
+keys2: age,name
+scalar ctx: both undef

@@ -1,0 +1,25 @@
+ERROR (3)
+  - failed to reach db1
+  - failed to reach db2
+  - timeout talking to cache1
+WARN  (2)
+  - disk usage at 81%
+  - disk usage at 88%
+INFO  (3)
+  - startup complete
+  - cache warmed
+  - request served
+DEBUG (2)
+  - retry scheduled
+  - connection pool resized
+first-seen order: INFO WARN ERROR DEBUG
+cache      => INFO
+connection => DEBUG
+disk       => WARN,WARN
+failed     => ERROR,ERROR
+request    => INFO
+retry      => DEBUG
+startup    => INFO
+timeout    => ERROR
+total messages: 10
+last error: timeout talking to cache1

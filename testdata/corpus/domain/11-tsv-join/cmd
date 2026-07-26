@@ -1,0 +1,1 @@
+--key dept_id --mode left --empty - files/employees.tsv files/departments.tsv

@@ -1,0 +1,22 @@
+HOST        SUM    MIN    MAX   MEAN
+web1       1.88   0.30   0.61   0.47
+web2       3.08   0.55   0.91   0.77
+db1        2.17   0.25   0.88   0.54
+cache1     0.69   0.09   0.33   0.17
+edge1      2.35   0.51   0.66   0.59
+overall: n=20 sum=10.17 min=0.09 max=0.91
+sum(empty)=undef sum0(empty)=0
+maxstr=web2 minstr=cache1
+first busy host: web2
+first idle host: none
+product=120 longest=cache1 chain=web1>web2>db1>cache1>edge1
+totals: cache1=0.69 db1=2.17 edge1=2.35 web1=1.88 web2=3.08
+any over 0.9?  yes
+all positive?  yes
+none over 1.0? yes
+all hosts named? yes
+uniq: prod,web,db,edge (4 of 8)
+uniq on numish:    1,1.0,2,3
+uniqnum on numish: 1,2,3
+pairs: alpha:1 beta:2 gamma:3
+top 3 by peak: web2(0.91), db1(0.88), edge1(0.66)

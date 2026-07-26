@@ -1,0 +1,14 @@
+21 raw lines -> 14 headers (12 names, 0 unparseable)
+
+From:       "Release Bot" <releases@lists.example.org>
+To:         jane.doe@example.com, announce@lists.example.org
+Subject:    Release 2026.08 – now with 20% fewer bugs
+Date:       Thu, 13 Aug 2026 09:15:19 +0000
+Message-id: <20260813091519.GA2210@lists.example.org>
+
+delivery path (3 hops, oldest first):
+  1. localhost -> lists.example.org (local) at Thu, 13 Aug 2026 09:15:18 +0000
+  2. lists.example.org -> mx2.example.net (ESMTP) at Thu, 13 Aug 2026 09:15:20 +0000
+  3. mx2.example.net -> mail.example.com (ESMTPS) at Thu, 13 Aug 2026 09:15:22 +0000
+
+checks: all clean

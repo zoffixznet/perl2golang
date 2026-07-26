@@ -1,0 +1,20 @@
+scalar context: 4
+list context:   10
+scalar():       4
+numeric use:    4
+boolean:        nonempty
+--- the same call in two contexts ---
+list reverse:   40 30 20 10
+scalar reverse: 04030201
+--- split in two contexts ---
+split list:     a b c
+split scalar:   3
+--- hash context ---
+keys scalar:    3
+flattened len:  6
+hash boolean:   nonempty
+--- a sub sees its own context ---
+called in list context
+called in scalar context
+called in void context
+got back 1 and 1

@@ -1,0 +1,8 @@
+vector: 49.46.50.50.46.51.51.51
+float via %s: 0.3
+full: 0.30000000000000004
+binary: 1010 / 0b1010
+neg width: [ab      ]
+round: 2.67
+big to %d: -1
+ref: ARRAY(0x<addr>)

@@ -1,0 +1,11 @@
+log-tail: files/current.log (761 bytes): resuming at byte 234
+new matches (3 of 9 new lines):
+  2026-08-14 00:01:02 ERROR upstream db-03 timeout after 3000ms
+  2026-08-14 00:01:41 ERROR payment gateway 502 for order 118907
+  2026-08-14 00:02:55 ERROR payment gateway 502 for order 118907
+--- new state ---
+file=files/current.log
+offset=761
+sig=c720953cbdd8646e6a20b12cfb889a92
+siglen=64
+runs=18

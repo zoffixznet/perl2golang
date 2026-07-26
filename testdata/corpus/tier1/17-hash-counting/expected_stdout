@@ -1,0 +1,23 @@
+lines:  4
+words:  22
+unique: 16
+--- by frequency, then alphabetically ---
+the       5
+dog       2
+fox       2
+and       1
+barks     1
+between   1
+brown     1
+end       1
+extra     1
+jumps     1
+lazy      1
+over      1
+quick     1
+runs      1
+spacing   1
+words     1
+--- words seen more than once ---
+dog, fox, the
+most common: the (5)

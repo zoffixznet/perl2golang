@@ -1,0 +1,16 @@
+status: exact match
+stat: unambiguous prefix of 'status'
+comit: unknown; did you mean commit (d=1 s=0.83), config (d=3 s=0.50)?
+puhs: unknown; did you mean push (d=2 s=0.75), pull (d=2 s=0.50)?
+rebse: unknown; did you mean rebase (d=1 s=0.83), reset (d=2 s=0.80), merge (d=3 s=0.40)?
+chekout: unknown; did you mean checkout (d=1 s=0.88)?
+cherry: unambiguous prefix of 'cherry-pick'
+zzz: unknown; did you mean log (d=3 s=0.00)?
+resto: unambiguous prefix of 'restore'
+confg: unknown; did you mean config (d=1 s=0.83), log (d=3 s=0.40)?
+--- invariants ---
+lev(kitten,sitting)=3
+lev(x,'')=1 lev('','')=0
+lcs(GAC,AGCAT)=2
+sym: d(a,b)==d(b,a): yes
+'st' is ambiguous: yes

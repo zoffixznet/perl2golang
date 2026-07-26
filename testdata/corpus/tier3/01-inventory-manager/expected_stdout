@@ -1,0 +1,13 @@
+can(sell)=yes can(fly)=no
+isa(Inventory::Item)=yes ref=Inventory::Item
+sell failed: cannot sell 500 of WID-02: only 40 on hand
+SKU      NAME                      PRICE   QTY      VALUE
+---------------------------------------------------------
+GAD-77   Gadget deluxe             17.49     7     122.43
+WID-01   Widget, small              2.50    80     200.00
+WID-02   Widget, large              4.75    40     190.00
+---------------------------------------------------------
+TOTAL                                              512.43
+items created: 3
+clone sku=WID-03 class=Inventory::Item
+items created: 4

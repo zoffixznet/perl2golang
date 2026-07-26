@@ -1,0 +1,11 @@
+level+1: 1
+level str: <>
+defined: no
+bool: false
+undef  -> false
+'0'    -> false
+'0'    -> false
+''     -> false
+'00'   -> true
+'0.0'  -> true
+'0E0'  -> true

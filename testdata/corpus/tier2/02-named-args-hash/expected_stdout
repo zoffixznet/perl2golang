@@ -1,0 +1,7 @@
+ada      role=guest   active=1 quota=  100 shell=/bin/sh
+bob      role=admin   active=1 quota=50000 shell=/bin/sh
+cleo     role=guest   active=0 quota=  100 shell=/usr/sbin/nologin
+ref keys: active,name,quota,role,shell
+ref role: staff
+overrides: quota+role
+overrides: none

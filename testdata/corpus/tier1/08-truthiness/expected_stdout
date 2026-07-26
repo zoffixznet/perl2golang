@@ -1,0 +1,27 @@
+--- strings ---
+'0'            => false
+''             => false
+'0.0'          => true
+'00'           => true
+'0E0'          => true
+' '            => true
+'false'        => true
+'0 but true'   => true
+'N'            => true
+--- numbers ---
+0              => false
+1              => true
+-1             => true
+0              => false
+0.1            => true
+0              => false
+--- containers ---
+empty array          => false
+array holding a 0    => true
+empty hash           => false
+hash with one key    => true
+undef                => false
+--- what a comparison actually returns ---
+true is  '1' (length 1)
+false is '' (length 0)
+false + 1 = 1

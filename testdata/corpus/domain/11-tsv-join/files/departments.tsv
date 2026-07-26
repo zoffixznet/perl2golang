@@ -1,0 +1,6 @@
+dept_id	dept_name	cost_center
+D10	Engineering	CC-100
+D20	Support	CC-200
+D30	Sales	CC-300
+D30	Sales EMEA	CC-301
+D40	Finance	CC-400

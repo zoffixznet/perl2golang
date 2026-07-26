@@ -1,0 +1,18 @@
+preflight at 2024-06-01T12:00:00Z (epoch 1717243200)
+weekday index 6, day-of-year 153
+config: debug=0 region=eu-central-1 replicas=2 stage=staging
+SIGINT  => coderef
+SIGTERM => ignored
+SIGHUP  => default
+SIGUSR1 => unset
+interrupted flag: 0
+style before block: legacy
+style inside block: modern
+style inner delete: (none)
+style back to outer local: modern
+style after block: legacy
+secrets in env: 0
+search path: /opt/tools:/usr/local/deploy
+1 warning(s):
+  - replica count below 3 in staging
+verdict: PROCEED WITH CAUTION

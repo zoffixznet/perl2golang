@@ -1,0 +1,6 @@
+plain: 1 2 3
+local: 1|2|3
+reset: 1 2 3
+abc
+a-b-c<END>
+abc

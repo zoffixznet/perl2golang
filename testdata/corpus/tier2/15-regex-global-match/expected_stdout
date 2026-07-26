@@ -1,0 +1,17 @@
+keys: key1 key2 key3 key4
+pairs (flat): 8 items
+key1->alpha key2->beta key3->gamma key4->delta
+key1  alpha  pos=10
+key2  beta   pos=20
+key3  gamma  pos=31
+key4  delta  pos=42
+iterations=4 pos after loop=undef
+vowel runs: 12
+resumed at key3: key3 -> gamma
+tokens: NUM(12) OP(+) NUM(34) OP(*) PAREN(() NUM(5) OP(-) NUM(6) PAREN()) OP(/) NUM(7)
+'a=1;b=2' has 2 settings
+'x=9' has 1 settings
+'p=1;q=2;r=3' has 3 settings
+pos after success: 3
+pos after failed /g: undef
+pos after failed /gc: 3

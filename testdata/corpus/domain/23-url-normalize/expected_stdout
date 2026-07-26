@@ -1,0 +1,31 @@
+ 1 http    http://shop.example.com/products/9912?a=1&b=2
+ 2 http    http://shop.example.com/products/9912?a=1&b=2
+ 3 https   https://shop.example.com/products/9912?a=1&b=2
+ 4 http    http://shop.example.com/a/b/d/
+ 5 http    http://shop.example.com/a/b/d/
+ 6 http    http://shop.example.com/~jane/profile
+ 7 http    http://shop.example.com/~jane/profile
+ 8 https   https://api.example.com:8443/v3/orders?limit=10
+ 9 https   https://api.example.com/v3/orders?limit=10
+10 ftp     ftp://files.example.com/pub/readme.txt
+11 REJECT  not-a-url-at-all
+12 REJECT  http://user:secret@shop.example.com/account
+13 REJECT  gopher://old.example.com/1/menu
+14 REJECT  http:///missing-host
+15 http    http://shop.example.com/search?q=%2Fetc%2Fpasswd&sort=
+
+cache-key duplicates: 3
+  http://shop.example.com/a/b/d/
+    lines: 4 5
+  http://shop.example.com/products/9912?a=1&b=2
+    lines: 1 2
+  http://shop.example.com/~jane/profile
+    lines: 6 7
+
+rejected: 4
+  line 11: no scheme in 'not-a-url-at-all'
+  line 12: userinfo not allowed by site policy in 'http://user:secret@shop.example.com/account'
+  line 13: unsupported scheme 'gopher'
+  line 14: empty host in 'http:///missing-host'
+
+11 urls -> 8 distinct cache keys

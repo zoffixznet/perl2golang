@@ -1,0 +1,8 @@
+web1	cpu	42
+web1	mem	61
+web2	cpu	91
+web2	mem	74
+db1	cpu	25
+db1	mem	88
+cache1	cpu	12
+cache1	mem	33

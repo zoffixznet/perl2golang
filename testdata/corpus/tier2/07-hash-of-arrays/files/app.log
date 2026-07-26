@@ -1,0 +1,10 @@
+INFO  startup complete
+WARN  disk usage at 81%
+ERROR failed to reach db1
+INFO  cache warmed
+ERROR failed to reach db2
+DEBUG retry scheduled
+WARN  disk usage at 88%
+INFO  request served
+ERROR timeout talking to cache1
+DEBUG connection pool resized

@@ -1,0 +1,7 @@
+last: 40
+second-last: 30
+after write: 10 20 30 99
+substr -3:   llo
+substr -3,2: ll
+neg length:  ell
+oob read: undef (no panic)

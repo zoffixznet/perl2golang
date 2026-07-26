@@ -1,0 +1,21 @@
+parsed=5 skipped=1
+22:13:20 web1      sshd      pid=1421  Accepted publickey for ada fro
+22:13:44 web1      sshd      pid=1422  Failed password for invalid us
+22:15:01 db1       cron      pid=2001  (root) CMD (/usr/bin/backup --
+22:16:12 web2      kernel    pid=-     [12345.678] eth0: link down
+22:17:00 db1       postgres  pid=3112  duration: 1523.442 ms  stateme
+auth Accepted method=publickey user=ada   ip=10.0.0.7
+auth Failed   method=password  user=root  ip=10.0.0.9
+lazy=[b]
+greedy=[b>bold</b> and <i>italic</i]
+ada_lovelace   identifier  -              -
+9lives         -           leading-digit  -
+x              identifier  -              -
+A-1            -           -              -
+__init__       identifier  -              -
+tab            identifier  -              -
+sep            identifier  -              -
+duration 1523.442
+duration 12.000
+no duration in 'no duration here'
+seconds since midnight: 80220

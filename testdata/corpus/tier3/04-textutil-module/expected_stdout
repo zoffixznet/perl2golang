@@ -1,0 +1,17 @@
+clean: [the quick brown fox jumps over the lazy dog]
+title: The Quick Brown Fox Jumps Over The Lazy Dog
+width const: 24
+trunc: the quick brown f...
+trunc2: short
+commify: 90,210 / 1,234,567
+module: TextUtil (textutil/1.2)
+--- word stats (TextUtil::Stats) ---
+distinct=15 total=33 longest=9 shortest=2
+top: shall (5), the (5), we (5)
+--- call accounting ---
+commify        2
+squeeze        1
+title_case     1
+trim           1
+truncate_str   2
+trim was called 1 time(s)

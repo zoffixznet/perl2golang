@@ -1,0 +1,3 @@
+libcore:
+libnet: libcore
+app: libnet libmagick libmagic

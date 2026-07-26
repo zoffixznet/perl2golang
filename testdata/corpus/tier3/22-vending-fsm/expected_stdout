@@ -1,0 +1,32 @@
+--- audit trail ---
+[idle]     credit now 100
+[idle]     -> collecting
+[collecting] credit now 150
+[collecting] dispensing 'cola', change 30
+[collecting] -> idle
+[idle]     ILLEGAL event 'select'
+[idle]     credit now 100
+[idle]     -> collecting
+[collecting] 'crisps' sold out
+[collecting] dispensing 'water', change 10
+[collecting] -> idle
+[idle]     REJECTED coin: coin must be one of 10/20/50/100
+[idle]     ILLEGAL event 'select'
+[idle]     credit now 10
+[idle]     -> collecting
+[collecting] need 110 more for 'cola'
+[collecting] REJECTED select: no such item 'caviar'
+[collecting] credit now 110
+[collecting] credit now 120
+[collecting] dispensing 'cola', exact payment
+[collecting] -> idle
+[idle]     nothing to refund
+[idle]     credit now 20
+[idle]     -> collecting
+[collecting] refunding 20
+[collecting] -> idle
+--- final ---
+state: idle, credit: 0
+stock: cola=0 crisps=0 water=0
+events: coin=8 illegal=2 refund=2 select=6
+takings: 330

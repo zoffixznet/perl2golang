@@ -1,0 +1,5 @@
+len: 8
+gap defined? no
+joined: [1,2,3,,,,,8]
+truncated: 1 2
+re-extended len: 5, last defined? no

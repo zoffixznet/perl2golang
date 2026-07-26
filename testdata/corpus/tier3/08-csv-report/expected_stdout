@@ -1,0 +1,14 @@
+columns: id|product|category|price|notes
+data rows: 5
+
+appliances (2 items, total 539.94)
+  101  Espresso Machine, Pro          449.99  Steam wand, 15 bar
+  104  Grinder Burr, conical           89.95  Includes "travel" lid
+kitchen (3 items, total 70.50)
+  102  French Press                    24.50  -
+  103  Mug, "World's Okayest Dev"      11.00  Dishwasher safe
+  105  Kettle                          35.00  1.7L, gooseneck
+
+priciest: Espresso Machine, Pro (449.99)
+longest name: 26 chars
+round trip ok: yes

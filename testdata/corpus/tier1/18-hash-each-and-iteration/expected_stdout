@@ -1,0 +1,18 @@
+--- each, collected then sorted ---
+apples   10
+figs     12
+kiwis     7
+pears     4
+plums     0
+--- keys in scalar context is the count ---
+pairs: 5
+--- values, aggregated order-independently ---
+sum=33 min=0 max=12
+--- iterating in a chosen order ---
+ 0 plums
+ 4 pears
+ 7 kiwis
+10 apples
+12 figs
+--- modifying values while iterating keys is fine ---
+apples=20 figs=24 kiwis=14 pears=8 plums=0

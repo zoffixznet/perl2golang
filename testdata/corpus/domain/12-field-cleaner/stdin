@@ -1,0 +1,9 @@
+name|email|phone|joined|state
+  jane   DOE |JANE.DOE@Example.COM|(555) 010-0134|03/12/2019|tx
+bob smith|bob.smith@example
+.com|555.0175|2019-12-03|Texas
+pat o'neil|pat@example.org|+1 555 010 0142|Dec 3, 2019|CALIFORNIA
+kim lee|kim.lee@example com|5550. 199|12/3/19|Ca.
+ana maria ionescu|ana@example.net|555-0102|2020-02-30|new york
+sam mcgregor|sam@example.org|555 0110|July 4, 2021|NY
+max weber|max@@example.de|01761|silly-date|Bavaria

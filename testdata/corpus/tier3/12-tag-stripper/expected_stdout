@@ -1,0 +1,20 @@
+--- text ---
+Tea & Biscuits — Weekly Digest
+Tea & Biscuits
+Welcome to issue #42 of our "famous" digest.
+Read the brewing guide and
+scone recipes.
+Oolong <special> edition
+Earl Grey -- classic
+Assam strong
+Contact: news@example.com
+Steep well,The (c) 2024 Tea Team
+--- links (3) ---
+the brewing guide  => https://example.com/brewing
+scone recipes      => https://example.com/scones?a=1&amp;b=2
+news@example.com   => mailto:news@example.com
+--- checks ---
+kept angle text: yes
+script leaked: no
+comment leaked: no
+attr value 'a > b' leaked: no

@@ -1,0 +1,16 @@
+start:            a b c d e f g
+removed 3 at 2:   c d e
+remaining:        a b f g
+inserted at 1:    a X Y b f g
+spliced tail:     f g
+remaining:        a X Y b
+replaced one:     a Z Y b
+scalar splice:    a
+remaining:        Z Y b (3)
+--- more shapes ---
+truncate at 3:    1 2 3
+prepend:          0 1 2 3
+grow in place:    0 p q r 3
+splice everything: 0 p q r 3 / left 0
+--- negative length ---
+splice(1,-2) took b c d, left a e f

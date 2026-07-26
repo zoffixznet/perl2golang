@@ -1,0 +1,22 @@
+passwd fields: 7, user=ada shell=/bin/bash
+dropped=4 kept=7
+kept: [a][b][][c][][][]
+key=path value=/var/log/nginx=rotated
+limit 3 last piece: 1000:1000:Ada Lovelace,,,:/home/ada:/bin/bash
+magic=4 regex=9
+magic words: [alpha][beta][gamma][delta]
+split /\s+/ gives 5 fields, first is []
+tokens: 12 + 34 - 5 * 6
+operands=12 34 5 6 operators=+ - *
+chars: p.e.r.l (4)
+limited chars: [p][e][rl]
+double-semicolon: one|two|three
+alternation: a|b|c|d
+encoded: name=ada;role=analyst;year=1815
+round trip ok: yes
+no separator: 1 field(s): unchanged
+empty input -> 0 fields
+q     => [perl regex]
+page  => [2]
+safe  => []
+sort  => [date]

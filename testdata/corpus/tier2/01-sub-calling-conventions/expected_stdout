@@ -1,0 +1,12 @@
+Hello, Ada!
+Howdy, Bob!
+total: 24
+first=3 rest=4
+ 0 => empty
+ 1 => single
+ 3 => few
+12 => many
+min=1 max=9 avg=4.80
+stats() on empty input returned 0 values
+pair=3 4 howmany=2
+double: 48

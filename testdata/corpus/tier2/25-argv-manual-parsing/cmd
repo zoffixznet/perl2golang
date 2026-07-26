@@ -1,0 +1,1 @@
+--sort=count -rv --limit=3 -- files/data.txt

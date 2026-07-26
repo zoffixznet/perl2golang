@@ -1,0 +1,32 @@
+columns: order_id|customer|region|product|qty|unit_price|status
+8 order(s) loaded
+
+ID     CUSTOMER   REGION PRODUCT     QTY      UNIT     TOTAL  STATUS
+------------------------------------------------------------------------
+1001   Acme Ltd   north  widget       12      4.50     54.00  shipped
+1002   Beta Corp  south  gizmo         3     19.99     59.97  pending
+1003   Acme Ltd   north  gizmo         7     19.99    139.93  shipped
+1004   Gamma Inc  east   widget       40      4.25    170.00  shipped
+1005   Beta Corp  south  doohickey     1    120.00    120.00  cancelled
+1006   Delta LLC  west   widget       25      4.50    112.50  pending
+1007   Gamma Inc  east   doohickey     2    115.00    230.00  shipped
+1008   Acme Ltd   north  widget        5      4.50     22.50  cancelled
+
+REGION   STATUS    ORDERS      VALUE
+------------------------------------
+east     ALL            2     400.00
+east     shipped        2     400.00
+north    ALL            2     193.93
+north    shipped        2     193.93
+south    ALL            1      59.97
+south    pending        1      59.97
+west     ALL            1     112.50
+west     pending        1     112.50
+------------------------------------
+TOTAL                         766.40
+
+Gamma Inc     400.00   52.2%  **********
+Acme Ltd      193.93   25.3%  *****
+Delta LLC     112.50   14.7%  ***
+Beta Corp      59.97    7.8%  **
+tricky: 7 fields -> [1009][Epsilon, Ltd][north][12" widget][2][9.99][shipped]

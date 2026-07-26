@@ -1,0 +1,5 @@
+# the graph the intern checked in on a Friday
+libcore: libutil
+libutil: libformat
+libformat: libcore
+app: libcore

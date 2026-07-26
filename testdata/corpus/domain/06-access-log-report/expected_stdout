@@ -1,0 +1,32 @@
+parsed 27/28 lines, 202,709 transferred
+
+by status:
+  200 OK               16   59.3%
+  201 Created           2    7.4%
+  204 No Content        1    3.7%
+  302 Found             1    3.7%
+  403 Forbidden         1    3.7%
+  404 Not Found         3   11.1%
+  500 Server Err        3   11.1%
+
+by method: DELETE=1, GET=15, HEAD=5, POST=6
+
+top paths:
+  PATH                          HITS    ERR      BYTES  STATUSES
+  /api/v1/orders                   5      3      1,294  201:2,500:3
+  /health                          5      0          0  200:5
+  /products                        3      0    125,132  200:3
+  /                                1      0      5,124  200:1
+  /.env                            1      1        196  404:1
+  /admin                           1      1        199  403:1
+  /admin/login                     1      0      3,388  200:1
+  /api/v1/cart                     1      0        640  200:1
+
+requests by hour (UTC):
+  00:00 ##################                       18
+  23:00 #########                                9
+
+skipped lines:
+  files/access.log.1 line 10: malformed junk line that the collector s...
+
+server error rate: 11.11%

@@ -1,0 +1,16 @@
+>contig_0001 length=88 cov=41.2
+ATGGCGTACGTTAGCCGATCGATCGGATCCGATTACGGCATTAGCCATGCAATTGGCCTA
+GCTAGCTAACGATCGGCTAGCTAGCTA
+>contig_0002 length=142 cov=38.9
+atggcgtacgttagccgatcgatcggatccgattacggcattagccatgcaattggccta
+gctagctaacgatcggctagctagctagcgcgcgcgatatatcgcgatcgatcgatgcgc
+gatcgatcgatcgatcgatcgg
+>contig_0003 length=61 cov=12.0 note=repeat-rich
+NNNNNNNNNNGCGCGCGCGCGCGCGCGCGCNNNNNNNNNNNNGCGCGCGCGCGCATATA
+
+>contig_0004 length=30 cov=99.1
+ATGCATGCATGCATGCATGCATGCATGCAT
+>contig_0005
+>contig_0006 length=75 cov=22.4
+ATGCCCGGGAAATTTCCCGGGATGCATGCATCGATCGATCGTAGCTAGCTAGCATCGATC
+GATCGRYKMTCGWAT

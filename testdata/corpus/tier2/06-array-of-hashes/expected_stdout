@@ -1,0 +1,13 @@
+NAME     ROLE      REGION    CPU  MEM(MB) STATE
+----------------------------------------------
+db2      database  eu-west    16    65536 up   
+web2     web       eu-west     4    16384 down 
+cache2   cache     eu-west     2     8192 down 
+db1      database  us-east    16    65536 up   
+web3     web       us-east     8    32768 up   
+web1     web       us-east     4    16384 up   
+cache1   cache     us-east     2     8192 up   
+----------------------------------------------
+7 hosts, 52 vCPU, 208.0 GiB, 2 down
+large hosts: db1, db2, web3
+first down record: web2 in eu-west

@@ -1,0 +1,7 @@
+web1|web|us-east|4|16384|up
+db1|database|us-east|16|65536|up
+web2|web|eu-west|4|16384|down
+cache1|cache|us-east|2|8192|up
+db2|database|eu-west|16|65536|up
+web3|web|us-east|8|32768|up
+cache2|cache|eu-west|2|8192|down

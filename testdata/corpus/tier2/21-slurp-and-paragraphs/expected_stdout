@@ -1,0 +1,10 @@
+slurped 236 bytes, 12 newlines
+releases: Release 1.0 Release 1.1 Release 2.0
+paragraph mode gave 3 chunks
+Release 1.0  2 note(s): Initial public relea; Ships with the core 
+Release 1.1  2 note(s): Adds the report gene; Fixes a crash on emp
+Release 2.0  3 note(s): Rewrites the storage; Drops support for th; Requires a migration
+custom $/ records: alpha|beta|gamma
+line mode restored, first line: Release 1.0
+line list: 12 entries, 2 of them blank
+bumped: Release 11.0 Release 11.1 Release 12.0

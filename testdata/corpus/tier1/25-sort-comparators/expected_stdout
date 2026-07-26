@@ -1,0 +1,20 @@
+--- named comparator over hash keys ---
+bob     95
+erin    95
+alice   88
+carol   88
+dave    71
+--- reusable comparators ---
+1,4,17,30,200
+banana,apple,kiwi,pear,plum,fig
+--- multi-field records ---
+doe    jane  32
+doe    bob   45
+smith  ann   29
+smith  john  40
+--- sorting by hash value, ties broken by key ---
+tokyo     37
+delhi     32
+shanghai  29
+cairo     23
+dhaka     23

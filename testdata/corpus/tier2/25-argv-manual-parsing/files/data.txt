@@ -1,0 +1,5 @@
+apple 12
+banana 7
+cherry 30
+damson 3
+elderberry 21

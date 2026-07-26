@@ -1,0 +1,15 @@
+freeze/thaw equal: yes
+frozen is a plain string of positive length: yes
+original alpha size intact: yes
+original beta tags: b,even
+copy beta tags: b,even,mutated
+store/retrieve equal: yes
+manifest md5: 6f01ea795d15a98fc2eec44f6d945e25
+manifest md5b64: bwHqeV0VqY/C7sRPbZReJQ
+alpha  36021f4450ae
+beta   d27f4ec31274
+delta  c3fa65029884
+gamma  1d3993c13201
+b64: cmVsZWFzZS1rZXk6AAEC/w==
+b64 round trip: yes
+decoded length: 16 bytes

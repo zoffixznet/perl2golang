@@ -1,0 +1,10 @@
+emp_id	name	dept_id	site	dept_name	cost_center
+E001	Jane Doe	D10	lisbon	Engineering	CC-100
+E002	Bob Smith	D20	remote	Support	CC-200
+E003	Pat O'Neil	D10	lisbon	Engineering	CC-100
+E004	Kim Lee	D30	seoul	Sales	CC-300
+E004	Kim Lee	D30	seoul	Sales EMEA	CC-301
+E005	Ana Ionescu	D99	cluj	-	-
+E006	Sam Jones	D20	remote	Support	CC-200
+E007	Max Weber		berlin	-	-
+# 5 matched, 1 fanned out, 0 dropped, 4 right keys

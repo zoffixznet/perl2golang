@@ -1,0 +1,29 @@
+21 line(s), 4 stage(s), final state OUTSIDE
+-- transitions --
+2 OUTSIDE->INSIDE(checkout)
+5 INSIDE(checkout)->OUTSIDE [ok]
+6 OUTSIDE->INSIDE(compile)
+11 INSIDE(compile)->OUTSIDE [ok]
+12 OUTSIDE->INSIDE(test)
+17 INSIDE(test)->OUTSIDE [failed]
+18 OUTSIDE->INSIDE(package)
+20 INSIDE(package)->OUTSIDE [skipped]
+-- stages --
+STAGE       FROM    TO RESULT    WARN  FAIL
+checkout       2     5 ok           0     0
+compile        6    11 ok           1     0
+test          12    17 failed       0     2
+package       18    20 skipped      0     0
+-- detail --
+compile:
+  warn: deprecated api used in net
+test:
+  fail: net::timeout
+  fail: ui::render
+-- summary --
+failed    1
+ok        2
+preamble  2
+skipped   1
+failed stages: test
+failing tests: net::timeout ui::render

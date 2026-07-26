@@ -1,0 +1,9 @@
+order_id,customer,region,product,qty,unit_price,status
+1001,Acme Ltd,north,widget,12,4.50,shipped
+1002,Beta Corp,south,gizmo,3,19.99,pending
+1003,Acme Ltd,north,gizmo,7,19.99,shipped
+1004,Gamma Inc,east,widget,40,4.25,shipped
+1005,Beta Corp,south,doohickey,1,120.00,cancelled
+1006,Delta LLC,west,widget,25,4.50,pending
+1007,Gamma Inc,east,doohickey,2,115.00,shipped
+1008,Acme Ltd,north,widget,5,4.50,cancelled

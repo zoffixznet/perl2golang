@@ -1,0 +1,14 @@
+ID                LEN    GC%      N   AMB   GAP  DESC
+contig_0001        87   51.7      0     0     0  length=88 cov=41.2
+contig_0002       142   54.9      0     0     0  length=142 cov=38.9
+contig_0003        59   86.5     22     0    12  length=61 cov=12.0 note...
+contig_0004        30   46.7      0     0     0  length=30 cov=99.1
+contig_0005         0      -      0     0     0  
+contig_0006        75   49.3      0     5     0  length=75 cov=22.4
+
+sequences:      6 (1 empty)
+total length:   393
+min/max:        30 / 142
+mean length:    78.6
+N50:            87 (L50=2)
+overall GC%:    56.28%

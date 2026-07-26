@@ -1,0 +1,31 @@
+5 lines, 51 words, 27 distinct, 21 after stopwords
+-- top 10 content words --
+ 1. dog            5 #####
+ 2. quick          4 ####
+ 3. fox            3 ###
+ 4. lazy           3 ###
+ 5. are            2 ##
+ 6. happy          2 ##
+ 7. well-known     2 ##
+ 8. action         1 #
+ 9. away           1 #
+10. barks          1 #
+-- singletons --
+14 word(s) seen once: action away barks brown day dogs foxes jumps
+-- stopwords found --
+the      7 (first seen line 1)
+a        3 (first seen line 3)
+and      3 (first seen line 2)
+for      1 (first seen line 4)
+in       1 (first seen line 2)
+is       1 (first seen line 3)
+-- by length --
+ 3: 4 word(s) are,day,dog,fox
+ 4: 6 word(s) away,dogs,lazy,over,runs
+ 5: 7 word(s) barks,brown,foxes,happy,jumps
+ 6: 2 word(s) action,sleeps
+ 8: 1 word(s) thinking
+10: 1 word(s) well-known
+-- first eight distinct, in order of appearance --
+brown dog fox jumps lazy over quick the
+cumulative coverage of top 5: 43.1%

@@ -1,0 +1,19 @@
+levels: error=16 info=2 warn=4
+clusters: 8 (covering 20 lines)
+
+  4x [error] worker N: timeout waiting for upstream db-N:N after NUM_UNIT
+     lines 1..15, e.g.: worker 12: timeout waiting for upstream db-03:5432 after 3000ms
+  4x [error] payment gateway returned code N for order N
+     lines 9..18, e.g.: payment gateway returned code 502 for order 118842
+  3x [error] cannot open file '…': No such file or directory
+     lines 4..6, e.g.: cannot open file '/var/spool/app/queue/8843122.job': No such file...
+  3x [error] uncaught exception '…' in request PATH
+     lines 20..22, e.g.: uncaught exception 'DBI::timeout' in request /api/v1/orders/118902
+  2x [warn ] cache miss rate N% exceeds threshold N%
+     lines 3..19, e.g.: cache miss rate 41% exceeds threshold 25%
+  2x [warn ] session store at HEX grew to NUM_UNIT, compacting
+     lines 12..13, e.g.: session store at 0x7f3a2c001200 grew to 512MB, compacting
+  1x [error] template '…' not found, falling back to '…'
+     lines 14..14, e.g.: template 'checkout_v2.tt' not found, falling back to 'checkout.tt'
+  1x [error] cannot open file '…': Permission denied
+     lines 17..17, e.g.: cannot open file '/var/spool/app/tmp/upload_x99.bin': Permission ...

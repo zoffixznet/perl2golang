@@ -1,0 +1,6 @@
+Nov 14 22:13:20 web1 sshd[1421]: Accepted publickey for ada from 10.0.0.7 port 51234
+Nov 14 22:13:44 web1 sshd[1422]: Failed password for invalid user root from 10.0.0.9 port 51240
+Nov 14 22:15:01 db1 cron[2001]: (root) CMD (/usr/bin/backup --full)
+Nov 14 22:16:12 web2 kernel: [12345.678] eth0: link down
+Nov 14 22:17:00 db1 postgres[3112]: duration: 1523.442 ms  statement: SELECT 1
+this line does not match the syslog shape at all

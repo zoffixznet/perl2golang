@@ -1,0 +1,22 @@
+scalar: 42 and 42
+array:  alpha beta gamma
+array:  alpha beta gamma
+elem0:  alpha / alpha / alpha
+count:  3 last index 2 / 2
+slice:  alpha gamma
+hash:   grass=green,sky=blue
+value:  blue / blue / blue
+hslice: blue green
+code:   49 / 64 / 81
+nested: 40 and 30
+mixed:  logic
+refref: beta / gamma
+ref() => SCALAR
+ref() => ARRAY
+ref() => HASH
+ref() => CODE
+ref() => REF
+ref() => REF
+ref() => (not a reference)
+registry: 3 words, 2 colours, sq(5)=25
+orig=alpha beta gamma copy=alpha beta gamma delta

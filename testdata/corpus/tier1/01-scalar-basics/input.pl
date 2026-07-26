@@ -1,0 +1,26 @@
+use strict;
+use warnings;
+
+my $name     = "world";
+my $greeting = 'Hello';
+my $line     = "$greeting, $name!";
+print $line, "\n";
+my $head = "abc";
+my $both = $head . "def";
+print "$both\n";
+print length($both), "\n";
+my $rule = '-' x 20;
+print "$rule\n";
+print "=" x length($line), "\n";
+my ($x, $y, $z);
+$x = $y = $z = 7;
+print "$x $y $z\n";
+my $tabbed = "col1\tcol2";
+print "$tabbed\n";
+print "He said \"hi\" \\ done\n";
+my $raw = 'no $interp here\n';
+print $raw, "\n";
+my $count = 3;
+print "I have ${count} items and ${name} knows it\n";
+my $multi = "line one\nline two";
+print $multi, "\n";

@@ -1,0 +1,9 @@
+manifest: 5 entries, disk: 5 files
+ok: 3
+CHANGED (same size!):
+  etc/widgetd.conf
+MISSING from disk:
+  share/doc/CHANGELOG
+EXTRA on disk:
+  share/doc/notes.tmp
+FAIL: 3 problem(s)

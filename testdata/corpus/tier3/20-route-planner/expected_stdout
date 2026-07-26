@@ -1,0 +1,15 @@
+network: 11 stations, 25 directed edges
+Depot:Airport: 17 min via Depot -> Central -> Oldtown -> Museum -> Uptown -> Airport
+Riverside:Uptown: 10 min via Riverside -> Docks -> Museum -> Uptown
+Central:Island: unreachable
+Nowhere:Central: error: unknown station 'Nowhere'
+--- from Central ---
+  Oldtown      2 min
+  Riverside    4 min
+  Museum       5 min
+  Docks        7 min
+  Uptown      10 min
+  Stadium     12 min
+  Airport     16 min
+unreachable from Central: Depot Island Lighthouse
+widest probe gap: Uptown <-> Stadium = 15 min

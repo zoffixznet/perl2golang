@@ -1,0 +1,22 @@
+2026-08-13 04:12:01 [error] worker 12: timeout waiting for upstream db-03:5432 after 3000ms
+2026-08-13 04:12:04 [error] worker 7: timeout waiting for upstream db-03:5432 after 3012ms
+2026-08-13 04:13:11 [warn] cache miss rate 41% exceeds threshold 25%
+2026-08-13 04:15:44 [error] cannot open file '/var/spool/app/queue/8843122.job': No such file or directory
+2026-08-13 04:15:45 [error] cannot open file '/var/spool/app/queue/8843123.job': No such file or directory
+2026-08-13 04:15:46 [error] cannot open file '/var/spool/app/queue/8843127.job': No such file or directory
+2026-08-13 05:02:19 [error] worker 3: timeout waiting for upstream db-03:5432 after 2998ms
+2026-08-13 05:30:00 [info] scheduled maintenance window opened
+2026-08-13 05:31:22 [error] payment gateway returned code 502 for order 118842
+2026-08-13 05:31:29 [error] payment gateway returned code 502 for order 118845
+2026-08-13 05:31:40 [error] payment gateway returned code 503 for order 118846
+2026-08-13 06:01:13 [warn] session store at 0x7f3a2c001200 grew to 512MB, compacting
+2026-08-13 06:41:55 [warn] session store at 0x7f3a2c009880 grew to 640MB, compacting
+2026-08-13 07:00:02 [error] template 'checkout_v2.tt' not found, falling back to 'checkout.tt'
+2026-08-13 07:22:10 [error] worker 12: timeout waiting for upstream db-04:5432 after 3005ms
+2026-08-13 08:00:00 [info] scheduled maintenance window closed
+2026-08-13 08:14:31 [error] cannot open file '/var/spool/app/tmp/upload_x99.bin': Permission denied
+2026-08-13 09:09:09 [error] payment gateway returned code 502 for order 118901
+2026-08-13 10:00:41 [warn] cache miss rate 33% exceeds threshold 25%
+2026-08-13 11:41:00 [error] uncaught exception 'DBI::timeout' in request /api/v1/orders/118902
+2026-08-13 11:41:02 [error] uncaught exception 'DBI::timeout' in request /api/v1/orders/118903
+2026-08-13 11:41:03 [error] uncaught exception 'DBI::st execute failed' in request /api/v1/reports/weekly

@@ -1,0 +1,16 @@
+INVOICE INV-2024-0117 (2024-06-01)
+Customer: ADA LOVELACE <ada@example.com>
+* VIP customer: priority handling *
+Items:
+  - Sourdough loaf       2 x 6.50 = 13.00
+      note: sliced
+  - Butter               1 x 4.25 = 4.25
+  - Raspberry jam        3 x 5.10 = 15.30
+      note: gift wrap
+Subtotal: 32.55
+Tax (8%): 2.60
+TOTAL: 35.15
+Thank you for shopping at HEARTH & CRUMB.
+error: unclosed each block
+error: undefined template variable 'oops'
+error: unknown filter 'nope'

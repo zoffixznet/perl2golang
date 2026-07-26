@@ -1,0 +1,3 @@
+list=a b c count=3
+ctx: LIST SCALAR (void call ran too)
+wrapped: n=4 w=x y z w

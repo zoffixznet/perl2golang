@@ -1,0 +1,12 @@
+header=0 threshold=40 format=csv verbose=2 quiet=0
+include=[cpu,mem]
+rename=db1=>primary web1=>frontend1
+remaining args: files/metrics.tsv
+frontend1,cpu,42
+frontend1,mem,61
+web2,cpu,91
+web2,mem,74
+primary,mem,88
+5 of 8 rows over threshold 40
+verbose detail enabled
+second parse: format=json verbose=3 header=0 leftover=extra.tsv

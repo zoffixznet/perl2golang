@@ -1,0 +1,22 @@
+# task <name> <duration> <priority>   -- higher priority runs first on ties
+# dep <task> <prerequisite>
+task fetch-src 3 5
+task gen-proto 2 8
+task compile-core 5 9
+task compile-cli 3 4
+task unit-tests 4 7
+task int-tests 6 6
+task docs 2 1
+task package 1 9
+task publish 1 9
+
+dep gen-proto fetch-src
+dep compile-core gen-proto
+dep compile-cli compile-core
+dep unit-tests compile-core
+dep int-tests compile-cli
+dep int-tests unit-tests
+dep docs fetch-src
+dep package int-tests
+dep package docs
+dep publish package

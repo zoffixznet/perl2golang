@@ -1,0 +1,36 @@
+-- tree --
+etc/
+  hosts
+  nginx/
+    nginx.conf
+    sites/
+      default
+usr/
+  bin/
+    perl
+var/
+  lib/
+    db/
+      data.mdb
+  log/
+    nginx/
+      access.log
+      error.log
+    syslog
+-- totals --
+(root)                1160600
+etc                      2870
+etc/nginx                2560
+etc/nginx/sites           512
+usr                     12000
+usr/bin                 12000
+var                   1145730
+var/lib               1048576
+var/lib/db            1048576
+var/log                 97154
+var/log/nginx            5920
+-- depths --
+depth 1: 1 files
+depth 2: 3 files
+depth 3: 4 files
+top level dirs: etc usr var

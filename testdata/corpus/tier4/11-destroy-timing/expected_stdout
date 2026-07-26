@@ -1,0 +1,8 @@
+start
+acquire lock-A
+working under lock-A
+release lock-A
+between
+acquire lock-B
+release lock-B
+end

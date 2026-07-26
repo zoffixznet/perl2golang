@@ -1,0 +1,20 @@
+pick 1 and 3:   beta delta
+range slice:    alpha beta gamma
+negative slice: delta epsilon
+reordered:      epsilon alpha gamma
+slice by list:  epsilon alpha
+captured slice: beta gamma delta (3)
+after assign:   A B gamma delta epsilon
+swapped:        B A gamma delta epsilon
+--- reverse and sort do not mutate ---
+reversed:       epsilon,delta,gamma,A,B
+sorted:         A,B,delta,epsilon,gamma
+original:       B A gamma delta epsilon
+--- reverse in scalar context reverses characters ---
+scalar reverse: desserts
+forced:         olleh
+list of one:    hello
+--- tail slices ---
+everything but the first: A,gamma,delta,epsilon
+last two:                 delta,epsilon
+first=B rest=A gamma delta epsilon

@@ -1,0 +1,30 @@
+-- status counts --
+200 4
+302 2
+304 1
+403 1
+404 1
+500 1
+-- per client methods --
+10.0.0.1   GET=3 POST=1
+10.0.0.2   GET=2 POST=1
+10.0.0.3   GET=2 POST=1
+-- three level matrix --
+10.0.0.1 /admin 403 1
+10.0.0.1 /index.html 200 2
+10.0.0.1 /login 302 1
+10.0.0.2 /index.html 200 1
+10.0.0.2 /login 302 1
+10.0.0.2 /style.css 200 1
+10.0.0.3 /index.html 404 1
+10.0.0.3 /login 500 1
+10.0.0.3 /style.css 304 1
+-- paths --
+/admin       hits=1 clients=10.0.0.1
+/index.html  hits=4 clients=10.0.0.1,10.0.0.2,10.0.0.3
+/login       hits=3 clients=10.0.0.1,10.0.0.2,10.0.0.3
+/style.css   hits=2 clients=10.0.0.2,10.0.0.3
+exists 10.0.0.9? no
+after probe, 10.0.0.9 exists? yes
+and /nope under it? no
+client keys: 10.0.0.1,10.0.0.2,10.0.0.3,10.0.0.9

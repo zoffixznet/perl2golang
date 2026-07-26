@@ -1,0 +1,63 @@
+PATH                           BASENAME         DIRNAME             
+files/reports/2023-q4.csv      2023-q4.csv      files/reports       
+files/README.md                README.md        files               
+/var/log/nginx/access.log.1    access.log.1     /var/log/nginx      
+relative.txt                   relative.txt     .                   
+dir/with.dots/file.tar.gz      file.tar.gz      dir/with.dots       
+trailing/slash/                slash            trailing            
+-- fileparse with suffix patterns --
+files/reports/2023-q4.csv  name=2023-q4      dir=files/reports/ suffix=.csv
+archive.tar.gz             name=archive.tar  dir=./           suffix=.gz
+plain                      name=plain        dir=./           suffix=(none)
+a/b/c.log.1                name=c.log        dir=a/b/         suffix=.1
+-- portable path assembly --
+catfile: files/reports/2023-q4.csv
+catdir:  files/reports
+splitpath: dirs=files/reports/ file=2023-q4.csv
+splitdir: files|reports
+-- absolute paths, reported relatively --
+cwd is absolute: yes
+cwd basename matches this entry: yes
+abs_path is absolute: yes
+abs2rel: files/reports/2023-q4.csv
+abs_path of a directory: files/reports
+abs_path of a missing file: undef
+-- Data::Dumper --
+$VAR1 = {
+  'enabled' => 1,
+  'limits' => {
+    'cpu' => 4,
+    'disk' => undef,
+    'mem' => 512
+  },
+  'name' => 'reporter',
+  'outputs' => [
+    {
+      'format' => 'csv',
+      'path' => 'out/report.csv'
+    },
+    {
+      'format' => 'text',
+      'path' => 'out/report.txt'
+    }
+  ],
+  'version' => [
+    2,
+    1,
+    0
+  ]
+};
+one-liner: {'cpu' => 4,'disk' => undef,'mem' => 512}
+just the outputs:
+[
+  {
+    'format' => 'csv',
+    'path' => 'out/report.csv'
+  },
+  {
+    'format' => 'text',
+    'path' => 'out/report.txt'
+  }
+]
+$VAR1 = 'scalar';$VAR2 = [1,2];
+structures equal: yes

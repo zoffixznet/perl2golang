@@ -1,0 +1,17 @@
+fib(20) = 6765
+fact(10) = 3628800
+0: even=1 odd=0
+1: even=0 odd=1
+6: even=1 odd=0
+7: even=0 odd=1
+list   -> list context
+scalar -> scalar context
+void context
+root
+  etc
+    passwd
+    hosts
+  var
+    log
+      syslog
+deep_sum = 36

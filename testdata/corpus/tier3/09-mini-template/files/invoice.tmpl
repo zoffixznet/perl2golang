@@ -1,0 +1,11 @@
+INVOICE {{invoice.number}} ({{invoice.date}})
+Customer: {{customer.name|uc}} <{{customer.email}}>
+{{#if customer.vip}}* VIP customer: priority handling *
+{{/if}}Items:
+{{#each items}}  - {{name|pad20}} {{qty}} x {{price|money}} = {{total|money}}
+{{#if note}}      note: {{note}}
+{{/if}}{{/each}}Subtotal: {{subtotal|money}}
+Tax ({{tax_rate}}%): {{tax|money}}
+TOTAL: {{grand_total|money}}
+{{#if overdue}}!!! OVERDUE !!!
+{{/if}}Thank you for shopping at {{store|uc}}.

@@ -1,0 +1,22 @@
+enter root
+  enter root.2
+    enter root.2.1
+    leave root.2.1
+  leave root.2
+leave root
+after aliasing: low=7 high=30 sizes=10 20 30
+span list=4 5 6 7 8 scalar=5 first=4
+goto: <disc size=3>
+bucket: medium
+countdown: 5 4 3 2 1
+fib: 0,1,1,2,3,5,8,13,21,34,55,832040
+cells: |     42| |      7| |  31337|
+narrow: 42 wide:       42
+engine version 2.14.7 (raw length 3)
+compare: new enough
+conn: db1:5432
+subset: ssl=on,user=app
+mid=wed thu fri ends=mon sun picked=mon wed fri sun
+moved to: db2:6432
+pattern: ..#..#..#..#.#..#..
+pattern length ok

@@ -1,0 +1,25 @@
+--- chomp and chop ---
+chomp: [hello] length 5
+chomp on a line with no newline removed 0 chars
+chop removed 'o' leaving 'hell'
+chomped list: a b c
+--- split shapes ---
+a|b|c
+trailing empties dropped: 4 -> a|b||c
+limit -1 keeps them: 6 -> a|b||c||
+limit 2:  one|two three
+empty pattern: x|y|z
+regex \s+: [][lead][and][trail]
+literal ' ': [lead][and][trail]
+--- join ---
+2024-01-15
+20240115
+solo
+[]
+--- round trip over STDIN ---
+1: 3 fields -> alpha / beta / gamma
+2: 3 fields -> one /  / three
+3: 1 fields -> single
+4: 2 fields ->  / leading
+5: 2 fields -> trailing / 
+read 5 lines

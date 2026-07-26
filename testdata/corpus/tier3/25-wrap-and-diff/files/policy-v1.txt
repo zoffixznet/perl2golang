@@ -1,0 +1,7 @@
+All deployments must be reviewed by at least one other engineer before
+they reach production.
+Database migrations require a rollback plan.
+Feature flags default to off.
+Incidents are documented within two working days.
+On-call engineers may freeze deployments at any time.
+Secrets are rotated every ninety days.

@@ -1,0 +1,30 @@
+length:   12
+uc:       HELLO, WORLD
+lc:       hello, world
+ucfirst:  Hello, world
+lcfirst:  hello, World
+--- index and rindex ---
+index 'o':        4
+index 'o' from 5: 8
+rindex 'o':       8
+rindex 'o' to 5:  4
+index 'zz':       -1
+index '':         0
+starts with Hello: yes
+contains World:    yes
+--- ord and chr ---
+ord('A')=65 chr(66)=B ord('')=0
+--- repeat, reverse, split, join ---
+repeat:   ababab
+reverse:  dlroW ,olleH
+chars:    a|b|c
+rejoined: abc
+--- padding without sprintf ---
+[id      ]
+[      id]
+--- case-insensitive compare ---
+Apple:apple    cmp=-1  lc cmp= 0
+Apple:Banana   cmp=-1  lc cmp=-1
+b:A            cmp= 1  lc cmp= 1
+--- lc/uc are not involutive on already-cased text ---
+MIXED mixed

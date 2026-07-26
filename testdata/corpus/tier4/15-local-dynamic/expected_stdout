@@ -1,0 +1,4 @@
+mode=normal
+mode=debug
+mode=normal
+mode=normal (restored even after die)

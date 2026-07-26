@@ -1,0 +1,7 @@
+id,name,city,balance,notes
+1001,"Doe, Jane",Springfield,1523.75,"prefers ""quiet"" hours"
+1002,Bob Smith,"Cape Town",-42.10,
+1003,"O'Neil, Pat",Lisbon,0.00,"address line 1
+address line 2"
+1004,Ana-Maria Ionescu,Cluj-Napoca,99999999.99,VIP account with a very long note that will not fit
+1005,"Lee, Kim",Seoul,203.40,"tab	inside"

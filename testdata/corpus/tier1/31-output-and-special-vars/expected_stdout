@@ -1,0 +1,22 @@
+print takes a list: abc
+no separator is inserted between them
+printf: x=1
+say appends a newline
+interpolated: x y z
+x,y,z
+1
+2
+3
+--- $, output field separator ---
+one, two, three
+onetwothree
+--- $\ output record separator ---
+auto terminated!
+so is this!
+back to manual
+--- $" list separator inside interpolation ---
+x | y | z
+x y z
+--- explicit filehandles ---
+explicit STDOUT
+printf to an explicit handle

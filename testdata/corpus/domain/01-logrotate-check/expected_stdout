@@ -1,0 +1,9 @@
+logrotate-check: 5 stanzas, 4 global directives
+ERROR /var/log/app/app.log         not rotated: mtime 4d old but schedule is daily
+ERROR /var/log/legacy/old.log      rotate count not numeric: 'lots'
+ERROR /var/log/mail/mail.log       conflicting frequencies: daily, weekly
+ERROR config                       stanza at line 53 (/var/log/cron/cron.log): missing closing brace
+WARN  /var/log/app/app.log         size 209715200 exceeds size directive 100M
+WARN  /var/log/legacy/old.log      unknown directive 'missignok'
+WARN  /var/log/unmanaged/rogue.log log present but not managed by any stanza
+summary: 4 error(s), 3 warning(s)

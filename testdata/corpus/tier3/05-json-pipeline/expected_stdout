@@ -1,0 +1,50 @@
+NAME   TIER    ORDERS     SPEND PENDING
+Ada    gold         2     83.25 no
+Grace  silver       1     22.50 yes
+Linus  bronze       1      0.00 yes
+
+{
+   "currency" : "EUR",
+   "customer_count" : 3,
+   "customers" : {
+      "Ada" : {
+         "any_pending" : false,
+         "order_count" : 2,
+         "order_ids" : [
+            1001,
+            1003
+         ],
+         "spend" : 83.25,
+         "tier" : "gold"
+      },
+      "Grace" : {
+         "any_pending" : true,
+         "order_count" : 1,
+         "order_ids" : [
+            1002
+         ],
+         "spend" : 22.5,
+         "tier" : "silver"
+      },
+      "Linus" : {
+         "any_pending" : true,
+         "order_count" : 1,
+         "order_ids" : [
+            1004
+         ],
+         "spend" : 0,
+         "tier" : "bronze"
+      }
+   },
+   "source_generated" : "2024-11-02T00:00:00Z",
+   "top_skus" : [
+      "TEA-EG",
+      "MUG-01"
+   ],
+   "vips" : [
+      "Ada",
+      "Grace"
+   ]
+}
+round-trip stable: yes
+vip check: Ad+Gr

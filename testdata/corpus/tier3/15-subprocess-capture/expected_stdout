@@ -1,0 +1,11 @@
+backtick scalar: 17 bytes, 3 newlines
+squares: 1 4 9 16 25
+backtick exit status: 0
+kept: 1,2,4,5,7
+pipe close status: 0
+report: child saw 32 bytes
+system ok: rc=0 decoded=0
+system fail: decoded=42 signal=0 core=no
+die in child: decoded=255
+stderr captured: [to-err]
+saved=7 current=0

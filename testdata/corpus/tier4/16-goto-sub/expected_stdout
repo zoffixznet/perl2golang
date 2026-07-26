@@ -1,0 +1,5 @@
+trampoline ran
+real_work(1 2): frame above me: top-level
+ok
+real_work(1 2): frame above me: main::normal_call
+ok

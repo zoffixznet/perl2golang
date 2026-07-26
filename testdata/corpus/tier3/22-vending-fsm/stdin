@@ -1,0 +1,29 @@
+# a normal purchase with change
+coin 100
+coin 50
+select cola
+
+# select without any credit is illegal in idle
+select water
+
+# sold-out item keeps credit, then buy something else
+coin 100
+select crisps
+select water
+
+# invalid coin then invalid item
+coin 25
+select caviar
+
+# underpay, unknown item while collecting, top up, exact payment
+coin 10
+select cola
+select caviar
+coin 100
+coin 10
+select cola
+
+# refund paths
+refund
+coin 20
+refund

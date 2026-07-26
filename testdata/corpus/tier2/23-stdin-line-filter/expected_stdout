@@ -1,0 +1,7 @@
+   2: 2023-11-14 ERROR db1 unreachable
+   4: 2023-11-14 ERROR db2 unreachable after 3 tries
+   6: 2023-11-14 ERROR cache1 timeout
+-- 3/7 lines kept (232 bytes read), pattern=/ERROR/
+-- shortest=31 longest=46
+-- 2 line(s) with 4 field(s)
+-- 1 line(s) with 7 field(s)

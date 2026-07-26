@@ -1,0 +1,12 @@
+Release 1.0
+Initial public release.
+Ships with the core parser.
+
+Release 1.1
+Adds the report generator.
+Fixes a crash on empty input.
+
+Release 2.0
+Rewrites the storage layer.
+Drops support for the old format.
+Requires a migration step.

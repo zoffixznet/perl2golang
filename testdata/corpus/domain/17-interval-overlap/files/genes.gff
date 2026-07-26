@@ -1,0 +1,10 @@
+##gff-version 3
+# minimal extract: seqid source type start end score strand frame attributes
+chr1	ensembl	gene	1000	5000	.	+	.	ID=gene:ABC1;Name=ABC1
+chr1	ensembl	gene	4500	8000	.	-	.	ID=gene:DEF2;Name=DEF2
+chr1	ensembl	gene	12000	15000	.	+	.	ID=gene:GHI3;Name=GHI3
+chr2	ensembl	gene	500	2500	.	+	.	ID=gene:JKL4;Name=JKL4
+chr2	ensembl	gene	9000	9500	.	-	.	ID=gene:MNO5;Name=MNO5
+chr2	ensembl	gene	9400	12000	.	+	.	ID=gene:PQR6;Name=PQR6
+chr3	ensembl	gene	100	900	.	+	.	ID=gene:STU7;Name=STU7
+chrM	ensembl	gene	1	16000	.	+	.	ID=gene:MT1;Name=MT1

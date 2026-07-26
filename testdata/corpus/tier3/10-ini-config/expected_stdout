@@ -1,0 +1,41 @@
+[database]
+  app_name   = ordersvc
+  base_dir   = /srv/ordersvc
+  dsn        = pg://db.internal:5432/ordersvc_prod
+  host       = db.internal
+  log_level  = info
+  name       = ordersvc_prod
+  port       = 5432
+  timeout    = 30
+[database.dev]
+  app_name   = ordersvc
+  base_dir   = /srv/ordersvc
+  dsn        = pg://db.internal:5432/ordersvc_prod
+  host       = localhost
+  log_level  = info
+  name       = ordersvc_dev
+  port       = 5432
+  timeout    = 30
+[web]
+  app_name   = ordersvc
+  base_dir   = /srv/ordersvc
+  log_level  = info
+  port       = 8080
+  static_dir = /srv/ordersvc/static
+  timeout    = 60
+  workers    = 4
+[worker]
+  app_name   = ordersvc
+  base_dir   = /srv/ordersvc
+  log_level  = info
+  port       = 8080
+  queue      = jobs.default
+  static_dir = /srv/ordersvc/static
+  timeout    = 60
+  workers    = 16
+web capacity: 240 slots
+worker inherits port: 8080
+dev dsn: pg://db.internal:5432/ordersvc_prod
+missing section: caught: no such section [nope]
+bad int: caught: key static_dir is not an integer: '/srv/ordersvc/static'
+unknown var: caught: unknown variable ${nowhere} in broken.path

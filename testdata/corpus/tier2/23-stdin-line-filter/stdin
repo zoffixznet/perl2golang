@@ -1,0 +1,7 @@
+2023-11-14 INFO  boot complete
+2023-11-14 ERROR db1 unreachable
+2023-11-14 WARN  disk 81%
+2023-11-14 ERROR db2 unreachable after 3 tries
+2023-11-14 INFO  retry scheduled
+2023-11-14 ERROR cache1 timeout
+2023-11-14 DEBUG pool resized

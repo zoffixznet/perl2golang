@@ -1,0 +1,23 @@
+13 contacts, 5 duplicate cluster(s), 2 unique
+
+cluster (keep C002):
+  - C001   Robert Martinez        rob.martinez@example.com       78701
+  * C002   Bob Martinez           robert.martinez@example.com    78701
+
+cluster (keep C003):
+  * C003   Jane Doe               jane.doe@example.com           10001
+  - C004   Jane  Doe.             jdoe@example.net               10001
+  - C010   Jane Doe               jane.doe@example.com           94110
+
+cluster (keep C005):
+  * C005   Elizabeth Chen         liz.chen@example.org           94110
+  - C006   Liz Chen               liz.chen@example.org           94110
+
+cluster (keep C009):
+  - C008   Pat O'Neil             pat@example.org                60601
+  * C009   Patrick O'Neil         pat.oneil@example.org          60601
+
+cluster (keep C012):
+  - C011   Wm. Fitzgerald         wf@example.com                 02134
+  * C012   William Fitzgerald     william.fitzgerald@example.com 02134
+

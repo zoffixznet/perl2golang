@@ -1,0 +1,35 @@
+%d      : 42
+%d trunc: 42
+%d neg  : -42
+%s      : text
+%s num  : 42.5
+%f      : 3.141590
+%.2f    : 3.14
+%.0f    : 0 2 2
+--- width and alignment ---
+[   42]
+[42   ]
+[00042]
+[-0042]
+[      ab]
+[ab      ]
+[abc]
+[    42]
+--- radix ---
+%x %X : ff FF
+%#x    : 0xff
+%o %#o: 10 010
+%b %#b: 1010 0b1010
+--- exponent and general ---
+%e : 1.234568e+04
+%g : 1.23e-05
+%g : 1.23457e+06
+%g : 100
+--- signs and literals ---
+%+d: +5 -5
+% d: [ 5]
+literal percent: 50%
+--- sprintf into a variable ---
+widget    | 19.50|   7
+length of that row: 22
+cart has 3 items costing 6.50 each

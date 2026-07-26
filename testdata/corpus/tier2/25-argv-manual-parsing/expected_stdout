@@ -1,0 +1,6 @@
+options: limit=3 sort=count reverse=1 verbose=1 prefix=(none)
+files: files/data.txt
+cherry          30
+elderberry      21
+apple           12
+3 record(s) shown

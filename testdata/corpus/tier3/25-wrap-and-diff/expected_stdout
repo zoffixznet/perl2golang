@@ -1,0 +1,20 @@
+--- wrapped (width 34, hanging indent) ---
+26|Deployment gating uses the
+34|    internal continuous-integrati-
+32|    on-and-delivery-orchestrator
+28|    service; exceptions need
+13|    sign-off.
+--- diff files/policy-v1.txt files/policy-v2.txt ---
+- All deployments must be reviewed by at least one other engineer before
++ All deployments must be reviewed by at least two other engineers before
+  they reach production.
+  Database migrations require a rollback plan.
++ Database migrations run only during business hours.
+  Feature flags default to off.
+- Incidents are documented within two working days.
+  On-call engineers may freeze deployments at any time.
+- Secrets are rotated every ninety days.
++ Secrets are rotated every sixty days.
++ Post-incident reviews are blameless.
+summary: +4 -3 unchanged 4 (lcs 4)
+similarity: 53.3%
