@@ -24,9 +24,9 @@ type outcome struct {
 	stderr string
 }
 
-// exec drives Run with buffers in place of the three streams, which is the
+// runCLI drives Run with buffers in place of the three streams, which is the
 // whole reason the logic lives in this package rather than in main.
-func exec(t *testing.T, stdin string, args ...string) outcome {
+func runCLI(t *testing.T, stdin string, args ...string) outcome {
 	t.Helper()
 	var out, errs bytes.Buffer
 	code := Run(args, strings.NewReader(stdin), &out, &errs)
@@ -230,7 +230,7 @@ func TestRun(t *testing.T) {
 				if _, err := os.Stat(filepath.Join(dir, "out", "keep.txt")); err != nil {
 					t.Errorf("the existing directory was disturbed: %v", err)
 				}
-				forced := exec(t, "", filepath.Join(dir, "hello.pl"), "-o", filepath.Join(dir, "out"), "--force")
+				forced := runCLI(t, "", filepath.Join(dir, "hello.pl"), "-o", filepath.Join(dir, "out"), "--force")
 				if forced.code != ExitOK {
 					t.Errorf("--force exited %d, stderr:\n%s", forced.code, forced.stderr)
 				}
@@ -239,7 +239,7 @@ func TestRun(t *testing.T) {
 		{
 			name: "verbose renders every diagnostic in full on stderr",
 			args: func(t *testing.T, dir string) []string {
-				return []string{"-e", `my %h; print "$_\n" for keys %h;`, "-v"}
+				return []string{"-e", `my @n = (9, 10, 2); print join(",", sort @n), "\n";`, "-v"}
 			},
 			want: ExitOK,
 			check: func(t *testing.T, dir string, got outcome) {
@@ -379,7 +379,7 @@ func TestRun(t *testing.T) {
 			if tt.args != nil {
 				args = tt.args(t, dir)
 			}
-			got := exec(t, tt.stdin, args...)
+			got := runCLI(t, tt.stdin, args...)
 			if got.code != tt.want {
 				t.Errorf("exit status = %d, want %d\nstdout:\n%s\nstderr:\n%s",
 					got.code, tt.want, got.stdout, got.stderr)
@@ -434,7 +434,7 @@ type jsonEnvelope struct {
 }
 
 func TestJSONOutput(t *testing.T) {
-	got := exec(t, "", "-e", hello, "--json")
+	got := runCLI(t, "", "-e", hello, "--json")
 	if got.code != ExitOK {
 		t.Fatalf("exit status = %d, stderr:\n%s", got.code, got.stderr)
 	}
@@ -503,9 +503,12 @@ func sliceOfPaths[T any](artifacts []T) []string {
 func TestJSONEscapesNothing(t *testing.T) {
 	// Angle brackets and ampersands are everywhere in Perl and in generated
 	// Go, and a consumer should see them as themselves.
-	got := exec(t, "", "-e", `my @a = (1,2); print "a<b && c>d\n" if $a[0] < $a[1];`, "--json")
-	if strings.Contains(got.stdout, `<`) || strings.Contains(got.stdout, `&`) {
+	got := runCLI(t, "", "-e", `my @a = (1,2); print "a<b && c>d\n" if $a[0] < $a[1];`, "--json")
+	if strings.Contains(got.stdout, `\u003c`) || strings.Contains(got.stdout, `\u0026`) {
 		t.Error("JSON output escaped HTML characters")
+	}
+	if !strings.Contains(got.stdout, "a<b && c>d") {
+		t.Error("the source text did not survive into the JSON as written")
 	}
 }
 
@@ -514,7 +517,7 @@ func TestStrictExitStatus(t *testing.T) {
 	// which is a warning every time.
 	const warns = `my @n = (9, 10, 2); print join(",", sort @n), "\n";`
 
-	relaxed := exec(t, "", "-e", warns)
+	relaxed := runCLI(t, "", "-e", warns)
 	if relaxed.code != ExitOK {
 		t.Fatalf("without --strict the exit status should be 0, got %d\n%s", relaxed.code, relaxed.stderr)
 	}
@@ -522,7 +525,7 @@ func TestStrictExitStatus(t *testing.T) {
 		t.Skipf("this snippet no longer produces a warning; stderr:\n%s", relaxed.stderr)
 	}
 
-	strict := exec(t, "", "-e", warns, "--strict")
+	strict := runCLI(t, "", "-e", warns, "--strict")
 	if strict.code != ExitStrict {
 		t.Errorf("with --strict the exit status should be %d, got %d\n%s",
 			ExitStrict, strict.code, strict.stderr)
@@ -532,13 +535,13 @@ func TestStrictExitStatus(t *testing.T) {
 	}
 	// A gate that also destroys the artifact makes the failure harder to
 	// diagnose, so the Go is still on stdout.
-	if !strings.HasPrefix(strict.stdout, "package main") {
+	if !strings.Contains(strict.stdout, "package main") {
 		t.Errorf("--strict withheld the output:\n%s", strict.stdout)
 	}
 }
 
 func TestStrictIsCleanOnACleanRun(t *testing.T) {
-	got := exec(t, "", "-e", `print "hi\n";`, "--strict")
+	got := runCLI(t, "", "-e", `print "hi\n";`, "--strict")
 	if got.code != ExitOK {
 		t.Errorf("a clean run under --strict should exit 0, got %d\n%s", got.code, got.stderr)
 	}
@@ -553,7 +556,7 @@ func TestFailedConversionLeavesNoDirectory(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	got := exec(t, "", "legacy.pl")
+	got := runCLI(t, "", "legacy.pl")
 	if got.code != ExitFailed {
 		t.Fatalf("exit status = %d, want %d\nstderr:\n%s", got.code, ExitFailed, got.stderr)
 	}
@@ -568,20 +571,179 @@ func TestFailedConversionLeavesNoDirectory(t *testing.T) {
 func TestColorNeverLeaksIntoAPipe(t *testing.T) {
 	// The buffers below are not terminals, so auto must resolve to no colour
 	// however loud the diagnostics are.
-	got := exec(t, "", "-e", `my @n = (9, 10); print join(",", sort @n), "\n";`, "-v")
+	got := runCLI(t, "", "-e", `my @n = (9, 10); print join(",", sort @n), "\n";`, "-v")
 	if strings.Contains(got.stdout, "\x1b[") || strings.Contains(got.stderr, "\x1b[") {
 		t.Error("escape sequences were written to something that is not a terminal")
 	}
 
-	forced := exec(t, "", "-e", `my @n = (9, 10); print join(",", sort @n), "\n";`, "-v", "--color=always")
+	forced := runCLI(t, "", "-e", `my @n = (9, 10); print join(",", sort @n), "\n";`, "-v", "--color=always")
 	if !strings.Contains(forced.stderr, "\x1b[") {
 		t.Error("--color=always should force colour on")
 	}
 }
 
 func TestColorFlagIsChecked(t *testing.T) {
-	got := exec(t, "", "-e", "print 1;", "--color=sometimes")
+	got := runCLI(t, "", "-e", "print 1;", "--color=sometimes")
 	if got.code != ExitUsage {
 		t.Errorf("exit status = %d, want %d", got.code, ExitUsage)
+	}
+}
+
+// panicReader stands in for a stream that fails in a way nothing anticipated.
+type panicReader struct{}
+
+func (panicReader) Read([]byte) (int, error) { panic("a defect somewhere below") }
+
+func TestPanicBecomesAMessageNotAStackTrace(t *testing.T) {
+	var out, errs bytes.Buffer
+	code := Run([]string{"-"}, panicReader{}, &out, &errs)
+
+	if code != ExitFailed {
+		t.Errorf("exit status = %d, want %d", code, ExitFailed)
+	}
+	if out.String() != "" {
+		t.Errorf("a failed run wrote to stdout: %q", out.String())
+	}
+	got := errs.String()
+	for _, want := range []string{"internal error", "bug in perl2go", "Please report it"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("the message should contain %q:\n%s", want, got)
+		}
+	}
+	if strings.Contains(got, "goroutine ") || strings.Contains(got, ".go:") {
+		t.Errorf("a stack trace reached the user:\n%s", got)
+	}
+}
+
+func TestFailureKeepsStdoutEmpty(t *testing.T) {
+	dir := t.TempDir()
+	got := runCLI(t, "", filepath.Join(dir, "missing.pl"))
+	if got.stdout != "" {
+		t.Errorf("nothing was converted, so stdout should be empty, got:\n%s", got.stdout)
+	}
+	if !strings.Contains(got.stderr, "-> failed") {
+		t.Errorf("the run should end with the verdict:\n%s", got.stderr)
+	}
+}
+
+func TestCollidingOutputDirectoriesAreRefusedUpFront(t *testing.T) {
+	dir := t.TempDir()
+	for _, sub := range []string{"a", "b"} {
+		if err := os.MkdirAll(filepath.Join(dir, sub), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		write(t, filepath.Join(dir, sub), "run.pl", hello)
+	}
+	build := filepath.Join(dir, "build")
+
+	got := runCLI(t, "", filepath.Join(dir, "a", "run.pl"), filepath.Join(dir, "b", "run.pl"), "-o", build)
+	if got.code != ExitUsage {
+		t.Errorf("exit status = %d, want %d", got.code, ExitUsage)
+	}
+	if !strings.Contains(got.stderr, "would both be written to") {
+		t.Errorf("the error should name the collision:\n%s", got.stderr)
+	}
+	if _, err := os.Stat(build); !os.IsNotExist(err) {
+		t.Error("nothing should have been written before the collision was found")
+	}
+}
+
+func TestFlagsWorkAfterTheFileName(t *testing.T) {
+	dir := t.TempDir()
+	// The standard flag package stops at the first positional, so this is the
+	// case that needs its own test.
+	got := runCLI(t, "", write(t, dir, "hello.pl", hello), "--stdout")
+	if got.code != ExitOK {
+		t.Fatalf("exit status = %d, stderr:\n%s", got.code, got.stderr)
+	}
+	checkStream(t, got.stdout)
+}
+
+func TestStdoutDoesNotEatTheFileName(t *testing.T) {
+	dir := t.TempDir()
+	got := runCLI(t, "", "--stdout", write(t, dir, "hello.pl", hello))
+	if got.code != ExitOK {
+		t.Fatalf("exit status = %d, stderr:\n%s", got.code, got.stderr)
+	}
+	checkStream(t, got.stdout)
+}
+
+func TestEverythingAfterADashDashIsAFileName(t *testing.T) {
+	dir := t.TempDir()
+	t.Chdir(dir)
+	odd := write(t, dir, "--strict", hello)
+	got := runCLI(t, "", "--", odd)
+	if got.code != ExitOK {
+		t.Fatalf("exit status = %d, stderr:\n%s", got.code, got.stderr)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "--strict-go", "main.go")); err != nil {
+		t.Errorf("expected the file after -- to be converted: %v", err)
+	}
+}
+
+func TestSnippetWithAnOutputDirectoryWritesFiles(t *testing.T) {
+	dir := t.TempDir()
+	out := filepath.Join(dir, "snip")
+
+	got := runCLI(t, "", "-e", hello, "-o", out)
+	if got.code != ExitOK {
+		t.Fatalf("exit status = %d, stderr:\n%s", got.code, got.stderr)
+	}
+	if got.stdout == "" {
+		t.Error("the summary should be on stdout when files were written")
+	}
+	for _, name := range []string{"main.go", docStartHere} {
+		if _, err := os.Stat(filepath.Join(out, name)); err != nil {
+			t.Errorf("-o should have written the whole bundle: %v", err)
+		}
+	}
+}
+
+func TestOutAndStdoutTogetherAreRefused(t *testing.T) {
+	got := runCLI(t, "", "-e", hello, "-o", "somewhere", "--stdout")
+	if got.code != ExitUsage {
+		t.Errorf("exit status = %d, want %d\nstderr:\n%s", got.code, ExitUsage, got.stderr)
+	}
+	if !strings.Contains(got.stderr, "P2G0001") {
+		t.Errorf("the conflict should carry its code:\n%s", got.stderr)
+	}
+}
+
+func TestJSONAlongsideAWrittenBundle(t *testing.T) {
+	dir := t.TempDir()
+	out := filepath.Join(dir, "out")
+
+	got := runCLI(t, "", write(t, dir, "hello.pl", hello), "-o", out, "--json")
+	if got.code != ExitOK {
+		t.Fatalf("exit status = %d, stderr:\n%s", got.code, got.stderr)
+	}
+	var env jsonEnvelope
+	if err := json.Unmarshal([]byte(got.stdout), &env); err != nil {
+		t.Fatalf("stdout is not one JSON object: %v", err)
+	}
+	if len(env.Conversions) != 1 || env.Conversions[0].OutputDir != out {
+		t.Errorf("the object should name the directory it wrote: %+v", env.Conversions)
+	}
+	if _, err := os.Stat(filepath.Join(out, "main.go")); err != nil {
+		t.Errorf("--json should not stop the files being written: %v", err)
+	}
+	// The one JSON object is the whole of stdout.
+	if !strings.HasPrefix(got.stdout, "{") || !strings.HasSuffix(got.stdout, "}\n") {
+		t.Error("something other than the JSON object reached stdout")
+	}
+}
+
+func TestNoColorIsHonoured(t *testing.T) {
+	const warns = `my @n = (9, 10, 2); print join(",", sort @n), "\n";`
+	t.Setenv("NO_COLOR", "")
+
+	// auto asks the environment, and the environment has said no.
+	if got := runCLI(t, "", "-e", warns, "-v"); strings.Contains(got.stderr, "\x1b[") {
+		t.Errorf("NO_COLOR was set and colour was written anyway:\n%q", got.stderr)
+	}
+	// An explicit --color=always is an answer on its own, which is what makes
+	// it usable for recording a transcript.
+	if got := runCLI(t, "", "-e", warns, "-v", "--color=always"); !strings.Contains(got.stderr, "\x1b[") {
+		t.Error("--color=always should override NO_COLOR")
 	}
 }

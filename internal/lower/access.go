@@ -1,6 +1,8 @@
 package lower
 
 import (
+	"strings"
+
 	"perl2go/internal/ir"
 	"perl2go/internal/perl/ast"
 )
@@ -36,8 +38,8 @@ func (l *Lowerer) indexExpr(n *ast.Index) ir.Expr {
 	}
 
 	// A literal negative index counts from the end, which Go spells out.
-	if lit, ok := idx.(*ir.Lit); ok && lit.Kind == ir.LitInt && len(lit.Value) > 0 && lit.Value[0] == '-' {
-		off := ir.Bin("-", lenOf(base), ir.IntLit(lit.Value[1:]), ir.TInt)
+	if text, neg := negativeLiteral(n.Idx); neg {
+		off := ir.Bin("-", lenOf(base), ir.IntLit(text), ir.TInt)
 		out := index(base, off, elem)
 		l.note(out, "A negative Perl index counts back from the end. Go has no such "+
 			"rule, so the arithmetic is written out. Note that Perl returns undef for "+
@@ -55,6 +57,25 @@ func (l *Lowerer) indexExpr(n *ast.Index) ir.Expr {
 			"slices-not-arrays")
 	}
 	return out
+}
+
+// negativeLiteral reports whether an index is a negative constant, and returns
+// its magnitude. Go has no negative index, so the arithmetic has to be written
+// out, and Go rejects a negative constant index outright rather than wrapping.
+func negativeLiteral(e ast.Expr) (string, bool) {
+	switch n := e.(type) {
+	case *ast.NumberLit:
+		if strings.HasPrefix(n.Text, "-") {
+			return n.Text[1:], true
+		}
+	case *ast.UnOp:
+		if n.Op == "-" {
+			if inner, ok := n.X.(*ast.NumberLit); ok {
+				return inner.Text, true
+			}
+		}
+	}
+	return "", false
 }
 
 // hashParts resolves a hash element access into the map, the key, and the
@@ -89,9 +110,46 @@ func (l *Lowerer) hashParts(n *ast.HashIndex) (m ir.Expr, key ir.Expr, elem *ir.
 	if m == nil {
 		return nil, nil, ir.TAny
 	}
+	m = l.asMap(m, n)
 	elem = elemOf(typeOrAny(m))
 	key = l.toStr(l.expr(n.Key), n.Key)
 	return m, key, elem
+}
+
+// asMap makes a value usable as a map.
+//
+// A nested Perl structure often leaves inference with nothing to go on, and
+// the value lands as `any`. Go will not index an interface value, so the type
+// has to be asserted. The assertion panics when the value is something else,
+// which is exactly the moment the developer wants to hear about it.
+func (l *Lowerer) asMap(x ir.Expr, at ast.Node) ir.Expr {
+	if typeOrAny(x).Kind != ir.Any {
+		return x
+	}
+	want := ir.MapOf(ir.TAny)
+	out := &ir.TypeAssert{X: x, Assert: want}
+	out.T = want
+	l.note(out, "This value's type did not resolve, so it is held as `any`. Go will "+
+		"not index an interface value: the assertion says what it is expected to be, "+
+		"and panics on the spot if it turns out to be something else. The two-result "+
+		"form of an assertion asks the same question without panicking.",
+		"type-assertions-and-switches")
+	return out
+}
+
+// asSlice makes a value usable as a slice, for the same reason as asMap.
+func (l *Lowerer) asSlice(x ir.Expr, at ast.Node) ir.Expr {
+	if typeOrAny(x).Kind != ir.Any {
+		return x
+	}
+	want := ir.SliceOf(ir.TAny)
+	out := &ir.TypeAssert{X: x, Assert: want}
+	out.T = want
+	l.note(out, "A value declared as `any` cannot be indexed directly. The assertion "+
+		"states what it should be; if the program is right, it costs nothing, and if "+
+		"it is wrong, it stops here rather than further along.",
+		"type-assertions-and-switches")
+	return out
 }
 
 // hashExpr lowers $h{k} and $ref->{k}.
@@ -135,6 +193,11 @@ func (l *Lowerer) sliceExpr(n *ast.Slice) ir.Expr {
 		for _, one := range flatten(ie) {
 			if n.Hash {
 				elems = append(elems, index(container, l.toStr(l.expr(one), one), elem))
+				continue
+			}
+			if text, neg := negativeLiteral(one); neg {
+				elems = append(elems, index(container,
+					ir.Bin("-", lenOf(container), ir.IntLit(text), ir.TInt), elem))
 				continue
 			}
 			elems = append(elems, index(container, l.toInt(l.expr(one), one), elem))

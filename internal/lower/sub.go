@@ -50,7 +50,7 @@ func (l *Lowerer) lowerSubDecl(sd *ast.SubDecl) {
 		fn.Results = s.Results
 		fn.Doc = l.subDoc(s)
 	}
-	fn.Body = &ir.Block{Stmts: l.stmts(rest)}
+	fn.Body = l.markUnused(&ir.Block{Stmts: l.stmts(rest)})
 	l.addImplicitReturn(s, fn)
 	l.setProv(fn, sd)
 	l.explainSub(fn, s, sd)
@@ -423,7 +423,18 @@ func (l *Lowerer) callSub(s *Sub, n *ast.Call) ir.Expr {
 			out = append(out, l.assignable(a, elemOf(s.VarArgs.Type), nil))
 			continue
 		}
-		out = append(out, a)
+		// The sub named its parameters and takes no variadic tail, so Perl
+		// would have left this argument sitting unread in @_.
+		if l.pass == 2 && i == len(s.Params) {
+			l.approximate(n, "P2G2130", "call with extra arguments",
+				"the extra arguments are dropped",
+				"This call passes more values than the sub unpacks. In Perl the extras "+
+					"sit in @_ where nothing reads them; a Go call has to match the "+
+					"signature exactly.",
+				"If the extras were meant to be used, add parameters for them. If they "+
+					"were not, remove them from the call.",
+				"variadic-and-no-defaults")
+		}
 	}
 	// A call that passes fewer arguments than the sub unpacks would leave
 	// undef in Perl; Go will not compile it, so the gap is filled explicitly.

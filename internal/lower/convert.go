@@ -1,6 +1,8 @@
 package lower
 
 import (
+	"strconv"
+
 	"perl2go/internal/ir"
 	"perl2go/internal/perl/ast"
 )
@@ -80,7 +82,7 @@ func (l *Lowerer) toFloat(x ir.Expr, n ast.Node) ir.Expr {
 		if lit, ok := x.(*ir.Lit); ok && lit.Kind == ir.LitInt {
 			return ir.FloatLit(lit.Value)
 		}
-		return &ir.Conversion{To: ir.TFloat, X: x}
+		return conversion(ir.TFloat, x)
 	case t.Kind == ir.String:
 		out := l.helperCall(hParseNum, ir.TFloat, x)
 		l.note(out, "Perl reads the longest numeric prefix of a string and calls the "+
@@ -102,18 +104,43 @@ func (l *Lowerer) toInt(x ir.Expr, n ast.Node) ir.Expr {
 	t := x.Type()
 	switch {
 	case t == nil:
-		return &ir.Conversion{To: ir.TInt, X: l.helperCall(hToNum, ir.TFloat, x)}
+		return conversion(ir.TInt, l.helperCall(hToNum, ir.TFloat, x))
 	case t.Kind == ir.Int:
 		return x
 	case t.Kind == ir.Float:
-		out := &ir.Conversion{To: ir.TInt, X: x}
+		// Go refuses to convert an untyped float constant to int, because the
+		// truncation would be silent. Doing it here is the same answer.
+		if text, ok := floatConstant(x); ok {
+			if f, err := strconv.ParseFloat(text, 64); err == nil {
+				return ir.IntLit(strconv.FormatInt(int64(f), 10))
+			}
+		}
+		out := conversion(ir.TInt, x)
 		l.note(out, "Converting a float to an int in Go truncates towards zero, which "+
 			"is what Perl's int() does too.")
 		return out
 	case t.Kind == ir.String:
-		return &ir.Conversion{To: ir.TInt, X: l.helperCall(hParseNum, ir.TFloat, x)}
+		return conversion(ir.TInt, l.helperCall(hParseNum, ir.TFloat, x))
 	}
-	return &ir.Conversion{To: ir.TInt, X: l.helperCall(hToNum, ir.TFloat, x)}
+	return conversion(ir.TInt, l.helperCall(hToNum, ir.TFloat, x))
+}
+
+// floatConstant reports whether an expression is a floating-point constant,
+// possibly negated, and returns its text.
+func floatConstant(x ir.Expr) (string, bool) {
+	switch n := x.(type) {
+	case *ir.Lit:
+		if n.Kind == ir.LitFloat {
+			return n.Value, true
+		}
+	case *ir.Unary:
+		if n.Op == "-" {
+			if text, ok := floatConstant(n.X); ok {
+				return "-" + text, true
+			}
+		}
+	}
+	return "", false
 }
 
 // toNum renders an expression as whatever numeric type suits it: int when the
@@ -188,8 +215,13 @@ func (l *Lowerer) assignable(x ir.Expr, want *ir.Type, n ast.Node) ir.Expr {
 	case ir.Any:
 		return x
 	case ir.Slice, ir.Map:
-		if have != nil && have.Kind == want.Kind {
-			return x
+		// An empty literal has no elements to infer an element type from, so
+		// it takes the type of the variable it is going into. `@a = ()` is the
+		// common case and it must not narrow the array to a slice of nothing.
+		if lit, ok := x.(*ir.CompositeLit); ok && len(lit.Elems) == 0 {
+			lit.LitType = want
+			lit.T = want
+			return lit
 		}
 		return x
 	}

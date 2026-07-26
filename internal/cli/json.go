@@ -174,10 +174,14 @@ func artifactJSON(name string, content []byte) jsonArtifact {
 }
 
 // summaryLines is the terminal summary this run would have printed, split into
-// lines so a consumer can indent or filter it.
+// lines so a consumer can indent or filter it. A conversion that wrote no
+// directory gets the one-line form, because the block form is a tour of files
+// that are not there.
 func summaryLines(r *run, f *convertFlags) []string {
-	text := fileBlock(r, f.verbose)
-	return strings.Split(strings.TrimSuffix(text, "\n"), "\n")
+	if r.dir == "" {
+		return []string{streamLine(r, f.verbose)}
+	}
+	return strings.Split(strings.TrimSuffix(fileBlock(r, f.verbose), "\n"), "\n")
 }
 
 // outcomeOf names what happened, in one word a script can switch on.

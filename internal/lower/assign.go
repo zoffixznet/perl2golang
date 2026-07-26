@@ -111,19 +111,42 @@ func (l *Lowerer) declareSingle(v *ast.Var, n *ast.Assign) []ir.Stmt {
 	coerced := l.assignable(value, b.Type, n.RHS)
 
 	// The short declaration form takes its type from the initialiser, so it
-	// only says what the binding wants when the two agree. Where they do not,
-	// which is what happens whenever inference settled on `any`, the type has
-	// to be written out or the variable ends up narrower than its later uses.
-	if b.Type != nil && !typeOrAny(coerced).Equal(b.Type) {
-		st := &ir.DeclStmt{Names: []string{b.Go}, Type: b.Type, Values: []ir.Expr{coerced}}
-		l.setProv(st, n)
-		l.explainDeclaration(st, b, v)
-		return []ir.Stmt{st}
+	// only says what the binding wants when the two agree. A scalar that
+	// inference left dynamic needs the type written out, or the variable ends
+	// up narrower than its later uses. A container whose element type is only
+	// dynamic because nothing pinned it down is better off taking the more
+	// specific type the initialiser brought.
+	var st ir.Stmt
+	switch {
+	case b.Type == nil || typeOrAny(coerced).Equal(b.Type):
+		st = assign(":=", []ir.Expr{ir.NewIdent(b.Go, b.Type)}, []ir.Expr{coerced})
+	case b.Type.Kind == ir.Any:
+		st = &ir.DeclStmt{Names: []string{b.Go}, Type: b.Type, Values: []ir.Expr{coerced}}
+	default:
+		b.Type = typeOrAny(coerced)
+		st = assign(":=", []ir.Expr{ir.NewIdent(b.Go, b.Type)}, []ir.Expr{coerced})
 	}
-
-	st := assign(":=", []ir.Expr{ir.NewIdent(b.Go, b.Type)}, []ir.Expr{coerced})
 	l.setProv(st, n)
 	l.explainDeclaration(st, b, v)
+	return append([]ir.Stmt{st}, l.discardIfUnused(b)...)
+}
+
+// discardIfUnused keeps a declaration compiling when nothing ever reads it.
+//
+// Go rejects an unused local outright. Perl does not, so a script often
+// declares something for documentation or for a later edit. The blank
+// assignment is Go's own way of saying "on purpose", and it is a better answer
+// than dropping the line, which would hide something the developer wrote.
+func (l *Lowerer) discardIfUnused(b *Binding) []ir.Stmt {
+	if b == nil || b.Used > 0 || b.Kind == KindGlobal || b.Go == "" {
+		return nil
+	}
+	st := assign("=", []ir.Expr{ir.NewIdent("_", nil)}, []ir.Expr{ir.NewIdent(b.Go, b.Type)})
+	l.note(st, "Go will not compile a local variable that is never read, on the "+
+		"grounds that an unread variable is usually a mistake. Nothing in this "+
+		"program reads "+b.Go+", and assigning it to the blank identifier is how Go "+
+		"says that is deliberate.",
+		"var-vs-short-declaration")
 	return []ir.Stmt{st}
 }
 
@@ -217,7 +240,13 @@ func (l *Lowerer) listAssign(targets []ast.Expr, rhs ast.Expr, n *ast.Assign, de
 			"right-hand side before storing any of them. That is what makes a, b = b, a "+
 			"a working swap.",
 			"multiple-return-values")
-		return []ir.Stmt{st}
+		out := []ir.Stmt{st}
+		if declare {
+			for _, t := range targets {
+				out = append(out, l.discardIfUnused(l.bindingFor(t.(*ast.Var), false))...)
+			}
+		}
+		return out
 	}
 
 	// A call that returns exactly as many values as there are targets.
@@ -291,6 +320,9 @@ func (l *Lowerer) listAssignByIndex(targets []ast.Expr, rhs ast.Expr, n *ast.Ass
 		val := l.helperCall(hAt, elem, ir.NewIdent(tmp, typeOrAny(src)), ir.IntLit(itoa(i)))
 		out = append(out, assign(declOp(declare), []ir.Expr{ir.NewIdent(b.Go, b.Type)},
 			[]ir.Expr{l.assignable(val, b.Type, nil)}))
+		if declare {
+			out = append(out, l.discardIfUnused(b)...)
+		}
 		i++
 	}
 	return out
@@ -384,7 +416,7 @@ func (l *Lowerer) assignToIndex(lhs *ast.Index, n *ast.Assign) []ir.Stmt {
 	}
 	st := assign("=", []ir.Expr{index(base, idx, elem)}, []ir.Expr{value})
 	l.setProv(st, n)
-	l.approximate(n, "P2G5540", "assigning past the end of an array",
+	l.approximate(n, "P2G5561", "assigning past the end of an array",
 		"Go does not grow a slice on assignment",
 		"Assigning to an index beyond the end of a Perl array extends it, filling "+
 			"the gap with undef. Assigning past the end of a Go slice panics.",
@@ -535,14 +567,29 @@ func (l *Lowerer) compoundAssign(n *ast.Assign) []ir.Stmt {
 		return []ir.Stmt{st}
 
 	case "+", "-", "*":
-		if b := l.bindingOfTarget(n.LHS); b != nil {
-			l.observe(b, typeOrAny(l.scalar(n.RHS)))
-		}
+		// The right side is lowered once: lowering it twice would run any
+		// setup it needed twice as well.
 		value := l.scalar(n.RHS)
-		if t.Kind == ir.Float {
+		if b := l.bindingOfTarget(n.LHS); b != nil {
+			l.observe(b, typeOrAny(value))
+		}
+		switch t.Kind {
+		case ir.Float:
 			value = l.toFloat(value, n.RHS)
-		} else if t.Kind == ir.Int {
+		case ir.Int:
 			value = l.toInt(value, n.RHS)
+		case ir.Any:
+			// A dynamic target cannot be added to directly, so the arithmetic
+			// happens in float64 and the result goes back into the value.
+			st := assign("=", []ir.Expr{target},
+				[]ir.Expr{ir.Bin(op, l.toFloat(target, n.LHS), l.toFloat(value, n.RHS), ir.TFloat)})
+			l.setProv(st, n)
+			l.note(st, "Arithmetic needs to know what it is adding, and this variable's "+
+				"type did not resolve, so both sides go through a conversion first. "+
+				"Giving the variable a concrete type at its declaration removes all of "+
+				"this.",
+				"explicit-conversions-no-coercion", "type-assertions-and-switches")
+			return []ir.Stmt{st}
 		}
 		st := assign(op+"=", []ir.Expr{target}, []ir.Expr{value})
 		l.setProv(st, n)

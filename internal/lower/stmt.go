@@ -32,7 +32,7 @@ func (l *Lowerer) stmts(list []ast.Stmt) []ir.Stmt {
 func (l *Lowerer) block(list []ast.Stmt) *ir.Block {
 	saved := l.scope
 	l.scope = newScope(saved)
-	b := &ir.Block{Stmts: l.stmts(list)}
+	b := l.markUnused(&ir.Block{Stmts: l.stmts(list)})
 	l.scope = saved
 	return b
 }
@@ -110,6 +110,19 @@ func (l *Lowerer) stmt(st ast.Stmt) []ir.Stmt {
 	case *ast.Foreach:
 		return l.foreachStmt(n)
 	case *ast.Block:
+		// A Perl bare block is a loop that runs once, which is why last and
+		// next work inside it. When the body uses them, the Go form has to be
+		// a real loop or the branch has nothing to leave.
+		if usesLoopControl(n.Body) {
+			body := l.block(n.Body)
+			body.Stmts = append(body.Stmts, &ir.Branch{Kind: "break"})
+			out := &ir.For{Body: body, Label: l.label(n.Label)}
+			l.setProv(out, n)
+			l.note(out, "A bare block in Perl is a loop that runs exactly once, which "+
+				"is why last and next work inside one. Go has no such block, so it "+
+				"becomes a for loop that breaks at the bottom.")
+			return []ir.Stmt{out}
+		}
 		out := &ir.BlockStmt{Body: l.block(n.Body)}
 		l.setProv(out, n)
 		l.note(out, "A bare block in Perl exists to scope its variables. Go blocks "+
@@ -136,6 +149,31 @@ func (l *Lowerer) stmt(st ast.Stmt) []ir.Stmt {
 		"this statement is not implemented",
 		"The converter has no rule for this kind of statement.",
 		"Translate it by hand.")}
+}
+
+// usesLoopControl reports whether a statement list branches out of its
+// enclosing loop, not counting loops nested inside it, which have their own.
+func usesLoopControl(body []ast.Stmt) bool {
+	for _, st := range body {
+		switch n := st.(type) {
+		case *ast.LoopCtl:
+			return true
+		case *ast.If:
+			if usesLoopControl(n.Then) || usesLoopControl(n.Else) {
+				return true
+			}
+			for _, ei := range n.ElseIfs {
+				if usesLoopControl(ei.Then) {
+					return true
+				}
+			}
+		case *ast.Block:
+			if usesLoopControl(n.Body) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // exprStatement lowers an expression evaluated for effect.
@@ -219,6 +257,12 @@ func (l *Lowerer) exprStatement(e ast.Expr) []ir.Stmt {
 	if x == nil {
 		return nil
 	}
+	// Go allows only a call in statement position. Anything else evaluated
+	// for effect has already had its effect through the setup statements
+	// queued in front of it, and the value itself is discarded.
+	if _, isCall := x.(*ir.Call); !isCall {
+		return nil
+	}
 	st := exprStmt(x)
 	l.setProv(st, e)
 	return []ir.Stmt{st}
@@ -244,6 +288,7 @@ func (l *Lowerer) declarationOnly(n *ast.My) []ir.Stmt {
 		}
 		l.setProv(st, v)
 		out = append(out, st)
+		out = append(out, l.discardIfUnused(b)...)
 	}
 	return out
 }
@@ -251,18 +296,49 @@ func (l *Lowerer) declarationOnly(n *ast.My) []ir.Stmt {
 // incDecStmt lowers ++ and -- in statement position, which is where Go allows
 // them.
 func (l *Lowerer) incDecStmt(n *ast.UnOp) []ir.Stmt {
+	if b := l.bindingOfTarget(n.X); b != nil {
+		// Incrementing $h{k} says the values are numbers, not that the hash
+		// itself is one, which is what makes a counting hash come out as
+		// map[string]int rather than map[string]any.
+		switch n.X.(type) {
+		case *ast.HashIndex, *ast.Index:
+			l.observeElem(b, ir.TInt)
+		default:
+			l.observe(b, ir.TInt)
+		}
+	}
 	target := l.assignTarget(n.X)
 	if target == nil {
 		return []ir.Stmt{exprStmt(l.expr(n))}
 	}
 	if typeOrAny(target).Kind == ir.String && n.Op == "++" {
-		return []ir.Stmt{exprStmt(l.incDecExpr(n))}
+		// The step itself is the statement; the value it produces is not
+		// wanted, and a bare identifier is not a statement in Go.
+		savedPre := l.pre
+		l.pre = nil
+		l.incDecExpr(n)
+		out := l.takePre()
+		l.pre = savedPre
+		return out
+	}
+	if typeOrAny(target).Kind == ir.Any {
+		// Go's ++ needs a numeric type, and this one is not known until the
+		// program runs, so the step is written as arithmetic instead.
+		step := "+"
+		if n.Op == "--" {
+			step = "-"
+		}
+		st := assign("=", []ir.Expr{target},
+			[]ir.Expr{ir.Bin(step, l.toFloat(target, n.X), ir.FloatLit("1"), ir.TFloat)})
+		l.setProv(st, n)
+		l.note(st, "++ works on numbers, and this variable's type did not resolve, so "+
+			"the step goes through a conversion. Declaring the variable as an int "+
+			"turns this back into a plain ++.",
+			"explicit-conversions-no-coercion")
+		return []ir.Stmt{st}
 	}
 	st := &ir.IncDec{X: target, Dec: n.Op == "--"}
 	l.setProv(st, n)
-	if b := l.bindingOfTarget(n.X); b != nil {
-		l.observe(b, ir.TInt)
-	}
 	if _, isHash := n.X.(*ast.HashIndex); isHash {
 		l.note(st, "Incrementing a missing map key works because reading a missing key "+
 			"gives the value type's zero value: counters need no initialisation, exactly "+
@@ -336,7 +412,7 @@ func (l *Lowerer) whileStmt(n *ast.While) []ir.Stmt {
 	}
 	setup := l.takePre()
 
-	out := &ir.For{Cond: cond, Body: l.block(n.Body), Label: n.Label}
+	out := &ir.For{Cond: cond, Body: l.block(n.Body), Label: l.label(n.Label)}
 	l.setProv(out, n)
 	l.note(out, "Go has one loop keyword. `for cond { }` is its while, `for { }` is "+
 		"its infinite loop, and there is no do-while and no until.",
@@ -366,7 +442,7 @@ func (l *Lowerer) doWhile(n *ast.While) []ir.Stmt {
 		Cond: ir.Un("!", cond, ir.TBool),
 		Then: &ir.Block{Stmts: []ir.Stmt{&ir.Branch{Kind: "break"}}},
 	})
-	out := &ir.For{Body: body, Label: n.Label}
+	out := &ir.For{Body: body, Label: l.label(n.Label)}
 	l.setProv(out, n)
 	l.note(out, "Go has no do-while. The body-first shape is written as an "+
 		"unconditional for loop that breaks at the bottom, which runs the body at "+
@@ -418,7 +494,7 @@ func (l *Lowerer) forStmt(n *ast.ForC) []ir.Stmt {
 
 	body := l.block(n.Body)
 	body.Stmts = append(body.Stmts, extraPost...)
-	out := &ir.For{Init: init, Cond: cond, Post: post, Body: body, Label: n.Label}
+	out := &ir.For{Init: init, Cond: cond, Post: post, Body: body, Label: l.label(n.Label)}
 	l.setProv(out, n)
 	l.note(out, "A C-style for loop carries over almost unchanged. Go drops the "+
 		"parentheses around the header and requires the braces.")
@@ -442,17 +518,23 @@ func (l *Lowerer) packageStmt(n *ast.PackageDecl) []ir.Stmt {
 
 // loopCtl lowers last, next, and redo.
 func (l *Lowerer) loopCtl(n *ast.LoopCtl) []ir.Stmt {
+	if n.Label != "" {
+		if l.usedLabels == nil {
+			l.usedLabels = map[string]bool{}
+		}
+		l.usedLabels[n.Label] = true
+	}
 	switch n.Op {
 	case "last":
-		out := &ir.Branch{Kind: "break", Label: n.Label}
+		out := &ir.Branch{Kind: "break", Label: l.label(n.Label)}
 		l.setProv(out, n)
 		return []ir.Stmt{out}
 	case "next":
-		out := &ir.Branch{Kind: "continue", Label: n.Label}
+		out := &ir.Branch{Kind: "continue", Label: l.label(n.Label)}
 		l.setProv(out, n)
 		return []ir.Stmt{out}
 	}
-	return []ir.Stmt{l.todoStmt(n, "P2G3540", "redo",
+	return []ir.Stmt{l.todoStmt(n, "P2G3510", "redo",
 		"redo has no Go equivalent",
 		"redo restarts the current iteration without re-evaluating the loop "+
 			"condition or the increment. Go has break and continue and nothing that "+
@@ -536,11 +618,22 @@ func (l *Lowerer) todoStmt(n ast.Node, code, construct, short, message, advice s
 // its block.
 func (l *Lowerer) globalDecl(b *Binding) ir.Decl {
 	d := &ir.VarDecl{Names: []string{b.Go}, Type: b.Type}
-	if b.Type != nil && b.Type.Kind == ir.Map {
+	switch {
+	case b.Init != nil:
+		d.Type = nil
+		d.Values = []ir.Expr{b.Init}
+	case b.Type != nil && b.Type.Kind == ir.Map:
 		d.Values = []ir.Expr{composite(b.Type, nil, nil)}
 	}
 	d.Doc = []string{b.Go + " holds " + typeWords(b.Type) + "."}
+	if b.Doc != "" {
+		d.Doc = []string{b.Doc}
+	}
 	if l.pass == 2 {
+		if b.Explain != "" {
+			ir.Annotate(d, b.Explain)
+			return d
+		}
 		ir.Annotate(d, "This was a package variable in the original, reachable from "+
 			"every sub in the file. Go's package-level variables work the same way, "+
 			"and a name starting with a lower-case letter is visible only inside this "+

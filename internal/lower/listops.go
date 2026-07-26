@@ -104,7 +104,7 @@ func (l *Lowerer) defaultSort(target ir.Expr, elem *ir.Type, n *ast.Call) ir.Stm
 	}}
 	fn := funcLit([]ir.Param{{Name: a, Type: elem}, {Name: b, Type: elem}}, []*ir.Type{ir.TInt}, body)
 	st := exprStmt(call("slices", "slices", "SortFunc", ir.TVoid, target, fn))
-	l.approximate(n, "P2G5501", "sort with no comparator",
+	l.approximate(n, "P2G5540", "sort with no comparator",
 		"the default sort compares as text, not as numbers",
 		"Perl's sort with no block compares its values as strings, so (10, 9, 100) "+
 			"comes back as (10, 100, 9). Go has no default comparison at all, which "+
@@ -205,21 +205,17 @@ func comparatorShape(block []ast.Stmt) (cmpKind, bool) {
 
 // mapCall lowers map into the append loop that Go code writes instead.
 func (l *Lowerer) mapCall(n *ast.Call) ir.Expr {
-	src, item, body, ok := l.blockLoop(n)
+	src, item, body, value, ok := l.blockLoop(n)
 	if !ok {
 		return ir.Nil(ir.TAny)
 	}
-	if len(body) == 0 {
-		return src
-	}
-	last, isExpr := body[len(body)-1].(*ir.ExprStmt)
-	if !isExpr {
+	if value == nil {
 		return l.todoExpr(n, "P2G5595", "map block",
 			"this map block is not implemented",
 			"The block does not end in an expression, so there is nothing to collect.",
 			"Rewrite it as an explicit loop that appends what you want.")
 	}
-	outT := ir.SliceOf(typeOrAny(last.X))
+	outT := ir.SliceOf(typeOrAny(value))
 	name := l.tmp("mapped")
 	decl := &ir.DeclStmt{Names: []string{name}, Type: outT}
 	loop := &ir.Range{
@@ -227,9 +223,9 @@ func (l *Lowerer) mapCall(n *ast.Call) ir.Expr {
 		Value:  item,
 		X:      src,
 		Define: true,
-		Body: &ir.Block{Stmts: append(body[:len(body)-1],
+		Body: &ir.Block{Stmts: append(body,
 			assign("=", []ir.Expr{ir.NewIdent(name, outT)},
-				[]ir.Expr{appendTo(ir.NewIdent(name, outT), last.X)}))},
+				[]ir.Expr{appendTo(ir.NewIdent(name, outT), value)}))},
 	}
 	l.setProv(decl, n)
 	l.note(decl, "Go has no map over a slice, and the standard library deliberately "+
@@ -244,15 +240,11 @@ func (l *Lowerer) mapCall(n *ast.Call) ir.Expr {
 
 // grepCall lowers grep into a filtering loop.
 func (l *Lowerer) grepCall(n *ast.Call) ir.Expr {
-	src, item, body, ok := l.blockLoop(n)
+	src, item, body, value, ok := l.blockLoop(n)
 	if !ok {
 		return ir.Nil(ir.TAny)
 	}
-	if len(body) == 0 {
-		return src
-	}
-	last, isExpr := body[len(body)-1].(*ir.ExprStmt)
-	if !isExpr {
+	if value == nil {
 		return l.todoExpr(n, "P2G5596", "grep block",
 			"this grep block is not implemented",
 			"The block does not end in an expression, so there is no test to apply.",
@@ -261,7 +253,7 @@ func (l *Lowerer) grepCall(n *ast.Call) ir.Expr {
 	t := typeOrAny(src)
 	name := l.tmp("matched")
 	decl := &ir.DeclStmt{Names: []string{name}, Type: t}
-	cond := last.X
+	cond := value
 	if typeOrAny(cond).Kind != ir.Bool {
 		cond = l.toBool(cond, nil)
 	}
@@ -270,7 +262,7 @@ func (l *Lowerer) grepCall(n *ast.Call) ir.Expr {
 		Value:  item,
 		X:      src,
 		Define: true,
-		Body: &ir.Block{Stmts: append(body[:len(body)-1], &ir.If{
+		Body: &ir.Block{Stmts: append(body, &ir.If{
 			Cond: cond,
 			Then: &ir.Block{Stmts: []ir.Stmt{
 				assign("=", []ir.Expr{ir.NewIdent(name, t)}, []ir.Expr{appendTo(ir.NewIdent(name, t), item)}),
@@ -289,7 +281,7 @@ func (l *Lowerer) grepCall(n *ast.Call) ir.Expr {
 
 // blockLoop is the shared setup for map and grep: it lowers the list, invents
 // the loop variable, and lowers the block with $_ bound to it.
-func (l *Lowerer) blockLoop(n *ast.Call) (src ir.Expr, item ir.Expr, body []ir.Stmt, ok bool) {
+func (l *Lowerer) blockLoop(n *ast.Call) (src ir.Expr, item ir.Expr, body []ir.Stmt, value ir.Expr, ok bool) {
 	args := flatten(argList(n))
 	block := n.Block
 	if block == nil && len(args) > 0 {
@@ -298,7 +290,7 @@ func (l *Lowerer) blockLoop(n *ast.Call) (src ir.Expr, item ir.Expr, body []ir.S
 		args = args[1:]
 	}
 	if block == nil || len(args) == 0 {
-		return nil, nil, nil, false
+		return nil, nil, nil, nil, false
 	}
 	var listArgs []ast.Expr
 	listArgs = append(listArgs, args...)
@@ -319,15 +311,26 @@ func (l *Lowerer) blockLoop(n *ast.Call) (src ir.Expr, item ir.Expr, body []ir.S
 	l.topicStack = append(l.topicStack, item)
 	defer func() { l.topicStack = l.topicStack[:len(l.topicStack)-1] }()
 
+	// The block's value is its last expression, so that one is lowered as an
+	// expression rather than as a statement: a statement layer would discard
+	// exactly the thing the block exists to produce.
+	lead := block
+	var tail ast.Expr
+	if last, isExpr := block[len(block)-1].(*ast.ExprStmt); isExpr {
+		lead = block[:len(block)-1]
+		tail = last.X
+	}
+
 	savedPre := l.pre
 	l.pre = nil
-	body = l.stmts(block)
+	body = l.stmts(lead)
+	if tail != nil {
+		value = l.expr(tail)
+	}
 	inner := l.takePre()
 	l.pre = savedPre
-	if len(inner) > 0 {
-		body = append(inner, body...)
-	}
-	return src, item, body, true
+	body = append(body, inner...)
+	return src, item, body, value, true
 }
 
 // mapToHash recognises `map { KEY => VALUE } LIST` used to build a hash, which
@@ -419,34 +422,30 @@ func (l *Lowerer) splitCall(n *ast.Call) ir.Expr {
 		return out
 	}
 
-	// A literal separator with no pattern metacharacters is a plain string
-	// split, which is what a Go developer writes and is much faster.
-	if sep, ok := l.literalSeparator(args[0]); ok {
-		out := call("strings", "strings", "Split", ir.SliceOf(ir.TString), subject, ir.Str(quote(sep)))
-		l.inform(n, "P2G4530", "split on a fixed separator",
-			"split removes trailing empty fields unless a negative limit is given, "+
-				"and strings.Split keeps them. For \"a,b,,\" the original yields two "+
-				"fields and strings.Split yields four. Add a trim if the input can end "+
-				"with separators.")
-		l.note(out, "strings.Split takes the separator as plain text, not as a "+
-			"pattern, so nothing has to be escaped and no regular expression is "+
-			"compiled.")
-		return out
-	}
-
 	pattern, ok := l.patternOf(args[0])
 	if !ok {
 		return composite(ir.SliceOf(ir.TString), nil, nil)
 	}
-	limit := ir.Expr(ir.IntLit("-1"))
+	// No third argument means Perl's default limit of zero, which drops
+	// trailing empty fields. A negative limit is what keeps them.
+	limit := ir.Expr(ir.IntLit("0"))
 	if len(args) > 2 {
 		limit = l.toInt(l.expr(args[2]), args[2])
 	}
 	out := l.helperCall(hSplitPattern, ir.SliceOf(ir.TString), pattern, subject, limit)
+	if sep, plain := l.literalSeparator(args[0]); plain {
+		l.note(out, "The separator here is plain text, so strings.Split(s, "+
+			quote(sep)+") is the direct Go answer and is what you would normally "+
+			"write. It differs in two ways that matter: split drops trailing empty "+
+			"fields unless a negative limit says otherwise, and its third argument "+
+			"caps the number of fields with the remainder left in the last one. The "+
+			"helper keeps both rules.")
+		return out
+	}
 	l.note(out, "Splitting on a pattern uses the compiled regular expression. The "+
-		"helper keeps the rules Go's regexp.Split does not have: trailing empty "+
-		"fields are dropped, and a pattern with capture groups puts the captures into "+
-		"the result.",
+		"helper keeps the rules regexp.Split does not have: trailing empty fields "+
+		"are dropped, the limit leaves the remainder in the last field, and a "+
+		"pattern with capture groups puts the captures into the result.",
 		"regexp-is-re2")
 	return out
 }

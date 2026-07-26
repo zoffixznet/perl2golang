@@ -1,0 +1,26 @@
+[
+  {
+    "tier": "tier1",
+    "name": "01-hello",
+    "path": "corpus/tier1/01-hello",
+    "args": [],
+    "has_stdin": false,
+    "has_files": false,
+    "allow_stderr": false,
+    "expected_exit": 0,
+    "deterministic": true,
+    "kind": "convert"
+  },
+  {
+    "tier": "tier4",
+    "name": "01-eval",
+    "path": "corpus/tier4/01-eval",
+    "args": [],
+    "has_stdin": false,
+    "has_files": false,
+    "allow_stderr": false,
+    "expected_exit": 0,
+    "deterministic": true,
+    "kind": "honest-failure"
+  }
+]

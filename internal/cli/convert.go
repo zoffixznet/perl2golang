@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -89,9 +90,11 @@ func runConvert(e *env, args []string) int {
 	}
 
 	// A snippet and standard input are the two inputs with no natural output
-	// directory, and both decide the default output mode, so the question is
-	// settled from the flags rather than from whether the read succeeded.
-	snippet := f.exprSet || (len(f.inputs) == 1 && f.inputs[0] == "-")
+	// directory, so they print to standard output unless -o says where a
+	// directory should go. The question is settled from the flags rather than
+	// from whether the read succeeded, so a bad file name does not change
+	// where the good ones would have gone.
+	snippet := (f.exprSet || (len(f.inputs) == 1 && f.inputs[0] == "-")) && f.out == ""
 	stream := resolveStream(f.stream, snippet)
 	if code := checkConflicts(e, f, stream); code != ExitOK {
 		return code
@@ -102,15 +105,13 @@ func runConvert(e *env, args []string) int {
 		return code
 	}
 
-	// The terminal summary is the product of a run that writes files, so it
-	// goes to stdout. As soon as stdout is carrying converted code or JSON,
-	// the summary moves to stderr and stays out of the pipe.
-	out := e.stdout
-	if stream != streamOff || f.json {
-		out = e.stderr
-	}
 	color := !f.json && diag.ColorEnabled(e.stderr, f.color)
 
+	if stream == streamOff {
+		if code := assignOutputDirs(e, f, runs); code != ExitOK {
+			return code
+		}
+	}
 	for _, r := range runs {
 		r.convert(f, stream)
 	}
@@ -129,6 +130,14 @@ func runConvert(e *env, args []string) int {
 	if err := emitArtifacts(e, runs, stream, worst); err != nil {
 		fmt.Fprintf(e.stderr, "perl2go: writing to standard output: %v\n", err)
 		return ExitFailed
+	}
+	// The terminal summary is the product of a run that writes files, so it
+	// goes to stdout. As soon as stdout is carrying converted code, or the run
+	// produced nothing at all, the summary moves to stderr: whatever else
+	// happens, stdout holds the artifact or it holds nothing.
+	out := e.stdout
+	if stream != streamOff || !anyOutput(runs) {
+		out = e.stderr
 	}
 	writeSummary(out, runs, stream, f.verbose)
 	for _, r := range runs {
@@ -159,7 +168,8 @@ func parseConvertFlags(e *env, args []string) (*convertFlags, int) {
 	fs.BoolVar(&f.verbose, "verbose", false, "")
 	fs.StringVar(&f.color, "color", "auto", "")
 
-	if err := fs.Parse(args); err != nil {
+	positional, err := parseInterspersed(fs, args)
+	if err != nil {
 		if errors.Is(err, flag.ErrHelp) {
 			return nil, e.print(convertHelp())
 		}
@@ -175,8 +185,37 @@ func parseConvertFlags(e *env, args []string) (*convertFlags, int) {
 			f.exprSet = true
 		}
 	})
-	f.inputs = fs.Args()
+	f.inputs = positional
 	return f, ExitOK
+}
+
+// parseInterspersed parses flags that appear anywhere on the line, not only
+// before the first file name.
+//
+// The standard flag package stops at the first argument that is not a flag,
+// which would make `perl2go report.pl --strict` convert a file called
+// --strict. Feeding it the arguments in runs, and collecting the positionals
+// in between, gives the behaviour people expect while leaving every flag's
+// syntax exactly as the standard package defines it. Everything after a bare
+// "--" is positional, whatever it looks like.
+func parseInterspersed(fs *flag.FlagSet, args []string) ([]string, error) {
+	var tail []string
+	if i := slices.Index(args, "--"); i >= 0 {
+		tail = args[i+1:]
+		args = args[:i]
+	}
+	var positional []string
+	for {
+		if err := fs.Parse(args); err != nil {
+			return nil, err
+		}
+		args = fs.Args()
+		if len(args) == 0 {
+			return append(positional, tail...), nil
+		}
+		positional = append(positional, args[0])
+		args = args[1:]
+	}
 }
 
 // checkConflicts rejects flag combinations that contradict each other, before
@@ -190,9 +229,6 @@ func checkConflicts(e *env, f *convertFlags, stream streamMode) int {
 	}
 	if f.out != "" && stream != streamOff {
 		return conflict("--out", "--stdout")
-	}
-	if f.out != "" && f.json {
-		return conflict("--out", "--json")
 	}
 	return ExitOK
 }
@@ -355,8 +391,9 @@ func (r *run) convert(f *convertFlags, stream streamMode) {
 		Path:   r.in.path,
 		Verify: true,
 		// The compact case asks for the Go and the notes, not a documentation
-		// tree it has nowhere to put.
-		NoDocs: stream == streamBare,
+		// tree it has nowhere to put. --json is the exception: it promises
+		// every artifact, so it always asks for the documents.
+		NoDocs: stream == streamBare && !f.json,
 	})
 	r.elapsed = time.Since(start)
 	if err != nil {
@@ -367,7 +404,6 @@ func (r *run) convert(f *convertFlags, stream streamMode) {
 	r.res = res
 
 	if stream == streamOff {
-		r.dir = outputDir(f.out, r.in, len(f.inputs) > 1)
 		res.Report.OutputDir = r.dir
 		if err := project.Write(r.dir, res.Bundle(), f.force); err != nil {
 			r.err = err
@@ -384,6 +420,33 @@ func (r *run) convert(f *convertFlags, stream streamMode) {
 			r.exit = ExitStrict
 		}
 	}
+}
+
+// assignOutputDirs works out where each input's bundle goes, before any of
+// them is converted.
+//
+// Two inputs with the same base name, which is common when a tree holds one
+// script per directory, would otherwise both claim the same output directory
+// and the second would fail with a puzzling complaint about a directory this
+// same run had just created. Saying so up front, before anything is written,
+// is the difference between an error the user can act on and one they have to
+// work out.
+func assignOutputDirs(e *env, f *convertFlags, runs []*run) int {
+	several := len(f.inputs) > 1
+	taken := map[string]string{}
+	for _, r := range runs {
+		if r.failed() {
+			continue
+		}
+		r.dir = outputDir(f.out, r.in, several)
+		if first, clash := taken[r.dir]; clash {
+			return e.usagef("%s and %s would both be written to %s. "+
+				"Convert them one at a time with -o, or give them different names",
+				first, r.in.display, r.dir)
+		}
+		taken[r.dir] = r.in.display
+	}
+	return ExitOK
 }
 
 // outputDir decides where one input's bundle goes.

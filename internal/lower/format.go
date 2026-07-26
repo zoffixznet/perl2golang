@@ -61,7 +61,16 @@ func (l *Lowerer) perlFormat(format string, args []ir.Expr, at ast.Node) (string
 		case 'o', 'x', 'X', 'b':
 			out.WriteString(spec)
 			outArgs = append(outArgs, l.toInt(a, at))
-		case 'e', 'E', 'f', 'F', 'g', 'G':
+		case 'g', 'G':
+			// Perl's %g defaults to six significant digits, following C. Go's
+			// %g defaults to the shortest text that reads back exactly, so the
+			// precision has to be written out or the two disagree.
+			if !strings.Contains(spec, ".") {
+				spec = spec[:len(spec)-1] + ".6" + spec[len(spec)-1:]
+			}
+			out.WriteString(spec)
+			outArgs = append(outArgs, l.toFloat(a, at))
+		case 'e', 'E', 'f', 'F':
 			out.WriteString(spec)
 			outArgs = append(outArgs, l.toFloat(a, at))
 		case 's':

@@ -1,13 +1,17 @@
 // Command perl2go converts Perl 5 scripts to Go and generates teaching
 // material explaining the Go it produced.
+//
+// Everything this command does lives in [perl2go/internal/cli], so the
+// terminal behaviour can be tested without building a binary or spawning a
+// process. main is only the hand-off: arguments in, exit status out.
 package main
 
 import (
-	"fmt"
 	"os"
+
+	"perl2go/internal/cli"
 )
 
 func main() {
-	fmt.Fprintln(os.Stderr, "perl2go: not yet implemented")
-	os.Exit(1)
+	os.Exit(cli.Run(os.Args[1:], os.Stdin, os.Stdout, os.Stderr))
 }

@@ -270,16 +270,25 @@ func (r *runner) runEntry(ctx context.Context, e Entry) EntryResult {
 
 	compiled, bins := r.compile(ctx, e, conv, class)
 	set(StageCompiled, compiled)
+	if bins != nil {
+		defer bins.cleanup()
+	}
 
-	clean, annotated := r.equivalence(ctx, e, fixture, compiled, bins, &res)
-	set(StageEquivalent, clean)
-	res.EquivalentAnnotated = annotated
+	// Tier 4 is judged by what the tool said, not by what the program did, so
+	// its programs are only run when its own expectation asks for behavioural
+	// equivalence.
+	clean, annotated := notApplicable(), notApplicable()
+	if e.Kind != KindHonestFailure || contains(res.Categories, CatConvertVerify) {
+		clean, annotated = r.equivalence(ctx, e, fixture, compiled, bins, &res)
+	}
 
 	if e.Kind == KindHonestFailure {
 		set(StageEquivalent, notApplicable())
 		res.EquivalentAnnotated = notApplicable()
 		set(StageHonest, honest(res.Categories, class, compiled, clean, annotated))
 	} else {
+		set(StageEquivalent, clean)
+		res.EquivalentAnnotated = annotated
 		set(StageHonest, notApplicable())
 	}
 	return finish()
@@ -293,31 +302,20 @@ type binaries struct {
 	cleanup   func()
 }
 
-// compile decides the compiled stage and, when the equivalence stage still has
-// a chance of running, produces the two executables it needs.
+// compile decides the compiled stage and produces the two executables the
+// equivalence stage needs.
 //
-// The conversion has already put the generated files through the real toolchain
-// and recorded what it found, so a program that did not build is failed on that
-// evidence without compiling it a second time.
+// The two programs are built one at a time, the clean one first, so a failure
+// always names the same package and the same line whichever machine the run
+// happens on. A single build of both packages would report whichever of them
+// the compiler reached first, and two runs would then disagree about a number
+// that did not change.
 func (r *runner) compile(ctx context.Context, e Entry, conv *convert.Result, class Classification) (StageResult, *binaries) {
 	if conv == nil || !class.Emitted.passed() {
 		return fail("nothing was emitted to compile"), nil
 	}
 	if !r.env.Toolchain {
 		return skip("no Go toolchain on PATH"), nil
-	}
-	if !conv.Report.Verified.Toolchain {
-		return skip("the conversion found no Go toolchain"), nil
-	}
-	if !conv.Report.Verified.Built {
-		reason := "the generated Go does not compile"
-		if conv.Report.Verified.Error != "" {
-			reason += ": " + truncate(firstLine(conv.Report.Verified.Error), 160)
-		}
-		return fail(reason), nil
-	}
-	if r.opts.Short {
-		return pass(), nil
 	}
 
 	dir, err := os.MkdirTemp("", "perl2go-score-"+e.Tier+"-")
@@ -347,8 +345,14 @@ func (r *runner) compile(ctx context.Context, e Entry, conv *convert.Result, cla
 	} {
 		if out, err := r.goBuild(ctx, build, target.out, target.pkg); err != nil {
 			bins.cleanup()
-			return fail(fmt.Sprintf("go build %s: %s", target.pkg, truncate(firstLine(out+" "+err.Error()), 160))), nil
+			return fail("the generated Go does not compile: " +
+				truncate(compilerMessage(out+"\n"+err.Error()), 160)), nil
 		}
+	}
+	if r.opts.Short {
+		// Nothing will be run, so the executables are of no further use.
+		bins.cleanup()
+		return pass(), nil
 	}
 	return pass(), bins
 }
@@ -380,9 +384,6 @@ func (r *runner) goBuild(ctx context.Context, dir, out, pkg string) (string, err
 
 // equivalence runs the Perl and both generated programs and compares them.
 func (r *runner) equivalence(ctx context.Context, e Entry, f *Fixture, compiled StageResult, bins *binaries, res *EntryResult) (clean, annotated StageResult) {
-	if bins != nil {
-		defer bins.cleanup()
-	}
 	switch {
 	case r.opts.Short:
 		s := skip("equivalence was not checked in short mode")
@@ -541,6 +542,16 @@ func honest(categories []string, class Classification, compiled, clean, annotate
 		return skip(strings.Join(why, "; "))
 	}
 	return fail(strings.Join(why, "; "))
+}
+
+// contains reports whether a list of strings holds one.
+func contains(list []string, want string) bool {
+	for _, s := range list {
+		if s == want {
+			return true
+		}
+	}
+	return false
 }
 
 // allSkipped reports whether the only standard an entry could be judged by was

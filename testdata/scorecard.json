@@ -1,0 +1,6557 @@
+{
+  "format_version": 1,
+  "tool_version": "0.1.0",
+  "recorded": "2026-08-14T13:47:35Z",
+  "filter": {},
+  "environment": {
+    "perl": true,
+    "go_toolchain": true
+  },
+  "tiers": [
+    {
+      "tier": "tier1",
+      "entries": 35,
+      "stages": {
+        "compiled": {
+          "pass": 33,
+          "fail": 2,
+          "skip": 0
+        },
+        "emitted": {
+          "pass": 35,
+          "fail": 0,
+          "skip": 0
+        },
+        "equivalent": {
+          "pass": 6,
+          "fail": 29,
+          "skip": 0
+        },
+        "parsed": {
+          "pass": 21,
+          "fail": 14,
+          "skip": 0
+        },
+        "typed": {
+          "pass": 10,
+          "fail": 25,
+          "skip": 0
+        }
+      },
+      "equivalent_annotated": {
+        "pass": 6,
+        "fail": 29,
+        "skip": 0
+      },
+      "quality": {
+        "todos": 35,
+        "symbols": 363,
+        "symbols_typed": 273,
+        "refusals": 35,
+        "approximations": 49
+      }
+    },
+    {
+      "tier": "tier2",
+      "entries": 35,
+      "stages": {
+        "compiled": {
+          "pass": 9,
+          "fail": 26,
+          "skip": 0
+        },
+        "emitted": {
+          "pass": 35,
+          "fail": 0,
+          "skip": 0
+        },
+        "equivalent": {
+          "pass": 0,
+          "fail": 35,
+          "skip": 0
+        },
+        "parsed": {
+          "pass": 8,
+          "fail": 27,
+          "skip": 0
+        },
+        "typed": {
+          "pass": 0,
+          "fail": 35,
+          "skip": 0
+        }
+      },
+      "equivalent_annotated": {
+        "pass": 0,
+        "fail": 35,
+        "skip": 0
+      },
+      "quality": {
+        "todos": 181,
+        "symbols": 782,
+        "symbols_typed": 392,
+        "refusals": 201,
+        "approximations": 75
+      }
+    },
+    {
+      "tier": "tier3",
+      "entries": 25,
+      "stages": {
+        "compiled": {
+          "pass": 4,
+          "fail": 21,
+          "skip": 0
+        },
+        "emitted": {
+          "pass": 25,
+          "fail": 0,
+          "skip": 0
+        },
+        "equivalent": {
+          "pass": 0,
+          "fail": 25,
+          "skip": 0
+        },
+        "parsed": {
+          "pass": 1,
+          "fail": 24,
+          "skip": 0
+        },
+        "typed": {
+          "pass": 0,
+          "fail": 25,
+          "skip": 0
+        }
+      },
+      "equivalent_annotated": {
+        "pass": 0,
+        "fail": 25,
+        "skip": 0
+      },
+      "quality": {
+        "todos": 276,
+        "symbols": 700,
+        "symbols_typed": 236,
+        "refusals": 296,
+        "approximations": 100
+      }
+    },
+    {
+      "tier": "tier4",
+      "entries": 35,
+      "stages": {
+        "compiled": {
+          "pass": 19,
+          "fail": 16,
+          "skip": 0
+        },
+        "emitted": {
+          "pass": 35,
+          "fail": 0,
+          "skip": 0
+        },
+        "honest": {
+          "pass": 20,
+          "fail": 14,
+          "skip": 1
+        },
+        "parsed": {
+          "pass": 17,
+          "fail": 18,
+          "skip": 0
+        },
+        "typed": {
+          "pass": 11,
+          "fail": 24,
+          "skip": 0
+        }
+      },
+      "equivalent_annotated": {
+        "pass": 0,
+        "fail": 0,
+        "skip": 0
+      },
+      "quality": {
+        "todos": 58,
+        "symbols": 162,
+        "symbols_typed": 84,
+        "refusals": 65,
+        "approximations": 32
+      }
+    },
+    {
+      "tier": "domain",
+      "entries": 25,
+      "stages": {
+        "compiled": {
+          "pass": 3,
+          "fail": 22,
+          "skip": 0
+        },
+        "emitted": {
+          "pass": 25,
+          "fail": 0,
+          "skip": 0
+        },
+        "equivalent": {
+          "pass": 0,
+          "fail": 25,
+          "skip": 0
+        },
+        "parsed": {
+          "pass": 0,
+          "fail": 25,
+          "skip": 0
+        },
+        "typed": {
+          "pass": 0,
+          "fail": 25,
+          "skip": 0
+        }
+      },
+      "equivalent_annotated": {
+        "pass": 0,
+        "fail": 25,
+        "skip": 0
+      },
+      "quality": {
+        "todos": 112,
+        "symbols": 878,
+        "symbols_typed": 402,
+        "refusals": 134,
+        "approximations": 69
+      }
+    }
+  ],
+  "total": {
+    "tier": "TOTAL",
+    "entries": 155,
+    "stages": {
+      "compiled": {
+        "pass": 68,
+        "fail": 87,
+        "skip": 0
+      },
+      "emitted": {
+        "pass": 155,
+        "fail": 0,
+        "skip": 0
+      },
+      "equivalent": {
+        "pass": 6,
+        "fail": 114,
+        "skip": 0
+      },
+      "honest": {
+        "pass": 20,
+        "fail": 14,
+        "skip": 1
+      },
+      "parsed": {
+        "pass": 47,
+        "fail": 108,
+        "skip": 0
+      },
+      "typed": {
+        "pass": 21,
+        "fail": 134,
+        "skip": 0
+      }
+    },
+    "equivalent_annotated": {
+      "pass": 6,
+      "fail": 114,
+      "skip": 0
+    },
+    "quality": {
+      "todos": 662,
+      "symbols": 2885,
+      "symbols_typed": 1387,
+      "refusals": 731,
+      "approximations": 325
+    }
+  },
+  "quality": {
+    "todos": 662,
+    "symbols": 2885,
+    "symbols_typed": 1387,
+    "refusals": 731,
+    "approximations": 325
+  },
+  "entries": [
+    {
+      "tier": "tier1",
+      "name": "01-scalar-basics",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "pass"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "2 variables left dynamic out of 13"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "pass"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 13,
+        "symbols_typed": 11,
+        "refusals": 0,
+        "approximations": 0
+      },
+      "elapsed_ns": 1005354270
+    },
+    {
+      "tier": "tier1",
+      "name": "02-string-number-duality",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "stdout differs: line 8, byte 66: got \"equal\\n1000000\\n255 493 10\\n255 493...\", wanted \"differ\\n1000000\\n255 493 10\\n255 49...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "1 variable left dynamic out of 11"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "stdout differs: line 8, byte 66: got \"equal\\n1000000\\n255 493 10\\n255 493...\", wanted \"differ\\n1000000\\n255 493 10\\n255 49...\""
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 11,
+        "symbols_typed": 10,
+        "refusals": 0,
+        "approximations": 3
+      },
+      "elapsed_ns": 1004847631
+    },
+    {
+      "tier": "tier1",
+      "name": "03-undef-and-defined-or",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "exit status 2, wanted 0; stdout differs: line 3, byte 26: got \"dflt  logical-or=dflt\\nempty // :...\", wanted \"0  logical-or=dflt\\nempty // : \\ne...\"; stderr differs: 215 extra byte(s) after line 1, starting \"panic: the undef function is not...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "3 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "7 variables left dynamic out of 13"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "exit status 2, wanted 0; stdout differs: line 3, byte 26: got \"dflt  logical-or=dflt\\nempty // :...\", wanted \"0  logical-or=dflt\\nempty // : \\ne...\"; stderr differs: 237 extra byte(s) after line 1, starting \"panic: the undef function is not...\""
+      },
+      "quality": {
+        "todos": 3,
+        "symbols": 13,
+        "symbols_typed": 6,
+        "refusals": 3,
+        "approximations": 2
+      },
+      "elapsed_ns": 1098132265
+    },
+    {
+      "tier": "tier1",
+      "name": "04-numeric-arithmetic",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "stdout differs: line 17, byte 212: got \"29999999999999999\\nfloat equal\\n0....\", wanted \"30000000000000004\\nfloat not equa...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "stdout differs: line 17, byte 212: got \"29999999999999999\\nfloat equal\\n0....\", wanted \"30000000000000004\\nfloat not equa...\""
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 6,
+        "symbols_typed": 6,
+        "refusals": 0,
+        "approximations": 1
+      },
+      "elapsed_ns": 990615811
+    },
+    {
+      "tier": "tier1",
+      "name": "05-modulo-with-negatives",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "stdout differs: line 10, byte 393: got \"0  q*d+m=   3\\n-13:5   mod=  2  f...\", wanted \"2  q*d+m=  13\\n-13:5   mod=  2  f...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "stdout differs: line 10, byte 393: got \"0  q*d+m=   3\\n-13:5   mod=  2  f...\", wanted \"2  q*d+m=  13\\n-13:5   mod=  2  f...\""
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 8,
+        "symbols_typed": 8,
+        "refusals": 0,
+        "approximations": 6
+      },
+      "elapsed_ns": 1148886272
+    },
+    {
+      "tier": "tier1",
+      "name": "06-increment-and-magic-strings",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "stdout differs: line 1, byte 18: got \"6, i is now 6\\npre-inc returned 7...\", wanted \"5, i is now 6\\npre-inc returned 7...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "7 variables left dynamic out of 13"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "stdout differs: line 1, byte 18: got \"6, i is now 6\\npre-inc returned 7...\", wanted \"5, i is now 6\\npre-inc returned 7...\""
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 13,
+        "symbols_typed": 6,
+        "refusals": 0,
+        "approximations": 3
+      },
+      "elapsed_ns": 1047926612
+    },
+    {
+      "tier": "tier1",
+      "name": "07-comparison-operators",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "pass"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "pass"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 5,
+        "symbols_typed": 5,
+        "refusals": 0,
+        "approximations": 1
+      },
+      "elapsed_ns": 1022575388
+    },
+    {
+      "tier": "tier1",
+      "name": "08-truthiness",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "stdout differs: line 10, byte 203: got \"\\n'            =\u003e true\\n--- number...\", wanted \"N'            =\u003e true\\n--- number...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "4 variables left dynamic out of 10"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "stdout differs: line 10, byte 203: got \"\\n'            =\u003e true\\n--- number...\", wanted \"N'            =\u003e true\\n--- number...\""
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 10,
+        "symbols_typed": 6,
+        "refusals": 0,
+        "approximations": 0
+      },
+      "elapsed_ns": 1179931070
+    },
+    {
+      "tier": "tier1",
+      "name": "09-boolean-logic",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "exit status 2, wanted 0; stdout differs: line 1, byte 6: got \"yes\\n|| -\u003e yes\\n!  -\u003e yes\\n--- thes...\", wanted \"no\\n|| -\u003e yes\\n!  -\u003e yes\\n--- these...\"; stderr differs: 227 extra byte(s) after line 1, starting \"panic: runtime error: index out ...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "4 variables left dynamic out of 16"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "exit status 2, wanted 0; stdout differs: line 1, byte 6: got \"yes\\n|| -\u003e yes\\n!  -\u003e yes\\n--- thes...\", wanted \"no\\n|| -\u003e yes\\n!  -\u003e yes\\n--- these...\"; stderr differs: 248 extra byte(s) after line 1, starting \"panic: runtime error: index out ...\""
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 16,
+        "symbols_typed": 12,
+        "refusals": 0,
+        "approximations": 3
+      },
+      "elapsed_ns": 1063769561
+    },
+    {
+      "tier": "tier1",
+      "name": "10-array-basics",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "exit status 2, wanted 0; stdout differs: line 13, byte 310: got \"APPLE vs APPLE\\nout of range read...\", wanted \"apple vs APPLE\\nout of range read...\"; stderr differs: 156 extra byte(s) after line 1, starting \"panic: runtime error: index out ...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "1 variable left dynamic out of 8"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "exit status 2, wanted 0; stdout differs: line 13, byte 310: got \"APPLE vs APPLE\\nout of range read...\", wanted \"apple vs APPLE\\nout of range read...\"; stderr differs: 167 extra byte(s) after line 1, starting \"panic: runtime error: index out ...\""
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 8,
+        "symbols_typed": 7,
+        "refusals": 0,
+        "approximations": 4
+      },
+      "elapsed_ns": 1050770780
+    },
+    {
+      "tier": "tier1",
+      "name": "11-array-push-pop-shift-unshift",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "exit status 2, wanted 0; stdout differs: 317 byte(s) missing after line 5, expected \"pop on empty array: undef\\nempty ...\"; stderr differs: 143 extra byte(s) after line 1, starting \"panic: runtime error: index out ...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "3 variables left dynamic out of 13"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "exit status 2, wanted 0; stdout differs: 317 byte(s) missing after line 5, expected \"pop on empty array: undef\\nempty ...\"; stderr differs: 154 extra byte(s) after line 1, starting \"panic: runtime error: index out ...\""
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 13,
+        "symbols_typed": 10,
+        "refusals": 0,
+        "approximations": 1
+      },
+      "elapsed_ns": 961564186
+    },
+    {
+      "tier": "tier1",
+      "name": "12-array-splice",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "exit status 2, wanted 0; stdout differs: line 2, byte 50: got \"a b f g\\nremaining:        a b f ...\", wanted \"c d e\\nremaining:        a b f g\\n...\"; stderr differs: 218 extra byte(s) after line 1, starting \"panic: this form of splice is no...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "7 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "2 variables left dynamic out of 8"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "exit status 2, wanted 0; stdout differs: line 2, byte 50: got \"a b f g\\nremaining:        a b f ...\", wanted \"c d e\\nremaining:        a b f g\\n...\"; stderr differs: 238 extra byte(s) after line 1, starting \"panic: this form of splice is no...\""
+      },
+      "quality": {
+        "todos": 7,
+        "symbols": 8,
+        "symbols_typed": 6,
+        "refusals": 7,
+        "approximations": 7
+      },
+      "elapsed_ns": 1058943703
+    },
+    {
+      "tier": "tier1",
+      "name": "13-array-slices-and-reverse",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "exit status 2, wanted 0; stdout differs: line 2, byte 48: got \"\\nnegative slice: delta epsilon\\nr...\", wanted \" beta gamma\\nnegative slice: delt...\"; stderr differs: 173 extra byte(s) after line 1, starting \"panic: P2G2530: assigning to a s...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "2 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "exit status 2, wanted 0; stdout differs: line 2, byte 48: got \"\\nnegative slice: delta epsilon\\nr...\", wanted \" beta gamma\\nnegative slice: delt...\"; stderr differs: 183 extra byte(s) after line 1, starting \"panic: P2G2530: assigning to a s...\""
+      },
+      "quality": {
+        "todos": 2,
+        "symbols": 6,
+        "symbols_typed": 6,
+        "refusals": 2,
+        "approximations": 0
+      },
+      "elapsed_ns": 1002471970
+    },
+    {
+      "tier": "tier1",
+      "name": "14-list-assignment",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:45:11: use of untyped nil in assignment"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "4 variables left dynamic out of 24"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 24,
+        "symbols_typed": 20,
+        "refusals": 0,
+        "approximations": 2
+      },
+      "elapsed_ns": 350734259
+    },
+    {
+      "tier": "tier1",
+      "name": "15-hash-basics",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "exit status 2, wanted 0; stdout differs: 304 byte(s) missing after line 11, expected \"alice  exists=1 defined=1 true=1...\"; stderr differs: 217 extra byte(s) after line 1, starting \"panic: the undef function is not...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "1 untranslated construct"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "2 variables left dynamic out of 7"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "exit status 2, wanted 0; stdout differs: 304 byte(s) missing after line 11, expected \"alice  exists=1 defined=1 true=1...\"; stderr differs: 237 extra byte(s) after line 1, starting \"panic: the undef function is not...\""
+      },
+      "quality": {
+        "todos": 1,
+        "symbols": 7,
+        "symbols_typed": 5,
+        "refusals": 1,
+        "approximations": 0
+      },
+      "elapsed_ns": 1047005002
+    },
+    {
+      "tier": "tier1",
+      "name": "16-hash-slices-and-list-context",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "exit status 2, wanted 0; stdout differs: line 1, byte 14: got \"\\nunpacked:     h=localhost p=808...\", wanted \"localhost 8080\\nunpacked:     h=l...\"; stderr differs: 173 extra byte(s) after line 1, starting \"panic: P2G2530: assigning to a s...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "3 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "10 variables left dynamic out of 18"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "exit status 2, wanted 0; stdout differs: line 1, byte 14: got \"\\nunpacked:     h=localhost p=808...\", wanted \"localhost 8080\\nunpacked:     h=l...\"; stderr differs: 183 extra byte(s) after line 1, starting \"panic: P2G2530: assigning to a s...\""
+      },
+      "quality": {
+        "todos": 3,
+        "symbols": 18,
+        "symbols_typed": 8,
+        "refusals": 3,
+        "approximations": 3
+      },
+      "elapsed_ns": 1017644647
+    },
+    {
+      "tier": "tier1",
+      "name": "17-hash-counting",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "stdout differs: line 6, byte 86: got \"jumps     1\\ndog       2\\nand     ...\", wanted \"dog       2\\nfox       2\\nand     ...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "1 untranslated construct"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "5 variables left dynamic out of 13"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "stdout differs: line 6, byte 86: got \"jumps     1\\nover      1\\nend     ...\", wanted \"dog       2\\nfox       2\\nand     ...\""
+      },
+      "quality": {
+        "todos": 1,
+        "symbols": 13,
+        "symbols_typed": 8,
+        "refusals": 1,
+        "approximations": 0
+      },
+      "elapsed_ns": 1107237543
+    },
+    {
+      "tier": "tier1",
+      "name": "18-hash-each-and-iteration",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "exit status 2, wanted 0; stdout differs: 358 byte(s) missing after line 2, expected \"apples   10\\nfigs     12\\nkiwis   ...\"; stderr differs: 212 extra byte(s) after line 1, starting \"panic: each keeps hidden iterato...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "2 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "9 variables left dynamic out of 14"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "exit status 2, wanted 0; stdout differs: 358 byte(s) missing after line 2, expected \"apples   10\\nfigs     12\\nkiwis   ...\"; stderr differs: 232 extra byte(s) after line 1, starting \"panic: each keeps hidden iterato...\""
+      },
+      "quality": {
+        "todos": 2,
+        "symbols": 14,
+        "symbols_typed": 5,
+        "refusals": 2,
+        "approximations": 1
+      },
+      "elapsed_ns": 1172436738
+    },
+    {
+      "tier": "tier1",
+      "name": "19-if-unless-ternary",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "exit status 2, wanted 0; stdout differs: 16 byte(s) missing after line 20, expected \"evens=12 odds=9\\n\"; stderr differs: 157 extra byte(s) after line 1, starting \"panic: P2G2540: this compound as...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "1 untranslated construct"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "1 variable left dynamic out of 11"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "exit status 2, wanted 0; stdout differs: 16 byte(s) missing after line 20, expected \"evens=12 odds=9\\n\"; stderr differs: 168 extra byte(s) after line 1, starting \"panic: P2G2540: this compound as...\""
+      },
+      "quality": {
+        "todos": 1,
+        "symbols": 11,
+        "symbols_typed": 10,
+        "refusals": 1,
+        "approximations": 1
+      },
+      "elapsed_ns": 996090311
+    },
+    {
+      "tier": "tier1",
+      "name": "20-while-until-dowhile",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "stdout differs: line 18, byte 250: got \"--- the trap that defined() avoi...\", wanted \"item 0\\nitem 7\\n--- the trap that ...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "1 variable left dynamic out of 9"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "stdout differs: line 18, byte 250: got \"--- the trap that defined() avoi...\", wanted \"item 0\\nitem 7\\n--- the trap that ...\""
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 9,
+        "symbols_typed": 8,
+        "refusals": 0,
+        "approximations": 1
+      },
+      "elapsed_ns": 1026092060
+    },
+    {
+      "tier": "tier1",
+      "name": "21-for-and-foreach",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "pass"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "1 variable left dynamic out of 18"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "pass"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 18,
+        "symbols_typed": 17,
+        "refusals": 0,
+        "approximations": 2
+      },
+      "elapsed_ns": 1016759942
+    },
+    {
+      "tier": "tier1",
+      "name": "22-loop-control",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "exit status 2, wanted 0; stdout differs: 116 byte(s) missing after line 13, expected \"handled a after 3 attempts\\nhandl...\"; stderr differs: 138 extra byte(s) after line 1, starting \"panic: P2G3510: redo has no Go e...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "1 untranslated construct"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "exit status 2, wanted 0; stdout differs: 116 byte(s) missing after line 13, expected \"handled a after 3 attempts\\nhandl...\"; stderr differs: 149 extra byte(s) after line 1, starting \"panic: P2G3510: redo has no Go e...\""
+      },
+      "quality": {
+        "todos": 1,
+        "symbols": 5,
+        "symbols_typed": 5,
+        "refusals": 1,
+        "approximations": 1
+      },
+      "elapsed_ns": 906124475
+    },
+    {
+      "tier": "tier1",
+      "name": "23-statement-modifiers",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "stdout differs: line 6, byte 36: got \"i ended at 0\\nj=4\\nsquares: 1 4 9 ...\", wanted \"tick 0\\ni ended at -1\\nj=4\\nsquares...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "2 variables left dynamic out of 17"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "stdout differs: line 6, byte 36: got \"i ended at 0\\nj=4\\nsquares: 1 4 9 ...\", wanted \"tick 0\\ni ended at -1\\nj=4\\nsquares...\""
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 17,
+        "symbols_typed": 15,
+        "refusals": 0,
+        "approximations": 1
+      },
+      "elapsed_ns": 1093881654
+    },
+    {
+      "tier": "tier1",
+      "name": "24-sort-basics",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "stdout differs: line 11, byte 436: got \"banana Apple cherry date apple C...\", wanted \"date Apple apple Cherry banana c...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "2 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "6 variables left dynamic out of 13"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "stdout differs: line 11, byte 436: got \"banana Apple cherry date apple C...\", wanted \"date Apple apple Cherry banana c...\""
+      },
+      "quality": {
+        "todos": 2,
+        "symbols": 13,
+        "symbols_typed": 7,
+        "refusals": 2,
+        "approximations": 1
+      },
+      "elapsed_ns": 1117143915
+    },
+    {
+      "tier": "tier1",
+      "name": "25-sort-comparators",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "exit status 2, wanted 0; stdout differs: 337 byte(s) missing after line 2, expected \"bob     95\\nerin    95\\nalice   88...\"; stderr differs: 220 extra byte(s) after line 1, starting \"panic: sort with a named sub is ...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "5 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "7 variables left dynamic out of 18"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "exit status 2, wanted 0; stdout differs: 337 byte(s) missing after line 2, expected \"bob     95\\nerin    95\\nalice   88...\"; stderr differs: 240 extra byte(s) after line 1, starting \"panic: sort with a named sub is ...\""
+      },
+      "quality": {
+        "todos": 5,
+        "symbols": 18,
+        "symbols_typed": 11,
+        "refusals": 5,
+        "approximations": 4
+      },
+      "elapsed_ns": 1074600273
+    },
+    {
+      "tier": "tier1",
+      "name": "26-string-functions",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "stdout differs: line 23, byte 491: got \"]\\n[id]\\n--- case-insensitive comp...\", wanted \"      ]\\n[      id]\\n--- case-inse...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "stdout differs: line 23, byte 491: got \"]\\n[id]\\n--- case-insensitive comp...\", wanted \"      ]\\n[      id]\\n--- case-inse...\""
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 5,
+        "symbols_typed": 5,
+        "refusals": 0,
+        "approximations": 0
+      },
+      "elapsed_ns": 1100755398
+    },
+    {
+      "tier": "tier1",
+      "name": "27-substr",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "exit status 2, wanted 0; stdout differs: line 9, byte 225: got \"The lazy brown fox' with 'lazy' ...\", wanted \"quick' with 'lazy' -\u003e The lazy b...\"; stderr differs: 154 extra byte(s) after line 1, starting \"panic: P2G2540: this assignment ...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "2 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "3 variables left dynamic out of 10"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "exit status 2, wanted 0; stdout differs: line 9, byte 225: got \"The lazy brown fox' with 'lazy' ...\", wanted \"quick' with 'lazy' -\u003e The lazy b...\"; stderr differs: 165 extra byte(s) after line 1, starting \"panic: P2G2540: this assignment ...\""
+      },
+      "quality": {
+        "todos": 2,
+        "symbols": 10,
+        "symbols_typed": 7,
+        "refusals": 2,
+        "approximations": 0
+      },
+      "elapsed_ns": 1105720661
+    },
+    {
+      "tier": "tier1",
+      "name": "28-sprintf-formats",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "pass"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "pass"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 1,
+        "symbols_typed": 1,
+        "refusals": 0,
+        "approximations": 0
+      },
+      "elapsed_ns": 917886911
+    },
+    {
+      "tier": "tier1",
+      "name": "29-chomp-chop-split-join",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "stdout differs: line 2, byte 31: got \"] length 0\\nchomp on a line with ...\", wanted \"hello] length 5\\nchomp on a line ...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "1 variable left dynamic out of 13"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "stdout differs: line 2, byte 31: got \"] length 0\\nchomp on a line with ...\", wanted \"hello] length 5\\nchomp on a line ...\""
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 13,
+        "symbols_typed": 12,
+        "refusals": 0,
+        "approximations": 0
+      },
+      "elapsed_ns": 1065357264
+    },
+    {
+      "tier": "tier1",
+      "name": "30-heredocs",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "pass"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "pass"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 6,
+        "symbols_typed": 6,
+        "refusals": 0,
+        "approximations": 0
+      },
+      "elapsed_ns": 933607309
+    },
+    {
+      "tier": "tier1",
+      "name": "31-output-and-special-vars",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "exit status 2, wanted 0; stdout differs: 244 byte(s) missing after line 11, expected \"one, two, three\\nonetwothree\\n--- ...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "3 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "exit status 2, wanted 0; stdout differs: 244 byte(s) missing after line 11, expected \"one, two, three\\nonetwothree\\n--- ...\""
+      },
+      "quality": {
+        "todos": 3,
+        "symbols": 2,
+        "symbols_typed": 2,
+        "refusals": 3,
+        "approximations": 0
+      },
+      "elapsed_ns": 1011326048
+    },
+    {
+      "tier": "tier1",
+      "name": "32-scalar-and-list-context",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "exit status 2, wanted 0; stdout differs: line 2, byte 34: got \"4\\nscalar():       4\\nnumeric use:...\", wanted \"10\\nscalar():       4\\nnumeric use...\"; stderr differs: 277 extra byte(s) after line 1, starting \"panic: wantarray has no Go equiv...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "2 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "2 variables left dynamic out of 12"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "exit status 2, wanted 0; stdout differs: line 2, byte 34: got \"4\\nscalar():       4\\nnumeric use:...\", wanted \"10\\nscalar():       4\\nnumeric use...\"; stderr differs: 310 extra byte(s) after line 1, starting \"panic: wantarray has no Go equiv...\""
+      },
+      "quality": {
+        "todos": 2,
+        "symbols": 12,
+        "symbols_typed": 10,
+        "refusals": 2,
+        "approximations": 0
+      },
+      "elapsed_ns": 1110292939
+    },
+    {
+      "tier": "tier1",
+      "name": "33-argv-and-arguments",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "stdout differs: line 2, byte 8: got \"--- $0 is the script name, not a...\", wanted \"argv[0] = [build] (5 chars)\\nargv...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "4 variables left dynamic out of 11"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "stdout differs: line 2, byte 8: got \"--- $0 is the script name, not a...\", wanted \"argv[0] = [build] (5 chars)\\nargv...\""
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 11,
+        "symbols_typed": 7,
+        "refusals": 0,
+        "approximations": 1
+      },
+      "elapsed_ns": 1099861531
+    },
+    {
+      "tier": "tier1",
+      "name": "34-exit-status",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:10:10: undefined: args"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "1 variable left dynamic out of 3"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 3,
+        "symbols_typed": 2,
+        "refusals": 0,
+        "approximations": 0
+      },
+      "elapsed_ns": 318888997
+    },
+    {
+      "tier": "tier1",
+      "name": "35-die-exit-status",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "pass"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "pass"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 3,
+        "symbols_typed": 3,
+        "refusals": 0,
+        "approximations": 0
+      },
+      "elapsed_ns": 998974425
+    },
+    {
+      "tier": "tier2",
+      "name": "01-sub-calling-conventions",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:13:36: cannot use counts (variable of type []int) as [][]any value in argument to total"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "13 variables left dynamic out of 21"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 21,
+        "symbols_typed": 8,
+        "refusals": 0,
+        "approximations": 3
+      },
+      "elapsed_ns": 343552504
+    },
+    {
+      "tier": "tier2",
+      "name": "02-named-args-hash",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "stdout differs: line 1, byte 0: got \"         role=        active=0 q...\", wanted \"ada      role=guest   active=1 q...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "12 variables left dynamic out of 16"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "stdout differs: line 1, byte 0: got \"         role=        active=0 q...\", wanted \"ada      role=guest   active=1 q...\""
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 16,
+        "symbols_typed": 4,
+        "refusals": 0,
+        "approximations": 4
+      },
+      "elapsed_ns": 1113538660
+    },
+    {
+      "tier": "tier2",
+      "name": "03-recursion-and-wantarray",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:35:51: cannot use []int{…} (value of type []int) as int value in array or slice literal"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "3 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "12 variables left dynamic out of 18"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 2,
+        "symbols": 18,
+        "symbols_typed": 6,
+        "refusals": 3,
+        "approximations": 4
+      },
+      "elapsed_ns": 368419176
+    },
+    {
+      "tier": "tier2",
+      "name": "04-reference-syntax-tour",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:43:31: invalid operation: cannot call cref (variable of interface type any): any is not a function"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "1 untranslated construct"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "7 variables left dynamic out of 17"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 17,
+        "symbols_typed": 10,
+        "refusals": 1,
+        "approximations": 0
+      },
+      "elapsed_ns": 338397144
+    },
+    {
+      "tier": "tier2",
+      "name": "05-modify-through-refs",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:61:3: undefined: item"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "1 untranslated construct"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "21 variables left dynamic out of 32"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 32,
+        "symbols_typed": 11,
+        "refusals": 1,
+        "approximations": 2
+      },
+      "elapsed_ns": 366455631
+    },
+    {
+      "tier": "tier2",
+      "name": "06-array-of-hashes",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:43:29: cannot use map[string]string{…} (value of type map[string]string) as map[string]any value in argument to append"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "1 untranslated construct"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "10 variables left dynamic out of 21"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 21,
+        "symbols_typed": 11,
+        "refusals": 1,
+        "approximations": 0
+      },
+      "elapsed_ns": 317659026
+    },
+    {
+      "tier": "tier2",
+      "name": "07-hash-of-arrays",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:44:17: undefined: m"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "15 variables left dynamic out of 22"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 22,
+        "symbols_typed": 7,
+        "refusals": 0,
+        "approximations": 5
+      },
+      "elapsed_ns": 324228318
+    },
+    {
+      "tier": "tier2",
+      "name": "08-hash-of-hashes",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "exit status 2, wanted 0; stdout differs: line 6, byte 146: got \"+Inf max=  0 (4)\\ndisk  avg= +Inf...\", wanted \"42.5 max= 91 (web2)\\ndisk  avg= 4...\"; stderr differs: 176 extra byte(s) after line 1, starting \"panic: interface conversion: int...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "1 untranslated construct"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "4 variables left dynamic out of 22"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "exit status 2, wanted 0; stdout differs: line 6, byte 146: got \"+Inf max=  0 (4)\\ndisk  avg= +Inf...\", wanted \"42.5 max= 91 (web2)\\ndisk  avg= 4...\"; stderr differs: 187 extra byte(s) after line 1, starting \"panic: interface conversion: int...\""
+      },
+      "quality": {
+        "todos": 1,
+        "symbols": 22,
+        "symbols_typed": 18,
+        "refusals": 1,
+        "approximations": 0
+      },
+      "elapsed_ns": 1063829820
+    },
+    {
+      "tier": "tier2",
+      "name": "09-autovivification-counters",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:38:28: invalid append: argument must be a slice; have pathsSeen[path] (map index expression of interface type any)"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "8 variables left dynamic out of 20"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 20,
+        "symbols_typed": 12,
+        "refusals": 0,
+        "approximations": 2
+      },
+      "elapsed_ns": 280355045
+    },
+    {
+      "tier": "tier2",
+      "name": "10-autovivification-tree",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:44:12: invalid operation: cannot take address of node.(map[string]any)[part] (map index expression of interface type any)"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "2 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "8 variables left dynamic out of 23"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 1,
+        "symbols": 23,
+        "symbols_typed": 15,
+        "refusals": 2,
+        "approximations": 0
+      },
+      "elapsed_ns": 272229047
+    },
+    {
+      "tier": "tier2",
+      "name": "11-closures-and-generators",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:17:27: invalid operation: cannot call tick (variable of interface type any): any is not a function"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "1 untranslated construct"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "16 variables left dynamic out of 31"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 31,
+        "symbols_typed": 15,
+        "refusals": 1,
+        "approximations": 5
+      },
+      "elapsed_ns": 225405572
+    },
+    {
+      "tier": "tier2",
+      "name": "12-dispatch-table",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:100:44: invalid operation: cannot call ops[item3] (map index expression of interface type any): any is not a function"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "1 untranslated construct"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "21 variables left dynamic out of 33"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 33,
+        "symbols_typed": 12,
+        "refusals": 1,
+        "approximations": 2
+      },
+      "elapsed_ns": 263165294
+    },
+    {
+      "tier": "tier2",
+      "name": "13-map-grep-sort",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:91:58: invalid append: argument must be a slice; have roles[toText(item2.(map[string]any)[\"role\"])] (map index expression of interface type any)"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "4 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "20 variables left dynamic out of 30"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 3,
+        "symbols": 30,
+        "symbols_typed": 10,
+        "refusals": 4,
+        "approximations": 3
+      },
+      "elapsed_ns": 249331937
+    },
+    {
+      "tier": "tier2",
+      "name": "14-regex-captures",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:55:3: declared and not used: line"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "3 variables left dynamic out of 21"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 21,
+        "symbols_typed": 18,
+        "refusals": 0,
+        "approximations": 1
+      },
+      "elapsed_ns": 243393343
+    },
+    {
+      "tier": "tier2",
+      "name": "15-regex-global-match",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:89:15: use of untyped nil in assignment"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "11 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "2 variables left dynamic out of 14"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 10,
+        "symbols": 14,
+        "symbols_typed": 12,
+        "refusals": 11,
+        "approximations": 1
+      },
+      "elapsed_ns": 221785695
+    },
+    {
+      "tier": "tier2",
+      "name": "16-substitution-and-tr",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "exit status 2, wanted 0; stdout differs: line 1, byte 10: got \"\\nstripped '' ( substitution)\\nonc...\", wanted \"access.log.1\\nstripped 'access.lo...\"; stderr differs: 158 extra byte(s) after line 1, starting \"panic: P2G4040: the /e modifier ...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "6 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "19 variables left dynamic out of 30"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "exit status 2, wanted 0; stdout differs: line 1, byte 10: got \"\\nstripped '' ( substitution)\\nonc...\", wanted \"access.log.1\\nstripped 'access.lo...\"; stderr differs: 169 extra byte(s) after line 1, starting \"panic: P2G4040: the /e modifier ...\""
+      },
+      "quality": {
+        "todos": 6,
+        "symbols": 30,
+        "symbols_typed": 11,
+        "refusals": 6,
+        "approximations": 0
+      },
+      "elapsed_ns": 963845501
+    },
+    {
+      "tier": "tier2",
+      "name": "17-regex-modifiers",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:70:10: use of untyped nil in assignment"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "3 variables left dynamic out of 20"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 20,
+        "symbols_typed": 17,
+        "refusals": 0,
+        "approximations": 2
+      },
+      "elapsed_ns": 253853489
+    },
+    {
+      "tier": "tier2",
+      "name": "18-split-and-join",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "stdout differs: line 16, byte 498: got \"no\\nno separator: 1 field(s): unc...\", wanted \"yes\\nno separator: 1 field(s): un...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "2 variables left dynamic out of 31"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "stdout differs: line 16, byte 498: got \"no\\nno separator: 1 field(s): unc...\", wanted \"yes\\nno separator: 1 field(s): un...\""
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 31,
+        "symbols_typed": 29,
+        "refusals": 0,
+        "approximations": 2
+      },
+      "elapsed_ns": 1073067534
+    },
+    {
+      "tier": "tier2",
+      "name": "19-read-lines-chomp",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "exit status 2, wanted 0; stdout differs: line 2, byte 63: got \"[localhost]\\n  3  ::1          [l...\", wanted \"localhost\\n  3  ::1          loca...\"; stderr differs: 224 extra byte(s) after line 1, starting \"panic: the input line counter is...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "1 untranslated construct"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "8 variables left dynamic out of 21"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "exit status 2, wanted 0; stdout differs: line 2, byte 63: got \"[localhost]\\n  3  ::1          [l...\", wanted \"localhost\\n  3  ::1          loca...\"; stderr differs: 244 extra byte(s) after line 1, starting \"panic: the input line counter is...\""
+      },
+      "quality": {
+        "todos": 1,
+        "symbols": 21,
+        "symbols_typed": 13,
+        "refusals": 1,
+        "approximations": 2
+      },
+      "elapsed_ns": 1082668416
+    },
+    {
+      "tier": "tier2",
+      "name": "20-write-and-append",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:142:3: declared and not used: line3"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "2 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "12 variables left dynamic out of 23"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 1,
+        "symbols": 23,
+        "symbols_typed": 11,
+        "refusals": 2,
+        "approximations": 3
+      },
+      "elapsed_ns": 246572147
+    },
+    {
+      "tier": "tier2",
+      "name": "21-slurp-and-paragraphs",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "exit status 2, wanted 0; stdout differs: 495 byte(s) missing after line 1, expected \"slurped 236 bytes, 12 newlines\\nr...\"; stderr differs: 213 extra byte(s) after line 1, starting \"panic: the do function is not im...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "6 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "9 variables left dynamic out of 18"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "exit status 2, wanted 0; stdout differs: 495 byte(s) missing after line 1, expected \"slurped 236 bytes, 12 newlines\\nr...\"; stderr differs: 233 extra byte(s) after line 1, starting \"panic: the do function is not im...\""
+      },
+      "quality": {
+        "todos": 6,
+        "symbols": 18,
+        "symbols_typed": 9,
+        "refusals": 6,
+        "approximations": 1
+      },
+      "elapsed_ns": 943535354
+    },
+    {
+      "tier": "tier2",
+      "name": "22-file-tests-and-dirs",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:181:16: invalid operation: ext != nil (mismatched types bool and untyped nil)"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "30 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "11 variables left dynamic out of 20"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 29,
+        "symbols": 20,
+        "symbols_typed": 9,
+        "refusals": 30,
+        "approximations": 4
+      },
+      "elapsed_ns": 268844207
+    },
+    {
+      "tier": "tier2",
+      "name": "23-stdin-line-filter",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:75:40: cannot index rec (variable of interface type any)"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "1 untranslated construct"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "5 variables left dynamic out of 16"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 16,
+        "symbols_typed": 11,
+        "refusals": 1,
+        "approximations": 1
+      },
+      "elapsed_ns": 271713912
+    },
+    {
+      "tier": "tier2",
+      "name": "24-diamond-argv",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:55:9: argv.Close undefined (type any has no field or method Close)"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "2 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "5 variables left dynamic out of 13"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 1,
+        "symbols": 13,
+        "symbols_typed": 8,
+        "refusals": 2,
+        "approximations": 0
+      },
+      "elapsed_ns": 254135132
+    },
+    {
+      "tier": "tier2",
+      "name": "25-argv-manual-parsing",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:50:36: cannot use args (variable of type []string) as []any value in argument to append"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "10 variables left dynamic out of 19"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 19,
+        "symbols_typed": 9,
+        "refusals": 0,
+        "approximations": 0
+      },
+      "elapsed_ns": 274142603
+    },
+    {
+      "tier": "tier2",
+      "name": "26-getopt-long-options",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:76:11: cannot use opt[\"rename\"].(map[string]any)[toText(host)] (map index expression of interface type any) as string value in assignment: need typ..."
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "3 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "9 variables left dynamic out of 16"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 2,
+        "symbols": 16,
+        "symbols_typed": 7,
+        "refusals": 3,
+        "approximations": 2
+      },
+      "elapsed_ns": 214979018
+    },
+    {
+      "tier": "tier2",
+      "name": "27-usage-and-exit-codes",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:112:68: modes[mode](counts) (no value) used as value"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "8 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "10 variables left dynamic out of 15"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 7,
+        "symbols": 15,
+        "symbols_typed": 5,
+        "refusals": 8,
+        "approximations": 2
+      },
+      "elapsed_ns": 214656607
+    },
+    {
+      "tier": "tier2",
+      "name": "28-word-frequency",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:120:44: invalid append: argument must be a slice; have byLen[strconv.Itoa(len(item2))] (map index expression of interface type any)"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "2 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "10 variables left dynamic out of 27"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 1,
+        "symbols": 27,
+        "symbols_typed": 17,
+        "refusals": 2,
+        "approximations": 3
+      },
+      "elapsed_ns": 233391381
+    },
+    {
+      "tier": "tier2",
+      "name": "29-csv-report-columns",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "exit status 2, wanted 0; stdout differs: 1457 byte(s) missing after line 1, expected \"columns: order_id|customer|regio...\"; stderr differs: 309 extra byte(s) after line 1, starting \"panic: regexp: Compile(`\\\\G(?:\\\"((...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "2 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "15 variables left dynamic out of 27"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "exit status 2, wanted 0; stdout differs: 1457 byte(s) missing after line 1, expected \"columns: order_id|customer|regio...\"; stderr differs: 319 extra byte(s) after line 1, starting \"panic: regexp: Compile(`\\\\G(?:\\\"((...\""
+      },
+      "quality": {
+        "todos": 2,
+        "symbols": 27,
+        "symbols_typed": 12,
+        "refusals": 2,
+        "approximations": 2
+      },
+      "elapsed_ns": 1271906725
+    },
+    {
+      "tier": "tier2",
+      "name": "30-log-state-machine",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:87:31: invalid append: argument must be a slice; have current[\"lines\"] (map index expression of interface type any)"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "1 untranslated construct"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "9 variables left dynamic out of 17"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 17,
+        "symbols_typed": 8,
+        "refusals": 1,
+        "approximations": 1
+      },
+      "elapsed_ns": 328180617
+    },
+    {
+      "tier": "tier2",
+      "name": "31-die-and-eval",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "exit status 2, wanted 0; stdout differs: 489 byte(s) missing after line 1, expected \"loaded 4 settings: name,retries,...\"; stderr differs: 155 extra byte(s) after line 1, starting \"panic: P2G2001: local's dynamic ...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "12 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "16 variables left dynamic out of 29"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "exit status 2, wanted 0; stdout differs: 489 byte(s) missing after line 1, expected \"loaded 4 settings: name,retries,...\"; stderr differs: 165 extra byte(s) after line 1, starting \"panic: P2G2001: local's dynamic ...\""
+      },
+      "quality": {
+        "todos": 12,
+        "symbols": 29,
+        "symbols_typed": 13,
+        "refusals": 12,
+        "approximations": 0
+      },
+      "elapsed_ns": 1108332768
+    },
+    {
+      "tier": "tier2",
+      "name": "32-error-objects-and-cleanup",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:69:71: invalid argument: index item2 (variable of type string) must be integer"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "22 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "23 variables left dynamic out of 32"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 21,
+        "symbols": 32,
+        "symbols_typed": 9,
+        "refusals": 22,
+        "approximations": 8
+      },
+      "elapsed_ns": 281646108
+    },
+    {
+      "tier": "tier2",
+      "name": "33-list-util-toolbox",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:37:19: cannot use vals (variable of type []string) as []any value in assignment"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "18 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "17 variables left dynamic out of 22"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 17,
+        "symbols": 22,
+        "symbols_typed": 5,
+        "refusals": 18,
+        "approximations": 4
+      },
+      "elapsed_ns": 291873184
+    },
+    {
+      "tier": "tier2",
+      "name": "34-scalar-util-and-posix",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:19:2: cannot assign to os.Getenv(\"TZ\")[nil] (neither addressable nor a map index expression)"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "32 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "14 variables left dynamic out of 28"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 31,
+        "symbols": 28,
+        "symbols_typed": 14,
+        "refusals": 32,
+        "approximations": 3
+      },
+      "elapsed_ns": 296973009
+    },
+    {
+      "tier": "tier2",
+      "name": "35-paths-and-dumper",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "exit status 2, wanted 0; stdout differs: line 7, byte 470: got \"/slash      \\n-- fileparse with s...\", wanted \"            \\n-- fileparse with s...\"; stderr differs: 221 extra byte(s) after line 1, starting \"panic: the fileparse function is...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "27 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "11 variables left dynamic out of 17"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "exit status 2, wanted 0; stdout differs: line 7, byte 470: got \"/slash      \\n-- fileparse with s...\", wanted \"            \\n-- fileparse with s...\"; stderr differs: 243 extra byte(s) after line 1, starting \"panic: the fileparse function is...\""
+      },
+      "quality": {
+        "todos": 27,
+        "symbols": 17,
+        "symbols_typed": 6,
+        "refusals": 27,
+        "approximations": 3
+      },
+      "notes": [
+        "perl no longer prints what expected_stdout records: line 20, byte 1072: got \"no\\nabs_path is absolute: yes\\nabs...\", wanted \"yes\\nabs_path is absolute: yes\\nab...\""
+      ],
+      "elapsed_ns": 950486275
+    },
+    {
+      "tier": "tier3",
+      "name": "01-inventory-manager",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "exit status 2, wanted 0; stdout differs: 606 byte(s) missing after line 1, expected \"can(sell)=yes can(fly)=no\\nisa(In...\"; stderr differs: 160 extra byte(s) after line 1, starting \"panic: P2G7010: a second package...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "42 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "32 variables left dynamic out of 34"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "exit status 2, wanted 0; stdout differs: 606 byte(s) missing after line 1, expected \"can(sell)=yes can(fly)=no\\nisa(In...\"; stderr differs: 170 extra byte(s) after line 1, starting \"panic: P2G7010: a second package...\""
+      },
+      "quality": {
+        "todos": 42,
+        "symbols": 34,
+        "symbols_typed": 2,
+        "refusals": 42,
+        "approximations": 2
+      },
+      "elapsed_ns": 1014376304
+    },
+    {
+      "tier": "tier3",
+      "name": "02-shape-hierarchy",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "exit status 2, wanted 0; stdout differs: 595 byte(s) missing after line 1, expected \"--- catalogue ---\\n#1 rectangle  ...\"; stderr differs: 218 extra byte(s) after line 1, starting \"panic: object method calls are n...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "25 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "9 variables left dynamic out of 12"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "exit status 2, wanted 0; stdout differs: 595 byte(s) missing after line 1, expected \"--- catalogue ---\\n#1 rectangle  ...\"; stderr differs: 238 extra byte(s) after line 1, starting \"panic: object method calls are n...\""
+      },
+      "quality": {
+        "todos": 25,
+        "symbols": 12,
+        "symbols_typed": 3,
+        "refusals": 25,
+        "approximations": 0
+      },
+      "elapsed_ns": 937802355
+    },
+    {
+      "tier": "tier3",
+      "name": "03-vector-overload",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:37:13: any does not satisfy cmp.Ordered"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "18 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "24 variables left dynamic out of 29"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 17,
+        "symbols": 29,
+        "symbols_typed": 5,
+        "refusals": 18,
+        "approximations": 0
+      },
+      "elapsed_ns": 242520556
+    },
+    {
+      "tier": "tier3",
+      "name": "04-textutil-module",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:30:81: cannot index sum (variable of interface type any)"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "13 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "5 variables left dynamic out of 7"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 12,
+        "symbols": 7,
+        "symbols_typed": 2,
+        "refusals": 13,
+        "approximations": 1
+      },
+      "elapsed_ns": 244091004
+    },
+    {
+      "tier": "tier3",
+      "name": "05-json-pipeline",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:52:47: invalid append: argument must be a slice; have slot.(map[string]any)[\"order_ids\"] (map index expression of interface type any)"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "10 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "18 variables left dynamic out of 22"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 9,
+        "symbols": 22,
+        "symbols_typed": 4,
+        "refusals": 10,
+        "approximations": 2
+      },
+      "elapsed_ns": 280850545
+    },
+    {
+      "tier": "tier3",
+      "name": "06-serialize-roundtrip",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:57:117: cannot use sorted (variable of type []string) as string value in array or slice literal"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "23 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "14 variables left dynamic out of 24"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 22,
+        "symbols": 24,
+        "symbols_typed": 10,
+        "refusals": 23,
+        "approximations": 2
+      },
+      "elapsed_ns": 310584437
+    },
+    {
+      "tier": "tier3",
+      "name": "07-log-analyzer",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:110:16: cannot use toNum(totalBytes) + toNum(bytes) (value of type float64) as int value in assignment"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "5 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "13 variables left dynamic out of 34"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 4,
+        "symbols": 34,
+        "symbols_typed": 21,
+        "refusals": 5,
+        "approximations": 0
+      },
+      "elapsed_ns": 286041646
+    },
+    {
+      "tier": "tier3",
+      "name": "08-csv-report",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:39:17: cannot index rows2 (variable of interface type any)"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "2 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "23 variables left dynamic out of 31"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 1,
+        "symbols": 31,
+        "symbols_typed": 8,
+        "refusals": 2,
+        "approximations": 5
+      },
+      "elapsed_ns": 297342562
+    },
+    {
+      "tier": "tier3",
+      "name": "09-mini-template",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:94:41: invalid append: argument must be a slice; have stack[len(stack) - 1][\"kids\"] (map index expression of interface type any)"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "5 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "25 variables left dynamic out of 34"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 4,
+        "symbols": 34,
+        "symbols_typed": 9,
+        "refusals": 5,
+        "approximations": 3
+      },
+      "elapsed_ns": 252469438
+    },
+    {
+      "tier": "tier3",
+      "name": "10-ini-config",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:160:3: invalid operation: seen.(map[string]any)[toText(name)]++ (non-numeric type any)"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "3 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "22 variables left dynamic out of 33"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 2,
+        "symbols": 33,
+        "symbols_typed": 11,
+        "refusals": 3,
+        "approximations": 11
+      },
+      "elapsed_ns": 250326436
+    },
+    {
+      "tier": "tier3",
+      "name": "11-fixed-width",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "exit status 2, wanted 0; stdout differs: 751 byte(s) missing after line 1, expected \"ledger for BRANCH-042 on 2024-06...\"; stderr differs: 218 extra byte(s) after line 1, starting \"panic: the unpack function is no...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "7 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "24 variables left dynamic out of 33"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "exit status 2, wanted 0; stdout differs: 751 byte(s) missing after line 1, expected \"ledger for BRANCH-042 on 2024-06...\"; stderr differs: 240 extra byte(s) after line 1, starting \"panic: the unpack function is no...\""
+      },
+      "quality": {
+        "todos": 7,
+        "symbols": 33,
+        "symbols_typed": 9,
+        "refusals": 7,
+        "approximations": 8
+      },
+      "elapsed_ns": 1163233538
+    },
+    {
+      "tier": "tier3",
+      "name": "12-tag-stripper",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:78:25: cannot use []string{…} (value of type []string) as []any value in argument to append"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "4 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "6 variables left dynamic out of 12"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 3,
+        "symbols": 12,
+        "symbols_typed": 6,
+        "refusals": 4,
+        "approximations": 1
+      },
+      "elapsed_ns": 244730904
+    },
+    {
+      "tier": "tier3",
+      "name": "13-fs-walker",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "exit status 2, wanted 0; stdout differs: 903 byte(s) missing after line 1, expected \"scanned 5 dirs, 7 files, 221 byt...\"; stderr differs: 155 extra byte(s) after line 1, starting \"panic: runtime error: index out ...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "11 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "18 variables left dynamic out of 22"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "exit status 2, wanted 0; stdout differs: 903 byte(s) missing after line 1, expected \"scanned 5 dirs, 7 files, 221 byt...\"; stderr differs: 165 extra byte(s) after line 1, starting \"panic: runtime error: index out ...\""
+      },
+      "quality": {
+        "todos": 11,
+        "symbols": 22,
+        "symbols_typed": 4,
+        "refusals": 11,
+        "approximations": 1
+      },
+      "elapsed_ns": 1137419673
+    },
+    {
+      "tier": "tier3",
+      "name": "14-workspace-builder",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:71:6: tfh.Close undefined (type any has no field or method Close)"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "22 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "20 variables left dynamic out of 26"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 21,
+        "symbols": 26,
+        "symbols_typed": 6,
+        "refusals": 22,
+        "approximations": 2
+      },
+      "elapsed_ns": 285956336
+    },
+    {
+      "tier": "tier3",
+      "name": "15-subprocess-capture",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:37:34: cannot use lines[i2] (variable of interface type any) as string value in argument to strings.TrimSuffix: need type assertion"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "17 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "13 variables left dynamic out of 18"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 16,
+        "symbols": 18,
+        "symbols_typed": 5,
+        "refusals": 17,
+        "approximations": 1
+      },
+      "elapsed_ns": 256367227
+    },
+    {
+      "tier": "tier3",
+      "name": "16-env-and-handlers",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:114:2: cannot assign to os.Getenv(\"DEPLOY_PATH_STYLE\")[nil] (neither addressable nor a map index expression)"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "6 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "11 variables left dynamic out of 17"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 5,
+        "symbols": 17,
+        "symbols_typed": 6,
+        "refusals": 6,
+        "approximations": 2
+      },
+      "elapsed_ns": 249782535
+    },
+    {
+      "tier": "tier3",
+      "name": "17-error-hierarchy",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:131:9: os.Exit(255) (no value) used as value"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "26 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "21 variables left dynamic out of 32"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 25,
+        "symbols": 32,
+        "symbols_typed": 11,
+        "refusals": 26,
+        "approximations": 2
+      },
+      "elapsed_ns": 290382969
+    },
+    {
+      "tier": "tier3",
+      "name": "18-expr-eval",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:88:79: use of package fmt not in selector"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "4 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "26 variables left dynamic out of 34"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 3,
+        "symbols": 34,
+        "symbols_typed": 8,
+        "refusals": 4,
+        "approximations": 12
+      },
+      "elapsed_ns": 249153377
+    },
+    {
+      "tier": "tier3",
+      "name": "19-build-scheduler",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:78:21: invalid append: argument must be a slice; have deps[t] (map index expression of interface type any)"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "10 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "27 variables left dynamic out of 42"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 9,
+        "symbols": 42,
+        "symbols_typed": 15,
+        "refusals": 10,
+        "approximations": 4
+      },
+      "elapsed_ns": 273231028
+    },
+    {
+      "tier": "tier3",
+      "name": "20-route-planner",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:129:51: invalid operation: distCentral (variable of type map[string]any) is not an interface"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "3 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "27 variables left dynamic out of 47"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 2,
+        "symbols": 47,
+        "symbols_typed": 20,
+        "refusals": 3,
+        "approximations": 7
+      },
+      "elapsed_ns": 270836329
+    },
+    {
+      "tier": "tier3",
+      "name": "21-fuzzy-match",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:48:83: cannot index item5 (variable of type int)"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "3 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "18 variables left dynamic out of 32"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 2,
+        "symbols": 32,
+        "symbols_typed": 14,
+        "refusals": 3,
+        "approximations": 5
+      },
+      "elapsed_ns": 242973893
+    },
+    {
+      "tier": "tier3",
+      "name": "22-vending-fsm",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:167:1: missing return"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "1 untranslated construct"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "14 variables left dynamic out of 27"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 27,
+        "symbols_typed": 13,
+        "refusals": 1,
+        "approximations": 9
+      },
+      "elapsed_ns": 258252140
+    },
+    {
+      "tier": "tier3",
+      "name": "23-perl-idioms",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:41:22: legacyRender() (no value) used as value"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "7 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "18 variables left dynamic out of 37"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 6,
+        "symbols": 37,
+        "symbols_typed": 19,
+        "refusals": 7,
+        "approximations": 13
+      },
+      "elapsed_ns": 276539819
+    },
+    {
+      "tier": "tier3",
+      "name": "24-autoload-accessors",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:115:47: in call to maps.Keys, cannot infer K (declared at $GOROOT/src/maps/iter.go:25:25)"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "29 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "19 variables left dynamic out of 24"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 28,
+        "symbols": 24,
+        "symbols_typed": 5,
+        "refusals": 29,
+        "approximations": 1
+      },
+      "elapsed_ns": 272118013
+    },
+    {
+      "tier": "tier3",
+      "name": "25-wrap-and-diff",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:68:13: slurp(oldFile) (no value) used as value"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "17 variables left dynamic out of 37"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 37,
+        "symbols_typed": 20,
+        "refusals": 0,
+        "approximations": 6
+      },
+      "elapsed_ns": 255614922
+    },
+    {
+      "tier": "tier4",
+      "name": "01-string-eval",
+      "kind": "honest-failure",
+      "categories": [
+        "refuse-statement"
+      ],
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "n/a"
+        },
+        "honest": {
+          "outcome": "pass"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "2 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "1 variable left dynamic out of 6"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "n/a"
+      },
+      "quality": {
+        "todos": 2,
+        "symbols": 6,
+        "symbols_typed": 5,
+        "refusals": 2,
+        "approximations": 0
+      },
+      "elapsed_ns": 825043941
+    },
+    {
+      "tier": "tier4",
+      "name": "02-symbolic-refs",
+      "kind": "honest-failure",
+      "categories": [
+        "approximate",
+        "refuse-statement"
+      ],
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:24:3: cannot assign to name + \"_seen\" (neither addressable nor a map index expression)"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "n/a"
+        },
+        "honest": {
+          "outcome": "fail",
+          "reason": "approximate: the conversion reported nothing about the construct; refuse-statement: nothing was refused, the construct went through unreported"
+        },
+        "parsed": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "3 variables left dynamic out of 8"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "n/a"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 8,
+        "symbols_typed": 5,
+        "refusals": 0,
+        "approximations": 0
+      },
+      "elapsed_ns": 224409295
+    },
+    {
+      "tier": "tier4",
+      "name": "03-glob-aliasing",
+      "kind": "honest-failure",
+      "categories": [
+        "approximate",
+        "refuse-statement"
+      ],
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:28:11: cannot use \u0026count (value of type *int) as *any value in assignment: *int does not implement *any (type *any is pointer to interface, not int..."
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "n/a"
+        },
+        "honest": {
+          "outcome": "pass"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "2 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "2 variables left dynamic out of 9"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "n/a"
+      },
+      "quality": {
+        "todos": 1,
+        "symbols": 9,
+        "symbols_typed": 7,
+        "refusals": 2,
+        "approximations": 0
+      },
+      "elapsed_ns": 184930730
+    },
+    {
+      "tier": "tier4",
+      "name": "04-monkey-patch",
+      "kind": "honest-failure",
+      "categories": [
+        "refuse-statement"
+      ],
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "n/a"
+        },
+        "honest": {
+          "outcome": "pass"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "5 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "3 variables left dynamic out of 5"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "n/a"
+      },
+      "quality": {
+        "todos": 5,
+        "symbols": 5,
+        "symbols_typed": 2,
+        "refusals": 5,
+        "approximations": 0
+      },
+      "elapsed_ns": 833637048
+    },
+    {
+      "tier": "tier4",
+      "name": "05-begin-parse",
+      "kind": "honest-failure",
+      "categories": [
+        "refuse-file"
+      ],
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "n/a"
+        },
+        "honest": {
+          "outcome": "pass"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "3 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "2 variables left dynamic out of 2"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "n/a"
+      },
+      "quality": {
+        "todos": 3,
+        "symbols": 2,
+        "symbols_typed": 0,
+        "refusals": 3,
+        "approximations": 1
+      },
+      "elapsed_ns": 777298870
+    },
+    {
+      "tier": "tier4",
+      "name": "06-prototypes",
+      "kind": "honest-failure",
+      "categories": [
+        "approximate"
+      ],
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:23:9: declared and not used: item"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "n/a"
+        },
+        "honest": {
+          "outcome": "fail",
+          "reason": "approximate: the conversion reported nothing about the construct"
+        },
+        "parsed": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "3 variables left dynamic out of 8"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "n/a"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 8,
+        "symbols_typed": 5,
+        "refusals": 0,
+        "approximations": 0
+      },
+      "elapsed_ns": 165015959
+    },
+    {
+      "tier": "tier4",
+      "name": "07-autoload",
+      "kind": "honest-failure",
+      "categories": [
+        "approximate",
+        "refuse-statement"
+      ],
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:64:9: os.Exit(255) (no value) used as value"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "n/a"
+        },
+        "honest": {
+          "outcome": "pass"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "7 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "9 variables left dynamic out of 9"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "n/a"
+      },
+      "quality": {
+        "todos": 6,
+        "symbols": 9,
+        "symbols_typed": 0,
+        "refusals": 7,
+        "approximations": 2
+      },
+      "elapsed_ns": 252249236
+    },
+    {
+      "tier": "tier4",
+      "name": "08-tie",
+      "kind": "honest-failure",
+      "categories": [
+        "refuse-statement"
+      ],
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "n/a"
+        },
+        "honest": {
+          "outcome": "pass"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "3 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "5 variables left dynamic out of 7"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "n/a"
+      },
+      "quality": {
+        "todos": 3,
+        "symbols": 7,
+        "symbols_typed": 2,
+        "refusals": 3,
+        "approximations": 0
+      },
+      "elapsed_ns": 831399161
+    },
+    {
+      "tier": "tier4",
+      "name": "09-local-special-var",
+      "kind": "honest-failure",
+      "categories": [
+        "shim",
+        "todo"
+      ],
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:36:9: too many return values"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "n/a"
+        },
+        "honest": {
+          "outcome": "pass"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "3 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "n/a"
+      },
+      "quality": {
+        "todos": 2,
+        "symbols": 2,
+        "symbols_typed": 2,
+        "refusals": 3,
+        "approximations": 0
+      },
+      "elapsed_ns": 195184286
+    },
+    {
+      "tier": "tier4",
+      "name": "10-format-write",
+      "kind": "honest-failure",
+      "categories": [
+        "approximate",
+        "refuse-statement"
+      ],
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "n/a"
+        },
+        "honest": {
+          "outcome": "pass"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "2 parse errors and 3 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "4 variables left dynamic out of 4"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "n/a"
+      },
+      "quality": {
+        "todos": 3,
+        "symbols": 4,
+        "symbols_typed": 0,
+        "refusals": 3,
+        "approximations": 1
+      },
+      "elapsed_ns": 696736229
+    },
+    {
+      "tier": "tier4",
+      "name": "11-destroy-timing",
+      "kind": "honest-failure",
+      "categories": [
+        "todo"
+      ],
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:32:9: too many return values"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "n/a"
+        },
+        "honest": {
+          "outcome": "pass"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "5 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "5 variables left dynamic out of 5"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "n/a"
+      },
+      "quality": {
+        "todos": 4,
+        "symbols": 5,
+        "symbols_typed": 0,
+        "refusals": 5,
+        "approximations": 0
+      },
+      "elapsed_ns": 240833091
+    },
+    {
+      "tier": "tier4",
+      "name": "12-wantarray",
+      "kind": "honest-failure",
+      "categories": [
+        "approximate",
+        "refuse-statement"
+      ],
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "n/a"
+        },
+        "honest": {
+          "outcome": "pass"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "3 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "7 variables left dynamic out of 9"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "n/a"
+      },
+      "quality": {
+        "todos": 3,
+        "symbols": 9,
+        "symbols_typed": 2,
+        "refusals": 3,
+        "approximations": 5
+      },
+      "elapsed_ns": 934344079
+    },
+    {
+      "tier": "tier4",
+      "name": "13-deep-autoviv",
+      "kind": "honest-failure",
+      "categories": [
+        "shim"
+      ],
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "n/a"
+        },
+        "honest": {
+          "outcome": "pass"
+        },
+        "parsed": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "4 variables left dynamic out of 4"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "n/a"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 4,
+        "symbols_typed": 0,
+        "refusals": 0,
+        "approximations": 1
+      },
+      "elapsed_ns": 828985867
+    },
+    {
+      "tier": "tier4",
+      "name": "14-args-aliasing",
+      "kind": "honest-failure",
+      "categories": [
+        "approximate",
+        "refuse-statement"
+      ],
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:19:11: cannot use row (variable of type []string) as [][]string value in argument to blankAll"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "n/a"
+        },
+        "honest": {
+          "outcome": "pass"
+        },
+        "parsed": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "2 variables left dynamic out of 7"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "n/a"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 7,
+        "symbols_typed": 5,
+        "refusals": 0,
+        "approximations": 2
+      },
+      "elapsed_ns": 278938038
+    },
+    {
+      "tier": "tier4",
+      "name": "15-local-dynamic",
+      "kind": "honest-failure",
+      "categories": [
+        "shim"
+      ],
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:46:9: os.Exit(255) (no value) used as value"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "n/a"
+        },
+        "honest": {
+          "outcome": "pass"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "3 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "1 variable left dynamic out of 2"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "n/a"
+      },
+      "quality": {
+        "todos": 2,
+        "symbols": 2,
+        "symbols_typed": 1,
+        "refusals": 3,
+        "approximations": 0
+      },
+      "elapsed_ns": 235676236
+    },
+    {
+      "tier": "tier4",
+      "name": "16-goto-sub",
+      "kind": "honest-failure",
+      "categories": [
+        "approximate"
+      ],
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:26:9: too many return values"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "n/a"
+        },
+        "honest": {
+          "outcome": "pass"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "2 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "1 variable left dynamic out of 3"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "n/a"
+      },
+      "quality": {
+        "todos": 1,
+        "symbols": 3,
+        "symbols_typed": 2,
+        "refusals": 2,
+        "approximations": 1
+      },
+      "elapsed_ns": 257575233
+    },
+    {
+      "tier": "tier4",
+      "name": "17-overload",
+      "kind": "honest-failure",
+      "categories": [
+        "refuse-statement",
+        "shim"
+      ],
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "n/a"
+        },
+        "honest": {
+          "outcome": "pass"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "4 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "4 variables left dynamic out of 5"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "n/a"
+      },
+      "quality": {
+        "todos": 4,
+        "symbols": 5,
+        "symbols_typed": 1,
+        "refusals": 4,
+        "approximations": 0
+      },
+      "elapsed_ns": 788985688
+    },
+    {
+      "tier": "tier4",
+      "name": "18-mro-c3",
+      "kind": "honest-failure",
+      "categories": [
+        "approximate"
+      ],
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "n/a"
+        },
+        "honest": {
+          "outcome": "pass"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "12 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "3 variables left dynamic out of 7"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "n/a"
+      },
+      "quality": {
+        "todos": 12,
+        "symbols": 7,
+        "symbols_typed": 4,
+        "refusals": 12,
+        "approximations": 0
+      },
+      "elapsed_ns": 776425498
+    },
+    {
+      "tier": "tier4",
+      "name": "19-regex-nonre2",
+      "kind": "honest-failure",
+      "categories": [
+        "shim"
+      ],
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "n/a"
+        },
+        "honest": {
+          "outcome": "pass"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "5 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "n/a"
+      },
+      "quality": {
+        "todos": 5,
+        "symbols": 8,
+        "symbols_typed": 8,
+        "refusals": 5,
+        "approximations": 0
+      },
+      "elapsed_ns": 759188788
+    },
+    {
+      "tier": "tier4",
+      "name": "20-regex-code-recursion",
+      "kind": "honest-failure",
+      "categories": [
+        "refuse-statement"
+      ],
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:35:83: undefined: m"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "n/a"
+        },
+        "honest": {
+          "outcome": "fail",
+          "reason": "refuse-statement: nothing was refused, the construct went through unreported"
+        },
+        "parsed": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "1 variable left dynamic out of 5"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "n/a"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 5,
+        "symbols_typed": 4,
+        "refusals": 0,
+        "approximations": 2
+      },
+      "elapsed_ns": 223015369
+    },
+    {
+      "tier": "tier4",
+      "name": "21-string-increment",
+      "kind": "honest-failure",
+      "categories": [
+        "shim"
+      ],
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:22:2: invalid operation: v2 += \"\" (mismatched types any and string)"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "n/a"
+        },
+        "honest": {
+          "outcome": "pass"
+        },
+        "parsed": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "3 variables left dynamic out of 6"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "n/a"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 6,
+        "symbols_typed": 3,
+        "refusals": 0,
+        "approximations": 1
+      },
+      "elapsed_ns": 232251885
+    },
+    {
+      "tier": "tier4",
+      "name": "22-int-overflow-float",
+      "kind": "honest-failure",
+      "categories": [
+        "approximate",
+        "shim"
+      ],
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "n/a"
+        },
+        "honest": {
+          "outcome": "fail",
+          "reason": "approximate: the conversion reported nothing about the construct; shim: the conversion reported nothing about the construct"
+        },
+        "parsed": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "n/a"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 3,
+        "symbols_typed": 3,
+        "refusals": 0,
+        "approximations": 0
+      },
+      "elapsed_ns": 748460760
+    },
+    {
+      "tier": "tier4",
+      "name": "23-sprintf-formats",
+      "kind": "honest-failure",
+      "categories": [
+        "shim"
+      ],
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "n/a"
+        },
+        "honest": {
+          "outcome": "pass"
+        },
+        "parsed": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "n/a"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 2,
+        "symbols_typed": 2,
+        "refusals": 0,
+        "approximations": 1
+      },
+      "elapsed_ns": 712134815
+    },
+    {
+      "tier": "tier4",
+      "name": "24-flipflop",
+      "kind": "honest-failure",
+      "categories": [
+        "shim"
+      ],
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "n/a"
+        },
+        "honest": {
+          "outcome": "fail",
+          "reason": "shim: the conversion reported nothing about the construct"
+        },
+        "parsed": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "n/a"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 4,
+        "symbols_typed": 4,
+        "refusals": 0,
+        "approximations": 0
+      },
+      "elapsed_ns": 713273651
+    },
+    {
+      "tier": "tier4",
+      "name": "25-hash-order",
+      "kind": "honest-failure",
+      "categories": [
+        "convert-verify"
+      ],
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "n/a"
+        },
+        "honest": {
+          "outcome": "skip",
+          "reason": "convert-verify: the entry's stdout is not reproducible run to run"
+        },
+        "parsed": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "n/a"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 2,
+        "symbols_typed": 2,
+        "refusals": 0,
+        "approximations": 0
+      },
+      "elapsed_ns": 648496013
+    },
+    {
+      "tier": "tier4",
+      "name": "26-sort-stability",
+      "kind": "honest-failure",
+      "categories": [
+        "convert-verify"
+      ],
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:19:29: cannot index a (variable of interface type any)"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "n/a"
+        },
+        "honest": {
+          "outcome": "fail",
+          "reason": "convert-verify: the generated program did not compile"
+        },
+        "parsed": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "7 variables left dynamic out of 7"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "n/a"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 7,
+        "symbols_typed": 0,
+        "refusals": 0,
+        "approximations": 0
+      },
+      "elapsed_ns": 225177820
+    },
+    {
+      "tier": "tier4",
+      "name": "27-negative-modulus",
+      "kind": "honest-failure",
+      "categories": [
+        "convert-verify"
+      ],
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:10:29: cannot use []int{…} (value of type []int) as int value in array or slice literal"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "n/a"
+        },
+        "honest": {
+          "outcome": "fail",
+          "reason": "convert-verify: the generated program did not compile"
+        },
+        "parsed": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "2 variables left dynamic out of 4"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "n/a"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 4,
+        "symbols_typed": 2,
+        "refusals": 0,
+        "approximations": 2
+      },
+      "elapsed_ns": 246433172
+    },
+    {
+      "tier": "tier4",
+      "name": "28-int-division",
+      "kind": "honest-failure",
+      "categories": [
+        "convert-verify"
+      ],
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:11:32: cannot convert float64(-7) / 2.0 (constant -3.5 of type float64) to type int"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "n/a"
+        },
+        "honest": {
+          "outcome": "fail",
+          "reason": "convert-verify: the generated program did not compile"
+        },
+        "parsed": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "n/a"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 1,
+        "symbols_typed": 1,
+        "refusals": 0,
+        "approximations": 2
+      },
+      "elapsed_ns": 246848886
+    },
+    {
+      "tier": "tier4",
+      "name": "29-str2num-coercion",
+      "kind": "honest-failure",
+      "categories": [
+        "convert-verify"
+      ],
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "n/a"
+        },
+        "honest": {
+          "outcome": "fail",
+          "reason": "convert-verify: stdout differs: line 12, byte 185: got \"0\\noct() does all:     0 8 0\\n\", wanted \"16\\noct() does all:     16 8 5\\n\""
+        },
+        "parsed": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "n/a"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 1,
+        "symbols_typed": 1,
+        "refusals": 0,
+        "approximations": 4
+      },
+      "elapsed_ns": 619795744
+    },
+    {
+      "tier": "tier4",
+      "name": "30-negative-index",
+      "kind": "honest-failure",
+      "categories": [
+        "convert-verify"
+      ],
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:13:4: invalid argument: index -1 (constant of type int) must not be negative"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "n/a"
+        },
+        "honest": {
+          "outcome": "fail",
+          "reason": "convert-verify: the generated program did not compile"
+        },
+        "parsed": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "n/a"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 2,
+        "symbols_typed": 2,
+        "refusals": 0,
+        "approximations": 1
+      },
+      "elapsed_ns": 252177884
+    },
+    {
+      "tier": "tier4",
+      "name": "31-array-autoextend",
+      "kind": "honest-failure",
+      "categories": [
+        "convert-verify"
+      ],
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "n/a"
+        },
+        "honest": {
+          "outcome": "fail",
+          "reason": "convert-verify: exit status 2, wanted 0; stdout differs: 97 byte(s) missing after line 1, expected \"len: 8\\ngap defined? no\\njoined: [...\"; stderr differs: 154 extra byte(s) after line 1, starting \"panic: runtime error: index out ...\""
+        },
+        "parsed": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "n/a"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 1,
+        "symbols_typed": 1,
+        "refusals": 0,
+        "approximations": 3
+      },
+      "elapsed_ns": 558948118
+    },
+    {
+      "tier": "tier4",
+      "name": "32-undef-context",
+      "kind": "honest-failure",
+      "categories": [
+        "convert-verify"
+      ],
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "n/a"
+        },
+        "honest": {
+          "outcome": "fail",
+          "reason": "convert-verify: exit status 2, wanted 0; stdout differs: line 2, byte 23: got \"0\u003e\\ndefined: no\\nbool: false\\n\", wanted \"\u003e\\ndefined: no\\nbool: false\\nundef ...\"; stderr differs: 217 extra byte(s) after line 1, starting \"panic: the undef function is not...\""
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "1 untranslated construct"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "1 variable left dynamic out of 4"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "n/a"
+      },
+      "quality": {
+        "todos": 1,
+        "symbols": 4,
+        "symbols_typed": 3,
+        "refusals": 1,
+        "approximations": 1
+      },
+      "elapsed_ns": 580092031
+    },
+    {
+      "tier": "tier4",
+      "name": "33-return-vs-undef",
+      "kind": "honest-failure",
+      "categories": [
+        "convert-verify"
+      ],
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:15:13: bare() (no value) used as value"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "n/a"
+        },
+        "honest": {
+          "outcome": "fail",
+          "reason": "convert-verify: the generated program did not compile"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "1 untranslated construct"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "4 variables left dynamic out of 6"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "n/a"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 6,
+        "symbols_typed": 2,
+        "refusals": 1,
+        "approximations": 1
+      },
+      "elapsed_ns": 217673182
+    },
+    {
+      "tier": "tier4",
+      "name": "34-open-unchecked",
+      "kind": "honest-failure",
+      "categories": [
+        "convert-verify"
+      ],
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "n/a"
+        },
+        "honest": {
+          "outcome": "fail",
+          "reason": "convert-verify: exit status 255, wanted 0; stdout differs: 105 byte(s) missing after line 1, expected \"open ok? no (No such file or dir...\"; stderr differs: 56 extra byte(s) after line 1, starting \"open /nonexistent/config.txt: no...\""
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "1 untranslated construct"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "1 variable left dynamic out of 4"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "n/a"
+      },
+      "quality": {
+        "todos": 1,
+        "symbols": 4,
+        "symbols_typed": 3,
+        "refusals": 1,
+        "approximations": 1
+      },
+      "elapsed_ns": 522924293
+    },
+    {
+      "tier": "tier4",
+      "name": "35-buffering",
+      "kind": "honest-failure",
+      "categories": [
+        "convert-verify"
+      ],
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "n/a"
+        },
+        "honest": {
+          "outcome": "pass"
+        },
+        "parsed": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "n/a"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 0,
+        "symbols_typed": 0,
+        "refusals": 0,
+        "approximations": 0
+      },
+      "elapsed_ns": 457545038
+    },
+    {
+      "tier": "domain",
+      "name": "01-logrotate-check",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:108:19: strip(lines[int(i)]) (no value) used as value"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "3 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "37 variables left dynamic out of 60"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 2,
+        "symbols": 60,
+        "symbols_typed": 23,
+        "refusals": 3,
+        "approximations": 5
+      },
+      "elapsed_ns": 282532613
+    },
+    {
+      "tier": "domain",
+      "name": "02-disk-usage-report",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:91:28: cannot index item3 (variable of type int)"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "2 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "19 variables left dynamic out of 35"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 1,
+        "symbols": 35,
+        "symbols_typed": 16,
+        "refusals": 2,
+        "approximations": 3
+      },
+      "elapsed_ns": 243698234
+    },
+    {
+      "tier": "domain",
+      "name": "03-proc-table-summary",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:185:31: cannot index b4 (variable of interface type any)"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "5 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "22 variables left dynamic out of 46"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 4,
+        "symbols": 46,
+        "symbols_typed": 24,
+        "refusals": 5,
+        "approximations": 0
+      },
+      "elapsed_ns": 240097279
+    },
+    {
+      "tier": "domain",
+      "name": "04-cron-lockwrap",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:105:19: invalid operation: cannot call job[\"code\"] (map index expression of type string): string is not a function"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "4 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "19 variables left dynamic out of 44"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 3,
+        "symbols": 44,
+        "symbols_typed": 25,
+        "refusals": 4,
+        "approximations": 6
+      },
+      "elapsed_ns": 197570401
+    },
+    {
+      "tier": "domain",
+      "name": "05-passwd-audit",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:91:32: cannot use []string{…} (value of type []string) as []any value in argument to append"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "3 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "18 variables left dynamic out of 40"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 2,
+        "symbols": 40,
+        "symbols_typed": 22,
+        "refusals": 3,
+        "approximations": 4
+      },
+      "elapsed_ns": 257305871
+    },
+    {
+      "tier": "domain",
+      "name": "06-access-log-report",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:87:16: cannot use toNum(bytesTotal) + toNum(bytes) (value of type float64) as int value in assignment"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "5 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "18 variables left dynamic out of 38"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 4,
+        "symbols": 38,
+        "symbols_typed": 20,
+        "refusals": 5,
+        "approximations": 1
+      },
+      "elapsed_ns": 262877597
+    },
+    {
+      "tier": "domain",
+      "name": "07-error-log-cluster",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "exit status 2, wanted 0; stdout differs: 1226 byte(s) missing after line 1, expected \"levels: error=16 info=2 warn=4\\nc...\"; stderr differs: 158 extra byte(s) after line 1, starting \"panic: runtime error: index out ...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "4 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "13 variables left dynamic out of 22"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "exit status 2, wanted 0; stdout differs: 1226 byte(s) missing after line 1, expected \"levels: error=16 info=2 warn=4\\nc...\"; stderr differs: 169 extra byte(s) after line 1, starting \"panic: runtime error: index out ...\""
+      },
+      "quality": {
+        "todos": 4,
+        "symbols": 22,
+        "symbols_typed": 9,
+        "refusals": 4,
+        "approximations": 0
+      },
+      "elapsed_ns": 1324465780
+    },
+    {
+      "tier": "domain",
+      "name": "08-stacktrace-extract",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:96:27: invalid append: argument must be a slice; have cur[\"frames\"] (map index expression of interface type any)"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "4 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "15 variables left dynamic out of 23"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 3,
+        "symbols": 23,
+        "symbols_typed": 8,
+        "refusals": 4,
+        "approximations": 2
+      },
+      "elapsed_ns": 261548617
+    },
+    {
+      "tier": "domain",
+      "name": "09-log-tail-state",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:49:16: invalid operation: pattern != nil (mismatched types string and untyped nil)"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "6 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "13 variables left dynamic out of 20"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 5,
+        "symbols": 20,
+        "symbols_typed": 7,
+        "refusals": 6,
+        "approximations": 2
+      },
+      "elapsed_ns": 210626233
+    },
+    {
+      "tier": "domain",
+      "name": "10-csv-to-fixed",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:93:27: cannot use map[string]string{…} (value of type map[string]string) as map[string]any value in argument to append"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "3 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "12 variables left dynamic out of 31"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 2,
+        "symbols": 31,
+        "symbols_typed": 19,
+        "refusals": 3,
+        "approximations": 3
+      },
+      "elapsed_ns": 273542409
+    },
+    {
+      "tier": "domain",
+      "name": "11-tsv-join",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:45:5: declared and not used: _2"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "2 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "19 variables left dynamic out of 31"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 1,
+        "symbols": 31,
+        "symbols_typed": 12,
+        "refusals": 2,
+        "approximations": 4
+      },
+      "elapsed_ns": 243732614
+    },
+    {
+      "tier": "domain",
+      "name": "12-field-cleaner",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:116:20: invalid operation: cannot call pipeline[i] (variable of interface type any): any is not a function"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "9 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "23 variables left dynamic out of 39"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 8,
+        "symbols": 39,
+        "symbols_typed": 16,
+        "refusals": 9,
+        "approximations": 5
+      },
+      "elapsed_ns": 211912181
+    },
+    {
+      "tier": "domain",
+      "name": "13-mail-header-parse",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:69:4: invalid operation: unfolded[-1] += toText(cont) (mismatched types any and string)"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "2 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "17 variables left dynamic out of 24"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 1,
+        "symbols": 24,
+        "symbols_typed": 7,
+        "refusals": 2,
+        "approximations": 1
+      },
+      "elapsed_ns": 265523836
+    },
+    {
+      "tier": "domain",
+      "name": "14-template-expand",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:103:25: undefined: m"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "3 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "16 variables left dynamic out of 32"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 2,
+        "symbols": 32,
+        "symbols_typed": 16,
+        "refusals": 3,
+        "approximations": 3
+      },
+      "elapsed_ns": 286460279
+    },
+    {
+      "tier": "domain",
+      "name": "15-dedupe-fuzzy",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:86:31: cannot use map[string]string{…} (value of type map[string]string) as map[string]any value in argument to append"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "1 untranslated construct"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "28 variables left dynamic out of 52"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 52,
+        "symbols_typed": 24,
+        "refusals": 1,
+        "approximations": 3
+      },
+      "elapsed_ns": 265537692
+    },
+    {
+      "tier": "domain",
+      "name": "16-fasta-stats",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:75:14: cannot use map[string]string{…} (value of type map[string]string) as map[string]any value in assignment"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "4 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "18 variables left dynamic out of 26"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 3,
+        "symbols": 26,
+        "symbols_typed": 8,
+        "refusals": 4,
+        "approximations": 0
+      },
+      "elapsed_ns": 274214648
+    },
+    {
+      "tier": "domain",
+      "name": "17-interval-overlap",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:72:50: invalid append: argument must be a slice; have genes[chrom].(map[string]any)[strand] (map index expression of interface type any)"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "2 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "16 variables left dynamic out of 44"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 1,
+        "symbols": 44,
+        "symbols_typed": 28,
+        "refusals": 2,
+        "approximations": 5
+      },
+      "elapsed_ns": 301986263
+    },
+    {
+      "tier": "domain",
+      "name": "18-codon-translate",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:73:5: invalid operation: cur[\"seq\"] += line (mismatched types any and string)"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "7 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "17 variables left dynamic out of 29"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 6,
+        "symbols": 29,
+        "symbols_typed": 12,
+        "refusals": 7,
+        "approximations": 3
+      },
+      "elapsed_ns": 233543251
+    },
+    {
+      "tier": "domain",
+      "name": "19-kmer-count",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "exit status 2, wanted 0; stdout differs: 417 byte(s) missing after line 1, expected \"reads=6 bases=162 k=6\\nkmers: 126...\"; stderr differs: 254 extra byte(s) after line 1, starting \"panic: P2G4520: tr with modifier...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "3 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "13 variables left dynamic out of 32"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "exit status 2, wanted 0; stdout differs: 417 byte(s) missing after line 1, expected \"reads=6 bases=162 k=6\\nkmers: 126...\"; stderr differs: 275 extra byte(s) after line 1, starting \"panic: P2G4520: tr with modifier...\""
+      },
+      "quality": {
+        "todos": 3,
+        "symbols": 32,
+        "symbols_typed": 19,
+        "refusals": 3,
+        "approximations": 1
+      },
+      "elapsed_ns": 1224348758
+    },
+    {
+      "tier": "domain",
+      "name": "20-version-bump",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:123:20: handlers[base](lines[i]) (no value) used as value"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "2 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "22 variables left dynamic out of 39"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 1,
+        "symbols": 39,
+        "symbols_typed": 17,
+        "refusals": 2,
+        "approximations": 3
+      },
+      "elapsed_ns": 234134120
+    },
+    {
+      "tier": "domain",
+      "name": "21-depgraph-toposort",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:87:4: invalid operation: declared[toText(target)]++ (non-numeric type any)"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "3 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "21 variables left dynamic out of 40"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 2,
+        "symbols": 40,
+        "symbols_typed": 19,
+        "refusals": 3,
+        "approximations": 8
+      },
+      "elapsed_ns": 274921611
+    },
+    {
+      "tier": "domain",
+      "name": "22-manifest-md5",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:85:16: cannot use map[string]string{…} (value of type map[string]string) as map[string]any value in assignment"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "15 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "20 variables left dynamic out of 33"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 14,
+        "symbols": 33,
+        "symbols_typed": 13,
+        "refusals": 15,
+        "approximations": 4
+      },
+      "elapsed_ns": 275587294
+    },
+    {
+      "tier": "domain",
+      "name": "23-url-normalize",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:66:35: invalid append: argument must be a slice; have byCanon[toText(canon)] (map index expression of interface type any)"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "5 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "9 variables left dynamic out of 15"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 4,
+        "symbols": 15,
+        "symbols_typed": 6,
+        "refusals": 5,
+        "approximations": 0
+      },
+      "elapsed_ns": 200551993
+    },
+    {
+      "tier": "domain",
+      "name": "24-cidr-calc",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "exit status 2, wanted 0; stdout differs: 1275 byte(s) missing after line 1, expected \"CIDR               NETWORK      ...\"; stderr differs: 160 extra byte(s) after line 1, starting \"panic: P2G7010: a second package...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "30 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "26 variables left dynamic out of 39"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "exit status 2, wanted 0; stdout differs: 1275 byte(s) missing after line 1, expected \"CIDR               NETWORK      ...\"; stderr differs: 170 extra byte(s) after line 1, starting \"panic: P2G7010: a second package...\""
+      },
+      "quality": {
+        "todos": 30,
+        "symbols": 39,
+        "symbols_typed": 13,
+        "refusals": 30,
+        "approximations": 1
+      },
+      "elapsed_ns": 1238063089
+    },
+    {
+      "tier": "domain",
+      "name": "25-dns-zone-parse",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:113:18: cannot use val (variable of type string) as int value in assignment"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "parsed": {
+          "outcome": "fail",
+          "reason": "7 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "25 variables left dynamic out of 44"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 6,
+        "symbols": 44,
+        "symbols_typed": 19,
+        "refusals": 7,
+        "approximations": 2
+      },
+      "elapsed_ns": 379050197
+    }
+  ],
+  "notes": [
+    "tier2/35-paths-and-dumper: perl no longer prints what expected_stdout records: line 20, byte 1072: got \"no\\nabs_path is absolute: yes\\nabs...\", wanted \"yes\\nabs_path is absolute: yes\\nab...\""
+  ],
+  "elapsed_ns": 3940262711
+}

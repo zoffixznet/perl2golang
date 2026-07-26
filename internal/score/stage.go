@@ -214,7 +214,7 @@ func Classify(rep *report.Report) Classification {
 	} else {
 		reason := "the generated Go is not valid Go"
 		if rep.Verified.Error != "" {
-			reason += ": " + firstLine(rep.Verified.Error)
+			reason += ": " + truncate(compilerMessage(rep.Verified.Error), 160)
 		}
 		c.Emitted = fail(reason)
 	}
@@ -227,6 +227,9 @@ func plural(n int, noun string) string {
 	if n == 1 {
 		return "1 " + noun
 	}
+	if strings.HasSuffix(noun, "y") {
+		return strconv.Itoa(n) + " " + strings.TrimSuffix(noun, "y") + "ies"
+	}
 	return strconv.Itoa(n) + " " + noun + "s"
 }
 
@@ -237,6 +240,19 @@ func firstLine(s string) string {
 		return strings.TrimSpace(s[:i]) + " ..."
 	}
 	return s
+}
+
+// compilerMessage picks the useful line out of a build transcript: the first
+// line that names a file and a position, which is the line that says what is
+// actually wrong. Everything before it is the wrapper the build put around it.
+func compilerMessage(s string) string {
+	for _, line := range strings.Split(s, "\n") {
+		line = strings.TrimSpace(line)
+		if strings.Contains(line, ".go:") && strings.Count(line, ":") >= 2 {
+			return line
+		}
+	}
+	return firstLine(s)
 }
 
 // truncate shortens a reason to n runes, so one runaway compiler message cannot

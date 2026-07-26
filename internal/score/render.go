@@ -31,7 +31,7 @@ func Render(w io.Writer, sc *Scorecard, delta Delta, opts RenderOptions) {
 	renderNotes(w, sc, opts)
 	renderDelta(w, delta)
 	renderEntries(w, sc, opts)
-	fmt.Fprintf(w, "\n%d entries in %s\n", len(sc.Entries), sc.Elapsed.Round(time.Millisecond))
+	fmt.Fprintf(w, "\n%s in %s\n", plural(len(sc.Entries), "entry"), sc.Elapsed.Round(time.Millisecond))
 }
 
 // tableStages are the columns of the main table, in ladder order.
@@ -57,11 +57,11 @@ func renderTable(w io.Writer, sc *Scorecard) {
 		rows = append(rows, row)
 	}
 	// The total is set apart, because it is the number that gets quoted.
-	rule := len(rows) - 1
+	rule := len(rows) - 2
 
 	fmt.Fprintln(w, "Conversion scorecard")
 	if sc.Filter.Partial() {
-		fmt.Fprintf(w, "  covering %s only\n", describeFilter(sc.Filter))
+		fmt.Fprintf(w, "  covering %s\n", describeFilter(sc.Filter))
 	}
 	fmt.Fprintln(w)
 	writeTable(w, header, rows, rule, map[int]bool{0: true})
@@ -96,6 +96,11 @@ func renderAnnotated(w io.Writer, sc *Scorecard) {
 	}
 	fmt.Fprintf(w, "  %s equivalent, against %s for the clean programs\n",
 		cell(sc.Total.EquivalentAnnotated), cell(sc.Total.Stage(StageEquivalent)))
+	checked := sc.Total.EquivalentAnnotated
+	if checked.Pass+checked.Fail == 0 {
+		fmt.Fprintln(w, "  no program was run, so the annotations were not checked against anything")
+		return
+	}
 	if same {
 		fmt.Fprintln(w, "  the annotations changed nothing: both programs behave the same everywhere")
 		return
@@ -190,7 +195,11 @@ func renderNotes(w io.Writer, sc *Scorecard, opts RenderOptions) {
 func renderDelta(w io.Writer, d Delta) {
 	fmt.Fprintln(w, "\nSince the last run")
 	if !d.Comparable {
-		fmt.Fprintln(w, "  "+d.Note)
+		note := d.Note
+		if note == "" {
+			note = "no previous scorecard to compare against"
+		}
+		fmt.Fprintln(w, "  "+note)
 		return
 	}
 	if len(d.Changes) == 0 {
@@ -281,11 +290,7 @@ func writeTable(w io.Writer, header []string, rows [][]string, rule int, leftAli
 			if i > 0 {
 				b.WriteString("  ")
 			}
-			if leftAlign[i] || i == len(cells)-1 {
-				if i == len(cells)-1 {
-					b.WriteString(c)
-					continue
-				}
+			if leftAlign[i] {
 				fmt.Fprintf(&b, "%-*s", widths[i], c)
 				continue
 			}

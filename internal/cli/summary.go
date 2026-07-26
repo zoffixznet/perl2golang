@@ -40,7 +40,7 @@ func writeSummary(w io.Writer, runs []*run, stream streamMode, verbose bool) {
 	switch {
 	case stream != streamOff:
 		for _, r := range runs {
-			fmt.Fprintln(w, streamLine(r))
+			fmt.Fprintln(w, streamLine(r, verbose))
 		}
 	case len(runs) == 1:
 		fmt.Fprint(w, fileBlock(runs[0], verbose))
@@ -52,14 +52,17 @@ func writeSummary(w io.Writer, runs []*run, stream streamMode, verbose bool) {
 // streamLine is the whole summary when the artifacts went to standard output.
 // The product is then on stdout and the user is watching that, so the run gets
 // one line on stderr and no more.
-func streamLine(r *run) string {
+func streamLine(r *run, verbose bool) string {
 	if r.failed() {
 		return fmt.Sprintf("%s: failed, nothing was written", r.in.display)
 	}
 	rep := r.res.Report
 	line := fmt.Sprintf("%s: converted, %s; %s", r.in.display, verifiedClause(rep), reviewClause(rep))
 	if codes := topCodes(rep); codes != "" {
-		line += " (" + codes + "), -v to see them in full"
+		line += " (" + codes + ")"
+		if !verbose {
+			line += ", -v to see them in full"
+		}
 	}
 	return line
 }
@@ -68,20 +71,23 @@ func streamLine(r *run) string {
 func fileBlock(r *run, verbose bool) string {
 	var b strings.Builder
 	if r.failed() {
-		fmt.Fprintf(&b, "%s -> failed  (%s)\n", r.in.display, elapsed(r))
+		// The diagnostic above has already said why. This line exists so that
+		// a scrollback full of them still ends with the verdict.
+		fmt.Fprintf(&b, "%s -> failed%s\n", r.in.display, timing(r))
 		return b.String()
 	}
 	rep := r.res.Report
 
-	fmt.Fprintf(&b, "%s -> %s  (%d lines, %d statements, %s)\n",
-		r.in.display, r.dir+"/", countLines(r.in.src), rep.Stats.Statements, elapsed(r))
-	row := func(label, name, count string) {
-		fmt.Fprintf(&b, "  %-10s %-24s %s\n", label, name, count)
+	lines, statements := countLines(r.in.src), rep.Stats.Statements
+	fmt.Fprintf(&b, "%s -> %s  (%d line%s, %d statement%s, %s)\n",
+		r.in.display, r.dir+"/", lines, plural(lines), statements, plural(statements), elapsed(r))
+	row := func(label, name string, n int, noun string) {
+		fmt.Fprintf(&b, "  %-10s %-20s %4d %s\n", label, name, n, noun+plural(n))
 	}
-	row("program", "main.go", plural(countLines(r.res.Clean["main.go"]), "line"))
-	row("annotated", "annotated/main.go", plural(countLines(r.res.Annotated["main.go"]), "line"))
+	row("program", "main.go", countLines(r.res.Clean["main.go"]), "line")
+	row("annotated", "annotated/main.go", countLines(r.res.Annotated["main.go"]), "line")
 	if n := docCount(r.res); n > 0 {
-		row("docs", "docs/", plural(n, "file"))
+		row("docs", "docs/", n, "file")
 	}
 	fmt.Fprintf(&b, "  %-10s %s\n", "checked", verifiedClause(rep))
 	fmt.Fprintf(&b, "  %-10s %s\n", "review", reviewClause(rep))
@@ -103,12 +109,11 @@ func multiBlock(runs []*run, verbose bool) string {
 	}
 	for _, r := range shown {
 		if r.failed() {
-			fmt.Fprintf(&b, "  %-7s %-22s %s\n", "failed", r.in.display, "nothing was written")
+			fmt.Fprintf(&b, "  %-7s %-24s %s\n", "failed", r.in.display, "nothing was written")
 			continue
 		}
-		fmt.Fprintf(&b, "  %-7s %-22s %-16s %-22s %s\n", "ok", r.in.display,
-			plural(r.res.Report.Stats.Statements, "statement"), r.dir+"/",
-			reviewClause(r.res.Report))
+		fmt.Fprintf(&b, "  %-7s %-24s %4d statements   %-20s %s\n", "ok", r.in.display,
+			r.res.Report.Stats.Statements, r.dir+"/", reviewClause(r.res.Report))
 	}
 	if n := len(runs) - len(shown); n > 0 {
 		fmt.Fprintf(&b, "  + %d more\n", n)
@@ -125,11 +130,12 @@ func multiBlock(runs []*run, verbose bool) string {
 	}
 	b.WriteString("  ---\n")
 	fmt.Fprintf(&b, "  %d of %d converted, %d failed, %.2fs\n", converted, len(runs), failed, total)
-	if r := worstRun(runs); r != nil {
-		fmt.Fprintf(&b, "  %-7s %s\n", "read", r.dir+"/"+readTarget(r.res))
-	}
 	if !verbose && anyEntries(runs) {
 		b.WriteString("  -v shows every diagnostic in full\n")
+	}
+	// The last line is always an address: the one file to open next.
+	if r := worstRun(runs); r != nil {
+		fmt.Fprintf(&b, "  %-7s %s\n", "read", r.dir+"/"+readTarget(r.res))
 	}
 	return b.String()
 }
@@ -202,13 +208,13 @@ func lineColumn(line int) string {
 func reviewClause(rep *report.Report) string {
 	var parts []string
 	if n := rep.Stats.Refused; n > 0 {
-		parts = append(parts, plural(n, "refusal"))
+		parts = append(parts, fmt.Sprintf("%d refusal%s", n, plural(n)))
 	}
 	if n := rep.Stats.Approximated; n > 0 {
-		parts = append(parts, plural(n, "warning"))
+		parts = append(parts, fmt.Sprintf("%d warning%s", n, plural(n)))
 	}
 	if n := len(rep.Entries) - rep.Stats.Refused - rep.Stats.Approximated; n > 0 {
-		parts = append(parts, plural(n, "note"))
+		parts = append(parts, fmt.Sprintf("%d note%s", n, plural(n)))
 	}
 	if len(parts) == 0 {
 		return "nothing to review"
@@ -285,15 +291,25 @@ func anyEntries(runs []*run) bool {
 	return false
 }
 
-// elapsed formats one run's wall time.
+// elapsed formats one run's wall time. Someone converting a corpus wants to
+// see it get faster, so the header carries it always.
 func elapsed(r *run) string {
 	return fmt.Sprintf("%.2fs", r.elapsed.Seconds())
 }
 
-// plural renders a count with its noun, adding the s when the count needs one.
-func plural(n int, noun string) string {
-	if n == 1 {
-		return fmt.Sprintf("%d %s", n, noun)
+// timing is the parenthesised wall time, or nothing at all for a run that
+// never started and so has no time worth reporting.
+func timing(r *run) string {
+	if r.elapsed == 0 {
+		return ""
 	}
-	return fmt.Sprintf("%d %ss", n, noun)
+	return "  (" + elapsed(r) + ")"
+}
+
+// plural is the suffix a noun takes for a count of n.
+func plural(n int) string {
+	if n == 1 {
+		return ""
+	}
+	return "s"
 }

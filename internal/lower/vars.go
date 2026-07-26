@@ -195,11 +195,22 @@ func (l *Lowerer) specialVar(v *ast.Var) ir.Expr {
 		return l.ident(b)
 
 	case "@ARGV":
-		out := slicing(ir.Pkg("os", "os", "Args", ir.SliceOf(ir.TString)), ir.IntLit("1"), nil, ir.SliceOf(ir.TString))
-		l.note(out, "Perl's @ARGV holds the arguments after the program name. Go's "+
-			"os.Args includes the program name at index 0, so the equivalent slice "+
-			"starts at 1.")
-		return out
+		// @ARGV is an ordinary array in Perl: scripts shift it, sort it and
+		// assign to it. os.Args[1:] is an expression rather than a variable,
+		// so the arguments get a real variable of their own.
+		b := l.lookup('@', "args", v)
+		b.Perl = "@ARGV"
+		b.Type = ir.SliceOf(ir.TString)
+		if b.Init == nil {
+			b.Init = slicing(ir.Pkg("os", "os", "Args", ir.SliceOf(ir.TString)),
+				ir.IntLit("1"), nil, ir.SliceOf(ir.TString))
+			b.Doc = "args holds the command line arguments, without the program name."
+			b.Explain = "Perl's @ARGV holds the arguments after the program name, and " +
+				"is an ordinary array a script can shift or sort. Go's os.Args includes " +
+				"the program name at index 0, and it is a slice expression rather than a " +
+				"variable, so the arguments are given a name here."
+		}
+		return l.ident(b)
 
 	case "$0":
 		return index(ir.Pkg("os", "os", "Args", ir.SliceOf(ir.TString)), ir.IntLit("0"), ir.TString)

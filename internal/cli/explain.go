@@ -26,7 +26,8 @@ func runExplain(e *env, args []string) int {
 	fs := flag.NewFlagSet("explain", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	fs.BoolVar(&list, "list", false, "")
-	if err := fs.Parse(args); err != nil {
+	positional, err := parseInterspersed(fs, args)
+	if err != nil {
 		if errors.Is(err, flag.ErrHelp) {
 			return e.print(explainHelp())
 		}
@@ -37,7 +38,7 @@ func runExplain(e *env, args []string) int {
 	if list {
 		return e.print(conceptList(kb))
 	}
-	topic := strings.Join(fs.Args(), " ")
+	topic := strings.Join(positional, " ")
 	if topic == "" {
 		return e.usagef("explain needs a topic. Try `perl2go explain --list`, " +
 			"or a diagnostic code such as `perl2go explain P2G4004`")

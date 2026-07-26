@@ -72,6 +72,15 @@ func Lookup(code Code) (Entry, bool) {
 	return c, true
 }
 
+// Known reports whether a code is in the registry. Everything that raises a
+// diagnostic answers to this: a code the registry does not know has no message,
+// no advice and no severity, which is a bug in perl2go rather than a fact about
+// the input.
+func Known(code Code) bool {
+	_, ok := catalogue[code]
+	return ok
+}
+
 // Codes returns every registered code in sorted order, which is the order
 // `perl2go explain` lists them in.
 func Codes() []Code {

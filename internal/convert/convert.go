@@ -36,8 +36,11 @@ type Options struct {
 	// Module overrides the generated module path.
 	Module string
 	// Verify asks for a full compile of the generated code when a Go
-	// toolchain is available. Parsing is always checked.
+	// toolchain is available. Parsing is always checked, whatever this says.
 	Verify bool
+	// SkipBuild suppresses the compile even when Verify is set, for callers
+	// that are going to build the output themselves anyway.
+	SkipBuild bool
 	// NoDocs skips the teaching bundle, which the snippet mode uses when it
 	// only wants the code and the notes.
 	NoDocs bool
@@ -156,7 +159,7 @@ func Convert(src []byte, opts Options) (result *Result, err error) {
 	// so verification covers whatever it produced as well. The documents are
 	// written afterwards, because they report what the checks found.
 	res.improveCode(context.Background(), opts.Improve)
-	res.verify()
+	res.verify(!opts.SkipBuild)
 	res.Walkthrough = walkthrough(low, src)
 
 	if !opts.NoDocs {
@@ -195,7 +198,7 @@ func render(mode gogen.Mode, f *ir.File) ([]byte, error) {
 // verify checks the tool's own output, first by parsing it and then, when a
 // toolchain is available, by compiling it. Output that does not build is a
 // defect in this tool and is reported as one rather than written and forgotten.
-func (r *Result) verify() {
+func (r *Result) verify(build bool) {
 	v := &r.Report.Verified
 	v.Toolchain = gogen.HaveToolchain()
 
@@ -217,7 +220,7 @@ func (r *Result) verify() {
 	}
 	v.Parsed = true
 
-	if !v.Toolchain {
+	if !v.Toolchain || !build {
 		return
 	}
 	files := map[string][]byte{"go.mod": []byte(GoMod(r.Module))}

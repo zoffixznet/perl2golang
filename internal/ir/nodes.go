@@ -1,5 +1,7 @@
 package ir
 
+import "strings"
+
 // File is one emitted Go source file.
 type File struct {
 	// Name is the file's base name, for example "main.go".
@@ -497,7 +499,17 @@ func Str(quoted string) *Lit {
 func IntLit(text string) *Lit { return &Lit{typed: typed{T: TInt}, Kind: LitInt, Value: text} }
 
 // FloatLit builds a floating-point literal.
+//
+// The spelling always carries a decimal point or an exponent, because Go types
+// an untyped constant from how it is written: `x := 0` declares an int and
+// `x := 0.0` declares a float64, and a float literal that prints as `0` would
+// quietly produce the wrong one.
 func FloatLit(text string) *Lit {
+	if text != "" && !strings.ContainsAny(text, ".eEpP") && text != "0" {
+		text += ".0"
+	} else if text == "0" {
+		text = "0.0"
+	}
 	return &Lit{typed: typed{T: TFloat}, Kind: LitFloat, Value: text}
 }
 

@@ -102,7 +102,7 @@ func firstLine(s string) string {
 }
 
 func TestStreamRoundTrip(t *testing.T) {
-	got := exec(t, "", "-e", `my %h = (a => 1); print "$_\n" for sort keys %h;`, "--stdout=framed")
+	got := runCLI(t, "", "-e", `my %h = (a => 1); print "$_\n" for sort keys %h;`, "--stdout=framed")
 	if got.code != ExitOK {
 		t.Fatalf("exit status = %d, stderr:\n%s", got.code, got.stderr)
 	}

@@ -136,11 +136,20 @@ var (
 	TVoid   = &Type{Kind: Void}
 )
 
-// SliceOf returns []elem.
-func SliceOf(elem *Type) *Type { return &Type{Kind: Slice, Elem: elem} }
+// SliceOf returns []elem. An element type that carries no information becomes
+// any, because a slice of nothing has no spelling in Go.
+func SliceOf(elem *Type) *Type { return &Type{Kind: Slice, Elem: usable(elem)} }
 
 // MapOf returns map[string]elem.
-func MapOf(elem *Type) *Type { return &Type{Kind: Map, Elem: elem} }
+func MapOf(elem *Type) *Type { return &Type{Kind: Map, Elem: usable(elem)} }
+
+// usable substitutes any for a type that cannot be written down.
+func usable(t *Type) *Type {
+	if t == nil || t.Kind == Void || t.Kind == Invalid {
+		return TAny
+	}
+	return t
+}
 
 // PointerTo returns *elem.
 func PointerTo(elem *Type) *Type { return &Type{Kind: Pointer, Elem: elem} }

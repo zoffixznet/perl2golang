@@ -35,12 +35,12 @@ func rootHelp() string {
 	      --version      print the version and exit
 
 	examples:
-	  perl2go report.pl                       convert one file into report-go/
-	  perl2go lib/*.pl -o build/              convert several files, one directory each
-	  perl2go -e 'print join ",", 1..5'       convert a snippet and print the Go
-	  cat old.pl | perl2go -                  read Perl from standard input
-	  perl2go explain slice-aliasing-and-copy read one teaching concept
-	  perl2go explain P2G4004                 look up what a diagnostic code means
+	  perl2go report.pl                         convert one file into report-go/
+	  perl2go lib/*.pl -o build/                convert several files, one directory each
+	  perl2go -e 'print join ",", 1..5'         convert a snippet and print the Go
+	  cat old.pl | perl2go -                    read Perl from standard input
+	  perl2go explain slice-aliasing-and-copy   read one teaching concept
+	  perl2go explain P2G4004                   look up what a diagnostic code means
 
 	exit status:
 	  0  the conversion finished; warnings and refusals are reported, not failures
@@ -90,7 +90,9 @@ func convertHelp() string {
 	                       this is what -e and standard input do by default
 	      --stdout=framed  force the framed stream even for -e and standard input
 	      --json           write one JSON object holding every artifact and the
-	                       full report; implies --color=never
+	                       full report; implies --color=never. The files are
+	                       still written as well, unless the input is a snippet
+	                       or standard input.
 
 	conversion:
 	      --strict         treat anything that needs review as a failure. The output

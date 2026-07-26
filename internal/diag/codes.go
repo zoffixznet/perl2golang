@@ -145,12 +145,24 @@ const (
 	Wantarray Code = "P2G2031"
 	// ForeachAliasing: the foreach variable aliases the element.
 	ForeachAliasing Code = "P2G2040"
+	// HashFromOddList: a hash is built from a list of unknown length.
+	HashFromOddList Code = "P2G2050"
+	// DefinedOnValueType: `defined` cannot see the absence of a value here.
+	DefinedOnValueType Code = "P2G2110"
+	// BareReturnZeroValues: a bare `return` became the declared zero values.
+	BareReturnZeroValues Code = "P2G2120"
+	// MissingArguments: a call passes fewer arguments than the sub unpacks.
+	MissingArguments Code = "P2G2130"
 )
 
 // References, aliasing, and mutation.
 const (
 	// Autovivification: a nested access creates the intermediate containers.
 	Autovivification Code = "P2G2510"
+	// SliceAssignment: an assignment writes several elements through a slice.
+	SliceAssignment Code = "P2G2530"
+	// AssignTargetShape: the left side of an assignment has no lowering rule.
+	AssignTargetShape Code = "P2G2540"
 	// MutateWhileIterating: a collection is modified inside its own loop.
 	MutateWhileIterating Code = "P2G2544"
 )
@@ -181,8 +193,14 @@ const (
 const (
 	// Redo: `redo` restarts a loop body without the loop's increment.
 	Redo Code = "P2G3510"
+	// OperatorNoRule: an operator has no lowering rule in the converter.
+	OperatorNoRule Code = "P2G3511"
 	// GotoLabel: `goto LABEL` moves control in a way Go's goto cannot.
 	GotoLabel Code = "P2G3520"
+	// ForPostList: a C-style for header carries several post expressions.
+	ForPostList Code = "P2G3530"
+	// ConstructNoRule: a construct has no lowering rule in the converter.
+	ConstructNoRule Code = "P2G3599"
 )
 
 // Regex features RE2 lacks.
@@ -197,6 +215,8 @@ const (
 	RegexRecursion Code = "P2G4010"
 	// RegexEmbeddedCode: a pattern runs Perl while matching.
 	RegexEmbeddedCode Code = "P2G4011"
+	// RegexAtomicGroup: a pattern uses an atomic group.
+	RegexAtomicGroup Code = "P2G4012"
 	// RegexKeepOut: a pattern uses `\K`.
 	RegexKeepOut Code = "P2G4014"
 	// RegexFreeSpacing: `/x` was expanded at conversion time.
@@ -205,6 +225,8 @@ const (
 	SubstEval Code = "P2G4040"
 	// SubstDoubleEval: `s///ee` evaluates the replacement's result again.
 	SubstDoubleEval Code = "P2G4041"
+	// RegexDollarAnchor: `$` matches in one more place in Perl than in Go.
+	RegexDollarAnchor Code = "P2G4060"
 	// RuntimePattern: the pattern text is only known at run time.
 	RuntimePattern Code = "P2G4080"
 )
@@ -215,8 +237,12 @@ const (
 	SplitSingleSpace Code = "P2G4510"
 	// TrModifiers: `tr///` carries modifiers that change the rule.
 	TrModifiers Code = "P2G4520"
+	// TrCounts: `tr///` with an empty replacement list counts characters.
+	TrCounts Code = "P2G4521"
 	// MatchPosition: `/g` and `pos` keep match state on the scalar.
 	MatchPosition Code = "P2G4530"
+	// BindingRightSide: the right side of `=~` is not a static pattern.
+	BindingRightSide Code = "P2G4590"
 )
 
 // Strings, sprintf, and encoding.
@@ -231,6 +257,8 @@ const (
 	MagicIncrement Code = "P2G5030"
 	// SprintfFormat: a sprintf format has no fmt verb with the same meaning.
 	SprintfFormat Code = "P2G5040"
+	// HexOctParseError: `hex` and `oct` answer 0 where Go returns an error.
+	HexOctParseError Code = "P2G5050"
 )
 
 // Numbers, sort, and comparison.
@@ -245,16 +273,48 @@ const (
 	SortStability Code = "P2G5545"
 	// HashOrder: hash iteration order is randomised, differently in each.
 	HashOrder Code = "P2G5550"
+	// ArrayLengthAssignment: assigning to `$#array` sets the array's length.
+	ArrayLengthAssignment Code = "P2G5560"
+	// AssignPastEnd: an assignment writes past the end of an array.
+	AssignPastEnd Code = "P2G5561"
+	// EachIterator: `each` walks a hash through state kept on the hash.
+	EachIterator Code = "P2G5570"
+	// SpliceReturn: `splice` returns the elements it removed.
+	SpliceReturn Code = "P2G5580"
+	// SpliceForm: a `splice` inserts, removes or replaces in one call.
+	SpliceForm Code = "P2G5581"
+	// SortNamedComparator: `sort` names a sub that reads `$a` and `$b`.
+	SortNamedComparator Code = "P2G5590"
+	// SortBlockNoOrder: a `sort` block does not end in an ordering.
+	SortBlockNoOrder Code = "P2G5591"
+	// MapBlockNoValue: a `map` block does not end in an expression.
+	MapBlockNoValue Code = "P2G5595"
+	// GrepBlockNoTest: a `grep` block does not end in an expression.
+	GrepBlockNoTest Code = "P2G5596"
 )
 
 // File I/O.
 const (
 	// TwoArgOpen: `open` takes its mode from the front of the filename.
 	TwoArgOpen Code = "P2G6001"
+	// OpenModePipe: an `open` mode selects a pipe or a duplicated handle.
+	OpenModePipe Code = "P2G6002"
+	// OpenModeComputed: the `open` mode is only known at run time.
+	OpenModeComputed Code = "P2G6003"
+	// OpenUnchecked: the original does not check whether `open` succeeded.
+	OpenUnchecked Code = "P2G6005"
 	// ReadLineLoop: `while (<FH>)` became a bufio.Scanner.
 	ReadLineLoop Code = "P2G6010"
+	// ReadLineKeepsNewline: readline keeps the newline and Scanner strips it.
+	ReadLineKeepsNewline Code = "P2G6011"
 	// SlurpFile: `$/ = undef` reads the whole file at once.
 	SlurpFile Code = "P2G6012"
+	// InputLineNumber: `$.` counts lines across every handle at once.
+	InputLineNumber Code = "P2G6015"
+	// OutputFormatVars: a global changes how `print` and `split` behave.
+	OutputFormatVars Code = "P2G6016"
+	// LastSystemError: `$!` holds the error of the last failed system call.
+	LastSystemError Code = "P2G6017"
 	// AutoflushNoOp: `$| = 1` has nothing to disable in the emitted code.
 	AutoflushNoOp Code = "P2G6020"
 	// FileTest: a `-f` style file test became os.Stat.
@@ -309,12 +369,24 @@ const (
 	HTTPTimeout Code = "P2G7525"
 	// SQLPlaceholders: placeholder syntax is decided by the driver.
 	SQLPlaceholders Code = "P2G7530"
+	// ModuleFunctionUnmapped: a mapped module's function has no rule.
+	ModuleFunctionUnmapped Code = "P2G7540"
 	// ModuleUnmapped: a module has no entry in the mapping table.
 	ModuleUnmapped Code = "P2G7550"
 	// StrictWarnings: `use strict` and `use warnings` have no counterpart.
 	StrictWarnings Code = "P2G7555"
 	// PosixFloor: POSIX::floor maps to math.Floor.
 	PosixFloor Code = "P2G7560"
+	// ListUtilMapped: List::Util maps to slices and to explicit loops.
+	ListUtilMapped Code = "P2G7561"
+	// DumperMapped: Data::Dumper maps to fmt or to encoding/json.
+	DumperMapped Code = "P2G7562"
+	// ScalarUtilMapped: Scalar::Util maps to a type switch.
+	ScalarUtilMapped Code = "P2G7563"
+	// BasenameMapped: File::Basename maps to path/filepath.
+	BasenameMapped Code = "P2G7564"
+	// TimeModuleMapped: the Time:: modules map to the time package.
+	TimeModuleMapped Code = "P2G7565"
 	// Base64Wrapping: base64 line wrapping differs.
 	Base64Wrapping Code = "P2G7570"
 	// YAMLDependency: YAML needs a third-party package.
@@ -600,6 +672,41 @@ var catalogue = map[Code]Entry{
 		Converted: "the emitted loop indexes the slice where the body assigns to the loop variable",
 		Concepts:  []string{"range-is-not-foreach"},
 	},
+	HashFromOddList: {
+		Severity:  report.Warn,
+		Message:   "the list this hash is built from has no length the converter can see",
+		Short:     "hash built from a list of unknown length",
+		Advice:    "build the map with an explicit loop over the list, two elements at a time",
+		Cost:      "the pairs cannot be matched up at conversion time, so none of them reach the map",
+		Converted: "the emitted code declares the map empty and leaves the filling to the loop",
+	},
+	DefinedOnValueType: {
+		Severity:  report.Warn,
+		Message:   "`defined` cannot tell an unassigned `%s` from one holding the zero value",
+		Short:     "defined compares against the zero value",
+		Advice:    "declare the variable as a pointer, where `nil` is the absence Perl's undef means",
+		Cost:      "a variable that was never assigned reads the same as one assigned 0 or the empty string",
+		Converted: "the emitted code tests against the zero value",
+		Concepts:  []string{"nil-vs-undef", "static-types-and-zero-values"},
+	},
+	BareReturnZeroValues: {
+		Severity:  report.Warn,
+		Message:   "a bare `return` yields undef or the empty list, and a Go function returns its results",
+		Short:     "bare return became explicit zero values",
+		Advice:    "add an error or a bool result and check it, which is how Go says there is no result",
+		Cost:      "a caller cannot tell the empty answer from a real one that happens to be the zero value",
+		Converted: "the emitted `return` passes the zero value of each declared result",
+		Concepts:  []string{"multiple-return-values", "comma-ok-idiom"},
+	},
+	MissingArguments: {
+		Severity:  report.Warn,
+		Message:   "this call passes fewer arguments than `%s` unpacks, and Go requires every parameter",
+		Short:     "missing argument became a zero value",
+		Advice:    "give the parameter a default inside the function, or split the function in two",
+		Cost:      "Perl left the unpassed variables undef, which a zero value does not always stand in for",
+		Converted: "the missing arguments are passed as their type's zero value",
+		Concepts:  []string{"variadic-and-no-defaults"},
+	},
 
 	// -- References and mutation --------------------------------------------
 
@@ -610,6 +717,21 @@ var catalogue = map[Code]Entry{
 		Advice:    "create the inner map before writing to it; `m[a][b]++` on a missing `m[a]` panics",
 		Converted: "the emitted code creates each intermediate map before the write",
 		Concepts:  []string{"nil-slices-vs-nil-maps", "maps-of-slices"},
+	},
+	SliceAssignment: {
+		Severity:  report.Refuse,
+		Message:   "a slice assignment writes several elements at once, and Go has no syntax for it",
+		Short:     "slice assignment has no Go syntax",
+		Advice:    "write one assignment per element, or a loop over the index and value pairs",
+		Converted: "the assignment is not converted; the statement panics with the original Perl text",
+		Concepts:  []string{"slices-not-arrays"},
+	},
+	AssignTargetShape: {
+		Severity:  report.Refuse,
+		Message:   "the shape of the left side of this assignment has no rule in the converter",
+		Short:     "assignment target has no rule",
+		Advice:    "translate the assignment by hand; the original is quoted above the stub",
+		Converted: "the assignment is not converted; the statement panics with the original Perl text",
 	},
 	MutateWhileIterating: {
 		Severity:  report.Warn,
@@ -708,6 +830,13 @@ var catalogue = map[Code]Entry{
 		Converted: "the body is wrapped in an inner `for` that repeats until the body runs to its end",
 		Concepts:  []string{"range-is-not-foreach"},
 	},
+	OperatorNoRule: {
+		Severity:  report.Refuse,
+		Message:   "the converter has no rule for the `%s` operator",
+		Short:     "operator has no rule",
+		Advice:    "translate the expression by hand; the original is quoted above the stub",
+		Converted: "the operator is not converted; the call site panics with the original Perl text",
+	},
 	GotoLabel: {
 		Severity:  report.Refuse,
 		Message:   "`goto %s` moves control in a way Go's `goto` cannot express",
@@ -715,6 +844,21 @@ var catalogue = map[Code]Entry{
 		Advice:    "a labelled `break` or `continue` covers jumps out of loops; anything else wants a small state machine",
 		Converted: "the jump is not converted: Go's `goto` cannot enter a block or jump over a declaration",
 		Concepts:  []string{"var-vs-short-declaration"},
+	},
+	ForPostList: {
+		Severity:  report.Warn,
+		Message:   "a C-style `for` takes a comma expression in its third slot, and Go takes one statement",
+		Short:     "for header takes one post expression",
+		Advice:    "fold the work into one expression where a `next` in the body has to run it",
+		Cost:      "a `next` in the body skips the moved expressions, where Perl ran them",
+		Converted: "the extra post expressions were moved to the end of the loop body",
+	},
+	ConstructNoRule: {
+		Severity:  report.Refuse,
+		Message:   "the converter has no rule for this construct, and a guessed one would look right and run differently",
+		Short:     "construct has no rule",
+		Advice:    "translate it by hand; the original is quoted above the stub",
+		Converted: "the construct is not converted; the stub panics with the original Perl text",
 	},
 
 	// -- Regex features RE2 lacks -------------------------------------------
@@ -762,6 +906,14 @@ var catalogue = map[Code]Entry{
 		Converted: "the pattern is not converted; the call site panics with the original Perl text",
 		Concepts:  []string{"regexp-is-re2", "submatch-and-named-groups"},
 	},
+	RegexAtomicGroup: {
+		Severity:  report.Refuse,
+		Message:   "an atomic group forbids backtracking into it, and RE2 has no backtracking to forbid",
+		Short:     "atomic group has no RE2 spelling",
+		Advice:    "remove the atomic group: RE2's linear-time guarantee is what it was protecting against",
+		Converted: "the pattern is not converted; the call site panics with the original Perl text",
+		Concepts:  []string{"regexp-is-re2"},
+	},
 	RegexKeepOut: {
 		Severity: report.Warn,
 		Message:  "`\\K` is available in neither Go regexp engine",
@@ -794,6 +946,14 @@ var catalogue = map[Code]Entry{
 		Converted: "the substitution is not converted; the call site panics with the original Perl text",
 		Concepts:  []string{"compile-time-mindset", "replace-and-expansion"},
 	},
+	RegexDollarAnchor: {
+		Severity:  report.Note,
+		Message:   "without `/m`, Perl's `$` also matches before a final newline, and Go's matches at the end",
+		Short:     "$ matches in one more place in Perl",
+		Advice:    "write `\\n?$` where the text still carries its newline, which restores the Perl meaning",
+		Converted: "the emitted pattern keeps `$`, which agrees for lines that have been chomped",
+		Concepts:  []string{"regexp-is-re2"},
+	},
 	RuntimePattern: {
 		Severity: report.Warn,
 		Message:  "the pattern is built from `%s` at run time, so it compiles at run time too",
@@ -822,6 +982,14 @@ var catalogue = map[Code]Entry{
 		Converted: "the emitted helper reproduces the modifiers and returns the count where the Perl used it",
 		Concepts:  []string{"strings-are-bytes", "replace-and-expansion"},
 	},
+	TrCounts: {
+		Severity:  report.Refuse,
+		Message:   "`tr///` with an empty replacement list counts the characters rather than changing them",
+		Short:     "tr with no replacement counts",
+		Advice:    "count with `strings.Count`, or range over the string testing `strings.ContainsAny`",
+		Converted: "the count is not converted; the statement panics with the original Perl text",
+		Concepts:  []string{"strings-are-bytes"},
+	},
 	MatchPosition: {
 		Severity:  report.Note,
 		Message:   "`pos` and the `/g` match state live on the scalar in Perl, and on the loop in Go",
@@ -829,6 +997,14 @@ var catalogue = map[Code]Entry{
 		Advice:    "iterate `FindAllStringSubmatchIndex`, whose returned offsets are the `pos` equivalent",
 		Converted: "the emitted loop keeps the offset in a local variable instead of on the string",
 		Concepts:  []string{"submatch-and-named-groups"},
+	},
+	BindingRightSide: {
+		Severity:  report.Refuse,
+		Message:   "the right side of `=~` is not a pattern the converter can read at conversion time",
+		Short:     "the =~ right side is not a pattern",
+		Advice:    "compile the pattern with `regexp.MustCompile` and call its methods directly",
+		Converted: "the match is not converted; the call site panics with the original Perl text",
+		Concepts:  []string{"mustcompile-pattern"},
 	},
 
 	// -- Strings ------------------------------------------------------------
@@ -874,6 +1050,14 @@ var catalogue = map[Code]Entry{
 		Advice:   "build the text with `strconv.Format*` and pad it with `fmt.Sprintf`, which has the width syntax",
 		Cost:     "the emitted code approximates the field with the nearest verb, so the width or the rounding can differ",
 		Concepts: []string{"strconv-parsing"},
+	},
+	HexOctParseError: {
+		Severity: report.Warn,
+		Message:  "`hex` and `oct` answer 0 for text they cannot read, and `strconv.ParseInt` returns an error",
+		Short:    "the hex and oct parse error is dropped",
+		Advice:   "check the second result and decide what unreadable text means, rather than taking 0",
+		Cost:     "the emitted code discards the error, so text that is not a number still becomes 0",
+		Concepts: []string{"errors-are-values", "strconv-parsing"},
 	},
 
 	// -- Numbers and sort ---------------------------------------------------
@@ -921,6 +1105,79 @@ var catalogue = map[Code]Entry{
 		Converted: "the emitted code sorts the keys before iterating, so the output is reproducible",
 		Concepts:  []string{"map-iteration-order", "sort-slice"},
 	},
+	ArrayLengthAssignment: {
+		Severity:  report.Warn,
+		Message:   "assigning to `$#array` sets the length, and a Go reslice cannot pass the capacity",
+		Short:     "$#array assignment only shortens",
+		Advice:    "append the zero value the required number of times wherever the array has to grow",
+		Cost:      "a larger value padded the Perl array with undef, which the reslice cannot do",
+		Converted: "the emitted code reslices, which shortens exactly as the Perl did",
+		Concepts:  []string{"slices-not-arrays", "slice-aliasing-and-copy"},
+	},
+	AssignPastEnd: {
+		Severity:  report.Warn,
+		Message:   "assigning past the end extends a Perl array, and the same write panics on a Go slice",
+		Short:     "assignment past the end panics in Go",
+		Advice:    "use `append` to add elements, and index assignment only for positions that exist",
+		Cost:      "an index Perl filled with undef stops the program instead",
+		Converted: "the emitted code writes at the index, which needs the position to be there already",
+		Concepts:  []string{"slices-not-arrays"},
+	},
+	EachIterator: {
+		Severity:  report.Refuse,
+		Message:   "`each` walks a hash through an iterator kept on the hash, and Go keeps no such state",
+		Short:     "each keeps hidden iterator state",
+		Advice:    "range over the map with `for k, v := range m`, which keeps no state between loops",
+		Converted: "the call is not converted; the call site panics with the original Perl text",
+		Concepts:  []string{"map-iteration-order"},
+	},
+	SpliceReturn: {
+		Severity:  report.Warn,
+		Message:   "`splice` returns what it removed, and `slices.Delete` returns the shortened slice",
+		Short:     "splice became a delete that returns nothing",
+		Advice:    "copy the run out with `slices.Clone` before deleting, where the removed part is used",
+		Cost:      "the removed elements are dropped rather than handed back",
+		Converted: "the emitted code calls `slices.Delete` and keeps the shortened slice",
+		Concepts:  []string{"slice-aliasing-and-copy"},
+	},
+	SpliceForm: {
+		Severity:  report.Refuse,
+		Message:   "this `splice` inserts, removes or replaces in one call, and each of those is its own Go call",
+		Short:     "this splice form has no single Go call",
+		Advice:    "use `slices.Delete`, `slices.Insert` or `slices.Replace`, whichever this call is doing",
+		Converted: "the call is not converted; the call site panics with the original Perl text",
+		Concepts:  []string{"slices-not-arrays"},
+	},
+	SortNamedComparator: {
+		Severity:  report.Refuse,
+		Message:   "a named `sort` sub reads the globals `$a` and `$b`, and Go passes the two values in",
+		Short:     "named sort comparator reads globals",
+		Advice:    "make the comparator `func(a, b T) int` and pass it to `slices.SortFunc`",
+		Converted: "the sort is not converted; the call site panics with the original Perl text",
+		Concepts:  []string{"sort-slice"},
+	},
+	SortBlockNoOrder: {
+		Severity:  report.Refuse,
+		Message:   "the `sort` block does not end in an expression that produces an ordering",
+		Short:     "sort block produces no ordering",
+		Advice:    "end the block with an int expression: negative, zero, or positive",
+		Converted: "the sort is not converted; the call site panics with the original Perl text",
+		Concepts:  []string{"sort-slice"},
+	},
+	MapBlockNoValue: {
+		Severity:  report.Refuse,
+		Message:   "the `map` block does not end in an expression, so there is nothing to collect",
+		Short:     "map block collects nothing",
+		Advice:    "rewrite it as a loop that appends what the block was meant to produce",
+		Converted: "the call is not converted; the call site panics with the original Perl text",
+	},
+	GrepBlockNoTest: {
+		Severity:  report.Refuse,
+		Message:   "the `grep` block does not end in an expression, so there is no test to apply",
+		Short:     "grep block applies no test",
+		Advice:    "rewrite it as a loop with an `if` around what the block was testing",
+		Converted: "the call is not converted; the call site panics with the original Perl text",
+	},
 
 	// -- File I/O -----------------------------------------------------------
 
@@ -933,6 +1190,31 @@ var catalogue = map[Code]Entry{
 		Converted: "the emitted code opens the file with the mode the string named, decided at conversion time",
 		Concepts:  []string{"io-reader-writer", "errors-are-values"},
 	},
+	OpenModePipe: {
+		Severity:  report.Refuse,
+		Message:   "the `%s` open mode selects a pipe or a duplicated handle, which is a different call in Go",
+		Short:     "this open mode is a different call",
+		Advice:    "a pipe open becomes `exec.Cmd.StdoutPipe`; a duplicated handle becomes the `*os.File`",
+		Converted: "the open is not converted; the call site panics with the original Perl text",
+		Concepts:  []string{"os-exec", "io-reader-writer"},
+	},
+	OpenModeComputed: {
+		Severity:  report.Refuse,
+		Message:   "the `open` mode is built at run time, so which call it means cannot be decided here",
+		Short:     "open mode is not known until run time",
+		Advice:    "call the function the mode names, or `os.OpenFile` with the flags built the same way",
+		Converted: "the open is not converted; the call site panics with the original Perl text",
+		Concepts:  []string{"errors-are-values"},
+	},
+	OpenUnchecked: {
+		Severity:  report.Warn,
+		Message:   "this `open` is not checked, and Go will not compile a call that drops the error silently",
+		Short:     "an unchecked open now ends the program",
+		Advice:    "decide what a missing file means here; reporting it and stopping is the safe default",
+		Cost:      "the Perl carried on with an unusable handle, and the emitted program stops at the open",
+		Converted: "the emitted code reports the error and exits",
+		Concepts:  []string{"errors-are-values", "if-err-nil-rhythm"},
+	},
 	ReadLineLoop: {
 		Severity: report.Note,
 		Message:  "`while (<%s>)` became a `bufio.Scanner` with its buffer raised to 1 MiB",
@@ -941,6 +1223,14 @@ var catalogue = map[Code]Entry{
 		Cost:     "a line longer than 1 MiB ends the loop with an error, where Perl read it",
 		Concepts: []string{"bufio-scanner-limit", "sentinel-and-custom-errors"},
 	},
+	ReadLineKeepsNewline: {
+		Severity:  report.Note,
+		Message:   "`readline` keeps the newline on the end of each line, and `bufio.Scanner` strips it",
+		Short:     "readline keeps the newline, Scanner does not",
+		Advice:    "drop the newline the emitted code puts back wherever the loop body does not want it",
+		Converted: "the newline is added back, because the loop body never chomps",
+		Concepts:  []string{"strings-are-bytes"},
+	},
 	SlurpFile: {
 		Severity: report.Warn,
 		Message:  "`$/ = undef` slurps the whole file, and the emitted code uses `os.ReadFile`",
@@ -948,6 +1238,29 @@ var catalogue = map[Code]Entry{
 		Advice:   "stream with `bufio.Reader` for files that do not fit in memory",
 		Cost:     "the whole file is held in memory at once, as it was in Perl",
 		Concepts: []string{"io-reader-writer", "bufio-scanner-limit"},
+	},
+	InputLineNumber: {
+		Severity:  report.Refuse,
+		Message:   "`$.` counts lines globally and changes whenever any handle is read, and Go counts nothing",
+		Short:     "$. has no counter in Go",
+		Advice:    "keep a counter next to the loop, which also says which handle it is counting",
+		Converted: "the variable is not converted; the expression panics with the original Perl text",
+	},
+	OutputFormatVars: {
+		Severity:  report.Refuse,
+		Message:   "`%s` is a global that changes how `print` and `split` behave, and Go has no such state",
+		Short:     "output formatting variable has no Go form",
+		Advice:    "pass the separator to the call that needs it; `strings.Join` and `bufio.Writer` take one",
+		Converted: "the variable is not converted; the expression panics with the original Perl text",
+		Concepts:  []string{"io-reader-writer"},
+	},
+	LastSystemError: {
+		Severity:  report.Refuse,
+		Message:   "`$!` holds the error of the last failed system call, and a Go error is returned by the call",
+		Short:     "$! has no global in Go",
+		Advice:    "use the error the call returned, and wrap it with `fmt.Errorf` and `%w` where it travels",
+		Converted: "the variable is not converted; the expression panics with the original Perl text",
+		Concepts:  []string{"errors-are-values", "error-wrapping"},
 	},
 	AutoflushNoOp: {
 		Severity:  report.Warn,
@@ -1130,6 +1443,14 @@ var catalogue = map[Code]Entry{
 		Advice:   "keep `?` for MySQL and SQLite, and use `$1` for the `pq` and `pgx` drivers",
 		Cost:     "the emitted SQL uses `?`, which is wrong for PostgreSQL drivers",
 	},
+	ModuleFunctionUnmapped: {
+		Severity:  report.Refuse,
+		Message:   "`%s` has no rule of its own, though the module it comes from is in the mapping table",
+		Short:     "module function has no Go mapping",
+		Advice:    "write the call by hand; `go doc` over the standard library finds what corresponds",
+		Converted: "the call is not converted; the call site panics with the original Perl text",
+		Concepts:  []string{"small-stdlib-philosophy", "go-mod-vs-cpan"},
+	},
 	ModuleUnmapped: {
 		Severity:  report.Warn,
 		Message:   "`%s` has no entry in the module mapping table",
@@ -1151,6 +1472,40 @@ var catalogue = map[Code]Entry{
 		Message:  "`POSIX::floor` maps to `math.Floor`, which takes and returns `float64`",
 		Short:    "POSIX floor maps to math.Floor",
 		Advice:   "use plain `/` on integers, which truncates towards zero in Go without a conversion",
+		Concepts: []string{"explicit-conversions-no-coercion"},
+	},
+	ListUtilMapped: {
+		Severity: report.Note,
+		Message:  "`List::Util` maps to `slices.Max` and `slices.Min`, and to a plain loop for the rest",
+		Short:    "List::Util maps to slices and loops",
+		Advice:   "write the loop for `sum`, `first` and `reduce`, which keeps the accumulator in sight",
+		Concepts: []string{"small-stdlib-philosophy"},
+	},
+	DumperMapped: {
+		Severity: report.Note,
+		Message:  "`Data::Dumper` maps to `fmt` with `%%#v`, and to `encoding/json` when the dump is read back",
+		Short:    "Data::Dumper maps to fmt or to json",
+		Advice:   "use `json.MarshalIndent` where the output is meant to be read or parsed again",
+		Concepts: []string{"encoding-json"},
+	},
+	ScalarUtilMapped: {
+		Severity: report.Note,
+		Message:  "`Scalar::Util` asks what a scalar holds, and Go answers most of that at compile time",
+		Short:    "Scalar::Util maps to a type switch",
+		Advice:   "use a type switch on an interface value for the questions that are left at run time",
+		Concepts: []string{"type-assertions-and-switches", "compile-time-mindset"},
+	},
+	BasenameMapped: {
+		Severity: report.Note,
+		Message:  "`basename` and `dirname` map to `filepath.Base` and `filepath.Dir`",
+		Short:    "File::Basename maps to path/filepath",
+		Advice:   "use `path` rather than `path/filepath` for slash-separated names such as URL paths",
+	},
+	TimeModuleMapped: {
+		Severity: report.Note,
+		Message:  "the `Time::` modules map to `time`, whose duration is a type rather than a number",
+		Short:    "the Time modules map to time",
+		Advice:   "write `2 * time.Second` rather than a bare `2`, which the compiler insists on",
 		Concepts: []string{"explicit-conversions-no-coercion"},
 	},
 	Base64Wrapping: {

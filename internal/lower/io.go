@@ -392,7 +392,7 @@ func (l *Lowerer) readLoop(n *ast.While) ([]ir.Stmt, bool) {
 	loop := &ir.For{
 		Cond:  ir.CallOf(selector(ir.NewIdent(scanner, scannerType), "Scan", nil), ir.TBool),
 		Body:  inner,
-		Label: n.Label,
+		Label: l.label(n.Label),
 	}
 	l.setProv(loop, n)
 	l.note(loop, "Scan returns false at the end of the input and also when something "+

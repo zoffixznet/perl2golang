@@ -108,7 +108,7 @@ func (l *Lowerer) binop(n *ast.BinOp) ir.Expr {
 			"mustcompile-pattern")
 	}
 
-	return l.todoExpr(n, "P2G3510", "operator "+n.Op,
+	return l.todoExpr(n, "P2G3511", "operator "+n.Op,
 		"the "+n.Op+" operator is not implemented",
 		"The converter has no rule for the "+n.Op+" operator.",
 		"Translate the expression by hand.")
@@ -139,7 +139,7 @@ func (l *Lowerer) modulo(n *ast.BinOp) ir.Expr {
 	rx := l.toInt(l.expr(n.R), n.R)
 	if mayBeNegative(n.L) || mayBeNegative(n.R) {
 		out := l.helperCall(hMod, ir.TInt, lx, rx)
-		l.approximate(n, "P2G5530", "% with a possibly negative operand",
+		l.approximate(n, "P2G5520", "% with a possibly negative operand",
 			"% follows a different sign rule in Go",
 			"Perl's % takes the sign of the right operand, so -7 % 3 is 2. Go's % takes "+
 				"the sign of the left operand, so -7 % 3 is -1. One of the operands here "+
@@ -278,7 +278,7 @@ func (l *Lowerer) rangeExpr(n *ast.BinOp) ir.Expr {
 	rx := l.expr(n.R)
 	if typeOrAny(lx).Kind == ir.String || typeOrAny(rx).Kind == ir.String {
 		out := l.helperCall(hStrRange, ir.SliceOf(ir.TString), l.toStr(lx, n.L), l.toStr(rx, n.R))
-		l.approximate(n, "P2G5510", "string range",
+		l.approximate(n, "P2G5030", "string range",
 			"the string range operator uses Perl's magic increment",
 			"'aa' .. 'ad' walks the range with Perl's magic string increment, which "+
 				"carries like an odometer: 'az' becomes 'ba' and 'Zz' becomes 'AAa'. Go "+
@@ -334,7 +334,7 @@ func (l *Lowerer) incDecExpr(n *ast.UnOp) ir.Expr {
 	}
 	if typeOrAny(target).Kind == ir.String && n.Op == "++" {
 		out := l.helperCall(hStrInc, ir.TString, target)
-		l.approximate(n, "P2G5510", "magic string increment",
+		l.approximate(n, "P2G5030", "magic string increment",
 			"++ on text uses Perl's magic increment",
 			"Incrementing a string in Perl increments it like an odometer when it "+
 				"looks like a word: 'aa' becomes 'ab', 'az' becomes 'ba', 'a9' becomes 'b0'. "+

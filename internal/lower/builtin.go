@@ -18,7 +18,7 @@ func (l *Lowerer) callExpr(n *ast.Call) ir.Expr {
 	if s, ok := l.subs[n.Name]; ok {
 		return l.callSub(s, n)
 	}
-	return l.todoExpr(n, "P2G4590", n.Name,
+	return l.todoExpr(n, "P2G3599", n.Name,
 		"the "+n.Name+" function is not implemented",
 		"There is no rule for "+n.Name+" yet, and guessing at one would produce Go "+
 			"that looks right and behaves differently.",
@@ -167,7 +167,8 @@ func (l *Lowerer) builtin(n *ast.Call) ir.Expr {
 	case "chomp", "chop":
 		return l.chompExpr(n)
 
-	case "close", "open", "print", "printf", "say":
+	case "close", "open", "print", "printf", "say", "die", "warn", "exit",
+		"push", "unshift", "delete":
 		// These reach expression position because of the `X or die` idiom.
 		// Perl's answer there is a truth value, so the statements run first
 		// and the value they produce is success. Only names the statement
@@ -198,7 +199,7 @@ func (l *Lowerer) builtin(n *ast.Call) ir.Expr {
 		}
 		return nil
 	case "wantarray":
-		return l.todoExpr(n, "P2G2010", "wantarray",
+		return l.todoExpr(n, "P2G2031", "wantarray",
 			"wantarray has no Go equivalent",
 			"wantarray reports whether the caller wanted a list or a scalar, so one "+
 				"sub can return two different shapes. Go has no calling context at all: "+
@@ -799,7 +800,7 @@ func (l *Lowerer) radixCall(n *ast.Call, base int) ir.Expr {
 	name := l.tmp("n")
 	parsed := assign(":=", []ir.Expr{ir.NewIdent(name, ir.TInt), ir.NewIdent("_", nil)},
 		[]ir.Expr{call("strconv", "strconv", "ParseInt", ir.TInt, s, ir.IntLit(itoa(base)), ir.IntLit("64"))})
-	l.approximate(n, "P2G5030", "hex or oct",
+	l.approximate(n, "P2G5050", "hex or oct",
 		"the parse error is discarded here",
 		"Perl's hex and oct return 0 for text they cannot read. Go's "+
 			"strconv.ParseInt returns an error instead, which is the shape every "+
@@ -1046,14 +1047,14 @@ func (l *Lowerer) listUtil(n *ast.Call) ir.Expr {
 		l.emit(loop)
 		return ir.NewIdent(name, acc)
 	case "uniq":
-		return l.todoExpr(n, "P2G7530", "List::Util uniq",
+		return l.todoExpr(n, "P2G7540", "List::Util uniq",
 			"uniq is not implemented",
 			"uniq removes repeated values while keeping the first of each.",
 			"Range over the slice with a map[T]bool of what has been seen, appending "+
 				"only the first occurrence of each value.",
 			"maps-of-slices")
 	}
-	return l.todoExpr(n, "P2G7530", "List::Util "+n.Name,
+	return l.todoExpr(n, "P2G7540", "List::Util "+n.Name,
 		"the "+n.Name+" function is not implemented",
 		"List::Util's "+n.Name+" has no direct counterpart in the Go standard "+
 			"library.",

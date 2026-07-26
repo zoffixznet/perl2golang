@@ -2,6 +2,7 @@ package convert_test
 
 import (
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -31,6 +32,35 @@ func TestDebugEmit(t *testing.T) {
 	for i, line := range strings.Split(string(out), "\n") {
 		t.Logf("%4d| %s", i+1, line)
 	}
+}
+
+// TestDebugCompile reports how many corpus entries in a tier produce Go that
+// the real toolchain accepts, and why the rest do not. Set PERL2GO_TIER.
+func TestDebugCompile(t *testing.T) {
+	tier := os.Getenv("PERL2GO_TIER")
+	if tier == "" {
+		t.Skip("set PERL2GO_TIER to a corpus tier")
+	}
+	paths := corpusFiles(t, tier, 0)
+	built := 0
+	for _, path := range paths {
+		src, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		res, err := convert.Convert(src, convert.Options{Path: path, NoDocs: true})
+		if err != nil {
+			t.Logf("FAIL   %s: %v", path, err)
+			continue
+		}
+		if res.Report.Verified.Built {
+			built++
+			continue
+		}
+		first := strings.SplitN(res.Report.Verified.Error, "\n", 3)
+		t.Logf("NOBUILD %s: %s", filepath.Base(filepath.Dir(path)), strings.Join(first, " | "))
+	}
+	t.Logf("%s: %d of %d compile", tier, built, len(paths))
 }
 
 // TestDebugBundle writes a complete conversion bundle somewhere it can be read.

@@ -43,6 +43,65 @@ func TestConceptsExist(t *testing.T) {
 	}
 }
 
+// raiserDirs are the packages that raise diagnostics by writing a code as a
+// string literal. They are read as files rather than imported, so the registry
+// keeps no dependency on the code that uses it.
+var raiserDirs = []string{"../lower", "../convert"}
+
+// codeLiteral matches a diagnostic code written as a Go string literal.
+var codeLiteral = regexp.MustCompile(`"(P2G[0-9]{4})"`)
+
+// TestRaisedCodesAreRegistered fails when a package raises a code the registry
+// does not know. The registry is the only place a code is defined, so a literal
+// that is not in it would reach the reader as a code with no explanation behind
+// it, which `perl2go explain` could not answer for.
+func TestRaisedCodesAreRegistered(t *testing.T) {
+	found := 0
+	for _, dir := range raiserDirs {
+		entries, err := os.ReadDir(dir)
+		if err != nil {
+			t.Fatalf("read %s: %v", dir, err)
+		}
+		for _, e := range entries {
+			name := e.Name()
+			if e.IsDir() || !strings.HasSuffix(name, ".go") {
+				continue
+			}
+			path := filepath.Join(dir, name)
+			src, err := os.ReadFile(path)
+			if err != nil {
+				t.Fatalf("read %s: %v", path, err)
+			}
+			for _, m := range codeLiteral.FindAllSubmatchIndex(src, -1) {
+				found++
+				code := Code(src[m[2]:m[3]])
+				if Known(code) {
+					continue
+				}
+				line := 1 + strings.Count(string(src[:m[0]]), "\n")
+				t.Errorf("%s:%d raises %s, and the registry has no entry for it",
+					path, line, code)
+			}
+		}
+	}
+	if found == 0 {
+		t.Fatalf("no diagnostic codes found in %v, so this test proves nothing", raiserDirs)
+	}
+	t.Logf("checked %d code literals against %d registered codes", found, len(catalogue))
+}
+
+// TestKnown covers the answer both ways, because a Known that always said yes
+// would let TestRaisedCodesAreRegistered pass on a registry that is missing
+// half its entries.
+func TestKnown(t *testing.T) {
+	if !Known(RegexLookahead) {
+		t.Errorf("Known(%s) = false, and it is in the registry", RegexLookahead)
+	}
+	if Known("P2G0000") {
+		t.Error("Known(P2G0000) = true, and no such code is registered")
+	}
+}
+
 // TestCatalogueStyle runs the same checks init runs, one code at a time, so a
 // failure names the code and the rule instead of stopping the whole package.
 func TestCatalogueStyle(t *testing.T) {

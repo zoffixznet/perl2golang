@@ -640,7 +640,7 @@ func (l *Lowerer) substStmt(n *ast.Subst) []ir.Stmt {
 	global := strings.Contains(n.Pattern.Mods, "g")
 	method := "ReplaceAllString"
 	if !global {
-		out := l.helperCall(hReplaceFirst, ir.TString, pattern, target, repl)
+		out := l.helperCall(hReplaceFirst, ir.TString, pattern, l.toStr(target, nil), repl)
 		st := assign("=", []ir.Expr{target}, []ir.Expr{out})
 		l.setProv(st, n)
 		l.note(st, "Without /g a substitution replaces only the first match. Go's "+
@@ -649,7 +649,7 @@ func (l *Lowerer) substStmt(n *ast.Subst) []ir.Stmt {
 			"replace-and-expansion")
 		return []ir.Stmt{st}
 	}
-	out := ir.CallOf(selector(pattern, method, nil), ir.TString, target, repl)
+	out := ir.CallOf(selector(pattern, method, nil), ir.TString, l.toStr(target, nil), repl)
 	st := assign("=", []ir.Expr{target}, []ir.Expr{out})
 	l.setProv(st, n)
 	l.note(st, "s///g becomes ReplaceAllString. The replacement is a template where "+
@@ -748,6 +748,10 @@ func (l *Lowerer) transStmt(n *ast.Trans) []ir.Stmt {
 	if target == nil {
 		return nil
 	}
+	// Every form below works on text, so a target whose type did not resolve
+	// is read as text on the way in. Storing a string back into a dynamic
+	// variable is fine, which is why only the read side needs the conversion.
+	text := l.toStr(target, nil)
 	if n.Mods != "" {
 		return []ir.Stmt{l.todoStmt(n, "P2G4520", "tr/// with modifiers",
 			"tr with modifiers is not implemented",
@@ -767,7 +771,7 @@ func (l *Lowerer) transStmt(n *ast.Trans) []ir.Stmt {
 
 	if s, r := string(search), string(repl); s == lowerAlphabet && r == upperAlphabet {
 		st := assign("=", []ir.Expr{target},
-			[]ir.Expr{call("strings", "strings", "ToUpper", ir.TString, target)})
+			[]ir.Expr{call("strings", "strings", "ToUpper", ir.TString, text)})
 		l.setProv(st, n)
 		l.note(st, "tr/a-z/A-Z/ is upper-casing spelled character by character. "+
 			"strings.ToUpper says the same thing and handles every alphabet, not just "+
@@ -776,7 +780,7 @@ func (l *Lowerer) transStmt(n *ast.Trans) []ir.Stmt {
 	}
 	if s, r := string(search), string(repl); s == upperAlphabet && r == lowerAlphabet {
 		st := assign("=", []ir.Expr{target},
-			[]ir.Expr{call("strings", "strings", "ToLower", ir.TString, target)})
+			[]ir.Expr{call("strings", "strings", "ToLower", ir.TString, text)})
 		l.setProv(st, n)
 		return []ir.Stmt{st}
 	}
@@ -807,7 +811,7 @@ func (l *Lowerer) transStmt(n *ast.Trans) []ir.Stmt {
 		"out of a loop.")
 	l.emit(decl)
 	st := assign("=", []ir.Expr{target},
-		[]ir.Expr{ir.CallOf(selector(ir.NewIdent(name, nil), "Replace", nil), ir.TString, target)})
+		[]ir.Expr{ir.CallOf(selector(ir.NewIdent(name, nil), "Replace", nil), ir.TString, text)})
 	return []ir.Stmt{st}
 }
 

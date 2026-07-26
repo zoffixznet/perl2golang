@@ -48,6 +48,9 @@ type Binding struct {
 	// and can drop a variable that is written but never read.
 	Reads  int
 	Writes int
+	// Used records the first pass's read count, which is the whole-file
+	// answer the second pass needs before it has finished counting again.
+	Used int
 	// Evidence is every type the inference pass observed for this binding.
 	Evidence []*ir.Type
 	// Captured marks a binding referenced from inside a nested closure.
@@ -55,6 +58,13 @@ type Binding struct {
 	// Closed marks a filehandle the program closes explicitly, so the
 	// generated code does not also defer a close.
 	Closed bool
+	// Init is the value a package-level binding is declared with, used where
+	// one of Perl's own variables has to become a real Go variable.
+	Init ir.Expr
+	// Doc and Explain are the doc comment and the annotation for such a
+	// binding, which deserves better than a generic one.
+	Doc     string
+	Explain string
 }
 
 // declared reports whether the binding is a real Go declaration the emitter

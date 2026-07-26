@@ -115,8 +115,8 @@ func dispatch(e *env, args []string) int {
 			return e.print(rootHelp())
 		}
 		if !slices.Contains(commands, rest[0]) {
-			return e.usage(diag.New(diag.FlagConflict, diag.Pos{},
-				"command line", "help "+rest[0], "a command name"))
+			return e.usagef("there is no command called %q. The commands are %s",
+				rest[0], strings.Join(commands, ", "))
 		}
 		return e.commandHelp(rest[0])
 	}
@@ -182,7 +182,7 @@ func (e *env) print(s string) int {
 // the help that explains it.
 func (e *env) usage(entry report.Entry) int {
 	if e.jsonMode {
-		return usageJSON(e, entry.Message)
+		return usageJSON(e, entry.Code+": "+entry.Message)
 	}
 	e.diagnose(entry, "command line", nil, diag.ColorEnabled(e.stderr, ""))
 	return e.helpHint()

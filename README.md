@@ -125,7 +125,12 @@ These are real and current, not oversights:
 - **The generated Go is best effort.** It is meant to be read, run and edited,
   not trusted blindly. Where the two languages disagree in a way that survives
   translation, the report says so; where the tool got something wrong, the Go
-  compiler and your own reading are the backstop.
+  compiler and your own reading are the backstop. Expect a straightforward
+  script to compile and need a little hand-finishing, and expect one built on
+  nested data structures or code references to need more: those are where type
+  inference gives up and falls back to `any`, and the report says how often it
+  did. `make score` measures all of this against the bundled corpus, and the
+  numbers it prints are the real ones.
 - **Perl is not required to run this tool**, and converting a file never runs
   it. Perl is only used by this repository's own test suite, against scripts in
   `testdata/corpus/`.
@@ -137,6 +142,8 @@ make test       # the full suite
 make test-short # skips the toolchain-heavy tests
 make score      # runs the corpus and prints the conversion scorecard
 make lint       # go vet plus a gofmt check
+make explain    # list the teaching concepts; TOPIC=<id> reads one
+make demo       # convert a corpus script and run the result
 make deps       # checks for the system tools the other targets need
 ```
 

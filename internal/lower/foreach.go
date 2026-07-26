@@ -77,7 +77,7 @@ func (l *Lowerer) foreachStmt(n *ast.Foreach) []ir.Stmt {
 		X:      src,
 		Define: true,
 		Body:   l.block(n.Body),
-		Label:  n.Label,
+		Label:  l.label(n.Label),
 	}
 	l.setProv(out, n)
 	if loopVar == nil {
@@ -160,7 +160,7 @@ func (l *Lowerer) countingLoop(n *ast.Foreach) ([]ir.Stmt, bool) {
 		Cond:  ir.Bin("<=", idx, high, ir.TBool),
 		Post:  &ir.IncDec{X: idx},
 		Body:  l.block(n.Body),
-		Label: n.Label,
+		Label: l.label(n.Label),
 	}
 	l.setProv(out, n)
 	l.note(out, "Perl's range operator builds the whole list before the loop starts, "+
@@ -195,7 +195,7 @@ func (l *Lowerer) aliasingLoop(n *ast.Foreach, src ir.Expr, elem *ir.Type, b *Bi
 		X:      src,
 		Define: true,
 		Body:   l.block(n.Body),
-		Label:  n.Label,
+		Label:  l.label(n.Label),
 	}
 	l.setProv(out, n)
 	l.note(out, "Perl's foreach variable is an alias for the element, so assigning to "+

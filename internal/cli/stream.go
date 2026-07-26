@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"go/format"
 	"io"
 	"path"
 	"regexp"
@@ -88,35 +89,176 @@ func writeStream(w io.Writer, res *convert.Result, exit int) error {
 	return err
 }
 
-// writeBare writes only the converted Go, with no framing at all. This is what
-// `perl2go -e '...' > snip.go` needs, so the common case is one file written
-// byte for byte with nothing added to it.
+// writeBare writes only the converted Go, with no framing at all.
 //
-// A snippet that needs support code produces more than one file, and two Go
-// files cannot be concatenated into one. Each is then introduced by a comment
-// naming it, and the summary line on standard error says so.
+// `perl2go -e '...' > snip.go && go run snip.go` is the thirty-second demo of
+// this whole tool, so the result has to be one Go file that compiles. A
+// snippet that needs support code produces two files in one package, which is
+// merged back into one here: the package clause is written once, the imports
+// are pooled, and the bodies follow in order. The merge is checked by
+// formatting it, so a shape this does not understand falls back to writing the
+// files one after another with a banner naming each, which is honest even
+// though it is no longer a single compilable file.
 func writeBare(e *env, r *run) error {
 	names := cleanFiles(r.res)
+	if len(names) == 1 {
+		_, err := e.stdout.Write(r.res.Clean[names[0]])
+		return err
+	}
+	if merged, ok := mergeGoFiles(names, r.res.Clean); ok {
+		_, err := e.stdout.Write(merged)
+		return err
+	}
+
 	for i, name := range names {
-		if len(names) > 1 {
-			if i > 0 {
-				if _, err := io.WriteString(e.stdout, "\n"); err != nil {
-					return err
-				}
-			}
-			if _, err := fmt.Fprintf(e.stdout, "// ===== %s =====\n", name); err != nil {
+		if i > 0 {
+			if _, err := io.WriteString(e.stdout, "\n"); err != nil {
 				return err
 			}
+		}
+		if _, err := fmt.Fprintf(e.stdout, "// ===== %s =====\n", name); err != nil {
+			return err
 		}
 		if _, err := e.stdout.Write(r.res.Clean[name]); err != nil {
 			return err
 		}
 	}
-	if len(names) > 1 {
-		fmt.Fprintf(e.stderr, "this needs %d files; run with -o DIR to write them, "+
-			"or --stdout=framed for the delimited stream\n", len(names))
-	}
+	fmt.Fprintf(e.stderr, "this conversion needs %d files, which are printed one after "+
+		"another above; run with -o DIR to get them as files\n", len(names))
 	return nil
+}
+
+// goFile is one emitted Go file split into the parts a merge needs.
+type goFile struct {
+	// header is the comment block above the package clause.
+	header string
+	// imports holds one import spec per entry, exactly as it was written.
+	imports []string
+	// body is everything after the imports.
+	body string
+}
+
+// mergeGoFiles joins several files of one package into a single file. It
+// returns false when any input is not in the shape this understands, or when
+// the result does not format, either of which means the caller should print
+// the files separately rather than guess.
+func mergeGoFiles(names []string, srcs map[string][]byte) ([]byte, bool) {
+	parts := make([]goFile, 0, len(names))
+	for _, name := range names {
+		f, ok := splitGoFile(srcs[name])
+		if !ok {
+			return nil, false
+		}
+		parts = append(parts, f)
+	}
+
+	seen := map[string]bool{}
+	var imports []string
+	for _, p := range parts {
+		for _, spec := range p.imports {
+			if !seen[spec] {
+				seen[spec] = true
+				imports = append(imports, spec)
+			}
+		}
+	}
+	sort.Slice(imports, func(i, j int) bool {
+		return importPath(imports[i]) < importPath(imports[j])
+	})
+
+	var b strings.Builder
+	if parts[0].header != "" {
+		b.WriteString(parts[0].header + "\n\n")
+	}
+	b.WriteString("package main\n")
+	if len(imports) > 0 {
+		b.WriteString("\nimport (\n")
+		for _, spec := range imports {
+			b.WriteString("\t" + spec + "\n")
+		}
+		b.WriteString(")\n")
+	}
+	for i, p := range parts {
+		if p.body == "" {
+			continue
+		}
+		b.WriteString("\n")
+		if i > 0 && p.header != "" {
+			b.WriteString(p.header + "\n\n")
+		}
+		b.WriteString(p.body + "\n")
+	}
+
+	// Formatting is the check as well as the polish: source this cannot parse
+	// is source that should never have reached standard output.
+	out, err := format.Source([]byte(b.String()))
+	if err != nil {
+		return nil, false
+	}
+	return out, true
+}
+
+// splitGoFile separates one gofmt-formatted file into its header comment, its
+// import specs, and everything else.
+func splitGoFile(src []byte) (goFile, bool) {
+	lines := strings.Split(string(src), "\n")
+	var f goFile
+
+	i := 0
+	for ; i < len(lines); i++ {
+		text := strings.TrimSpace(lines[i])
+		if strings.HasPrefix(text, "package ") {
+			break
+		}
+		// Anything above the package clause that is not a comment means this
+		// file is not in the shape the emitter produces.
+		if text != "" && !strings.HasPrefix(text, "//") {
+			return goFile{}, false
+		}
+	}
+	if i == len(lines) {
+		return goFile{}, false
+	}
+	f.header = strings.TrimSpace(strings.Join(lines[:i], "\n"))
+	i++
+
+	for i < len(lines) {
+		text := strings.TrimSpace(lines[i])
+		if text == "" {
+			i++
+			continue
+		}
+		if text == "import (" {
+			i++
+			for i < len(lines) && strings.TrimSpace(lines[i]) != ")" {
+				if spec := strings.TrimSpace(lines[i]); spec != "" {
+					f.imports = append(f.imports, spec)
+				}
+				i++
+			}
+			if i == len(lines) {
+				return goFile{}, false
+			}
+			i++
+			continue
+		}
+		if !strings.HasPrefix(text, "import ") {
+			break
+		}
+		f.imports = append(f.imports, strings.TrimSpace(strings.TrimPrefix(text, "import")))
+		i++
+	}
+	f.body = strings.TrimSpace(strings.Join(lines[i:], "\n"))
+	return f, true
+}
+
+// importPath is the quoted path of an import spec, which may carry a name in
+// front of it. It is what the specs are ordered by.
+func importPath(spec string) string {
+	if i := strings.IndexByte(spec, '"'); i >= 0 {
+		return spec[i:]
+	}
+	return spec
 }
 
 // cleanFiles lists the clean program's files with main.go first.

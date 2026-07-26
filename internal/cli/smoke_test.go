@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -91,24 +92,23 @@ func TestConversionRunsNothing(t *testing.T) {
 	}
 	t.Setenv("PATH", dir)
 
-	got := exec2(t, `BEGIN { open my $fh, ">", "`+sentinel+`" or die; print $fh "ran"; close $fh }
-my $x = 1;
-system("touch `+sentinel+`");
-print `+"`touch "+sentinel+"`"+`;
-print "$x\n";`)
+	// Every way this script has of leaving a trace: a BEGIN block that runs at
+	// compile time, a system call, and a backtick capture.
+	script := fmt.Sprintf(
+		"BEGIN { open my $fh, \">\", %q or die; print $fh \"ran\"; close $fh }\n"+
+			"my $x = 1;\n"+
+			"system(\"touch %s\");\n"+
+			"my $out = `touch %s`;\n"+
+			"print \"$x\\n\";\n",
+		sentinel, sentinel, sentinel)
+
+	got := runCLI(t, "", "-e", script)
 	if got.code == ExitUsage {
 		t.Fatalf("the snippet was rejected before it could prove anything:\n%s", got.stderr)
 	}
 	if _, err := os.Stat(sentinel); !os.IsNotExist(err) {
 		t.Fatalf("something executed the input: %s exists", sentinel)
 	}
-}
-
-// exec2 converts a snippet with the artifacts going nowhere useful, which is
-// all TestConversionRunsNothing needs.
-func exec2(t *testing.T, code string) outcome {
-	t.Helper()
-	return exec(t, "", "-e", code)
 }
 
 // TestNoNetworkPackages checks the claim at the package level: perl2go cannot

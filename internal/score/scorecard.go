@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"time"
 )
 
@@ -399,6 +400,8 @@ func headlineStage(kind string) Stage {
 	return StageEquivalent
 }
 
+// describeFilter puts a run's coverage into words, for the table header and for
+// the refusal to compare two runs that did not cover the same ground.
 func describeFilter(f Filter) string {
 	var parts []string
 	if f.Tier != "" {
@@ -407,15 +410,12 @@ func describeFilter(f Filter) string {
 	if f.Only != "" {
 		parts = append(parts, "names matching "+f.Only)
 	}
+	out := "the whole corpus"
+	if len(parts) > 0 {
+		out = strings.Join(parts, ", ")
+	}
 	if f.Short {
-		parts = append(parts, "no equivalence checks")
-	}
-	if len(parts) == 0 {
-		return "the whole corpus"
-	}
-	out := parts[0]
-	for _, p := range parts[1:] {
-		out += ", " + p
+		out += " with no equivalence checks"
 	}
 	return out
 }

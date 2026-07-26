@@ -97,7 +97,8 @@ func (p SetupPlan) Describe() []string {
 	return lines
 }
 
-// PlanSetup works out what it would take to run model on this machine.
+// PlanSetup works out what it would take to run model on the hardware it is
+// given.
 //
 // An empty model means "the best one this hardware can run", taken from
 // [Recommend]. The plan installs the runtime under the user's home directory
@@ -111,7 +112,7 @@ func PlanSetup(hw Hardware, model string, runtimeInstalled bool) SetupPlan {
 	case model == "":
 		fits := Recommend(hw)
 		if len(fits) == 0 {
-			plan.Warnings = append(plan.Warnings, "no model in the catalogue fits this machine's memory and free disk")
+			plan.Warnings = append(plan.Warnings, "no model in the catalogue fits the available memory and free disk")
 			return plan
 		}
 		spec, known = fits[0], true
@@ -183,11 +184,11 @@ func PlanSetup(hw Hardware, model string, runtimeInstalled bool) SetupPlan {
 		switch vram := hw.BestVRAMMB(); {
 		case vram > 0 && !spec.FitsGPU(vram):
 			plan.Warnings = append(plan.Warnings, fmt.Sprintf(
-				"%s wants about %s of graphics memory and this machine has %s, so it will run partly on the CPU and be slow",
+				"%s wants about %s of graphics memory and %s is available, so it will run partly on the CPU and be slow",
 				spec.Name, formatMB(spec.MinVRAMMB), formatMB(vram)))
 		case vram == 0 && !spec.FitsCPU(hw.RAMTotalMB):
 			plan.Warnings = append(plan.Warnings, fmt.Sprintf(
-				"%s wants about %s of memory to run on the CPU and this machine has %s",
+				"%s wants about %s of memory to run on the CPU and %s is available",
 				spec.Name, formatMB(spec.MinRAMMB), formatMB(hw.RAMTotalMB)))
 		case vram == 0:
 			plan.Notes = append(plan.Notes, "there is no graphics card to use, so the model runs on the CPU and each file takes noticeably longer")

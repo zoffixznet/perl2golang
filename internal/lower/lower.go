@@ -17,7 +17,7 @@
 package lower
 
 import (
-	"fmt"
+	"sort"
 	"strings"
 
 	"perl2go/internal/ir"
@@ -111,6 +111,20 @@ type Lowerer struct {
 	curStmt ast.Node
 	// seenEntry keeps one report entry per situation per place.
 	seenEntry map[string]bool
+	// tmpNames hands out temporary identifiers, seeded on the second pass
+	// with every name a variable already claimed.
+	tmpNames *nameSet
+	// usedLabels records which loop labels something actually branches to.
+	usedLabels map[string]bool
+}
+
+// label returns a loop label only when something branches to it. Go rejects a
+// label nothing uses, where Perl is happy to let one sit there.
+func (l *Lowerer) label(name string) string {
+	if name == "" || !l.usedLabels[name] {
+		return ""
+	}
+	return name
 }
 
 // captureFrame is one active regex match whose groups are in scope.
@@ -169,6 +183,17 @@ func Lower(res parser.Result, src []byte, opts Options) *Result {
 	l.pass = 2
 	l.scope = newScope(nil)
 	l.tmpSeq = 0
+	l.tmpNames = newNameSet()
+	for _, b := range l.decls {
+		l.tmpNames.reserve(b.Go)
+	}
+	for _, b := range l.globals {
+		l.tmpNames.reserve(b.Go)
+	}
+	for _, name := range l.subOrd {
+		l.tmpNames.reserve(l.subs[name].Go)
+	}
+	l.tmpNames.reserve("main")
 	l.constants = nil
 	l.patterns = map[string]*patternVar{}
 	l.patternOrd = nil
@@ -206,7 +231,7 @@ func (l *Lowerer) run(prog *ast.Program) *Result {
 		file.Decls = append(file.Decls, l.globalDecl(g))
 	}
 
-	mainFn := &ir.FuncDecl{Name: "main", Body: &ir.Block{Stmts: top}}
+	mainFn := &ir.FuncDecl{Name: "main", Body: l.markUnused(&ir.Block{Stmts: top})}
 	l.annotateMain(mainFn)
 	file.Decls = append(file.Decls, mainFn)
 
@@ -426,13 +451,15 @@ func (l *Lowerer) use(name string) string {
 	return name
 }
 
-// tmp hands out a fresh local identifier.
+// tmp hands out a fresh local identifier that no variable in the file is
+// already using. Temporaries are unique across the whole file rather than per
+// scope, which costs nothing and removes a whole class of shadowing bug from
+// the generated code.
 func (l *Lowerer) tmp(base string) string {
-	l.tmpSeq++
-	if l.tmpSeq == 1 {
+	if l.tmpNames == nil {
 		return base
 	}
-	return fmt.Sprintf("%s%d", base, l.tmpSeq)
+	return l.tmpNames.take(base)
 }
 
 // emit queues a statement to appear before the statement being lowered.
@@ -479,6 +506,16 @@ func (l *Lowerer) finishReport() {
 	for _, b := range l.globals {
 		record(b)
 	}
+	// The bindings live in a map, so they come out in whatever order the
+	// runtime feels like. Sorting them makes two runs over the same input
+	// produce the same report, which is what lets a report be diffed.
+	sort.SliceStable(l.rep.Symbols, func(i, j int) bool {
+		a, b := l.rep.Symbols[i], l.rep.Symbols[j]
+		if a.Line != b.Line {
+			return a.Line < b.Line
+		}
+		return a.Name < b.Name
+	})
 	for _, e := range l.rep.Entries {
 		if e.Severity == report.Refuse {
 			l.rep.Stats.Todos++
@@ -495,6 +532,8 @@ func (l *Lowerer) finishReport() {
 // several incompatible types becomes dynamic and is reported.
 func (l *Lowerer) resolveTypes() {
 	settle := func(b *Binding) {
+		b.Used = b.Reads
+		b.Reads = 0
 		t := joinAll(b.Evidence)
 		if t == nil {
 			t = defaultFor(b.Sigil)
