@@ -208,14 +208,9 @@ func (l *Lowerer) builtin(n *ast.Call) ir.Expr {
 				"and let the caller take its length.",
 			"multiple-return-values")
 	case "ref":
-		return l.todoExpr(n, "P2G7020", "ref",
-			"ref inspects a runtime type that Go decides at compile time",
-			"ref reports what kind of thing a reference points at, because a Perl "+
-				"scalar can hold any of them. In Go the variable's type is already known "+
-				"and checked by the compiler, so there is normally nothing to ask.",
-			"If the value really is one of several types, declare it as an interface "+
-				"and use a type switch, which is Go's version of this question.",
-			"type-assertions-and-switches")
+		return l.refCall(n)
+	case "undef":
+		return l.undefCall(n)
 	case "bless":
 		return l.todoExpr(n, "P2G7001", "bless",
 			"bless has no Go equivalent",

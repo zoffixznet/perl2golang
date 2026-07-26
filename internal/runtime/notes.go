@@ -57,6 +57,14 @@ var notes = map[string]string{
 		"letters followed by one run of digits, which is why \"a9z\", \" a\" " +
 		"and \"1.5\" are all stepped as numbers.",
 
+	"refKind": "Asking a value what it is, for the cases where the answer " +
+		"is not already in its declared type. reflect is the only way to ask, " +
+		"and the answer is a word rather than a type, so nothing can be done " +
+		"with the value afterwards without a further assertion. A type switch " +
+		"answers the question and hands over the typed value at the same " +
+		"time, and it is what this should become wherever the possible types " +
+		"are known.",
+
 	"replaceFirst": "The regexp package replaces every match or none: there is " +
 		"no replace-the-first-one call. A substitution without the /g modifier " +
 		"changes only the first match, so the first match is expanded by hand " +

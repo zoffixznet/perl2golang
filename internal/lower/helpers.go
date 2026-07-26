@@ -38,4 +38,5 @@ const (
 	hSortedKeys    = "sortedKeys"
 	hReplaceFirst  = "replaceFirst" // s/// without the /g modifier
 	hReadLines     = "readLines"    // reading a whole handle as a list of lines
+	hRefKind       = "refKind"      // Perl ref(), answered from the runtime type
 )
