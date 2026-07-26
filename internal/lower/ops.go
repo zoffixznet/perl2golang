@@ -469,6 +469,13 @@ func (l *Lowerer) cond(e ast.Expr) ir.Expr {
 	switch n := e.(type) {
 	case nil:
 		return ir.BoolLit(true)
+	case *ast.List:
+		// A test is a scalar context, where parentheses around one thing are
+		// only parentheses. Treating them as a one-element list would ask
+		// whether that list is empty, which it never is.
+		if len(n.Elems) == 1 {
+			return l.cond(n.Elems[0])
+		}
 	case *ast.BinOp:
 		switch n.Op {
 		case "&&", "and":

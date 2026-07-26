@@ -248,8 +248,20 @@ func (l *Lowerer) builtin(n *ast.Call) ir.Expr {
 			"Range over the map directly with `for k, v := range m`, which gives both "+
 				"halves and keeps no state between loops.",
 			"map-iteration-order")
-	case "sum", "sum0", "max", "min", "first", "uniq", "shuffle", "reduce":
+	case "sum", "sum0", "max", "min", "shuffle":
 		return l.listUtil(n)
+	case "maxstr", "minstr":
+		return l.strExtreme(n)
+	case "first":
+		return l.firstCall(n)
+	case "any", "all", "none":
+		return l.quantifier(n)
+	case "reduce":
+		return l.reduceCall(n)
+	case "uniq", "uniqnum":
+		return l.uniqCall(n, n.Name == "uniqnum")
+	case "pairs":
+		return l.pairsCall(n)
 	case "floor", "ceil", "fmod", "strftime":
 		return l.posix(n)
 	case "basename", "dirname":
