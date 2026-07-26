@@ -1,0 +1,17 @@
+warning[P2G3001]: the type of `$row` could not be inferred, so it stays a
+    dynamic `perlval.Value`
+  --> logwatch.pl:61:9
+   |
+61 |         $row = $parsed ? $parsed->{fields} : $raw;
+   |         ^^^^
+   |
+   = converted: the variable and everything it flows into carry `perlval.Value`;
+                the conflicting uses are in the report
+   = cost: every use goes through run-time dispatch, so the compiler cannot
+           check it and a wrong use is a panic
+   = try: give the variable one consistent type, or annotate the sub's
+          parameters, and convert again
+   = learn: static-types-and-zero-values
+            (perl2go explain static-types-and-zero-values)
+   = learn: type-assertions-and-switches
+            (perl2go explain type-assertions-and-switches)

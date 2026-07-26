@@ -1,0 +1,12 @@
+warning[P2G1514]: the statement here did not parse and was replaced by a panic
+    stub
+  --> legacy.pl:7:1
+   |
+ 7 | format STDOUT_TOP =
+   | ^^^^^^^^^^^^^^^^^^^
+   |
+   = converted: the surrounding sub converted; this one statement panics with
+                the original Perl text
+   = cost: the program compiles, and reaching this statement stops it
+   = try: translate the quoted Perl in the stub by hand, then delete the panic
+   = learn: panic-and-recover   (perl2go explain panic-and-recover)

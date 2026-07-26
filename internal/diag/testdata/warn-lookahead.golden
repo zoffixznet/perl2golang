@@ -1,0 +1,14 @@
+warning[P2G4004]: lookahead `(?!#)` is not available in Go's `regexp` package
+  --> logwatch.pl:88:28
+   |
+88 |     next unless $line =~ /^(?!#)\s*(\S+)\s+(\d+)/;
+   |                            ^^^^^
+   |
+   = converted: the pattern compiles with `github.com/dlclark/regexp2`, which
+                backtracks
+   = cost: linear-time matching is no longer guaranteed; a 5s match timeout is
+           set on the compiled pattern
+   = try: drop the lookahead and test the surrounding text with
+          `strings.HasPrefix` or a second match
+   = learn: regexp-is-re2   (perl2go explain regexp-is-re2)
+   = learn: mustcompile-pattern   (perl2go explain mustcompile-pattern)

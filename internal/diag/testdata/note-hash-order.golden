@@ -1,0 +1,12 @@
+note[P2G5550]: hash iteration order is randomised in both languages, and
+    differently
+  --> logwatch.pl:12:19
+   |
+12 |     for my $host (keys %counts) {
+   |                   ^^^^^^^^^^^^
+   |
+   = converted: the emitted code sorts the keys before iterating, so the output
+                is reproducible
+   = try: sort the keys before iterating wherever the output order matters
+   = learn: map-iteration-order   (perl2go explain map-iteration-order)
+   = learn: sort-slice   (perl2go explain sort-slice)

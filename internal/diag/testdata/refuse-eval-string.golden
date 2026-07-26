@@ -1,0 +1,15 @@
+refused[P2G8001]: `eval STRING` builds Perl source at run time, and Go has no
+    compiler at run time
+   --> logwatch.pl:143:19
+    |
+143 |     my $ok = eval "$threshold_expr";
+    |                   ^^^^^^^^^^^^^^^^^
+    |
+    = not converted: this call site raises a panic carrying the original Perl
+                     text
+    = try: if the expressions come from a config file, embed an expression
+           evaluator such as github.com/expr-lang/expr and pass the values as
+           its environment; if there are only a handful of known expressions,
+           replace them with named functions and dispatch on the name
+    = learn: compile-time-mindset   (perl2go explain compile-time-mindset)
+    = learn: panic-and-recover   (perl2go explain panic-and-recover)
