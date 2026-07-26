@@ -56,7 +56,7 @@ func (l *Lowerer) statementForm(n *ast.Call) []ir.Stmt {
 func (l *Lowerer) statementFormOK(n *ast.Call) ([]ir.Stmt, bool) {
 	switch n.Name {
 	case "print", "say", "printf", "push", "unshift", "chomp", "die", "warn",
-		"exit", "delete", "close", "open", "return":
+		"exit", "delete", "close", "open", "return", "opendir", "closedir":
 		return l.statementOnly(n), true
 	}
 	return nil, false
@@ -87,6 +87,10 @@ func (l *Lowerer) statementOnly(n *ast.Call) []ir.Stmt {
 		return l.closeCall(n)
 	case "open":
 		return l.openCall(n)
+	case "opendir":
+		return l.opendirCall(n)
+	case "closedir":
+		return l.closedirCall(n)
 	}
 	return nil
 }
@@ -211,6 +215,10 @@ func (l *Lowerer) builtin(n *ast.Call) ir.Expr {
 		return l.refCall(n)
 	case "undef":
 		return l.undefCall(n)
+	case "readdir":
+		return l.readdirCall(n)
+	case "unlink":
+		return l.unlinkCall(n)
 	case "bless":
 		return l.todoExpr(n, "P2G7001", "bless",
 			"bless has no Go equivalent",

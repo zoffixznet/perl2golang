@@ -24,6 +24,38 @@ var notes = map[string]string{
 		"errors.Is(err, fs.ErrNotExist) would report a directory the program " +
 		"cannot search as existing.",
 
+	"dirNames": "Reading a directory hands back entries rather than names, " +
+		"and it never includes \".\" or \"..\", so a filter written for those " +
+		"two silently does nothing. The order is sorted, which the system call " +
+		"underneath does not promise.",
+
+	"fileSize": "The size of something that cannot be inspected is reported " +
+		"as 0, the same as an empty file. os.Stat returns the error that " +
+		"tells the two apart, and this throws it away, so anything that has " +
+		"to know should call os.Stat directly.",
+
+	"isDir": "One stat answers every question about a path. Asking three " +
+		"separate questions with three helpers costs three system calls and " +
+		"can see the filesystem change between them.",
+
+	"isExecutable": "The permission bits say what the owner, the group and " +
+		"everybody else may do. They do not say what this process may do, " +
+		"which depends on who is running it.",
+
+	"isFile": "A regular file is not merely something that exists: a " +
+		"directory, a device and a socket all exist. Mode().IsRegular() is " +
+		"the distinction, and it is not the same test as the one for a " +
+		"directory negated.",
+
+	"isReadable": "Whether a file can be read is answered by opening it, " +
+		"because the permission bits do not know who is running. The answer " +
+		"can also go stale the moment it is given, so code that is about to " +
+		"read should just read and handle the error.",
+
+	"isWritable": "The same approximation isExecutable makes: the bits say " +
+		"what the owner and the group may do, not what this process may do, " +
+		"and a read-only mount is invisible to them.",
+
 	"formatNum": "Numbers become text with fifteen significant digits, which " +
 		"is why 0.1 + 0.2 prints as 0.3. Go's own formatting prints the " +
 		"shortest text that reads back exactly, which is 0.30000000000000004, " +

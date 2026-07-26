@@ -116,6 +116,9 @@ type Lowerer struct {
 	tmpNames *nameSet
 	// usedLabels records which loop labels something actually branches to.
 	usedLabels map[string]bool
+	// lastStat is the path the most recent file test asked about, so that
+	// `-f _` has something to reuse.
+	lastStat ast.Expr
 }
 
 // label returns a loop label only when something branches to it. Go rejects a

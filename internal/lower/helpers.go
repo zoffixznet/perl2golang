@@ -39,4 +39,11 @@ const (
 	hReplaceFirst  = "replaceFirst" // s/// without the /g modifier
 	hReadLines     = "readLines"    // reading a whole handle as a list of lines
 	hRefKind       = "refKind"      // Perl ref(), answered from the runtime type
+	hIsDir         = "isDir"        // -d
+	hIsFile        = "isFile"       // -f
+	hFileSize      = "fileSize"     // -s
+	hIsReadable    = "isReadable"   // -r
+	hIsWritable    = "isWritable"   // -w
+	hIsExecutable  = "isExecutable" // -x
+	hDirNames      = "dirNames"     // opendir plus readdir, as a list of names
 )

@@ -224,6 +224,14 @@ func (l *Lowerer) exprStatement(e ast.Expr) []ir.Stmt {
 					if sts, ok := l.closeGuarded(c, n.R); ok {
 						return sts
 					}
+				case "opendir":
+					if sts, ok := l.opendirGuarded(c, n.R); ok {
+						return sts
+					}
+				case "closedir":
+					// The directory was read in one call, so there is no
+					// handle left to close and nothing that can fail.
+					return l.closedirCall(c)
 				}
 			}
 			// The `something() or die "..."` idiom: a guard, not a value.

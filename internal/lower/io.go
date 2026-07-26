@@ -93,6 +93,7 @@ func (l *Lowerer) openStatements(n *ast.Call, onFail func(errName string) []ir.S
 	}
 
 	handle.Type = fileType
+	l.observe(handle, fileType)
 	errName := l.tmp("err")
 	openStmt := assign(":=", []ir.Expr{ir.NewIdent(handle.Go, fileType), ir.NewIdent(errName, ir.TError)},
 		[]ir.Expr{opener})
@@ -268,6 +269,143 @@ func (l *Lowerer) closeCall(n *ast.Call) []ir.Stmt {
 		return []ir.Stmt{st}
 	}
 	return nil
+}
+
+// ---------------------------------------------------------------------------
+// Directories
+
+var dirType = ir.SliceOf(ir.TString)
+
+// opendirGuarded lowers `opendir my $dh, DIR or FAILURE`.
+func (l *Lowerer) opendirGuarded(n *ast.Call, onFail ast.Expr) ([]ir.Stmt, bool) {
+	return l.opendirStatements(n, func(errName string) []ir.Stmt {
+		saved := l.errVar
+		l.errVar = errName
+		defer func() { l.errVar = saved }()
+
+		savedPre := l.pre
+		l.pre = nil
+		body := l.exprStatement(onFail)
+		inner := l.takePre()
+		l.pre = savedPre
+		return append(inner, body...)
+	})
+}
+
+// opendirCall lowers opendir with no failure handling of its own.
+func (l *Lowerer) opendirCall(n *ast.Call) []ir.Stmt {
+	stmts, _ := l.opendirStatements(n, nil)
+	return stmts
+}
+
+// opendirStatements reads the directory up front and binds the handle to the
+// names it holds.
+//
+// Perl opens a directory and then pulls names off it one at a time. Go reads
+// the whole directory in one call, so the handle and the list it would have
+// produced are the same thing here, and closedir has nothing left to close.
+func (l *Lowerer) opendirStatements(n *ast.Call, onFail func(errName string) []ir.Stmt) ([]ir.Stmt, bool) {
+	args := flatten(argList(n))
+	if len(args) < 2 {
+		return nil, false
+	}
+	handle := l.openHandle(args[0])
+	if handle == nil {
+		return nil, false
+	}
+	handle.Type = dirType
+	handle.Closed = true
+	l.observe(handle, dirType)
+
+	dir := l.toStr(l.expr(args[1]), args[1])
+	errName := l.tmp("err")
+	read := assign(":=", []ir.Expr{ir.NewIdent(handle.Go, dirType), ir.NewIdent(errName, ir.TError)},
+		[]ir.Expr{l.helperCall(hDirNames, dirType, dir)})
+	l.setProv(read, n)
+	l.note(read, "Go reads a directory in one call rather than handing back a handle "+
+		"to pull names off. That means there is nothing to close afterwards, and the "+
+		"whole listing is in memory, which is the trade os.ReadDir makes for you.",
+		"errors-are-values", "multiple-return-values")
+
+	var failBody []ir.Stmt
+	if onFail != nil {
+		failBody = onFail(errName)
+	}
+	if len(failBody) == 0 {
+		failBody = []ir.Stmt{
+			exprStmt(call("fmt", "fmt", "Fprintln", ir.TVoid, ir.Pkg("os", "os", "Stderr", nil),
+				ir.NewIdent(errName, ir.TError))),
+			exprStmt(call("os", "os", "Exit", ir.TVoid, ir.IntLit("255"))),
+		}
+	}
+	check := &ir.If{
+		Cond: ir.Bin("!=", ir.NewIdent(errName, ir.TError), ir.Nil(ir.TError), ir.TBool),
+		Then: &ir.Block{Stmts: failBody},
+	}
+	l.approximate(n, "P2G6040", "opendir",
+		"the whole directory is read at once",
+		"opendir hands back a handle that readdir pulls names off one at a time, so "+
+			"a huge directory never has to be in memory all at once. os.ReadDir reads "+
+			"the lot, sorts it, and gives you a slice.",
+		"For a directory too large to hold, os.File.ReadDir(n) reads it in batches "+
+			"and is the closer match.")
+	return []ir.Stmt{read, check}, true
+}
+
+// readdirCall lowers readdir, which by then is just the list opendir read.
+func (l *Lowerer) readdirCall(n *ast.Call) ir.Expr {
+	args := flatten(argList(n))
+	if len(args) == 0 {
+		return composite(dirType, nil, nil)
+	}
+	b := l.handleBinding(args[0])
+	if b == nil {
+		return composite(dirType, nil, nil)
+	}
+	out := l.ident(b)
+	l.note(out, "The names were read when the directory was opened, so this is the "+
+		"list itself. In Perl readdir is a cursor and calling it twice gives different "+
+		"answers; here it is a value and does not move.")
+	return out
+}
+
+// closedirCall lowers closedir, which has nothing to do once the directory has
+// been read in one go.
+func (l *Lowerer) closedirCall(n *ast.Call) []ir.Stmt {
+	l.inform(n, "P2G6041", "closedir",
+		"The directory was read in a single call, so there is no open handle left "+
+			"to close and the call has been dropped. Nothing leaks: os.ReadDir closes "+
+			"the directory itself before it returns.")
+	return nil
+}
+
+// unlinkCall lowers unlink, which returns how many files it removed.
+func (l *Lowerer) unlinkCall(n *ast.Call) ir.Expr {
+	args := flatten(argList(n))
+	if len(args) == 0 {
+		return ir.IntLit("0")
+	}
+	if len(args) == 1 {
+		out := call("os", "os", "Remove", ir.TError, l.toStr(l.expr(args[0]), args[0]))
+		l.approximate(n, "P2G6045", "unlink",
+			"unlink's count becomes an error value",
+			"unlink returns how many files it managed to remove, so the reason a "+
+				"removal failed is left in $! and usually never looked at. os.Remove "+
+				"returns the error itself.",
+			"Test the returned error rather than a count. os.Remove on a missing file "+
+				"returns an error that errors.Is(err, fs.ErrNotExist) recognises, which "+
+				"is often the case worth ignoring.",
+			"errors-are-values")
+		return out
+	}
+	l.refuse(n, "P2G6045", "unlink of several files",
+		"removing several paths in one call is not implemented",
+		"unlink takes a list and returns how many of them it removed. os.Remove "+
+			"takes one path and returns one error.",
+		"Loop over the paths and call os.Remove for each, deciding what a failure "+
+			"means as you go.",
+		"errors-are-values")
+	return ir.IntLit("0")
 }
 
 // handleBinding resolves an expression naming a filehandle.
@@ -485,16 +623,44 @@ func targetVar(e ast.Expr) *ast.Var {
 }
 
 // fileTest lowers -e and its relatives.
+//
+// Each one asks the filesystem a single question, which in Go is os.Stat
+// followed by a look at the FileInfo. The helpers keep the question at the call
+// site, where the Perl had it, rather than spreading a stat and an error check
+// through the middle of an expression.
 func (l *Lowerer) fileTest(n *ast.FileTest) ir.Expr {
+	node := n.Arg
+	if isStatReuse(node) {
+		// `-f _` reuses the stat the previous test performed. Go has no such
+		// cache, so the path is tested again.
+		if l.lastStat == nil {
+			return l.todoExpr(n, "P2G6031", "the _ filehandle",
+				"there is no earlier file test to reuse",
+				"`_` reuses the result of the last file test, and no test came before "+
+					"this one in a place the converter could see.",
+				"Name the path and test it directly.")
+		}
+		node = l.lastStat
+		l.approximate(n, "P2G6031", "the _ filehandle",
+			"the path is inspected again rather than reused",
+			"`_` reuses the stat the previous test already performed, which saves a "+
+				"system call. Go keeps no such cache, so the generated code asks about "+
+				"the path a second time.",
+			"Call os.Stat once, keep the FileInfo, and read every answer off it: "+
+				"IsDir, Mode().IsRegular(), and Size().")
+	} else if node != nil {
+		l.lastStat = node
+	}
+
 	var arg ir.Expr
-	if n.Arg == nil {
+	if node == nil {
 		if len(l.topicStack) > 0 {
 			arg = l.toStr(l.topicStack[len(l.topicStack)-1], nil)
 		} else {
 			arg = ir.Str(`""`)
 		}
 	} else {
-		arg = l.toStr(l.expr(n.Arg), n.Arg)
+		arg = l.toStr(l.expr(node), node)
 	}
 
 	switch n.Op {
@@ -505,13 +671,78 @@ func (l *Lowerer) fileTest(n *ast.FileTest) ir.Expr {
 			"is unavailable rather than only that it is.",
 			"errors-are-values")
 		return out
+	case 'd':
+		out := l.helperCall(hIsDir, ir.TBool, arg)
+		l.note(out, "os.Stat returns a FileInfo, and IsDir is a method on it. One stat "+
+			"answers every question the file tests ask separately.",
+			"errors-are-values")
+		return out
+	case 'f':
+		out := l.helperCall(hIsFile, ir.TBool, arg)
+		l.note(out, "Mode().IsRegular() is the FileInfo's answer to -f: an ordinary "+
+			"file rather than a directory, a device, or a socket.")
+		return out
+	case 's':
+		out := l.helperCall(hFileSize, ir.TInt, arg)
+		l.approximate(n, "P2G6032", "-s file test",
+			"a missing file now reports a size of zero",
+			"-s returns the file's size, and undef when the file cannot be inspected, "+
+				"so `defined -s $p` tells a missing file from an empty one. A Go int has "+
+				"no undef, so both answer 0.",
+			"Test with os.Stat and look at the error where the difference matters.",
+			"nil-vs-undef")
+		return out
+	case 'z':
+		out := ir.Bin("&&", l.helperCall(hFileExists, ir.TBool, arg),
+			ir.Bin("==", l.helperCall(hFileSize, ir.TInt, arg), ir.IntLit("0"), ir.TBool), ir.TBool)
+		l.note(out, "-z asks two things at once: that the file is there, and that it "+
+			"is empty. Written out, they are two calls.")
+		return out
+	case 'r':
+		out := l.helperCall(hIsReadable, ir.TBool, arg)
+		l.note(out, "Whether a file can be read is answered by opening it. The "+
+			"permission bits say what the owner and the group may do, which is a "+
+			"different question from what this process may do.")
+		return out
+	case 'w':
+		out := l.helperCall(hIsWritable, ir.TBool, arg)
+		l.approximate(n, "P2G6033", "-w file test",
+			"writability is read off the permission bits",
+			"-w asks whether this process may write to the path, taking the running "+
+				"user into account. The generated code looks at the permission bits "+
+				"instead, which does not know who is running.",
+			"Where it matters, try the write and handle the error, which is the only "+
+				"answer that cannot go stale between the test and the write.",
+			"errors-are-values")
+		return out
+	case 'x':
+		out := l.helperCall(hIsExecutable, ir.TBool, arg)
+		l.approximate(n, "P2G6033", "-x file test",
+			"executability is read off the permission bits",
+			"-x asks whether this process may execute the path. The generated code "+
+				"looks at the permission bits instead, which does not know who is running.",
+			"Where it matters, run the program and handle the error.",
+			"errors-are-values")
+		return out
 	}
 	return l.todoExpr(n, "P2G6030", "-"+string(n.Op)+" file test",
 		"this file test is not implemented",
 		"Perl's file test operators ask one question each. Go asks os.Stat once and "+
 			"reads the answer off the returned FileInfo.",
-		"Call os.Stat, check the error, then use the FileInfo: IsDir for -d, "+
-			"Mode().IsRegular() for -f, Size() for -s and -z, and Mode().Perm() for the "+
-			"permission tests.",
+		"Call os.Stat, check the error, then use the FileInfo: ModTime for -M and "+
+			"-A, Mode() for the type tests, and Sys() for the fields Go does not "+
+			"expose portably.",
 		"errors-are-values")
+}
+
+// isStatReuse reports whether a file test's argument is the `_` handle, which
+// asks for the previous test's answer rather than naming a path.
+func isStatReuse(e ast.Expr) bool {
+	switch n := e.(type) {
+	case *ast.Call:
+		return n.Name == "_" && argCount(n) == 0
+	case *ast.FileHandle:
+		return n.Name == "_"
+	}
+	return false
 }
