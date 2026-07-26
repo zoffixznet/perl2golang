@@ -119,6 +119,14 @@ type Lowerer struct {
 	// lastStat is the path the most recent file test asked about, so that
 	// `-f _` has something to reuse.
 	lastStat ast.Expr
+	// countsLines records that the program read $., which the line-reading
+	// loops have to keep up to date. It is discovered on the first pass and
+	// acted on by the second.
+	countsLines bool
+	// readLoops counts the line-reading loops in the file, discovered on the
+	// first pass. More than one means they share the line counter and each
+	// has to start it again.
+	readLoops int
 }
 
 // label returns a loop label only when something branches to it. Go rejects a

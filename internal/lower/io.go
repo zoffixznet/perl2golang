@@ -524,8 +524,27 @@ func (l *Lowerer) readLoop(n *ast.While) ([]ir.Stmt, bool) {
 		defer func() { l.topicStack = l.topicStack[:len(l.topicStack)-1] }()
 	}
 
+	if l.pass == 1 {
+		l.readLoops++
+	}
+
 	inner := l.block(body)
-	inner.Stmts = append([]ir.Stmt{lineDecl}, inner.Stmts...)
+	lead := []ir.Stmt{lineDecl}
+	var reset ir.Stmt
+	if l.countsLines {
+		counter := l.lineCounter(n)
+		bump := assign("+=", []ir.Expr{ir.NewIdent(counter.Go, ir.TInt)}, []ir.Expr{ir.IntLit("1")})
+		l.note(bump, "This is what $. was doing invisibly. Counting the line here, "+
+			"next to the read, is one line of code and removes the question of which "+
+			"handle the number belongs to.")
+		lead = append(lead, bump)
+		if l.readLoops > 1 {
+			// More than one loop shares the counter, so each one starts it
+			// again. Perl does the same when the previous handle was closed.
+			reset = assign("=", []ir.Expr{ir.NewIdent(counter.Go, ir.TInt)}, []ir.Expr{ir.IntLit("0")})
+		}
+	}
+	inner.Stmts = append(lead, inner.Stmts...)
 
 	loop := &ir.For{
 		Cond:  ir.CallOf(selector(ir.NewIdent(scanner, scannerType), "Scan", nil), ir.TBool),
@@ -553,7 +572,11 @@ func (l *Lowerer) readLoop(n *ast.While) ([]ir.Stmt, bool) {
 		"function.",
 		"if-err-nil-rhythm", "var-vs-short-declaration")
 
-	return []ir.Stmt{mk, buffer, loop, errCheck}, true
+	out := []ir.Stmt{mk, buffer, loop, errCheck}
+	if reset != nil {
+		out = append([]ir.Stmt{reset}, out...)
+	}
+	return out, true
 }
 
 // readTarget names what a read loop assigns each line to.

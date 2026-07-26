@@ -79,6 +79,36 @@ func (l *Lowerer) lookup(sigil rune, name string, at ast.Node) *Binding {
 	return b
 }
 
+// lineCounter returns the variable standing in for $., creating it the first
+// time the program asks for it.
+//
+// It lives at package level because $. does: the value outlives the loop that
+// set it, and the line after the loop can still read it.
+func (l *Lowerer) lineCounter(at ast.Node) *Binding {
+	const key = "$."
+	b, ok := l.globalSeen[key]
+	if !ok {
+		b = &Binding{
+			Perl:  key,
+			Sigil: '$',
+			Kind:  KindGlobal,
+			Line:  posLine(at),
+			Type:  ir.TInt,
+			Init:  ir.IntLit("0"),
+		}
+		b.Go = l.names.take("lineNo")
+		b.Doc = b.Go + " counts the lines read so far from the input being read."
+		b.Explain = "Perl keeps this count for you in $., updated by every read and " +
+			"shared by every handle. Go keeps no such count, so the loops that read " +
+			"lines maintain it here."
+		l.globalSeen[key] = b
+		l.globals = append(l.globals, b)
+	}
+	l.countsLines = true
+	l.observe(b, ir.TInt)
+	return b
+}
+
 // observe records a type the binding was seen holding. Only pass 1 collects;
 // pass 2 reads the settled answer.
 func (l *Lowerer) observe(b *Binding, t *ir.Type) {
@@ -248,14 +278,21 @@ func (l *Lowerer) specialVar(v *ast.Var) ir.Expr {
 			"errors-are-values", "error-wrapping")
 
 	case "$.":
-		return l.todoExpr(v, "P2G6015", "$.",
-			"the input line counter is not implemented",
-			"$. holds the line number of the last line read from the handle that was "+
-				"read most recently. It is global, it changes whenever any handle is read, "+
-				"and it survives past the end of the loop. Go's readers keep no such "+
-				"counter.",
-			"Keep your own counter next to the loop. It is one more line and it says "+
-				"which handle it is counting, which $. never did.")
+		b := l.lineCounter(v)
+		out := l.ident(b)
+		l.note(out, "$. is a global that every read updates, so it always refers to "+
+			"whichever handle was read last. The counter here is an ordinary variable "+
+			"the line-reading loops keep up to date, which says out loud what $. left "+
+			"implicit.")
+		l.approximate(v, "P2G6015", "$.",
+			"the line counter is an ordinary variable",
+			"$. is global and follows whichever handle was read most recently, so two "+
+				"loops reading two files share it and it keeps its value after a loop "+
+				"ends. The generated counter is one variable that every read loop "+
+				"increments, which matches the common case of one loop at a time and not "+
+				"the case of two interleaved reads.",
+			"Where two handles are read in turn, give each loop its own counter.")
+		return out
 
 	case "$;", "$,", "$\\", "$/", "$\"", "$|":
 		return l.todoExpr(v, "P2G6016", name,
