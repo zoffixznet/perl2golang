@@ -368,8 +368,8 @@ type AnonSub struct {
 // Match is $x =~ /re/ or a bare /re/ (implicit $_). Bound is nil for bare.
 type Match struct {
 	span
-	Bound  Expr // nil means $_
-	Negate bool // !~
+	Bound   Expr // nil means $_
+	Negate  bool // !~
 	Pattern *Regex
 	// PatternExpr is set instead of Pattern for $x =~ $re forms.
 	PatternExpr Expr

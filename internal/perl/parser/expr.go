@@ -16,22 +16,22 @@ const (
 	precAndLow = 4 // and
 	precNotLow = 5 // not (prefix)
 
-	precAssign  = 7 // = += .= //= ...
-	precTernary = 8
-	precRange   = 9  // .. ...
-	precOrOr    = 10 // || //
-	precAndAnd  = 11
-	precBitOr   = 12 // | ^
-	precBitAnd  = 13
-	precEquality = 14 // == != <=> eq ne cmp
-	precRelational = 15 // < > <= >= lt gt le ge
-	precNamedUnary = 16 // defined, length, -e ...
-	precShift    = 17 // << >>
-	precAdditive = 18 // + - .
+	precAssign         = 7 // = += .= //= ...
+	precTernary        = 8
+	precRange          = 9  // .. ...
+	precOrOr           = 10 // || //
+	precAndAnd         = 11
+	precBitOr          = 12 // | ^
+	precBitAnd         = 13
+	precEquality       = 14 // == != <=> eq ne cmp
+	precRelational     = 15 // < > <= >= lt gt le ge
+	precNamedUnary     = 16 // defined, length, -e ...
+	precShift          = 17 // << >>
+	precAdditive       = 18 // + - .
 	precMultiplicative = 19 // * / % x
-	precMatchBind = 20 // =~ !~
-	precUnary    = 21 // ! ~ \ unary + unary -
-	precPower    = 22 // **
+	precMatchBind      = 20 // =~ !~
+	precUnary          = 21 // ! ~ \ unary + unary -
+	precPower          = 22 // **
 )
 
 type opInfo struct {
