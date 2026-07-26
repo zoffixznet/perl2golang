@@ -273,9 +273,12 @@ func (l *Lowerer) declarationOnly(n *ast.My) []ir.Stmt {
 	var out []ir.Stmt
 	for _, v := range declaredVars(n) {
 		b := l.declare(v, KindLocal)
-		st := &ir.DeclStmt{Names: []string{b.Go}, Type: b.Type}
+		var st ir.Stmt = &ir.DeclStmt{Names: []string{b.Go}, Type: b.Type}
 		if b.Type != nil && b.Type.Kind == ir.Map {
-			st.Values = []ir.Expr{composite(b.Type, nil, nil)}
+			// A map needs making, and the short form says so in one line
+			// without repeating the type.
+			st = assign(":=", []ir.Expr{ir.NewIdent(b.Go, b.Type)},
+				[]ir.Expr{composite(b.Type, nil, nil)})
 			l.note(st, "A Go map has to be made before anything can be written to it. "+
 				"A declared but unmade map is nil, and writing to a nil map panics, "+
 				"which is one of the first surprises coming from Perl.",
