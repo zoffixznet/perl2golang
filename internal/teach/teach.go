@@ -180,27 +180,63 @@ func (kb *KB) Resolve(ids []string) (concepts []*Concept, unknown []string) {
 // GoSamples extracts the fenced ```go blocks from a concept body.
 func (c *Concept) GoSamples() []string { return c.fenced("go") }
 
-// fenced returns the bodies of every fenced code block whose info string is
-// exactly lang.
-func (c *Concept) fenced(lang string) []string {
-	var out []string
+// block is one fenced code block of a concept body.
+//
+// The info string carries meaning that the knowledge base's tests enforce:
+//
+//	go          a complete, compilable program or snippet
+//	go-fails    compilable Go that is expected to exit non-zero, because the
+//	            lesson is about the crash or the failure it produces
+//	go-invalid  Go that is expected not to compile
+//	perl        the Perl side of the lesson, never compiled
+//	(empty)     the exact output of the sample immediately above it
+//	console     a shell transcript, including the commands
+//	text        output that varies between runs or between machines
+//
+// The empty info string is the strict one: a plain block following a sample is
+// run and compared byte for byte, so a lesson can never claim output its own
+// code does not produce. Anything genuinely variable (timings, map order,
+// goroutine interleaving) is marked text instead, which says so to the reader
+// as well as to the test.
+type block struct {
+	lang string
+	text string
+}
+
+// blocks returns every fenced code block in the body, in order.
+func (c *Concept) blocks() []block {
+	var out []block
 	var cur []string
+	lang := ""
 	inBlock := false
 	for _, line := range strings.Split(c.Body, "\n") {
 		trimmed := strings.TrimRight(line, " \t")
 		if !inBlock {
-			if info, ok := strings.CutPrefix(trimmed, "```"); ok && strings.TrimSpace(info) == lang {
+			if info, ok := strings.CutPrefix(trimmed, "```"); ok {
 				inBlock = true
+				lang = strings.TrimSpace(info)
 				cur = nil
 			}
 			continue
 		}
 		if trimmed == "```" {
 			inBlock = false
-			out = append(out, strings.Join(cur, "\n")+"\n")
+			out = append(out, block{lang: lang, text: strings.Join(cur, "\n") + "\n"})
 			continue
 		}
 		cur = append(cur, line)
+	}
+	return out
+}
+
+// fenced returns the bodies of every fenced code block whose info string is
+// exactly lang.
+func (c *Concept) fenced(lang string) []string {
+	var out []string
+	for _, b := range c.blocks() {
+		if b.lang == lang {
+			out = append(out, b.text)
+		}
 	}
 	return out
 }

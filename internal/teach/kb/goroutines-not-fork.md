@@ -26,8 +26,6 @@ Children cannot corrupt each other's data; getting results *back* is the hard pa
 
 ## The Go you write
 
-Run three times — the goroutine's output never appeared, because `main` won the race to exit:
-
 ```go
 package main
 
@@ -42,7 +40,16 @@ func main() {
 
 ```
 main is done
+```
+
+Run it as often as you like: the goroutine's line never appears, because `main` wins the race to exit every time and the runtime does not wait for anybody.
+
+```console
+$ go run racy.go
 main is done
+$ go run racy.go
+main is done
+$ go run racy.go
 main is done
 ```
 
@@ -71,7 +78,7 @@ func main() {
 }
 ```
 
-```
+```text
 spawned and joined 100000 goroutines in 19.686224ms
 ```
 

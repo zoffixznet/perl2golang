@@ -25,7 +25,7 @@ Verified: even `exists $h{x}{y}` autovivifies `$h{x}` — Perl's forgiveness has
 
 A nil pointer dereference is a crash, not a warning — run as shown:
 
-```go
+```go-fails
 package main
 
 import "fmt"
@@ -52,7 +52,7 @@ exit status 2
 
 Deep assignment does not build the path — this also panics, as shown:
 
-```go
+```go-fails
 m := map[string]map[string]int{}
 m["a"]["b"] = 1 // no autovivification: m["a"] is a nil map
 ```

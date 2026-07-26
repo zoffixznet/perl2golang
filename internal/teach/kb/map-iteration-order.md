@@ -54,7 +54,7 @@ func main() {
 }
 ```
 
-```
+```text
 run 1: figs dates limes apples pears plums 
 run 2: apples pears plums figs dates limes 
 run 3: apples pears plums figs dates limes 

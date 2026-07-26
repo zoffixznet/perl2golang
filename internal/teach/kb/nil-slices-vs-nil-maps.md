@@ -25,7 +25,7 @@ Declaration and readiness are the same thing.
 
 One program, run as shown — everything works until the map write:
 
-```go
+```go-fails
 package main
 
 import "fmt"

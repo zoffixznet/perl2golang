@@ -68,7 +68,7 @@ result
 
 Blocking with no possible partner is a runtime-detected crash — run as shown:
 
-```go
+```go-fails
 ch := make(chan int)
 ch <- 1 // nobody will ever receive: the runtime detects the deadlock
 ```

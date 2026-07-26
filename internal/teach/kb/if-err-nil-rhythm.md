@@ -23,7 +23,7 @@ Perl's checked-call story is opt-in per call (`or die`), per file (`use autodie`
 
 The rhythm in its natural habitat — early returns, context added at each level, run as shown:
 
-```go
+```go-fails
 package main
 
 import (

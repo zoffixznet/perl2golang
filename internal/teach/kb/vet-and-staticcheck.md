@@ -57,7 +57,7 @@ func main() {
 }
 ```
 
-```
+```console
 $ go vet vetdemo.go
 vetdemo.go:27:24: fmt.Printf format %d has arg "many" of wrong type string
 vetdemo.go:15:13: show passes lock by value: command-line-arguments.Counter contains sync.Mutex

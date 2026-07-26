@@ -63,7 +63,7 @@ func main() {
 }
 ```
 
-```
+```console
 $ go run vetdemo.go
 processed %!d(string=many) records
 $ go vet vetdemo.go
@@ -72,7 +72,7 @@ vetdemo.go:7:24: fmt.Printf format %d has arg count of wrong type string
 
 And `go doc` works offline on the stdlib and every dependency, from the command line:
 
-```
+```console
 $ go doc strings.Builder
 package strings // import "strings"
 

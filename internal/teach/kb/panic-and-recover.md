@@ -22,7 +22,7 @@ In Perl, `die`/`eval` handle *expected* failures daily. That entire workload mov
 
 An unrecovered panic kills the whole program with a goroutine dump — run as shown:
 
-```go
+```go-fails
 package main
 
 import "fmt"

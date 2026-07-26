@@ -52,14 +52,14 @@ func main() {
 }
 ```
 
-```
+```console
 $ go run racedemo.go
 2000
 ```
 
 Correct output, broken program. Now with the detector:
 
-```
+```console
 $ go run -race racedemo.go
 ==================
 WARNING: DATA RACE

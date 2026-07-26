@@ -26,7 +26,7 @@ sub describe {
 
 Compiled and run as shown — including the deliberate panic at the end:
 
-```go
+```go-fails
 package main
 
 import "fmt"

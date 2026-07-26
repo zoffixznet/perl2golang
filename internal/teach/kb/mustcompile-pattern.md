@@ -56,14 +56,14 @@ func main() {
 }
 ```
 
-```
+```text
 compile in loop: 28.715132ms
 precompiled:    2.787513ms
 ```
 
 Why `Must`? `regexp.Compile` returns `(*Regexp, error)`, but a *literal* pattern's validity is a fact about your source code, not your inputs — so `MustCompile` panics instead of returning an error, and this is one of the few sanctioned panics in Go (`panic-and-recover`). At package level it fails at program start, before any work begins — run as shown:
 
-```go
+```go-fails
 var re = regexp.MustCompile(`(unclosed`)
 ```
 
