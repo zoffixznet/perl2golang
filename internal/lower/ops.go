@@ -229,6 +229,11 @@ func isListish(e ast.Expr) bool {
 // has no operator form. Writing it out as an if is what a Go developer does,
 // and it is clearer about what is being tested.
 func (l *Lowerer) orValue(n *ast.BinOp, definedOr bool) ir.Expr {
+	if !definedOr {
+		if out, ok := l.orderingChain(n); ok {
+			return out
+		}
+	}
 	lx := l.expr(n.L)
 	rx := l.expr(n.R)
 	t := join(typeOrAny(lx), typeOrAny(rx))
@@ -254,6 +259,60 @@ func (l *Lowerer) orValue(n *ast.BinOp, definedOr bool) ir.Expr {
 	l.emit(decl)
 	l.emit(guard)
 	return ir.NewIdent(name, t)
+}
+
+// orderingChain recognises the multi-key sort comparator, `$a->{x} <=> $b->{x}
+// || $a->{y} cmp $b->{y}`, and returns cmp.Or over the comparisons.
+//
+// The idiom leans on || returning the first true value: a comparison that says
+// "equal" is 0, which is false, so the next key gets a turn. cmp.Or is the same
+// rule, first non-zero wins, and it is what Go code sorting on several keys
+// actually looks like. Only orderings qualify, so nothing with a side effect
+// gets pulled into an argument list that Go evaluates eagerly.
+func (l *Lowerer) orderingChain(n *ast.BinOp) (ir.Expr, bool) {
+	leaves, ok := orderingLeaves(n)
+	if !ok || len(leaves) < 2 {
+		return nil, false
+	}
+	args := make([]ir.Expr, 0, len(leaves))
+	for _, leaf := range leaves {
+		x := l.expr(leaf)
+		if typeOrAny(x).Kind != ir.Int {
+			return nil, false
+		}
+		args = append(args, x)
+	}
+	out := call("cmp", "cmp", "Or", ir.TInt, args...)
+	l.note(out, "Chaining comparisons with || works because a comparison that finds "+
+		"the values equal returns 0, which is false, so the next key decides. "+
+		"cmp.Or returns its first non-zero argument, which is the same rule and is "+
+		"how a Go comparator sorts on more than one key.",
+		"sort-slice")
+	return out, true
+}
+
+// orderingLeaves flattens a || chain whose every leaf is an ordering
+// comparison. Anything else in the chain disqualifies it.
+func orderingLeaves(e ast.Expr) ([]ast.Expr, bool) {
+	b, ok := e.(*ast.BinOp)
+	if !ok {
+		return nil, false
+	}
+	switch b.Op {
+	case "<=>", "cmp":
+		return []ast.Expr{b}, true
+	case "||":
+		left, ok := orderingLeaves(b.L)
+		if !ok {
+			return nil, false
+		}
+		right, ok := orderingLeaves(b.R)
+		if !ok {
+			return nil, false
+		}
+		return append(left, right...), true
+	}
+	return nil, false
 }
 
 // defaultName invents a readable identifier for a temporary based on what it

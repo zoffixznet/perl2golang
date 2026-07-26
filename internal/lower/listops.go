@@ -143,12 +143,8 @@ func (l *Lowerer) blockComparator(n *ast.Call, elem *ir.Type) ir.Expr {
 	l.scope.define(varKey('$', "a"), ba)
 	l.scope.define(varKey('$', "b"), bb)
 
-	stmts := l.stmts(n.Block)
-	if len(stmts) == 0 {
-		return nil
-	}
-	last, ok := stmts[len(stmts)-1].(*ir.ExprStmt)
-	if !ok {
+	stmts, value := l.blockValue(n.Block)
+	if value == nil {
 		l.refuse(n, "P2G5591", "sort block",
 			"this ordering rule is not implemented",
 			"The block does not end in an expression that produces an ordering.",
@@ -156,12 +152,42 @@ func (l *Lowerer) blockComparator(n *ast.Call, elem *ir.Type) ir.Expr {
 			"sort-slice")
 		return nil
 	}
-	value := last.X
 	if typeOrAny(value).Kind != ir.Int {
 		value = l.toInt(value, nil)
 	}
-	body := &ir.Block{Stmts: append(stmts[:len(stmts)-1], &ir.Return{Results: []ir.Expr{value}})}
+	body := &ir.Block{Stmts: append(stmts, &ir.Return{Results: []ir.Expr{value}})}
 	return funcLit([]ir.Param{{Name: ba.Go, Type: elem}, {Name: bb.Go, Type: elem}}, []*ir.Type{ir.TInt}, body)
+}
+
+// blockValue lowers a Perl block that is evaluated for its value rather than
+// for its effect: sort comparators, map bodies, grep tests.
+//
+// The distinction matters more than it looks. `$a <=> $b || $x cmp $y` read as
+// a statement is a guard, `if the first test is false, run the second`, and the
+// value disappears. Read as an expression it is the ordering the block exists
+// to produce. Everything but the last statement is still lowered as statements,
+// because that is what those are.
+func (l *Lowerer) blockValue(block []ast.Stmt) ([]ir.Stmt, ir.Expr) {
+	if len(block) == 0 {
+		return nil, nil
+	}
+	lead := block
+	var tail ast.Expr
+	if last, isExpr := block[len(block)-1].(*ast.ExprStmt); isExpr {
+		lead = block[:len(block)-1]
+		tail = last.X
+	}
+
+	savedPre := l.pre
+	l.pre = nil
+	stmts := l.stmts(lead)
+	var value ir.Expr
+	if tail != nil {
+		value = l.expr(tail)
+	}
+	stmts = append(stmts, l.takePre()...)
+	l.pre = savedPre
+	return stmts, value
 }
 
 type cmpKind int
