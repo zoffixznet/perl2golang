@@ -93,6 +93,9 @@ func (l *Lowerer) stmt(st ast.Stmt) []ir.Stmt {
 	if l.pass == 2 {
 		l.rep.Stats.Statements++
 	}
+	savedStmt := l.curStmt
+	l.curStmt = st
+	defer func() { l.curStmt = savedStmt }()
 	switch n := st.(type) {
 	case nil:
 		return nil
@@ -147,6 +150,15 @@ func (l *Lowerer) exprStatement(e ast.Expr) []ir.Stmt {
 	case *ast.My:
 		return l.declarationOnly(n)
 
+	case *ast.List:
+		// A parenthesised list evaluated for effect is each of its elements
+		// evaluated for effect, which is what `$i++, $j--` means.
+		var out []ir.Stmt
+		for _, part := range n.Elems {
+			out = append(out, l.exprStatement(part)...)
+		}
+		return out
+
 	case *ast.UnOp:
 		if n.Op == "++" || n.Op == "--" {
 			return l.incDecStmt(n)
@@ -164,9 +176,16 @@ func (l *Lowerer) exprStatement(e ast.Expr) []ir.Stmt {
 			// `open(...) or die "..."` deserves the real Go shape rather than a
 			// negated truth test, because error handling is the thing a Perl
 			// developer most needs to see written out.
-			if c, isCall := n.L.(*ast.Call); isCall && c.Name == "open" {
-				if sts, ok := l.openGuarded(c, n.R); ok {
-					return sts
+			if c, isCall := n.L.(*ast.Call); isCall {
+				switch c.Name {
+				case "open":
+					if sts, ok := l.openGuarded(c, n.R); ok {
+						return sts
+					}
+				case "close":
+					if sts, ok := l.closeGuarded(c, n.R); ok {
+						return sts
+					}
 				}
 			}
 			// The `something() or die "..."` idiom: a guard, not a value.
@@ -378,22 +397,28 @@ func (l *Lowerer) forStmt(n *ast.ForC) []ir.Stmt {
 		cond = l.cond(n.Cond)
 	}
 	var post ir.Stmt
+	var extraPost []ir.Stmt
 	if n.Post != nil {
 		sts := l.exprStatement(n.Post)
-		if len(sts) == 1 {
+		if len(sts) > 0 {
 			post = sts[0]
-		} else if len(sts) > 1 {
+			extraPost = sts[1:]
+		}
+		if len(extraPost) > 0 {
 			l.approximate(n, "P2G3530", "for loop with several post expressions",
 				"only one post expression fits a Go for header",
-				"Perl allows a comma expression in the third slot of a C-style for. "+
-					"Go allows exactly one statement there.",
-				"The extra expressions were moved to the end of the loop body, which "+
-					"behaves the same unless the body uses next.")
-			post = sts[0]
+				"Perl allows a comma expression in the third slot of a C-style for, so "+
+					"a loop can advance two counters at once. Go allows exactly one "+
+					"statement there.",
+				"The extra expressions run at the end of the loop body instead, which "+
+					"behaves the same unless the body uses next, because next skips them "+
+					"and the header would not have.")
 		}
 	}
 
-	out := &ir.For{Init: init, Cond: cond, Post: post, Body: l.block(n.Body), Label: n.Label}
+	body := l.block(n.Body)
+	body.Stmts = append(body.Stmts, extraPost...)
+	out := &ir.For{Init: init, Cond: cond, Post: post, Body: body, Label: n.Label}
 	l.setProv(out, n)
 	l.note(out, "A C-style for loop carries over almost unchanged. Go drops the "+
 		"parentheses around the header and requires the braces.")

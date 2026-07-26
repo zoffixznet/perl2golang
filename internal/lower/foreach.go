@@ -37,13 +37,6 @@ func (l *Lowerer) foreachStmt(n *ast.Foreach) []ir.Stmt {
 		}
 	}
 
-	// Perl's loop variable aliases the element, so a body that assigns to it
-	// is modifying the array. Go's is a copy, so that has to become an
-	// indexed loop or the assignment silently does nothing.
-	if loopVar != nil && l.assignsTo(n.Body, loopVar) {
-		return l.aliasingLoop(n, src, elem, loopVar, setup)
-	}
-
 	var b *Binding
 	if loopVar != nil {
 		if n.MyVar {
@@ -54,6 +47,18 @@ func (l *Lowerer) foreachStmt(n *ast.Foreach) []ir.Stmt {
 	} else {
 		b = l.declareNamed(topicKey(n), '$', topicName(n), KindLoop, n)
 		b.Perl = "$_"
+	}
+
+	// Perl's loop variable aliases the element, so a body that assigns to it
+	// is modifying the array. Go's is a copy, so that has to become an
+	// indexed loop or the assignment silently does nothing. The same is true
+	// of $_ when the loop declares no variable of its own.
+	target := loopVar
+	if target == nil {
+		target = &ast.Var{Sigil: '$', Name: "_"}
+	}
+	if l.assignsTo(n.Body, target) {
+		return l.aliasingLoop(n, src, elem, b, loopVar == nil, setup)
 	}
 	l.observe(b, elem)
 	if l.pass == 2 {
@@ -168,19 +173,22 @@ func (l *Lowerer) countingLoop(n *ast.Foreach) ([]ir.Stmt, bool) {
 
 // aliasingLoop emits the indexed form for a loop whose body modifies the
 // element.
-func (l *Lowerer) aliasingLoop(n *ast.Foreach, src ir.Expr, elem *ir.Type, loopVar *ast.Var, setup []ir.Stmt) []ir.Stmt {
+func (l *Lowerer) aliasingLoop(n *ast.Foreach, src ir.Expr, elem *ir.Type, b *Binding, isTopic bool, setup []ir.Stmt) []ir.Stmt {
 	idxName := l.tmp("i")
 	idx := ir.NewIdent(idxName, ir.TInt)
 
 	// The loop variable becomes the indexed element, so every read and write
 	// of it in the body reaches the real element.
-	b := l.declare(loopVar, KindLoop)
 	l.observe(b, elem)
 	if l.pass == 2 {
 		b.Type = elem
 	}
-	b.Go = "" // never referred to by name
-	l.aliasFor(b, index(src, idx, elem))
+	element := index(src, idx, elem)
+	l.aliasFor(b, element)
+	if isTopic {
+		l.topicStack = append(l.topicStack, element)
+		defer func() { l.topicStack = l.topicStack[:len(l.topicStack)-1] }()
+	}
 
 	out := &ir.Range{
 		Key:    idx,

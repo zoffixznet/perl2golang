@@ -324,6 +324,15 @@ func allScalarTargets(targets []ast.Expr) bool {
 
 // assignToVar lowers `$x = ...`, `@a = ...`, `%h = ...`.
 func (l *Lowerer) assignToVar(v *ast.Var, n *ast.Assign) []ir.Stmt {
+	// One of Perl's own variables is not an ordinary name and does not get an
+	// ordinary binding: whatever it maps onto is the assignment target.
+	if target := l.specialVar(v); target != nil {
+		value := l.assignable(l.scalar(n.RHS), typeOrAny(target), n.RHS)
+		st := assign("=", []ir.Expr{target}, []ir.Expr{value})
+		l.setProv(st, n)
+		return []ir.Stmt{st}
+	}
+
 	b := l.lookup(v.Sigil, v.Name, v)
 	b.Writes++
 

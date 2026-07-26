@@ -106,6 +106,11 @@ type Lowerer struct {
 	// errVar names the error variable in scope, so $! resolves to the error
 	// the failing call actually returned.
 	errVar string
+	// curStmt is the statement being lowered, used to place a diagnostic
+	// whose own node has no usable position.
+	curStmt ast.Node
+	// seenEntry keeps one report entry per situation per place.
+	seenEntry map[string]bool
 }
 
 // captureFrame is one active regex match whose groups are in scope.
@@ -313,16 +318,48 @@ func (l *Lowerer) concept(ids ...string) {
 // entry records a report entry. Everything the converter approximated or
 // refused goes through here, so the report, the terminal summary and the
 // generated documents all see the same facts.
+//
+// Two entries with the same code at the same place are one fact stated twice,
+// which is noise in a report whose whole value is that it is read.
 func (l *Lowerer) entry(e report.Entry, n ast.Node) report.Entry {
 	if l.pass != 2 {
 		return e
 	}
+	n = l.locate(n)
 	e.Line, e.Col = posOf(n)
 	if e.Perl == "" {
 		e.Perl = l.snippet(n)
 	}
+	key := e.Code + ":" + itoa(e.Line) + ":" + itoa(e.Col) + ":" + e.Construct
+	if l.seenEntry[key] {
+		return e
+	}
+	if l.seenEntry == nil {
+		l.seenEntry = map[string]bool{}
+	}
+	l.seenEntry[key] = true
 	l.rep.Add(e)
 	return e
+}
+
+// locate falls back to the enclosing statement when a node's position is not
+// usable.
+//
+// An expression embedded in a double-quoted string is parsed from that string
+// rather than from the file, so its offsets belong to the fragment. A child
+// node can never begin before the statement that contains it, and when one
+// appears to, the statement is the honest answer.
+func (l *Lowerer) locate(n ast.Node) ast.Node {
+	if n == nil {
+		return l.curStmt
+	}
+	if l.curStmt == nil {
+		return n
+	}
+	if n.Pos().Offset < l.curStmt.Pos().Offset || n.Pos().Line < 1 {
+		return l.curStmt
+	}
+	return n
 }
 
 // refuse records a construct the converter will not translate and returns the

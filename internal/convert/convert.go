@@ -152,6 +152,11 @@ func Convert(src []byte, opts Options) (result *Result, err error) {
 		res.Annotated["helpers.go"] = annotated
 	}
 
+	// The optional improvement pass runs over the code before it is checked,
+	// so verification covers whatever it produced as well. The documents are
+	// written afterwards, because they report what the checks found.
+	res.improveCode(context.Background(), opts.Improve)
+	res.verify()
 	res.Walkthrough = walkthrough(low, src)
 
 	if !opts.NoDocs {
@@ -172,12 +177,7 @@ func Convert(src []byte, opts Options) (result *Result, err error) {
 		res.Docs = docs
 	}
 
-	// An optional improvement pass runs last, over finished artefacts, and
-	// only where one was supplied. Verification then covers whatever it
-	// produced as well as what the converter produced.
-	res.improve(context.Background(), opts.Improve)
-	res.verify()
-
+	res.improveDocs(context.Background(), opts.Improve)
 	res.Report.SortEntries()
 	return res, nil
 }

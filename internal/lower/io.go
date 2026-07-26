@@ -209,6 +209,47 @@ func (l *Lowerer) openMode(args []ast.Expr, n *ast.Call) (string, ir.Expr, bool)
 	return "<", ir.Str(quote(trimmed)), true
 }
 
+// closeGuarded lowers `close($fh) or FAILURE`.
+//
+// Go's if-with-an-init clause is made for this: the error is created, tested
+// and forgotten in one statement, and it is the only thing $! could sensibly
+// have meant.
+func (l *Lowerer) closeGuarded(n *ast.Call, onFail ast.Expr) ([]ir.Stmt, bool) {
+	args := flatten(argList(n))
+	if len(args) == 0 {
+		return nil, false
+	}
+	b := l.handleBinding(args[0])
+	if b == nil {
+		return nil, false
+	}
+	b.Closed = true
+
+	errName := l.tmp("err")
+	saved := l.errVar
+	l.errVar = errName
+	savedPre := l.pre
+	l.pre = nil
+	body := l.exprStatement(onFail)
+	inner := l.takePre()
+	l.pre = savedPre
+	l.errVar = saved
+
+	st := &ir.If{
+		Init: assign(":=", []ir.Expr{ir.NewIdent(errName, ir.TError)},
+			[]ir.Expr{ir.CallOf(selector(ir.NewIdent(b.Go, fileType), "Close", nil), ir.TError)}),
+		Cond: ir.Bin("!=", ir.NewIdent(errName, ir.TError), ir.Nil(ir.TError), ir.TBool),
+		Then: &ir.Block{Stmts: append(inner, body...)},
+	}
+	l.setProv(st, n)
+	l.note(st, "Close returns an error because a buffered write can fail when the "+
+		"buffer is flushed, and that is the last chance to notice the data never "+
+		"reached the disk. The init clause of the if scopes the error to the check "+
+		"itself, which is the usual shape for an error nothing else needs.",
+		"errors-are-values", "if-err-nil-rhythm", "var-vs-short-declaration")
+	return []ir.Stmt{st}, true
+}
+
 // closeCall lowers close.
 func (l *Lowerer) closeCall(n *ast.Call) []ir.Stmt {
 	args := flatten(argList(n))

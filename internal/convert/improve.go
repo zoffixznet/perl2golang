@@ -60,9 +60,9 @@ func (NoImprovement) Improve(_ context.Context, a Artifact) ([]byte, error) {
 	return a.Content, nil
 }
 
-// improve runs the configured improver over every artefact and keeps each
-// result only if it survives checking.
-func (r *Result) improve(ctx context.Context, imp Improver) {
+// improveCode runs the configured improver over the two programs, before they
+// are checked, so verification covers whatever it produced.
+func (r *Result) improveCode(ctx context.Context, imp Improver) {
 	if imp == nil {
 		return
 	}
@@ -75,6 +75,14 @@ func (r *Result) improve(ctx context.Context, imp Improver) {
 		r.Annotated[name] = r.accept(ctx, imp, Artifact{
 			Kind: ArtifactGo, Name: annotatedDir + "/" + name, Content: content, Perl: r.PerlSource, Report: r.Report,
 		})
+	}
+}
+
+// improveDocs runs the configured improver over the generated documents, which
+// happens after they are written because they report what the checks found.
+func (r *Result) improveDocs(ctx context.Context, imp Improver) {
+	if imp == nil {
+		return
 	}
 	for name, text := range r.Docs {
 		out := r.accept(ctx, imp, Artifact{
