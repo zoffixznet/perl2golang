@@ -191,7 +191,10 @@ func (r *repl) read() (text, meta string, err error) {
 		switch {
 		case errors.Is(err, errInterrupt):
 			if len(buf) == 0 {
-				r.p.note("(nothing to discard; :quit leaves)")
+				// The editor has already thrown the half-typed line away and
+				// echoed ^C. All that is left to say is how to get out, since
+				// Ctrl-C is what most people try first.
+				r.p.note("(:quit or Ctrl-D leaves)")
 				continue
 			}
 			r.p.note("discarded %s", plural(len(buf), "pending line"))
