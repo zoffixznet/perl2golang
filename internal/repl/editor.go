@@ -45,6 +45,7 @@ func newEditor(in, out *os.File, h *history, color bool) (*editor, error) {
 	if err != nil {
 		return nil, err
 	}
+	watchForSignals(restore)
 	return &editor{in: in, out: out, rd: bufio.NewReader(in), hist: h, restore: restore, color: color}, nil
 }
 

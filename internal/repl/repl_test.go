@@ -421,3 +421,20 @@ func TestHistoryDropsImmediateRepeats(t *testing.T) {
 		t.Errorf("history holds %d entries, want 2", h.len())
 	}
 }
+
+// TestLoadDoesNotRecurseForever covers a file that loads itself. Without a
+// depth limit that is a stack overflow, which is a crash, and the session
+// promises not to have any.
+func TestLoadDoesNotRecurseForever(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "loop.pl")
+	if err := os.WriteFile(path, []byte("my $x = 1;\n:load "+path+"\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out, _, code := run(t, ":load "+path+"\n:quit\n", nil)
+	if code != exitOK {
+		t.Errorf("exit = %d, want %d", code, exitOK)
+	}
+	if !strings.Contains(out, "a file is loading itself") {
+		t.Errorf("the recursion was not stopped:\n%s", out)
+	}
+}

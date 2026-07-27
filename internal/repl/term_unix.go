@@ -3,6 +3,8 @@
 package repl
 
 import (
+	"os"
+	"os/signal"
 	"syscall"
 	"unsafe"
 )
@@ -37,6 +39,31 @@ func makeRaw(fd uintptr) (func(), error) {
 	}
 	restore := saved
 	return func() { _ = ioctl(fd, ioctlSetTermios, &restore) }, nil
+}
+
+// watchForSignals puts the terminal back before a signal that would otherwise
+// end the process takes it away.
+//
+// Raw mode is a property of the terminal, not of this program, so a session
+// killed from another window must not leave the shell behind it without echo.
+// The default behaviour is restored and the signal re-raised, so the process
+// still dies the way the sender asked it to.
+func watchForSignals(restore func()) {
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT)
+	go func() {
+		s, ok := <-sigs
+		if !ok {
+			return
+		}
+		restore()
+		signal.Stop(sigs)
+		sig, ok := s.(syscall.Signal)
+		if !ok {
+			os.Exit(1)
+		}
+		_ = syscall.Kill(syscall.Getpid(), sig)
+	}()
 }
 
 func ioctl(fd, request uintptr, t *syscall.Termios) error {

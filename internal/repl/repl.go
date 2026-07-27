@@ -74,6 +74,9 @@ type repl struct {
 	mode  string
 	notes bool
 	done  bool
+	// depth counts nested :load calls, so a file that loads itself stops
+	// instead of running the stack out.
+	depth int
 }
 
 // Run holds one session open until it is asked to leave, and returns the
@@ -102,7 +105,9 @@ func Run(o Options) int {
 
 	r.banner()
 	if o.Load != "" {
-		if code := r.loadFile(o.Load); code != exitOK {
+		code := exitOK
+		r.guard(func() { code = r.loadFile(o.Load) })
+		if code != exitOK {
 			return code
 		}
 	}
@@ -134,7 +139,7 @@ func (r *repl) loop() {
 		}
 		if meta != "" {
 			r.hist.add(meta)
-			r.command(meta)
+			r.guard(func() { r.command(meta) })
 			if !r.done {
 				r.p.blank()
 			}
@@ -144,9 +149,26 @@ func (r *repl) loop() {
 			continue
 		}
 		r.hist.add(text)
-		r.run(text)
+		r.guard(func() { r.run(text) })
 		r.p.blank()
 	}
+}
+
+// guard runs one turn and turns a defect in this tool into a message rather
+// than the end of the session.
+//
+// The converter already catches its own panics; this covers everything after
+// it, which is display code that has no business ending somebody's session
+// either. Any panic seen here is a bug to fix, not a condition to live with.
+func (r *repl) guard(turn func()) {
+	defer func() {
+		if rec := recover(); rec != nil {
+			r.p.compact(internalEntry())
+			r.p.note("%v", rec)
+			r.p.note("the session is still usable; please report the line above")
+		}
+	}()
+	turn()
 }
 
 // errInterrupt is what the line editor returns for Ctrl-C.
@@ -340,9 +362,20 @@ func (r *repl) loadFile(path string) int {
 	return exitOK
 }
 
+// maxLoadDepth stops a file that loads itself, or a pair that load each other,
+// from running the stack out. Eight is past any honest use.
+const maxLoadDepth = 8
+
 // replay feeds text through the same reader the keyboard uses, so a loaded
 // file and a typed session take exactly one code path.
 func (r *repl) replay(text string) {
+	if r.depth >= maxLoadDepth {
+		r.p.note("stopping at %d nested :load calls; a file is loading itself", r.depth)
+		return
+	}
+	r.depth++
+	defer func() { r.depth-- }()
+
 	lines := strings.Split(strings.TrimRight(text, "\n"), "\n")
 	var buf []string
 	for _, line := range lines {
