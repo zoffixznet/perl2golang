@@ -358,10 +358,11 @@ func (b *bundle) startHere() string {
 	m.h(2, "What was produced")
 	if b.buildFailed() {
 		m.bullet("The clean program, at the root of this directory. It does not build as generated: see below and %s.", link("the conversion report", rel(fileStartHere, fileReport)))
+		m.bullet("The annotated program, in `annotated/`. The same code with the reasoning left in, and the same build errors, since the two are one program rendered twice.")
 	} else {
 		m.bullet("The clean program, at the root of this directory. Run it with `go run .` from the parent directory of this `docs/` folder.")
+		m.bullet("The annotated program, in `annotated/`. Same behaviour, heavy commentary. Run it with `go run ./annotated`.")
 	}
-	m.bullet("The annotated program, in `annotated/`. Same behaviour, heavy commentary. Run it with `go run ./annotated`.")
 	m.bullet("This documentation. It is specific to your file: the lessons in `concepts/` were chosen by what your code actually does, not from a fixed curriculum.")
 	m.bullet("%s, which repeats the build instructions.", link("The project readme", rel(fileStartHere, fileReadme)))
 
@@ -493,6 +494,13 @@ func (b *bundle) conversionReport() string {
 	for _, line := range b.verificationLines() {
 		m.bullet("%s", line)
 	}
+	if v := b.rep.Verified; v.Error != "" {
+		// The toolchain's own words, laid out as it printed them. Folded onto
+		// one line, a build failure is unreadable, and this is the line the
+		// developer most needs to read.
+		m.p("What the toolchain said:")
+		m.fence("", strings.TrimRight(v.Error, "\n"))
+	}
 
 	if len(b.entries) == 0 {
 		m.h(2, "Entries")
@@ -551,9 +559,6 @@ func (b *bundle) verificationLines() []string {
 		out = append(out, "No Go toolchain was found, so the code was parsed but not compiled. Run `go build ./...` and `go vet ./...` yourself before trusting it.")
 	}
 
-	if v.Error != "" {
-		out = append(out, "Reported error: `"+strings.Join(strings.Fields(v.Error), " ")+"`")
-	}
 	return out
 }
 
@@ -620,8 +625,15 @@ func (b *bundle) entryBody(m *md, from string, g groupedEntry, level int) {
 		m.p("The original:")
 		m.fence("perl", dedent(e.Perl))
 	}
-	if strings.TrimSpace(e.Message) != "" {
-		m.p("%s", strings.TrimSpace(e.Message))
+	if msg := strings.TrimSpace(e.Message); msg != "" {
+		// A message that spans lines is quoted output, usually the compiler's.
+		// Run together as a paragraph it is unreadable, so only the first line
+		// is prose and the rest keeps its shape.
+		head, rest, multiline := strings.Cut(msg, "\n")
+		m.p("%s", head)
+		if multiline && strings.TrimSpace(rest) != "" {
+			m.fence("", strings.TrimRight(rest, "\n"))
+		}
 	}
 	if strings.TrimSpace(e.Advice) != "" {
 		m.p("What to do: %s", strings.TrimSpace(e.Advice))
