@@ -42,6 +42,11 @@ func (l *Lowerer) lowerSubDecl(sd *ast.SubDecl) {
 	l.curSub = s
 	defer func() { l.scope, l.curSub = savedScope, savedSub }()
 
+	if s.Comparator {
+		l.lowerComparatorSub(s, sd)
+		return
+	}
+
 	body := sd.Body
 	params, rest := l.recoverParams(s, body)
 
@@ -54,6 +59,52 @@ func (l *Lowerer) lowerSubDecl(sd *ast.SubDecl) {
 	l.addImplicitReturn(s, fn)
 	l.setProv(fn, sd)
 	l.explainSub(fn, s, sd)
+	s.irDecl = fn
+}
+
+// lowerComparatorSub builds the Go function for a sub used as `sort byname
+// @list`.
+//
+// Perl hands the comparator its two values in the package globals $a and $b,
+// which is why such a sub takes no arguments and cannot be called directly. Go
+// passes them as parameters, so the whole signature changes: two values in, an
+// int out.
+func (l *Lowerer) lowerComparatorSub(s *Sub, sd *ast.SubDecl) {
+	elem := s.CmpElem
+	if elem == nil {
+		elem = ir.TAny
+	}
+	ba := l.declareNamed("cmpA@"+s.Name, '$', "a", KindParam, sd)
+	bb := l.declareNamed("cmpB@"+s.Name, '$', "b", KindParam, sd)
+	ba.Perl, bb.Perl = "$a", "$b"
+	ba.Type, bb.Type = elem, elem
+	l.scope.define(varKey('$', "a"), ba)
+	l.scope.define(varKey('$', "b"), bb)
+
+	s.Results = []*ir.Type{ir.TInt}
+	fn := &ir.FuncDecl{
+		Name:   s.Go,
+		Params: []ir.Param{{Name: ba.Go, Type: elem}, {Name: bb.Go, Type: elem}},
+	}
+	if l.pass == 2 {
+		fn.Results = s.Results
+		fn.Doc = []string{s.Go + " orders two values, returning a negative number, zero, " +
+			"or a positive one."}
+	}
+	stmts, value := l.blockValue(sd.Body)
+	if value != nil {
+		if typeOrAny(value).Kind != ir.Int {
+			value = l.toInt(value, nil)
+		}
+		stmts = append(stmts, &ir.Return{Results: []ir.Expr{value}})
+	}
+	fn.Body = l.markUnused(&ir.Block{Stmts: stmts})
+	l.setProv(fn, sd)
+	l.note(fn, "Perl passes a comparator its two values in the package globals $a "+
+		"and $b, so the sub takes no arguments and only works when sort calls it. Go "+
+		"passes them as parameters, which makes it an ordinary function that anything "+
+		"can call and the compiler can check.",
+		"sort-slice")
 	s.irDecl = fn
 }
 

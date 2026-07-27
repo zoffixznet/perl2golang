@@ -12,14 +12,7 @@ import (
 // the question Perl answers silently and usually wrongly.
 func (l *Lowerer) sortCall(n *ast.Call) ir.Expr {
 	if n.SortSub != "" {
-		return l.todoExpr(n, "P2G5590", "sort with a named comparator",
-			"sort with a named sub is not implemented",
-			"`sort byname @list` calls the named sub with the two values in the "+
-				"package globals $a and $b. Go passes the two values as parameters, so "+
-				"the sub's signature has to change.",
-			"Turn the comparator into `func(a, b T) int` returning a negative number, "+
-				"zero, or a positive one, and pass it to slices.SortFunc.",
-			"sort-slice")
+		return l.sortByName(n)
 	}
 
 	// `sort keys %h` is common enough, and idiomatic enough in Go, to deserve
@@ -79,6 +72,49 @@ func (l *Lowerer) sortCall(n *ast.Call) ir.Expr {
 			"sort-slice")
 		l.emit(st)
 	}
+	return target
+}
+
+// sortByName lowers `sort byname @list`, where the comparator is a named sub
+// that reads its two values out of $a and $b.
+//
+// The sub itself has to change shape, because Go passes the two values as
+// parameters. That is decided here, on the first pass, and the function is
+// declared with the new signature when it is lowered.
+func (l *Lowerer) sortByName(n *ast.Call) ir.Expr {
+	src := l.list(argList(n))
+	t := typeOrAny(src)
+	elem := elemOf(t)
+
+	s, ok := l.subs[n.SortSub]
+	if !ok {
+		return l.todoExpr(n, "P2G5590", "sort with a named comparator",
+			"the comparator sub is not declared in this file",
+			"`sort "+n.SortSub+" @list` calls a sub this file does not declare, so "+
+				"there is nothing to give the new signature to.",
+			"Write the comparator as `func(a, b T) int` returning a negative number, "+
+				"zero, or a positive one, and pass it to slices.SortFunc.",
+			"sort-slice")
+	}
+	if l.pass == 1 {
+		s.Comparator = true
+		s.CmpElem = join(s.CmpElem, elem)
+	}
+
+	name := l.tmp("sorted")
+	clone := assign(":=", []ir.Expr{ir.NewIdent(name, t)},
+		[]ir.Expr{call("slices", "slices", "Clone", t, src)})
+	l.setProv(clone, n)
+	l.emit(clone)
+	target := ir.NewIdent(name, t)
+
+	st := exprStmt(call("slices", "slices", "SortFunc", ir.TVoid, target, ir.NewIdent(s.Go, nil)))
+	l.note(st, "A named comparator becomes an ordinary function passed by name. In "+
+		"Perl it read its two values out of the package globals $a and $b, which is "+
+		"why it could not simply be called; in Go they are its parameters, so it is "+
+		"a function value like any other.",
+		"sort-slice", "closures-capture-variables")
+	l.emit(st)
 	return target
 }
 

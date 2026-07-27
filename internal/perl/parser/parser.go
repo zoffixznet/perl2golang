@@ -243,6 +243,9 @@ func (p *parser) parseStatementInner() ast.Stmt {
 	case t.Kind == token.EOF, t.Kind == token.Data:
 		return nil
 	case t.Kind == token.LBrace:
+		if p.looksLikeAnonHash() {
+			return p.parseExprStatement()
+		}
 		return p.parseBareBlock("")
 	case t.Kind == token.Ident:
 		// Label?
@@ -581,6 +584,31 @@ func (p *parser) parsePhaseBlock(name string) ast.Stmt {
 	n := &ast.Block{Body: body, Label: name}
 	setSpan(n, start, p.prevEnd())
 	return n
+}
+
+// looksLikeAnonHash decides whether a `{` at the start of a statement opens a
+// block or an anonymous hash.
+//
+// Perl faces the same ambiguity and resolves it by looking ahead in exactly
+// this way: a brace followed by a bareword or a quoted string and then a comma
+// or a fat comma is a hash constructor, and anything else is a block. The case
+// that matters is the last statement of a map block, `{ name => $n, id => $i }`,
+// which is the value the block produces rather than a block of its own.
+func (p *parser) looksLikeAnonHash() bool {
+	switch p.peekAt(1).Kind {
+	case token.Ident, token.StrSingle, token.StrDouble, token.Number, token.ScalarVar:
+	default:
+		return false
+	}
+	switch p.peekAt(2).Kind {
+	case token.FatComma:
+		return true
+	case token.Comma:
+		// A comma alone is weaker evidence, so it only counts after something
+		// that cannot start a statement of its own.
+		return p.peekAt(1).Kind == token.StrSingle || p.peekAt(1).Kind == token.StrDouble
+	}
+	return false
 }
 
 func (p *parser) parseBareBlock(label string) ast.Stmt {

@@ -105,6 +105,12 @@ type Sub struct {
 	Variadic bool
 	// VarArgs is the binding for the variadic parameter, if any.
 	VarArgs *Binding
+	// Comparator marks a sub used as `sort byname @list`, which reads its
+	// two values out of the package globals $a and $b. Go passes them as
+	// parameters, so such a sub gets a different signature entirely.
+	Comparator bool
+	// CmpElem is the element type the comparator was used on.
+	CmpElem *ir.Type
 	// irDecl is the lowered function, filled in on each pass.
 	irDecl *ir.FuncDecl
 	// Doc is the comment block above the declaration.
