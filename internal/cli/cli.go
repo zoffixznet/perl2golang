@@ -84,7 +84,7 @@ type env struct {
 // commands is the closed set of first words that name a subcommand. Anything
 // else in first position is a file for convert, which is what makes
 // `perl2go script.pl` shorthand for `perl2go convert script.pl`.
-var commands = []string{"convert", "explain", "version", "help"}
+var commands = []string{"convert", "repl", "explain", "version", "help"}
 
 // dispatch routes one invocation to its command.
 func dispatch(e *env, args []string) int {
@@ -102,10 +102,17 @@ func dispatch(e *env, args []string) int {
 	if !explicit && hasFlag(rest, "version") {
 		return e.print(versionLine() + "\n")
 	}
+	// --repl is the flag spelling of the repl command, for people who reach
+	// for a flag before a subcommand.
+	if !explicit && hasFlag(rest, "repl") {
+		return runRepl(e, rest)
+	}
 
 	switch name {
 	case "convert":
 		return runConvert(e, rest)
+	case "repl":
+		return runRepl(e, rest)
 	case "explain":
 		return runExplain(e, rest)
 	case "version":
@@ -160,6 +167,8 @@ func hasFlag(args []string, names ...string) bool {
 // commandHelp prints one subcommand's help to stdout.
 func (e *env) commandHelp(name string) int {
 	switch name {
+	case "repl":
+		return e.print(replHelp())
 	case "explain":
 		return e.print(explainHelp())
 	case "version":

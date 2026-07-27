@@ -18,6 +18,7 @@ func rootHelp() string {
 
 	commands:
 	  convert    convert Perl to Go; the default, so the word can be left out
+	  repl       type Perl, see the Go it becomes, one snippet at a time
 	  explain    print a teaching concept, or look up a diagnostic code
 	  version    print the version and build information
 	  help       help for perl2go, or for any command
@@ -39,6 +40,7 @@ func rootHelp() string {
 	  perl2go lib/*.pl -o build/                convert several files, one directory each
 	  perl2go -e 'print join ",", 1..5'         convert a snippet and print the Go
 	  cat old.pl | perl2go -                    read Perl from standard input
+	  perl2go repl                              explore Perl to Go interactively
 	  perl2go explain slice-aliasing-and-copy   read one teaching concept
 	  perl2go explain P2G4004                   look up what a diagnostic code means
 
@@ -51,8 +53,8 @@ func rootHelp() string {
 	Conversion never runs your Perl. No subprocess is spawned over your input and
 	no network connection is made, so converting a file you have not read is safe.
 
-	AI-assisted conversion and the interactive REPL are designed but not built yet.
-	There is no --ai flag and no repl command in this release.
+	AI-assisted conversion is designed but not built yet. There is no --ai flag in
+	this release.
 
 	Full flag list: perl2go convert --help
 	`)
@@ -134,6 +136,66 @@ func convertHelp() string {
 	network connection is made.
 
 	exit status: see perl2go --help
+	`)
+}
+
+// replHelp is `perl2go repl --help`.
+func replHelp() string {
+	return dedent(`
+	type Perl, see the Go it becomes.
+
+	usage:
+	  perl2go repl [flags]
+	  perl2go --repl [flags]
+	  perl2go repl < session.pl        replay a file as though it were typed
+
+	Each snippet is converted the moment it parses, so a snippet that spans lines
+	needs no continuation marker: the prompt keeps reading until the snippet is
+	complete. Declarations stay in scope for the rest of the session, so a program
+	can be built a line at a time. The Go shown is the Go a file conversion would
+	produce, and the concepts named under it are the same teaching concepts the
+	generated documents are built from.
+
+	Your Perl is never executed here either. It is read, converted and explained.
+
+	flags:
+	      --mode MODE      clean or annotated Go (default: clean); :mode switches it
+	      --no-notes       do not print the concept line after each snippet
+	      --no-history     do not read or write the history file
+	      --history FILE   history file (default: $XDG_STATE_HOME/perl2go/history)
+	      --load FILE      type the lines of FILE in before handing over the prompt
+	      --color WHEN     auto, always, never (default: auto; NO_COLOR is honoured)
+
+	meta commands (:help inside the session prints this list):
+	  :help            the list
+	  :go [full]       reprint the last Go, or the whole session ready to paste
+	  :explain [WHAT]  expand a concept, a P2G code, or the last snippet's concepts
+	  :concepts        every concept this session has touched, with its title
+	  :why             the converter's reasoning for the last snippet
+	  :diag            the last snippet's diagnostics in full, with source
+	  :vars            the variables in scope and the Go type inferred for each
+	  :perl            the Perl the session holds so far
+	  :mode            switch between clean and annotated output
+	  :notes on|off    show or hide the concept line
+	  :save FILE       write the session's Perl to a file
+	  :load FILE       type the lines of a file into the session
+	  :reset           forget the session program and start again
+	  :clear           clear the screen, keeping the session
+	  :quit            leave; :q and Ctrl-D do the same
+
+	keys, when the session has a terminal on both ends:
+	  left/right, Ctrl-A, Ctrl-E    move by character, to the start, to the end
+	  Alt-B, Alt-F, Ctrl-arrow      move by word
+	  Ctrl-K, Ctrl-U, Ctrl-W        kill to end of line, to start, one word back
+	  up/down, Ctrl-R               history, and reverse search over it
+	  Ctrl-C                        discard the snippet being typed, keep the session
+
+	examples:
+	  perl2go repl
+	  perl2go repl --mode annotated
+	  perl2go repl --load warmup.pl
+
+	exit status: 0 unless the session could not be started
 	`)
 }
 

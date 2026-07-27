@@ -4,7 +4,7 @@ BIN     := perl2go
 
 .DEFAULT_GOAL := help
 
-.PHONY: help build install test test-short score lint fmt vet clean run explain demo deps corpus-add
+.PHONY: help build install test test-short score lint fmt vet clean run explain repl repl-demo demo deps corpus-add
 
 help: ## Show this help
 	@echo "perl2go - convert Perl 5 scripts to Go and learn Go along the way"
@@ -45,6 +45,12 @@ run: build ## Build and show top-level help
 
 explain: build ## List the teaching concepts, or read one: make explain TOPIC=nil-vs-undef
 	@if [ -z "$(TOPIC)" ]; then ./bin/$(BIN) explain --list; else ./bin/$(BIN) explain "$(TOPIC)"; fi
+
+repl: build ## Start the interactive session: type Perl, see the Go
+	./bin/$(BIN) repl
+
+repl-demo: build ## Pipe a canned session through the repl and check the transcript
+	./scripts/repl-demo.sh ./bin/$(BIN)
 
 demo: build ## Convert a sample corpus script into a temp directory and run it
 	./scripts/demo.sh
