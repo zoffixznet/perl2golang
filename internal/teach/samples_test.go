@@ -6,7 +6,9 @@ import (
 	"go/token"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 	"testing"
@@ -20,36 +22,51 @@ import (
 // required to die with the message the lesson quotes.
 
 func TestGoSamplesParse(t *testing.T) {
-	for _, lang := range []string{"go", "go-fails"} {
-		forEachSample(t, lang, func(t *testing.T, c *Concept, n int, src string) {
+	forEachSample(t, func(t *testing.T, c *Concept, s sample) {
+		if s.lang == "go-invalid" {
+			return
+		}
+		for _, src := range s.files {
 			if _, err := parser.ParseFile(token.NewFileSet(), "sample.go", src, parser.SkipObjectResolution); err != nil {
-				t.Errorf("%s sample %d does not parse: %v\n%s", c.ID, n, err, numbered(src))
+				t.Errorf("%s sample %d does not parse: %v\n%s", c.ID, s.n, err, numbered(src))
 			}
-		})
-	}
+		}
+	})
 }
 
 func TestGoSamplesCompile(t *testing.T) {
 	requireToolchain(t)
-	for _, lang := range []string{"go", "go-fails"} {
-		forEachSample(t, lang, func(t *testing.T, c *Concept, n int, src string) {
-			t.Parallel()
-			if out, err := build(t, src); err != nil {
-				t.Errorf("%s sample %d does not compile: %v\n%s\n%s", c.ID, n, err, out, numbered(src))
-			}
-		})
-	}
+	forEachSample(t, func(t *testing.T, c *Concept, s sample) {
+		if s.lang == "go-invalid" {
+			return
+		}
+		t.Parallel()
+		if out, err := build(t, s.files); err != nil {
+			t.Errorf("%s sample %d does not compile: %v\n%s\n%s", c.ID, s.n, err, out, numbered(s.files[0]))
+		}
+	})
 }
 
 func TestInvalidSamplesDoNotCompile(t *testing.T) {
 	requireToolchain(t)
 	seen := 0
-	forEachSample(t, "go-invalid", func(t *testing.T, c *Concept, n int, src string) {
+	forEachSample(t, func(t *testing.T, c *Concept, s sample) {
+		if s.lang != "go-invalid" {
+			return
+		}
 		seen++
 		t.Parallel()
-		if out, err := build(t, src); err == nil {
-			t.Errorf("%s go-invalid sample %d compiles, but it is documented as a compile error\n%s\n%s",
-				c.ID, n, out, numbered(src))
+		out, err := build(t, s.files)
+		if err == nil {
+			t.Fatalf("%s go-invalid sample %d compiles, but it is documented as a compile error\n%s\n%s",
+				c.ID, s.n, out, numbered(s.files[0]))
+		}
+		// When the lesson quotes the compiler, the quote has to be current.
+		if s.hasOutput {
+			if got, want := compilerMessage(out), compilerMessage(s.want); got != want {
+				t.Errorf("%s go-invalid sample %d quotes a compiler message that is no longer produced\nwant:\n%s\ngot:\n%s",
+					c.ID, s.n, want, got)
+			}
 		}
 	})
 	if seen == 0 {
@@ -64,62 +81,156 @@ func TestInvalidSamplesDoNotCompile(t *testing.T) {
 func TestSamplesProduceDocumentedOutput(t *testing.T) {
 	requireToolchain(t)
 	checked := 0
-	for _, c := range Load().All() {
-		for n, s := range documentedSamples(c) {
-			checked++
-			t.Run(fmt.Sprintf("%s/%d", c.ID, n), func(t *testing.T) {
-				t.Parallel()
-				out, err := run(t, wrapSample(s.code))
-				switch {
-				case s.lang == "go" && err != nil:
-					t.Fatalf("%s sample %d exited with an error, but it is not marked go-fails: %v\n%s",
-						c.ID, n, err, out)
-				case s.lang == "go-fails" && err == nil:
-					t.Fatalf("%s sample %d is marked go-fails but ran to completion\n%s", c.ID, n, out)
-				}
-				got, want := out, s.want
-				if s.lang == "go-fails" {
-					// A stack trace names addresses and temporary paths, so the
-					// comparison stops at the panic message itself.
-					got, want = trimStack(got), trimStack(want)
-				}
-				if strings.TrimRight(got, "\n") != strings.TrimRight(want, "\n") {
-					t.Errorf("%s sample %d does not produce the output the lesson shows\nwant:\n%s\ngot:\n%s",
-						c.ID, n, want, got)
-				}
-			})
+	forEachSample(t, func(t *testing.T, c *Concept, s sample) {
+		if !s.hasOutput || s.lang == "go-invalid" {
+			return
 		}
-	}
+		checked++
+		t.Parallel()
+		out, err := run(t, s.files)
+		switch {
+		case s.lang == "go" && err != nil:
+			t.Fatalf("%s sample %d exited with an error, but it is not marked go-fails: %v\n%s",
+				c.ID, s.n, err, out)
+		case s.lang == "go-fails" && err == nil:
+			t.Fatalf("%s sample %d is marked go-fails but ran to completion\n%s", c.ID, s.n, out)
+		}
+		got, want := out, s.want
+		if s.lang == "go-fails" {
+			// A stack trace names addresses and temporary paths, so the
+			// comparison stops at the panic message itself.
+			got, want = trimStack(got), trimStack(want)
+		}
+		if strings.TrimRight(got, "\n") != strings.TrimRight(want, "\n") {
+			t.Errorf("%s sample %d does not produce the output the lesson shows\nwant:\n%s\ngot:\n%s",
+				c.ID, s.n, want, got)
+		}
+	})
 	if checked == 0 {
 		t.Error("no samples carry a documented output block; the output checks have gone missing")
 	}
 }
 
-// documentedSample is a runnable sample paired with the output its lesson
-// claims for it.
-type documentedSample struct {
-	lang string
-	code string
-	want string
+// sample is one buildable unit from a lesson: usually a single block, but
+// consecutive blocks that declare the same library package are the files of
+// one package and are compiled together.
+type sample struct {
+	n         int
+	lang      string
+	files     []string
+	want      string
+	hasOutput bool
 }
 
-// documentedSamples pairs each runnable block with the unlabelled block that
-// follows it, which by convention is that sample's output. Samples with no
-// following output block are not returned: they are covered by the compile
-// checks alone.
-func documentedSamples(c *Concept) []documentedSample {
-	var out []documentedSample
+// samples groups a concept's code blocks into buildable units and attaches the
+// documented output to each. The unlabelled block immediately after a runnable
+// one is that sample's output by convention; samples without one are covered
+// by the compile checks alone.
+func samples(c *Concept) []sample {
+	var out []sample
+	libs := map[string]string{} // package name -> source, for imports below
 	blocks := c.blocks()
 	for i, b := range blocks {
-		if b.lang != "go" && b.lang != "go-fails" {
+		switch b.lang {
+		case "go", "go-fails", "go-invalid":
+		default:
 			continue
 		}
-		if i+1 >= len(blocks) || blocks[i+1].lang != "" {
-			continue
+		src := wrapSample(b.text)
+
+		if pkg := packageName(src); pkg != "" && pkg != "main" {
+			// A block continuing the package the previous block opened is
+			// another file of it, not a program of its own.
+			if len(out) > 0 {
+				last := &out[len(out)-1]
+				if last.lang == b.lang && packageName(last.files[0]) == pkg {
+					last.files = append(last.files, src)
+					libs[pkg] += "\n" + src
+					continue
+				}
+			}
+			libs[pkg] = src
 		}
-		out = append(out, documentedSample{lang: b.lang, code: b.text, want: blocks[i+1].text})
+
+		s := sample{n: len(out), lang: b.lang, files: []string{src}}
+		// A lesson that shows a library package and then a program importing
+		// it means both to be compiled together.
+		for _, imp := range importedPackages(src) {
+			if lib, ok := libs[imp]; ok {
+				s.files = append(s.files, lib)
+			}
+		}
+		if i+1 < len(blocks) && blocks[i+1].lang == "" {
+			s.want, s.hasOutput = blocks[i+1].text, true
+		}
+		out = append(out, s)
 	}
 	return out
+}
+
+// packageName returns the package a source file declares.
+func packageName(src string) string {
+	for _, line := range strings.Split(src, "\n") {
+		if rest, ok := strings.CutPrefix(line, "package "); ok {
+			return strings.TrimSpace(rest)
+		}
+	}
+	return ""
+}
+
+// importPathRe matches a quoted import path on its own line, which is the only
+// form gofmt produces.
+var importPathRe = regexp.MustCompile(`(?m)^(?:import )?\s*"([^"]+)"\s*$`)
+
+// isExternal reports whether an import path names something outside the
+// standard library, which is true exactly when its first element is a domain.
+func isExternal(p string) bool {
+	first, _, _ := strings.Cut(p, "/")
+	return strings.Contains(first, ".")
+}
+
+// importedPackages returns the last element of every non-standard import path
+// in src, which is the name the sample refers to the package by.
+func importedPackages(src string) []string {
+	var out []string
+	for _, m := range importPathRe.FindAllStringSubmatch(src, -1) {
+		if isExternal(m[1]) {
+			out = append(out, path.Base(m[1]))
+		}
+	}
+	return out
+}
+
+// moduleOf returns the module path a sample's imports imply, so that a lesson
+// spanning two packages resolves inside one throwaway module.
+func moduleOf(files []string) string {
+	for _, src := range files {
+		for _, m := range importPathRe.FindAllStringSubmatch(src, -1) {
+			if isExternal(m[1]) {
+				return path.Dir(m[1])
+			}
+		}
+	}
+	return "sample"
+}
+
+// compilerMessage normalises a build failure for comparison: the package
+// header line goes, and the file name is replaced, because a lesson names its
+// example file (typo.go) while the test compiles a generated one. Line and
+// column numbers survive, so a message that moved is still caught.
+var sampleFileRe = regexp.MustCompile(`\./[\w./-]+\.go:`)
+
+func compilerMessage(s string) string {
+	var kept []string
+	for _, line := range strings.Split(strings.TrimRight(s, "\n"), "\n") {
+		// "# package" is the build's own header and "$ go build" is the
+		// prompt a lesson shows for context; neither is the diagnostic.
+		if strings.HasPrefix(line, "# ") || strings.HasPrefix(line, "$ ") || strings.TrimSpace(line) == "" {
+			continue
+		}
+		kept = append(kept, sampleFileRe.ReplaceAllString(line, "./sample.go:"))
+	}
+	return strings.Join(kept, "\n")
 }
 
 // trimStack cuts a panic's goroutine dump, which is full of addresses and
@@ -140,16 +251,14 @@ func trimStack(s string) string {
 	return strings.TrimRight(strings.Join(kept, "\n"), "\n")
 }
 
-// forEachSample runs fn as a subtest for every fenced block of the given
-// language in the knowledge base, passing the block wrapped into a compilable
-// file.
-func forEachSample(t *testing.T, lang string, fn func(t *testing.T, c *Concept, n int, src string)) {
+// forEachSample runs fn as a subtest for every buildable sample in the
+// knowledge base.
+func forEachSample(t *testing.T, fn func(t *testing.T, c *Concept, s sample)) {
 	t.Helper()
-	kb := Load()
-	for _, c := range kb.All() {
-		for n, sample := range c.fenced(lang) {
-			t.Run(fmt.Sprintf("%s/%s/%d", lang, c.ID, n), func(t *testing.T) {
-				fn(t, c, n, wrapSample(sample))
+	for _, c := range Load().All() {
+		for _, s := range samples(c) {
+			t.Run(fmt.Sprintf("%s/%d", c.ID, s.n), func(t *testing.T) {
+				fn(t, c, s)
 			})
 		}
 	}
@@ -265,44 +374,67 @@ func inferImports(src string) []string {
 	return paths
 }
 
-// module writes src into a throwaway module and returns the directory.
-func module(t *testing.T, src string) string {
+// module writes the files into a throwaway module and returns its directory
+// and whether it holds a main package. Files declaring a library package go
+// into a subdirectory named after it, which is what Go requires and what makes
+// a two-package lesson compile as the lesson describes it.
+func module(t *testing.T, files []string) (dir string, hasMain bool) {
 	t.Helper()
-	dir := t.TempDir()
+	dir = t.TempDir()
 	write := func(name, content string) {
-		if err := os.WriteFile(filepath.Join(dir, name), []byte(content), 0o644); err != nil {
+		full := filepath.Join(dir, name)
+		if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
+			t.Fatalf("creating %s: %v", filepath.Dir(full), err)
+		}
+		if err := os.WriteFile(full, []byte(content), 0o644); err != nil {
 			t.Fatalf("writing %s: %v", name, err)
 		}
 	}
-	write("go.mod", "module sample\n\ngo 1.26\n")
-	write("main.go", src)
-	return dir
+	write("go.mod", "module "+moduleOf(files)+"\n\ngo 1.26\n")
+	for i, src := range files {
+		name := fmt.Sprintf("file%d.go", i)
+		if pkg := packageName(src); pkg != "" && pkg != "main" {
+			name = filepath.Join(pkg, name)
+		} else {
+			hasMain = true
+		}
+		write(name, src)
+	}
+	return dir, hasMain
 }
 
-// build compiles src, returning the toolchain's output.
-func build(t *testing.T, src string) (string, error) {
-	t.Helper()
-	dir := module(t, src)
-	cmd := exec.Command(goTool, "build", "-o", filepath.Join(dir, "sample.bin"), ".")
+// goCmd runs the toolchain in dir with the network turned off.
+func goCmd(dir string, args ...string) (string, error) {
+	cmd := exec.Command(goTool, args...)
 	cmd.Dir = dir
 	cmd.Env = append(os.Environ(), "GOPROXY=off", "GOFLAGS=-mod=mod")
 	out, err := cmd.CombinedOutput()
 	return string(out), err
 }
 
-// run compiles and runs src, returning everything it wrote to stdout and
-// stderr. Samples take no input and are expected to finish immediately.
-func run(t *testing.T, src string) (string, error) {
+// build compiles the sample, returning the toolchain's output.
+func build(t *testing.T, files []string) (string, error) {
 	t.Helper()
-	dir := module(t, src)
-	bin := filepath.Join(dir, "sample.bin")
-	cmd := exec.Command(goTool, "build", "-o", bin, ".")
-	cmd.Dir = dir
-	cmd.Env = append(os.Environ(), "GOPROXY=off", "GOFLAGS=-mod=mod")
-	if out, err := cmd.CombinedOutput(); err != nil {
-		t.Fatalf("sample does not compile: %v\n%s\n%s", err, out, numbered(src))
+	dir, hasMain := module(t, files)
+	if !hasMain {
+		return goCmd(dir, "build", "./...")
 	}
-	cmd = exec.Command(bin)
+	return goCmd(dir, "build", "-o", filepath.Join(dir, "sample.bin"), ".")
+}
+
+// run compiles and runs the sample, returning everything it wrote to stdout
+// and stderr. Samples take no input and are expected to finish immediately.
+func run(t *testing.T, files []string) (string, error) {
+	t.Helper()
+	dir, hasMain := module(t, files)
+	if !hasMain {
+		t.Fatalf("sample has no main package to run\n%s", numbered(files[0]))
+	}
+	bin := filepath.Join(dir, "sample.bin")
+	if out, err := goCmd(dir, "build", "-o", bin, "."); err != nil {
+		t.Fatalf("sample does not compile: %v\n%s\n%s", err, out, numbered(files[0]))
+	}
+	cmd := exec.Command(bin)
 	cmd.Dir = dir
 	out, err := cmd.CombinedOutput()
 	return string(out), err

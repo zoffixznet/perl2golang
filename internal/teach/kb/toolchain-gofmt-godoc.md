@@ -92,6 +92,6 @@ Documentation is plain comments directly above declarations (`// Distance return
 
 ## The mismatch
 
-The tools you will actually run daily: `go run .` while iterating (compilation is fast enough that it feels interpreted), `go build` to produce a single static binary you can `scp` to a server with no interpreter or module tree waiting there — deployment is one file, the single biggest operational difference from shipping Perl — `go test ./...` before committing (the `./...` wildcard means "this package and everything below"), and `go vet ./...` in CI. Adopt gofmt on day one and never format by hand; fighting it marks code as written by an outsider more surely than any other habit.
+The tools you will actually run daily: `go run .` while iterating (compilation is fast enough that it feels interpreted), `go build` to produce a single static binary you can `scp` to a server with no interpreter or module tree waiting there — deployment is one file, the single biggest operational difference from shipping Perl — `go test ./...` before committing (the `./...` wildcard means "this package and everything below", and `table-driven-tests` covers what goes in the files it finds), and `go vet ./...` in CI. Adopt gofmt on day one and never format by hand; fighting it marks code as written by an outsider more surely than any other habit.
 
 Further reading: https://go.dev/blog/gofmt and https://pkg.go.dev/cmd/go
