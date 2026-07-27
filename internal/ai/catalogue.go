@@ -251,6 +251,44 @@ func Lookup(name string) (ModelSpec, bool) {
 	return ModelSpec{}, false
 }
 
+// PreferredModel picks which of the models a runtime already has to use.
+//
+// The rule is "use what is there". A model store is a machine-wide resource
+// that other projects share, so this never asks for a download to get a better
+// answer: it ranks what is installed and takes the best of it. A model this
+// tool has an opinion about wins over one it does not, and a model trained on
+// code wins over a general one, because every job here is about code.
+func PreferredModel(installed []string) string {
+	best, bestScore := "", -1<<30
+	for _, name := range installed {
+		score := installedScore(name)
+		if score > bestScore || (score == bestScore && name < best) {
+			best, bestScore = name, score
+		}
+	}
+	return best
+}
+
+// installedScore ranks one installed model tag.
+func installedScore(name string) int {
+	score := 0
+	if spec, ok := Lookup(name); ok {
+		score += 1000 + spec.Rank
+	} else if spec, ok := Lookup(strings.TrimSuffix(name, ":latest")); ok {
+		score += 1000 + spec.Rank
+	}
+	lower := strings.ToLower(name)
+	if strings.Contains(lower, "coder") || strings.Contains(lower, "code") {
+		score += 100
+	}
+	// An embedding model cannot answer a chat request at all, so it is worse
+	// than anything else that is present.
+	if strings.Contains(lower, "embed") {
+		score -= 5000
+	}
+	return score
+}
+
 // ExcludedReason reports why a model tag is not offered, matching either the
 // exact tag or its family prefix. The empty string means it is not excluded.
 func ExcludedReason(name string) string {

@@ -51,7 +51,7 @@ type Options struct {
 	Model string
 	// Timeout is the ceiling on a single request. Zero means [DefaultTimeout].
 	Timeout time.Duration
-	// Jobs selects what the model is used for. Nil means every job.
+	// Jobs selects what the model is used for. Nil means [DefaultJobs].
 	Jobs JobSet
 	// Progress receives one short line per step. It may be nil, and this
 	// package writes nowhere else.
@@ -109,7 +109,7 @@ func New(opts Options) *Client {
 		opts.KeepAlive = DefaultKeepAlive
 	}
 	if opts.Jobs == nil {
-		opts.Jobs = AllJobs()
+		opts.Jobs = DefaultJobs()
 	}
 	c := &Client{
 		opts:     opts,
