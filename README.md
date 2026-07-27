@@ -56,6 +56,15 @@ perl2go explain slice-aliasing-and-copy
 perl2go explain --list
 ```
 
+The lessons cover the language itself (types and zero values, `nil`, slices,
+maps, errors, interfaces, pointers, goroutines), the parts of the standard
+library a script actually lands on (`fmt`, `strings`, `strconv`, `sort`,
+`bufio`, `regexp`, `os/exec`, `encoding/json`, `time`, `path/filepath`,
+`flag`), and the tooling around them (`go test` and the table-driven habit,
+benchmarks, coverage, the race detector, `go vet`). Every Go sample in them is
+compiled and run by this repository's test suite, and the output each lesson
+shows is the output its code actually produces.
+
 ## The optional local model
 
 Everything above works with no model, no account, no network and no
