@@ -3,6 +3,8 @@ package convert
 import (
 	"context"
 	"fmt"
+	"maps"
+	"slices"
 
 	"perl2go/internal/gogen"
 	"perl2go/internal/report"
@@ -44,6 +46,14 @@ type Artifact struct {
 	// Report is the honest account of the conversion, which tells an
 	// improver where the weak spots are.
 	Report *report.Report
+	// Package is the rest of the Go package this artefact belongs to, keyed
+	// the same way as Name. An improver needs it to compile a candidate: a
+	// file that calls a helper cannot be checked on its own. It is nil for a
+	// document.
+	Package map[string][]byte
+	// Module is the generated module's path, so a candidate can be checked in
+	// a module that looks like the one being written.
+	Module string
 }
 
 // Improver rewrites a generated artefact. Returning the content unchanged, or
@@ -66,16 +76,34 @@ func (r *Result) improveCode(ctx context.Context, imp Improver) {
 	if imp == nil {
 		return
 	}
-	for name, content := range r.Clean {
+	// Sorted, because an improver may reuse what it worked out for one file
+	// when it reaches another, and a run whose result depends on Go's map
+	// iteration order is a run nobody can reproduce.
+	for _, name := range slices.Sorted(maps.Keys(r.Clean)) {
 		r.Clean[name] = r.accept(ctx, imp, Artifact{
-			Kind: ArtifactGo, Name: name, Content: content, Perl: r.PerlSource, Report: r.Report,
+			Kind: ArtifactGo, Name: name, Content: r.Clean[name], Perl: r.PerlSource,
+			Report: r.Report, Package: siblings(r.Clean, name), Module: r.Module,
 		})
 	}
-	for name, content := range r.Annotated {
+	for _, name := range slices.Sorted(maps.Keys(r.Annotated)) {
 		r.Annotated[name] = r.accept(ctx, imp, Artifact{
-			Kind: ArtifactGo, Name: annotatedDir + "/" + name, Content: content, Perl: r.PerlSource, Report: r.Report,
+			Kind: ArtifactGo, Name: annotatedDir + "/" + name, Content: r.Annotated[name], Perl: r.PerlSource,
+			Report: r.Report, Package: siblings(r.Annotated, name), Module: r.Module,
 		})
 	}
+}
+
+// siblings is every other file in one package, which is what a candidate has
+// to compile alongside.
+func siblings(files map[string][]byte, self string) map[string][]byte {
+	out := make(map[string][]byte, len(files))
+	for name, src := range files {
+		if name == self {
+			continue
+		}
+		out[name] = src
+	}
+	return out
 }
 
 // improveDocs runs the configured improver over the generated documents, which
@@ -84,9 +112,10 @@ func (r *Result) improveDocs(ctx context.Context, imp Improver) {
 	if imp == nil {
 		return
 	}
-	for name, text := range r.Docs {
+	for _, name := range slices.Sorted(maps.Keys(r.Docs)) {
 		out := r.accept(ctx, imp, Artifact{
-			Kind: ArtifactMarkdown, Name: name, Content: []byte(text), Perl: r.PerlSource, Report: r.Report,
+			Kind: ArtifactMarkdown, Name: name, Content: []byte(r.Docs[name]),
+			Perl: r.PerlSource, Report: r.Report, Module: r.Module,
 		})
 		r.Docs[name] = string(out)
 	}
