@@ -30,11 +30,7 @@ func (l *Lowerer) assignStmts(n *ast.Assign) []ir.Stmt {
 	case *ast.HashIndex:
 		return l.assignToHash(lhs, n)
 	case *ast.Slice:
-		return []ir.Stmt{l.todoStmt(n, "P2G2530", "slice assignment",
-			"assigning to a slice of an array or hash is not implemented",
-			"Perl can assign to several elements at once through a slice. Go has no "+
-				"equivalent syntax; each element is a separate assignment.",
-			"Write one assignment per element, or a loop over the index and value pairs.")}
+		return l.assignToSlice(lhs, n)
 	case *ast.Deref:
 		x := l.expr(lhs)
 		rhs := l.assignable(l.expr(n.RHS), typeOrAny(x), n.RHS)
@@ -60,6 +56,96 @@ func (l *Lowerer) assignStmts(n *ast.Assign) []ir.Stmt {
 		"The converter does not recognise the shape of the left side of this "+
 			"assignment.",
 		"Translate the assignment by hand.")}
+}
+
+// assignToSlice lowers `@a[i, j] = LIST` and `@h{k1, k2} = LIST`.
+//
+// Go has no syntax for a scattered slice, but it does have multiple assignment,
+// which evaluates every right-hand value before storing any of them. That is
+// exactly Perl's rule, and it is what makes `@_[0, 1] = @_[1, 0]` a swap rather
+// than two copies of one element.
+func (l *Lowerer) assignToSlice(lhs *ast.Slice, n *ast.Assign) []ir.Stmt {
+	targets := l.sliceElements(lhs)
+	if len(targets) == 0 {
+		return []ir.Stmt{l.todoStmt(n, "P2G2530", "slice assignment",
+			"assigning to a slice of an array or hash is not implemented",
+			"Perl can assign to several elements at once through a slice. The shape "+
+				"of this one is not something the converter could take apart.",
+			"Write one assignment per element, or a loop over the index and value "+
+				"pairs.")}
+	}
+
+	var values []ir.Expr
+	for _, e := range flatten(n.RHS) {
+		// A slice on the right is its elements, not one list value, so that
+		// the two sides line up element for element.
+		if s, ok := e.(*ast.Slice); ok {
+			values = append(values, l.sliceElements(s)...)
+			continue
+		}
+		parts, _ := l.listParts([]ast.Expr{e})
+		values = append(values, parts...)
+	}
+	if len(values) != len(targets) {
+		// Perl pads a short list with undef and drops a long one. Writing that
+		// out would take a temporary slice and a length check, and a mismatch
+		// is nearly always a mistake rather than an intention.
+		return []ir.Stmt{l.todoStmt(n, "P2G2530", "slice assignment",
+			"the two sides of this slice assignment are different lengths",
+			"Perl fills the extra targets with undef when the right side is shorter "+
+				"and ignores the extra values when it is longer. Go's multiple "+
+				"assignment requires the two sides to match.",
+			"Write the assignments out individually, deciding what a missing value "+
+				"should be.",
+			"nil-vs-undef")}
+	}
+
+	for i := range values {
+		values[i] = l.assignable(values[i], typeOrAny(targets[i]), nil)
+	}
+	st := assign("=", targets, values)
+	l.setProv(st, n)
+	l.note(st, "Go assigns to several places in one statement, and every value on "+
+		"the right is worked out before any of them is stored. That is what makes a "+
+		"swap written this way a swap rather than two copies of the same element.",
+		"multiple-return-values")
+	return []ir.Stmt{st}
+}
+
+// sliceElements turns @a[i, j] or @h{k1, k2} into the individual element
+// expressions behind it.
+func (l *Lowerer) sliceElements(n *ast.Slice) []ir.Expr {
+	var container ir.Expr
+	if v, ok := n.Base.(*ast.Var); ok {
+		sig := '@'
+		if n.Hash {
+			sig = '%'
+		}
+		container = l.identFor(l.lookup(sig, v.Name, v))
+	} else {
+		container = l.expr(n.Base)
+	}
+	if container == nil {
+		return nil
+	}
+	elem := elemOf(typeOrAny(container))
+
+	var out []ir.Expr
+	for _, ie := range n.Idx {
+		for _, one := range flatten(ie) {
+			if n.Hash {
+				out = append(out, index(container, l.toStr(l.expr(one), one), elem))
+				continue
+			}
+			if text, neg := negativeLiteral(one); neg {
+				out = append(out, index(container,
+					ir.Bin("-", lenOf(container), ir.IntLit(text), ir.TInt), elem))
+				continue
+			}
+			out = append(out, index(container, l.toInt(l.expr(one), one), elem))
+		}
+	}
+	return out
 }
 
 // declareAssign lowers `my ... = ...`.

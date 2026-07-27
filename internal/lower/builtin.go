@@ -215,14 +215,7 @@ func (l *Lowerer) builtin(n *ast.Call) ir.Expr {
 		}
 		return nil
 	case "wantarray":
-		return l.todoExpr(n, "P2G2031", "wantarray",
-			"wantarray has no Go equivalent",
-			"wantarray reports whether the caller wanted a list or a scalar, so one "+
-				"sub can return two different shapes. Go has no calling context at all: "+
-				"a function's result types are fixed by its signature.",
-			"Split the sub into two functions with clear names, or return the list "+
-				"and let the caller take its length.",
-			"multiple-return-values")
+		return l.wantarray(n)
 	case "ref":
 		return l.refCall(n)
 	case "undef":

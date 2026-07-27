@@ -100,6 +100,41 @@ func (l *Lowerer) undefCall(n *ast.Call) ir.Expr {
 	return ir.Nil(ir.TAny)
 }
 
+// wantarray answers, at conversion time, the question Perl answers at call
+// time.
+//
+// A Go function has one signature, so which shape it returns is settled before
+// the program runs: whatever the converter committed to is the answer, every
+// time. That is the honest translation, and it is also the reason the two
+// languages differ here at all.
+func (l *Lowerer) wantarray(n *ast.Call) ir.Expr {
+	list := false
+	if l.curSub != nil {
+		list = len(l.curSub.Results) > 1 ||
+			(len(l.curSub.Results) == 1 && l.curSub.Results[0] != nil && l.curSub.Results[0].Kind == ir.Slice)
+	}
+	out := ir.BoolLit(list)
+	answer := "a single value"
+	if list {
+		answer = "a list"
+	}
+	l.note(out, "wantarray asks whether the caller wanted a list or one value. A Go "+
+		"function's result types are part of its signature, so the answer cannot vary "+
+		"between calls: this one returns "+answer+", and that is what the test now "+
+		"reads.",
+		"multiple-return-values")
+	l.approximate(n, "P2G2031", "wantarray",
+		"the calling context is fixed at conversion time",
+		"wantarray lets one sub return two different shapes depending on how it was "+
+			"called. A Go function has one signature, so the converter committed to "+
+			"one shape and this test now has a constant answer.",
+		"Split the sub into two functions with names that say which shape they "+
+			"return. That is what Go code does, and it is usually clearer than the "+
+			"original.",
+		"multiple-return-values")
+	return out
+}
+
 // localStmts lowers `local X` and `local X = VALUE`.
 //
 // local swaps a package variable's value for the duration of the enclosing
