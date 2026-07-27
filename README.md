@@ -54,6 +54,97 @@ perl2go explain slice-aliasing-and-copy
 perl2go explain --list
 ```
 
+## The interactive session
+
+`perl2go repl` gives you a prompt. Type Perl, see the Go it becomes, and see
+the Go concepts behind it. It is the fastest way to answer "what does this look
+like in Go", and the answer is the same Go a file conversion would produce.
+
+```
+$ perl2go repl
+perl2go 0.1.0  type Perl, see the Go. :help for commands, :quit to leave.
+
+perl> my @nums = (3, 1, 4, 1, 5);
+  nums := []int{3, 1, 4, 1, 5}
+  concepts: slices-not-arrays, var-vs-short-declaration  (:explain to expand)
+
+perl> my %seen;
+  seen := map[string]any{}
+  concepts: nil-slices-vs-nil-maps  (:explain to expand)
+
+perl> $seen{$_}++ for @nums;
+  seen := map[string]int{}
+  for _, item := range nums {
+  	seen[strconv.Itoa(item)]++
+  }
+  (that replaced 1 line shown earlier; :go full shows the session as it stands)
+  concepts: explicit-conversions-no-coercion, range-is-not-foreach  (:explain to expand)
+
+perl> sub trim {
+ ...>     my $s = shift;
+ ...>     $s =~ s/^\s+|\s+$//g;
+  (sub body opened at line 1; a blank line twice discards it)
+ ...>     return $s;
+ ...> }
+  // pattern2 matches the pattern ^\s+|\s+$.
+  var pattern2 = regexp.MustCompile("^\\s+|\\s+$")
+  // trim performs one step of the program's work.
+  func trim(s any) any {
+  	s = pattern2.ReplaceAllString(toText(s), "")
+  	return s
+  }
+  (support code added: toText; :go full includes it)
+  concepts: replace-and-expansion, submatch-and-named-groups  (+2 more; :explain to expand)
+```
+
+Three things in that transcript are the point of the feature:
+
+- The session holds a **program**, not a list of snippets. `my %seen` became a
+  `map[string]any` and then a `map[string]int` once the next line showed what
+  goes in it. When re-inference changes something already printed, the session
+  says so instead of quietly contradicting itself.
+- A snippet that spans lines needs **no continuation marker**. The prompt keeps
+  reading until the snippet parses, so `sub trim {` simply carries on. Two
+  blank lines in a row throw away whatever is half-typed.
+- The **concepts** line names what the snippet touched, once per session.
+  `:explain` expands the last snippet's concepts, and `:explain <id>` prints the
+  whole lesson, the same lesson a conversion writes into `docs/concepts/`.
+
+Meta commands, all listed by `:help`:
+
+| | |
+|---|---|
+| `:go [full]` | reprint the last Go, or the whole session ready to paste |
+| `:explain [WHAT]` | expand a concept, a `P2G` code, or the last snippet |
+| `:concepts` | every concept this session touched, with its title |
+| `:why` | the converter's reasoning for the last snippet |
+| `:diag` | the last snippet's diagnostics in full, with source and carets |
+| `:vars` | the variables in scope and the Go type inferred for each |
+| `:perl` | the Perl the session holds so far |
+| `:mode clean\|annotated` | plain Go, or Go with the reasoning in comments |
+| `:notes on\|off` | show or hide the concept line |
+| `:save FILE` / `:load FILE` | write the session out, or type a file in |
+| `:reset` / `:clear` | forget the session, or clear the screen |
+| `:quit` | leave; `:q` and Ctrl-D do the same |
+
+Nothing ends the session except `:quit`, Ctrl-D and a signal. Perl that does
+not parse is reported with its position and leaves the session program
+untouched; a construct with no Go equivalent shows the refusal and what to
+write instead.
+
+At a terminal you get line editing and history: arrow keys, `Ctrl-A`/`Ctrl-E`,
+word movement with `Alt-B`/`Alt-F`, `Ctrl-K`/`Ctrl-U`/`Ctrl-W`, history with the
+up and down arrows and `Ctrl-R` to search it, and `Ctrl-C` to throw away the
+snippet you are typing without leaving. History is kept in
+`$XDG_STATE_HOME/perl2go/history`; `--no-history` turns that off.
+
+A session also works from a pipe, prompts and all, which makes a transcript
+something you can save, read, diff and replay:
+
+```
+perl2go repl < session.pl > transcript.txt
+```
+
 ## What you get
 
 Converting `report.pl` produces `report-go/`:
@@ -112,7 +203,12 @@ These are real and current, not oversights:
   will be able to run the output through a locally hosted model to improve the
   Go and enrich the tutorials, opt-in and offline. The tool is fully functional
   without it, and nothing in it makes a network connection today.
-- **There is no REPL yet.** Use `-e` to see what a snippet becomes.
+- **The session's line editing needs a terminal that supports raw mode**, which
+  covers Linux, macOS and the BSDs. Anywhere else, and inside an environment
+  that hands the program a pipe rather than a terminal, the session falls back
+  to reading whole lines: everything still works, but the arrow keys, history
+  and `Ctrl-R` do not, and the session says so once when it starts. There is no
+  readline dependency to install, because there is no dependency at all.
 - **Coverage is aimed at ordinary script-shaped Perl:** scalars, arrays, hashes,
   subroutines, references, control flow, regular expressions, string and list
   builtins, file reading and writing, and the common CPAN modules whose work the
@@ -143,6 +239,8 @@ make test-short # skips the toolchain-heavy tests
 make score      # runs the corpus and prints the conversion scorecard
 make lint       # go vet plus a gofmt check
 make explain    # list the teaching concepts; TOPIC=<id> reads one
+make repl       # start the interactive session
+make repl-demo  # pipe a canned session through the repl and check the transcript
 make demo       # convert a corpus script and run the result
 make deps       # checks for the system tools the other targets need
 ```
