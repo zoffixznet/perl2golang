@@ -289,12 +289,12 @@ func TestRun(t *testing.T) {
 			},
 		},
 		{
-			name: "help is grouped and names what is not built yet",
+			name: "help is grouped and covers every command",
 			args: func(t *testing.T, dir string) []string { return []string{"--help"} },
 			want: ExitOK,
 			check: func(t *testing.T, dir string, got outcome) {
 				for _, want := range []string{"commands:", "examples:", "exit status:", "convert one file",
-					"convert a snippet", "read one teaching concept", "not built yet"} {
+					"convert a snippet", "read one teaching concept", "--ai"} {
 					if !strings.Contains(got.stdout, want) {
 						t.Errorf("root help is missing %q", want)
 					}

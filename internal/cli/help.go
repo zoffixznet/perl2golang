@@ -20,6 +20,7 @@ func rootHelp() string {
 	  convert    convert Perl to Go; the default, so the word can be left out
 	  repl       type Perl, see the Go it becomes, one snippet at a time
 	  explain    print a teaching concept, or look up a diagnostic code
+	  ai         inspect and set up the optional local model
 	  version    print the version and build information
 	  help       help for perl2go, or for any command
 
@@ -32,6 +33,7 @@ func rootHelp() string {
 	      --force        overwrite an output directory that already has files in it
 	  -v, --verbose      show every diagnostic in full, with its source
 	      --color WHEN   auto, always, never (default: auto; NO_COLOR is honoured)
+	      --ai           let a local model improve the names in the generated Go
 	  -h, --help         help for perl2go, or for any command
 	      --version      print the version and exit
 
@@ -43,6 +45,8 @@ func rootHelp() string {
 	  perl2go repl                              explore Perl to Go interactively
 	  perl2go explain slice-aliasing-and-copy   read one teaching concept
 	  perl2go explain P2G4004                   look up what a diagnostic code means
+	  perl2go report.pl --ai                    let a local model name things better
+	  perl2go ai status                         what the optional local model needs
 
 	exit status:
 	  0  the conversion finished; warnings and refusals are reported, not failures
@@ -50,11 +54,9 @@ func rootHelp() string {
 	  2  the conversion failed and nothing was written
 	  3  usage error
 
-	Conversion never runs your Perl. No subprocess is spawned over your input and
-	no network connection is made, so converting a file you have not read is safe.
-
-	AI-assisted conversion is designed but not built yet. There is no --ai flag in
-	this release.
+	Conversion never runs your Perl. No subprocess is spawned over your input, and
+	without --ai no network connection is made at all, so converting a file you
+	have not read is safe.
 
 	Full flag list: perl2go convert --help
 	`)
@@ -100,6 +102,25 @@ func convertHelp() string {
 	      --strict         treat anything that needs review as a failure. The output
 	                       is still written, and the exit status becomes 1.
 
+	optional local model (off by default):
+	      --ai             let a local model choose better names in the generated
+	                       Go. Without this flag perl2go opens no socket at all.
+	      --ai-model TAG   which model to use (default: a code model the runtime
+	                       already has; nothing is ever downloaded to convert)
+	      --ai-endpoint U  the runtime's base URL (default: $OLLAMA_HOST, or
+	                       http://localhost:11434)
+	      --ai-timeout D   how long one request may take (default: 2m)
+	      --ai-jobs LIST   which jobs to run. Default rename,shapes,comments: the
+	                       three that only ever produce names. Also accepts idioms,
+	                       walkthrough and hints, the group names code and docs,
+	                       all, and none. The prose jobs are experimental and say
+	                       so when you turn them on.
+
+	                       Anything the model produces has to parse, compile and
+	                       pass go vet alongside the rest of its package before it
+	                       is used. When it does not, the deterministic output is
+	                       written and the report says what was turned down.
+
 	output control:
 	  -v, --verbose        show every diagnostic in full, with its source line and
 	                       carets, instead of the three-line summary
@@ -128,12 +149,18 @@ func convertHelp() string {
 	  git show HEAD:tools/old.pl | perl2go convert -
 	      convert something that is not on disk
 
+	  perl2go convert report.pl --ai
+	      the same conversion, with a local model naming what the converter had to
+	      invent names for
+
 	environment:
 	  NO_COLOR             set to anything to turn colour off
 	  TERM=dumb            same effect
+	  OLLAMA_HOST          the local runtime --ai talks to
+	  OLLAMA_MODELS        the shared model store, read but never overridden
 
-	Conversion never runs your Perl: no subprocess is spawned over your input and no
-	network connection is made.
+	Conversion never runs your Perl: no subprocess is spawned over your input, and
+	without --ai no network connection is made.
 
 	exit status: see perl2go --help
 	`)
