@@ -173,12 +173,12 @@ func (r *repl) cmdExplain(arg string) {
 		return
 	}
 	if c, ok := r.kb.Get(arg); ok {
-		r.p.body(c.Render())
+		r.p.body(lesson(c))
 		return
 	}
 	hits := r.kb.Search(arg)
 	if len(hits) == 1 {
-		r.p.body(hits[0].Render())
+		r.p.body(lesson(hits[0]))
 		return
 	}
 	if len(hits) > 1 {
@@ -229,6 +229,116 @@ func (r *repl) lookup(ids []string) (found []*teach.Concept, unknown []string) {
 		unknown = append(unknown, id)
 	}
 	return found, unknown
+}
+
+// lesson renders one concept for a terminal.
+//
+// The knowledge base is Markdown, written to be read on a page. At a prompt
+// the same text arrives as paragraphs hundreds of columns wide, wrapped
+// arbitrarily by the terminal. So: prose is folded at a readable width,
+// headings lose their hashes, and fenced code loses its fences and keeps its
+// own indentation, which means selecting a block with a mouse copies exactly
+// the code. A block the knowledge base marks as deliberately broken says so,
+// because a sample that does not compile is only a lesson if the reader knows
+// that is the point.
+func lesson(c *teach.Concept) string {
+	var b strings.Builder
+	b.WriteString(c.Title + "\n\n")
+
+	var para []string
+	blank := false
+	flush := func() {
+		if len(para) > 0 {
+			b.WriteString(wrapAt(strings.Join(para, " "), 76) + "\n")
+			para = nil
+			blank = false
+		}
+	}
+	write := func(line string) {
+		b.WriteString(line + "\n")
+		blank = strings.TrimSpace(line) == ""
+	}
+
+	fence := ""
+	inFence := false
+	for _, line := range strings.Split(strings.TrimSpace(c.Body), "\n") {
+		line = strings.TrimRight(line, " \t")
+		if info, ok := strings.CutPrefix(strings.TrimSpace(line), "```"); ok {
+			flush()
+			if inFence {
+				inFence = false
+				write("")
+				continue
+			}
+			inFence, fence = true, info
+			if !blank {
+				write("")
+			}
+			// The knowledge base marks its two kinds of deliberately broken
+			// sample differently, and the difference is the lesson.
+			switch {
+			case strings.Contains(fence, "invalid"):
+				write("(this one does not compile; that is what it is showing)")
+			case strings.Contains(fence, "fails"):
+				write("(this one compiles and then fails when it runs; that is the point)")
+			}
+			continue
+		}
+		if inFence {
+			write("  " + line)
+			continue
+		}
+		if strings.TrimSpace(line) == "" {
+			flush()
+			if !blank {
+				write("")
+			}
+			continue
+		}
+		if heading, ok := strings.CutPrefix(line, "#"); ok {
+			flush()
+			if !blank {
+				write("")
+			}
+			write(strings.TrimLeft(heading, "# "))
+			continue
+		}
+		if marker, rest, ok := listItem(line); ok {
+			flush()
+			write(marker + wrapAt(rest, 74-len(marker)))
+			continue
+		}
+		if strings.HasPrefix(line, ">") || strings.HasPrefix(line, "|") {
+			flush()
+			write(line)
+			continue
+		}
+		para = append(para, strings.TrimSpace(line))
+	}
+	flush()
+	return b.String()
+}
+
+// listItem splits a Markdown bullet or numbered item into its marker and its
+// text, so the text can be folded and the marker kept.
+func listItem(line string) (marker, rest string, ok bool) {
+	trimmed := strings.TrimLeft(line, " ")
+	indent := line[:len(line)-len(trimmed)]
+	for _, m := range []string{"- ", "* ", "+ "} {
+		if body, found := strings.CutPrefix(trimmed, m); found {
+			return indent + m, body, true
+		}
+	}
+	for i, r := range trimmed {
+		if r >= '0' && r <= '9' {
+			continue
+		}
+		if (r == '.' || r == ')') && i > 0 && i+1 < len(trimmed) && trimmed[i+1] == ' ' {
+			return indent + trimmed[:i+2], trimmed[i+2:], true
+		}
+		break
+	}
+	return "", "", false
 }
 
 // opening returns a concept's "why you care" paragraph, which is the first one

@@ -193,7 +193,7 @@ func TestMetaCommands(t *testing.T) {
 		{":go", []string{"for _, item := range nums"}},
 		{":go full", []string{"package main", "func main() {", "nums := []int{3, 1, 4}"}},
 		{":explain", []string{"range gives you the index first", "for the whole lesson"}},
-		{":explain slices-not-arrays", []string{"# Slices are views with capacity"}},
+		{":explain slices-not-arrays", []string{"Slices are views with capacity", "Further reading: https://go.dev/"}},
 		{":explain P2G4004", []string{"P2G4004", "lookahead"}},
 		{":concepts", []string{"concepts in this session", "read one with :explain"}},
 		{":why", []string{"Perl put each element in $_"}},
@@ -436,5 +436,61 @@ func TestLoadDoesNotRecurseForever(t *testing.T) {
 	}
 	if !strings.Contains(out, "a file is loading itself") {
 		t.Errorf("the recursion was not stopped:\n%s", out)
+	}
+}
+
+// TestLessonRendersForATerminal checks the one place the teaching content is
+// reshaped rather than passed through: prose folded to a readable width,
+// headings without their hashes, code without its fences, and a deliberately
+// broken sample labelled as one.
+func TestLessonRendersForATerminal(t *testing.T) {
+	out, _, _ := run(t, ":explain nil-slices-vs-nil-maps\n:quit\n", nil)
+
+	if strings.Contains(out, "```") {
+		t.Errorf("a code fence survived into the terminal:\n%s", out)
+	}
+	if strings.Contains(out, "# A nil slice") {
+		t.Errorf("a heading kept its hash:\n%s", out)
+	}
+	for _, want := range []string{
+		"A nil slice works; writing to a nil map panics",
+		"The Perl you know",
+		"(this one compiles and then fails when it runs; that is the point)",
+		"var m map[string]int // nil map",
+	} {
+		if !strings.Contains(out, want) {
+			t.Errorf("the lesson is missing %q:\n%s", want, out)
+		}
+	}
+	// Prose is folded; code keeps whatever width it was written at.
+	for _, line := range strings.Split(out, "\n") {
+		if strings.HasPrefix(line, "  ") && !strings.HasPrefix(line, "    ") && len(line) > 82 {
+			t.Errorf("a prose line was not folded (%d columns): %q", len(line), line)
+		}
+	}
+}
+
+func TestListItem(t *testing.T) {
+	tests := []struct {
+		line   string
+		marker string
+		rest   string
+		ok     bool
+	}{
+		{line: "- a bullet", marker: "- ", rest: "a bullet", ok: true},
+		{line: "  * an indented bullet", marker: "  * ", rest: "an indented bullet", ok: true},
+		{line: "1. a number", marker: "1. ", rest: "a number", ok: true},
+		{line: "12) another", marker: "12) ", rest: "another", ok: true},
+		{line: "ordinary prose"},
+		{line: "-not a bullet"},
+		{line: "1.no space"},
+		{line: ""},
+	}
+	for _, tc := range tests {
+		marker, rest, ok := listItem(tc.line)
+		if ok != tc.ok || marker != tc.marker || rest != tc.rest {
+			t.Errorf("listItem(%q) = %q, %q, %v; want %q, %q, %v",
+				tc.line, marker, rest, ok, tc.marker, tc.rest, tc.ok)
+		}
 	}
 }
