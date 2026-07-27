@@ -48,8 +48,11 @@ func (e *Emitter) decl(d ir.Decl) {
 
 // declHeader writes the annotations and the doc comment of a declaration.
 func (e *Emitter) declHeader(d ir.Decl, doc []string) {
+	// Asked before the prologue writes, because writing a note is what makes
+	// it no longer new.
+	annotated := e.hasVisibleNotes(d)
 	e.prologue(d)
-	if len(doc) > 0 && e.hasVisibleNotes(d) {
+	if len(doc) > 0 && annotated {
 		e.nl()
 	}
 	e.comment(doc)

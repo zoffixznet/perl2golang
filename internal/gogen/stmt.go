@@ -144,7 +144,15 @@ func (e *Emitter) hasVisibleNotes(n ir.Annotated) bool {
 	if e.mode != Annotated {
 		return false
 	}
-	return (m.Prov.Valid() && m.Prov.Text != "") || len(m.Notes) > 0
+	if m.Prov.Valid() && m.Prov.Text != "" {
+		return true
+	}
+	for _, note := range m.Notes {
+		if e.unsaid(note.Text) {
+			return true
+		}
+	}
+	return false
 }
 
 // block writes a brace-delimited statement list, with the block's own
@@ -372,7 +380,7 @@ func (e *Emitter) inline(s ir.Stmt) string {
 	if s == nil {
 		return ""
 	}
-	sub := &Emitter{mode: Clean, imports: e.imports, atLineStart: true}
+	sub := &Emitter{mode: Clean, imports: e.imports, atLineStart: true, saidBefore: e.saidBefore}
 	sub.stmt(s)
 
 	// Drop any comment line: inside a header it would run to the end of the

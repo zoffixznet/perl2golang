@@ -29,12 +29,33 @@ type Emitter struct {
 	// atLineStart tracks whether the next write begins a line, so indentation
 	// is applied exactly once per line.
 	atLineStart bool
+	// saidBefore records the annotations already written into this file. The
+	// same construct usually appears many times in a script, and repeating its
+	// explanation at every occurrence buries the code it is meant to explain,
+	// so each note is written once, where it first applies.
+	saidBefore map[string]bool
 }
 
 // New returns an emitter for the given rendering mode.
 func New(mode Mode) *Emitter {
-	return &Emitter{mode: mode, imports: NewImports(), atLineStart: true}
+	return &Emitter{mode: mode, imports: NewImports(), atLineStart: true, saidBefore: map[string]bool{}}
 }
+
+// firstMention reports whether text has not been written into this file yet,
+// and records it as written. It is only consulted in annotated mode.
+func (e *Emitter) firstMention(text string) bool {
+	if text == "" {
+		return false
+	}
+	if e.saidBefore[text] {
+		return false
+	}
+	e.saidBefore[text] = true
+	return true
+}
+
+// unsaid reports whether text would be written, without recording it.
+func (e *Emitter) unsaid(text string) bool { return text != "" && !e.saidBefore[text] }
 
 // Imports exposes the import set, which is only complete after emission.
 func (e *Emitter) Imports() *Imports { return e.imports }
@@ -50,7 +71,7 @@ func (e *Emitter) File(f *ir.File) ([]byte, error) {
 	// (an import request, say) does not leave a stray blank line behind.
 	var parts []string
 	for _, d := range f.Decls {
-		sub := &Emitter{mode: e.mode, imports: e.imports, atLineStart: true}
+		sub := &Emitter{mode: e.mode, imports: e.imports, atLineStart: true, saidBefore: e.saidBefore}
 		sub.decl(d)
 		if text := sub.sb.String(); strings.TrimSpace(text) != "" {
 			parts = append(parts, text)
@@ -148,7 +169,9 @@ func (e *Emitter) notes(n ir.Annotated) {
 		}
 	}
 	for _, note := range m.Notes {
-		e.comment(wrap(note.Text, 72))
+		if e.firstMention(note.Text) {
+			e.comment(wrap(note.Text, 72))
+		}
 	}
 }
 

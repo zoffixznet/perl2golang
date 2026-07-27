@@ -311,7 +311,7 @@ func multiline(parts []string) bool {
 }
 
 func (e *Emitter) funcLit(x *ir.FuncLit) string {
-	body := &Emitter{mode: e.mode, imports: e.imports, indent: e.indent + 1, atLineStart: true}
+	body := &Emitter{mode: e.mode, imports: e.imports, indent: e.indent + 1, atLineStart: true, saidBefore: e.saidBefore}
 	if x.Body != nil {
 		body.prologue(x.Body)
 		for _, s := range x.Body.Stmts {
@@ -387,7 +387,9 @@ func (e *Emitter) inlineNotes(n ir.Annotated) string {
 		// statement above it already quotes the source, and a `Perl: "Ada"`
 		// against every operand buries the explanation it sits next to.
 		for _, note := range m.Notes {
-			parts = appendComment(parts, note.Text)
+			if e.firstMention(note.Text) {
+				parts = appendComment(parts, note.Text)
+			}
 		}
 	}
 	if m.Todo != nil {
