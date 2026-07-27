@@ -1,6 +1,8 @@
 package lower
 
 import (
+	"strings"
+
 	"perl2go/internal/ir"
 	"perl2go/internal/perl/ast"
 )
@@ -96,6 +98,106 @@ func (l *Lowerer) undefCall(n *ast.Call) ir.Expr {
 	}
 	l.emit(st)
 	return ir.Nil(ir.TAny)
+}
+
+// localStmts lowers `local X` and `local X = VALUE`.
+//
+// local swaps a package variable's value for the duration of the enclosing
+// block, and everything called from inside sees the new one. Go has only
+// lexical scoping, so the swap is written out: keep the old value, install the
+// new one, and put it back on the way out with defer. The one difference worth
+// knowing is when "on the way out" happens, and it is reported.
+func (l *Lowerer) localStmts(targets []ast.Expr, value ast.Expr, n ast.Node) []ir.Stmt {
+	if len(targets) == 0 {
+		return nil
+	}
+	if len(targets) > 1 {
+		// Several at once is several localisations, and only the last of them
+		// can take the value.
+		var out []ir.Stmt
+		for i, t := range targets {
+			var v ast.Expr
+			if i == len(targets)-1 {
+				v = value
+			}
+			out = append(out, l.localStmts([]ast.Expr{t}, v, n)...)
+		}
+		return out
+	}
+
+	target := l.expr(targets[0])
+	if !assignableTarget(target) {
+		return []ir.Stmt{l.todoStmt(n, "P2G2001", "local",
+			"local's dynamic scoping is not implemented",
+			"local temporarily replaces a package variable's value for the duration "+
+				"of the enclosing block, and everything called from inside sees the new "+
+				"value. What is being localised here has no Go variable behind it, so "+
+				"there is nothing to save and put back.",
+			"Pass the value as an argument instead, which is what the code is really "+
+				"doing.",
+			"defer-timing")}
+	}
+
+	t := typeOrAny(target)
+	saved := l.tmp("saved" + capitalise(defaultName(targets[0])))
+	keep := assign(":=", []ir.Expr{ir.NewIdent(saved, t)}, []ir.Expr{target})
+	l.setProv(keep, n)
+
+	newValue := ir.Expr(zeroOf(t))
+	if value != nil {
+		newValue = l.assignable(l.expr(value), t, value)
+	}
+	install := assign("=", []ir.Expr{target}, []ir.Expr{newValue})
+
+	restore := &ir.Defer{Call: ir.CallOf(
+		funcLit(nil, nil, &ir.Block{Stmts: []ir.Stmt{
+			assign("=", []ir.Expr{target}, []ir.Expr{ir.NewIdent(saved, t)}),
+		}}), ir.TVoid)}
+
+	l.note(keep, "local is a save and a restore that Perl performs for you. Written "+
+		"out, it is three lines: keep the old value, install the new one, and put the "+
+		"old one back with defer.",
+		"defer-timing")
+	l.approximate(n, "P2G2001", "local",
+		"the old value comes back when the function returns, not when the block ends",
+		"local restores the previous value at the end of the enclosing block. Go's "+
+			"defer runs when the enclosing function returns, so if this local sits "+
+			"inside a loop or an if, the restore happens later than it did in Perl, and "+
+			"a local inside a loop stacks up one deferred restore per turn.",
+		"Where the block boundary matters, do the restore explicitly at the end of "+
+			"the block instead of deferring it.",
+		"defer-timing")
+	return []ir.Stmt{keep, install, restore}
+}
+
+// localTargets reads what a `local` declaration is localising. Unlike `my`,
+// which can only introduce variables, local can name a hash or array element,
+// so the expressions come out as written.
+func localTargets(my *ast.My) []ast.Expr {
+	var out []ast.Expr
+	for _, v := range my.Vars {
+		out = append(out, flatten(v)...)
+	}
+	return out
+}
+
+// assignableTarget reports whether an IR expression can stand on the left of an
+// assignment.
+func assignableTarget(x ir.Expr) bool {
+	switch x.(type) {
+	case *ir.Ident, *ir.Index, *ir.Selector:
+		return true
+	}
+	return false
+}
+
+// capitalise upper-cases the first letter, for building a readable temporary
+// name out of another name.
+func capitalise(s string) string {
+	if s == "" {
+		return s
+	}
+	return strings.ToUpper(s[:1]) + s[1:]
 }
 
 // posCall lowers pos, which reads how far a global match has walked through a

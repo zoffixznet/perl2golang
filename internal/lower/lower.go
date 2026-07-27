@@ -130,6 +130,10 @@ type Lowerer struct {
 	// first pass. More than one means they share the line counter and each
 	// has to start it again.
 	readLoops int
+	// traps records that the program catches a failure with eval, which
+	// changes what die has to compile into. It is discovered on the first
+	// pass and acted on by the second.
+	traps bool
 }
 
 // label returns a loop label only when something branches to it. Go rejects a
@@ -245,6 +249,12 @@ func (l *Lowerer) run(prog *ast.Program) *Result {
 		file.Decls = append(file.Decls, l.globalDecl(g))
 	}
 
+	if l.traps {
+		// A failure nothing traps has to end the program the way it did
+		// before, with its message on standard error rather than with a
+		// stack trace.
+		top = append([]ir.Stmt{l.mainRecover()}, top...)
+	}
 	mainFn := &ir.FuncDecl{Name: "main", Body: l.markUnused(&ir.Block{Stmts: top})}
 	l.annotateMain(mainFn)
 	file.Decls = append(file.Decls, mainFn)

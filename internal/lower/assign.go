@@ -40,6 +40,9 @@ func (l *Lowerer) assignStmts(n *ast.Assign) []ir.Stmt {
 		rhs := l.assignable(l.expr(n.RHS), typeOrAny(x), n.RHS)
 		return []ir.Stmt{assign("=", []ir.Expr{x}, []ir.Expr{rhs})}
 	case *ast.Call:
+		if lhs.Name == "local" {
+			return l.localStmts(flatten(argList(lhs)), n.RHS, n)
+		}
 		// `pos($s) = N` moves the cursor a global match starts from, which is
 		// an assignment to the variable holding that position.
 		if lhs.Name == "pos" {
@@ -62,15 +65,7 @@ func (l *Lowerer) assignStmts(n *ast.Assign) []ir.Stmt {
 // declareAssign lowers `my ... = ...`.
 func (l *Lowerer) declareAssign(my *ast.My, n *ast.Assign) []ir.Stmt {
 	if my.Keyword == "local" {
-		return []ir.Stmt{l.todoStmt(n, "P2G2001", "local",
-			"local's dynamic scoping is not implemented",
-			"local saves a package variable's value and restores it when the "+
-				"enclosing block exits, so code called from inside the block sees the "+
-				"new value. Go has only lexical scoping: a function never sees a "+
-				"caller's variables unless they were passed in.",
-			"Pass the value as a parameter, or save and restore it explicitly with a "+
-				"defer, which is the closest Go gets to the restore-on-exit behaviour.",
-			"defer-timing")}
+		return l.localStmts(localTargets(my), n.RHS, n)
 	}
 
 	vars := declaredVars(my)

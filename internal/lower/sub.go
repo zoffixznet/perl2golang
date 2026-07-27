@@ -212,6 +212,11 @@ func (l *Lowerer) addImplicitReturn(s *Sub, fn *ir.FuncDecl) {
 	if !ok {
 		return
 	}
+	// A sub whose last statement throws or exits produces no value at all,
+	// and returning the result of a call that never returns is not Go.
+	if terminatingCall(es.X) {
+		return
+	}
 	if l.pass == 1 {
 		s.ResultEvidence = append(s.ResultEvidence, []*ir.Type{typeOrAny(es.X)})
 		return
@@ -225,6 +230,23 @@ func (l *Lowerer) addImplicitReturn(s *Sub, fn *ir.FuncDecl) {
 		"expression it evaluated. Go requires the return to be written, which is "+
 		"one fewer thing to remember when reading the code.")
 	fn.Body.Stmts[len(fn.Body.Stmts)-1] = ret
+}
+
+// terminatingCall reports whether an expression is a call that never comes
+// back: panic, or os.Exit.
+func terminatingCall(x ir.Expr) bool {
+	c, ok := x.(*ir.Call)
+	if !ok {
+		return false
+	}
+	switch fn := c.Fun.(type) {
+	case *ir.Ident:
+		return fn.Name == "panic"
+	case *ir.Selector:
+		id, ok := fn.X.(*ir.Ident)
+		return ok && id.Name == "os" && fn.Sel == "Exit"
+	}
+	return false
 }
 
 // isArgsVar reports whether an expression is @_.

@@ -66,7 +66,7 @@ func (l *Lowerer) statementForm(n *ast.Call) []ir.Stmt {
 func (l *Lowerer) statementFormOK(n *ast.Call) ([]ir.Stmt, bool) {
 	switch n.Name {
 	case "print", "say", "printf", "push", "unshift", "chomp", "die", "warn",
-		"exit", "delete", "close", "open", "return", "opendir", "closedir":
+		"exit", "delete", "close", "open", "return", "opendir", "closedir", "local":
 		return l.statementOnly(n), true
 	}
 	return nil, false
@@ -101,6 +101,8 @@ func (l *Lowerer) statementOnly(n *ast.Call) []ir.Stmt {
 		return l.opendirCall(n)
 	case "closedir":
 		return l.closedirCall(n)
+	case "local":
+		return l.localStmts(flatten(argList(n)), nil, n)
 	}
 	return nil
 }
@@ -243,13 +245,16 @@ func (l *Lowerer) builtin(n *ast.Call) ir.Expr {
 	case "eval":
 		return l.evalCall(n)
 	case "local":
+		// A bare `local X` in an expression position has already been handled
+		// as a statement; reaching here means it is being read for a value,
+		// which it does not usefully have.
 		return l.todoExpr(n, "P2G2001", "local",
-			"local's dynamic scoping is not implemented",
+			"local used for its value is not implemented",
 			"local temporarily replaces a package variable's value for the duration "+
-				"of the enclosing block, and everything called from inside sees the new "+
-				"value. Go has only lexical scoping.",
-			"Pass the value as an argument, or save and restore it around the block "+
-				"with defer.",
+				"of the enclosing block. Its own value is the variable it localised, "+
+				"which is almost never what the surrounding expression wanted.",
+			"Split it into the localisation and the expression that reads the "+
+				"variable.",
 			"defer-timing")
 	case "each":
 		return l.todoExpr(n, "P2G5570", "each",
@@ -917,6 +922,18 @@ func (l *Lowerer) chompExpr(n *ast.Call) ir.Expr {
 
 func (l *Lowerer) dieCall(n *ast.Call) []ir.Stmt {
 	msg := l.dieMessage(n)
+	if l.traps {
+		// Something in this program catches, so die has to unwind rather than
+		// exit: an exit cannot be caught, and the catch is the whole point.
+		st := exprStmt(ir.CallOf(ir.NewIdent("panic", nil), ir.TVoid, msg))
+		l.setProv(st, n)
+		l.note(st, "die throws, and this program catches somewhere, so it becomes a "+
+			"panic: an os.Exit could not be caught. Go reserves panic for genuine "+
+			"bugs, and a function that can fail returns an error instead, which the "+
+			"caller checks on the next line.",
+			"panic-and-recover", "errors-are-values", "if-err-nil-rhythm")
+		return []ir.Stmt{st}
+	}
 	l.usedExit = true
 	var out []ir.Stmt
 	out = append(out, exprStmt(l.writeTo(ir.Pkg("os", "os", "Stderr", nil), msg)))
@@ -1018,18 +1035,6 @@ func (l *Lowerer) deleteCall(n *ast.Call) []ir.Stmt {
 		"that is not there is not an error, and delete returns nothing, where Perl's "+
 		"returns the removed value.")
 	return []ir.Stmt{st}
-}
-
-func (l *Lowerer) evalCall(n *ast.Call) ir.Expr {
-	return l.todoExpr(n, "P2G8001", "eval",
-		"eval is not implemented",
-		"eval either traps a die from the block inside it, or compiles a string as "+
-			"Perl source at run time. Go has neither: there is no compiler at run time, "+
-			"and errors travel as return values rather than by unwinding.",
-		"For the block form, change the code inside to return an error and check "+
-			"it. For the string form, there is no equivalent; a fixed set of "+
-			"expressions becomes named functions selected from a map.",
-		"errors-are-values", "panic-and-recover")
 }
 
 // ---------------------------------------------------------------------------
