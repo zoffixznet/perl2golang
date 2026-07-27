@@ -14,7 +14,9 @@ a question.
 
 Alongside this document sit short single-concept lessons in `concepts/`, chosen by what
 your script actually does. Where a topic here has a lesson it is named in backticks —
-"see the `slice-aliasing-and-copy` lesson". Those go deep on one thing; this is the map.
+"see the `slice-aliasing-and-copy` lesson". The ones your code pulled in are links; for
+any other, `perl2go explain <name>` prints it. Those lessons go deep on one thing; this
+is the map.
 
 ## Two decisions that explain the rest
 
@@ -1035,6 +1037,11 @@ Notes that matter in practice:
 - Documentation examples are tests. `func ExampleCount()` with an `// Output:` comment is
   compiled, run and compared, so examples cannot rot.
 
+The `table-driven-tests` lesson takes this apart row by row and maps the rest of the
+`Test::More` vocabulary onto it; `benchmarks-and-coverage` covers what else `go test`
+does, which is benchmarks, coverage, fuzzing and profiles, all without a module to
+install.
+
 ## The tools you will actually type
 
 There is one binary. `go help` lists everything; these are the daily ones.
@@ -1202,6 +1209,13 @@ Every Go expression below was compiled. Slice and map operations assume `a []int
 | `ref($x) eq 'ARRAY'` | `if v, ok := x.([]any); ok` | type assertion |
 | `$obj->can('read')` | `if r, ok := x.(io.Reader); ok` | interface assertion |
 | `use constant PI => 3` | `const Pi = 3` | `iota` for enumerations |
+
+Several rows have a lesson of their own: `fmt-and-verbs` for the printf family and the
+verbs that no longer mean what they did, `strings-package` for the string builtins and
+where `tr///` went, `strconv-parsing` for the numeric conversions, `sort-slice` for
+sorting, `regexp-is-re2` for patterns, `time-layouts` for dates, `filepath-and-paths` for
+paths and file tests, `flag-package` for `Getopt::Long`, `encoding-json` for JSON, and
+`os-exec` for `system` and backticks.
 
 ## What you will miss, and what to do instead
 

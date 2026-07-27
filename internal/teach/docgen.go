@@ -1072,7 +1072,7 @@ func (b *bundle) conceptPage(c *Concept) string {
 	if why := b.whyLine(c); why != "" {
 		m.p("%s", why)
 	}
-	m.raw(b.linkMentions(body, c.ID))
+	m.raw(b.linkMentions(body, conceptFile(c.ID), c.ID))
 
 	m.rule()
 	if links := b.conceptLinks(c.Prerequisites, conceptFile(c.ID)); links != "" {
@@ -1115,17 +1115,18 @@ func (b *bundle) whyLine(c *Concept) string {
 	return "Why this came up in your code: the converter flagged it while translating this file."
 }
 
-// linkMentions turns the lesson-id references inside a concept body into links.
-// The knowledge base names related lessons in backticks (`nil-vs-undef`), which
-// is dead text on a page; here it becomes navigation. Only lessons this bundle
-// carries are linked, and never inside a fenced code block.
-func (b *bundle) linkMentions(body, self string) string {
+// linkMentions turns the lesson-id references inside a page into links, from
+// the file at from. The knowledge base and the orientation guide both name
+// related lessons in backticks (`nil-vs-undef`), which is dead text on a page;
+// here it becomes navigation. Only lessons this bundle carries are linked, and
+// never inside a fenced code block.
+func (b *bundle) linkMentions(body, from, exclude string) string {
 	if body == "" {
 		return ""
 	}
 	ids := make([]string, 0, len(b.inBundle))
 	for id := range b.inBundle {
-		if id != self {
+		if id != exclude {
 			ids = append(ids, id)
 		}
 	}
@@ -1150,7 +1151,7 @@ func (b *bundle) linkMentions(body, self string) string {
 			if !strings.Contains(line, needle) {
 				continue
 			}
-			line = strings.ReplaceAll(line, needle, link(needle, rel(conceptFile(self), conceptFile(id))))
+			line = strings.ReplaceAll(line, needle, link(needle, rel(from, conceptFile(id))))
 		}
 		lines[i] = line
 	}
@@ -1170,7 +1171,7 @@ func (b *bundle) orientation() string {
 	}
 
 	m := &md{}
-	m.raw(b.fixGuideLinks(text))
+	m.raw(b.linkMentions(b.fixGuideLinks(text), fileGuide, ""))
 	m.rule()
 	m.p("This document is the same in every conversion. The parts that are specific to your file are %s and %s.",
 		link("the walkthrough", rel(fileGuide, fileWalk)),
