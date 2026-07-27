@@ -12,8 +12,10 @@ honest account of anything it could not translate.
 
 The conversion is the excuse. The point is that you finish reading knowing Go.
 
-Everything runs locally. No network, no account, no API key, and your Perl is
-never executed.
+Everything runs locally. No account, no API key, and your Perl is never
+executed. By default nothing opens a socket either; the one feature that talks
+to anything talks to a model on your own machine, and only when you ask for it
+with `--ai`.
 
 ## Install
 
@@ -53,6 +55,52 @@ Look a concept up directly, without converting anything:
 perl2go explain slice-aliasing-and-copy
 perl2go explain --list
 ```
+
+## The optional local model
+
+Everything above works with no model, no account, no network and no
+configuration, and that is the mode the tool is built around. `--ai` is an
+extra: it hands the finished Go to a model running on your own machine and asks
+it to name the things the converter had to invent names for.
+
+```
+perl2go ai status                 what is configured, and what this machine can run
+perl2go report.pl --ai            convert, and let the model name things
+```
+
+Without `--ai`, perl2go opens no socket at all. There is no telemetry, no
+update check and no hosted service anywhere in it.
+
+What the model is asked for is narrow on purpose:
+
+- better names for short locals, worked out from how they are used
+- names for struct types and their fields
+- doc comments on declarations that have none
+
+That is all. The model returns names, never code, and this tool does the
+rewriting. Every name has to be a valid Go identifier in the surrounding style,
+must not collide with anything already in the file, and must leave the file
+parsing, compiling and passing `go vet` alongside the rest of its package. A
+name that fails any of those is dropped and the converter's own name is kept.
+`--ai` can improve the result or leave it alone; it cannot damage it.
+
+It needs a local runtime speaking the Ollama API, which perl2go talks to and
+does not manage. Models are a machine-wide resource shared with everything else
+you run, so perl2go uses a model you already have, never downloads one to
+convert a file, and never removes, moves or copies one. `OLLAMA_HOST` and
+`OLLAMA_MODELS` are honoured as the runtime's own tools honour them.
+
+`perl2go ai setup` inspects the machine, reports what it found, lists the
+freely licensed models that fit it with their real download sizes, and prints
+the exact commands it would run. It stops there unless you add `--yes`.
+
+If the runtime is not running, is missing the model, is out of memory or is too
+slow, the conversion is the deterministic one, the exit status is normal, and a
+line on standard error says which of those happened.
+
+A conversion costs one request per generated program. Loading a model that is
+not resident dominates that, so the first conversion after a reboot is slower
+than the rest by a wide margin.
 
 ## The interactive session
 
@@ -199,10 +247,14 @@ want in a script.
 
 These are real and current, not oversights:
 
-- **AI-assisted improvement is planned and not implemented.** A later release
-  will be able to run the output through a locally hosted model to improve the
-  Go and enrich the tutorials, opt-in and offline. The tool is fully functional
-  without it, and nothing in it makes a network connection today.
+- **The optional local model names things and nothing else.** It does not write
+  the tutorials, and it will not be asked to: measured against a 7B model, the
+  explanations it writes are thinner than the ones in the knowledge base and it
+  will occasionally state something false about your code with complete
+  confidence. Naming is a job where the worst outcome is a mediocre name, and
+  every name is checked before it is used. The prose jobs exist behind
+  `--ai-jobs`, they are labelled experimental, and they say so when you turn
+  them on.
 - **The session's line editing needs a terminal that supports raw mode**, which
   covers Linux, macOS and the BSDs. Anywhere else, and inside an environment
   that hands the program a pipe rather than a terminal, the session falls back
