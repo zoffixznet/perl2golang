@@ -98,6 +98,59 @@ func (l *Lowerer) undefCall(n *ast.Call) ir.Expr {
 	return ir.Nil(ir.TAny)
 }
 
+// posCall lowers pos, which reads how far a global match has walked through a
+// scalar.
+func (l *Lowerer) posCall(n *ast.Call) ir.Expr {
+	b, ok := l.posSubject(n)
+	if !ok {
+		return l.todoExpr(n, "P2G4531", "pos",
+			"pos on something other than a variable is not implemented",
+			"pos reads the match position Perl keeps on a scalar. The argument here "+
+				"is not a variable, so there is nothing that position could belong to.",
+			"Assign the string to a variable first, then scan that.")
+	}
+	p := l.matchPos(b, n)
+	out := l.ident(p)
+	l.note(out, "This is the position a global match left behind. Perl keeps it on "+
+		"the scalar, which is why pos takes a variable rather than a string; here it "+
+		"is an ordinary int.")
+	l.approximate(n, "P2G4531", "pos",
+		"an unstarted scan now reads as 0, not undef",
+		"pos returns undef for a string no global match has walked yet, which is how "+
+			"`defined pos($s)` tells \"not started\" from \"at the beginning\". An int "+
+			"has no undef, so both read as 0.",
+		"Keep a separate bool where the difference matters.",
+		"nil-vs-undef")
+	return out
+}
+
+// posTarget resolves `pos($x)` on the left of an assignment.
+func (l *Lowerer) posTarget(n *ast.Call) (ir.Expr, bool) {
+	b, ok := l.posSubject(n)
+	if !ok {
+		return nil, false
+	}
+	p := l.matchPos(b, n)
+	out := l.identFor(p)
+	l.note(out, "Assigning to pos moves the cursor a global match will start from. "+
+		"With the position held in a variable of its own, that is an ordinary "+
+		"assignment.")
+	return out, true
+}
+
+// posSubject reads the scalar a call to pos is about.
+func (l *Lowerer) posSubject(n *ast.Call) (*Binding, bool) {
+	args := flatten(argList(n))
+	if len(args) == 0 {
+		return nil, false
+	}
+	v, ok := args[0].(*ast.Var)
+	if !ok || v.Sigil != '$' {
+		return nil, false
+	}
+	return l.lookup(v.Sigil, v.Name, v), true
+}
+
 // staticRefKind answers ref from a type the converter already resolved. It
 // declines for any, where nothing is known until the program runs.
 func staticRefKind(t *ir.Type) (string, bool) {

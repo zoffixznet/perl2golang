@@ -65,6 +65,10 @@ type Binding struct {
 	// binding, which deserves better than a generic one.
 	Doc     string
 	Explain string
+	// Pos names the companion variable holding this scalar's match
+	// position, for the code that walks it with a global match. Perl keeps
+	// that position on the variable itself; Go needs somewhere to put it.
+	Pos *Binding
 }
 
 // declared reports whether the binding is a real Go declaration the emitter

@@ -46,4 +46,5 @@ const (
 	hIsWritable    = "isWritable"   // -w
 	hIsExecutable  = "isExecutable" // -x
 	hDirNames      = "dirNames"     // opendir plus readdir, as a list of names
+	hNextMatch     = "nextMatch"    // one step of a scalar-context //g scan
 )

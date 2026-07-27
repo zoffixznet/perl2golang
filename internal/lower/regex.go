@@ -447,6 +447,9 @@ func namedGroups(raw string) map[string]int {
 
 // matchExpr lowers `EXPR =~ /pattern/`.
 func (l *Lowerer) matchExpr(n *ast.Match, forceBool bool) ir.Expr {
+	if x, ok := l.scanMatch(n); ok {
+		return x
+	}
 	subject := l.matchSubject(n.Bound)
 	pattern, ok := l.patternOf(matchPattern(n))
 	if !ok {
@@ -493,6 +496,69 @@ func (l *Lowerer) matchExpr(n *ast.Match, forceBool bool) ir.Expr {
 		return ir.Bin("==", ir.NewIdent(name, ir.SliceOf(ir.TString)), ir.Nil(ir.SliceOf(ir.TString)), ir.TBool)
 	}
 	return out
+}
+
+// scanMatch lowers `$var =~ /pattern/g` used for its truth value, which is the
+// idiom that walks a string one match at a time.
+//
+// Perl remembers where it got to on the variable itself, so the same expression
+// in a while loop yields a different match each time round. Go has no such
+// memory, so the position becomes a variable and the step becomes a call that
+// takes it and moves it on.
+func (l *Lowerer) scanMatch(n *ast.Match) (ir.Expr, bool) {
+	if n.Pattern == nil || !strings.Contains(n.Pattern.Mods, "g") || n.Negate {
+		return nil, false
+	}
+	v, ok := n.Bound.(*ast.Var)
+	if !ok || v.Sigil != '$' {
+		return nil, false
+	}
+	pattern, ok := l.patternOf(matchPattern(n))
+	if !ok {
+		return nil, false
+	}
+	b := l.lookup(v.Sigil, v.Name, v)
+	p := l.matchPos(b, n)
+
+	name := l.tmp("m")
+	matchT := ir.SliceOf(ir.TString)
+	step := assign(":=", []ir.Expr{ir.NewIdent(name, matchT)},
+		[]ir.Expr{l.helperCall(hNextMatch, matchT, pattern,
+			l.toStr(l.ident(b), v), ir.Un("&", ir.NewIdent(p.Go, ir.TInt), ir.PointerTo(ir.TInt)))})
+	l.setProv(step, n)
+	l.note(step, "A global match in scalar context is a cursor: each evaluation "+
+		"starts where the last one stopped, and the position lives on the variable. "+
+		"Go's regexp has no cursor, so the position is passed in by address and the "+
+		"call moves it along.",
+		"regexp-is-re2", "submatch-and-named-groups")
+	l.emit(step)
+
+	// Without /c a failed match forgets the position, so the next scan starts
+	// at the beginning again.
+	if !strings.Contains(n.Pattern.Mods, "c") {
+		reset := &ir.If{
+			Cond: ir.Bin("==", ir.NewIdent(name, matchT), ir.Nil(matchT), ir.TBool),
+			Then: &ir.Block{Stmts: []ir.Stmt{
+				assign("=", []ir.Expr{ir.NewIdent(p.Go, ir.TInt)}, []ir.Expr{ir.IntLit("0")}),
+			}},
+		}
+		l.note(reset, "A failed global match resets the position to the start unless "+
+			"the pattern carries /c. That is what makes a second loop over the same "+
+			"string begin again rather than find nothing.")
+		l.emit(reset)
+	}
+
+	frame := &captureFrame{Name: name, Count: countGroups(n.Pattern.Raw), Named: namedGroups(n.Pattern.Raw)}
+	l.captureStack = append(l.captureStack, frame)
+
+	l.approximate(n, "P2G4530", "//g in scalar context",
+		"the match position is a variable rather than a property of the string",
+		"Perl keeps the position on the scalar, so assigning to the variable forgets "+
+			"it and every copy of the string has its own. The generated code keeps one "+
+			"position variable per scanned variable, which matches the usual one-loop "+
+			"case and not the case of two scans over the same variable at once.",
+		"Where two scans overlap, give each one its own position variable.")
+	return ir.Bin("!=", ir.NewIdent(name, matchT), ir.Nil(matchT), ir.TBool), true
 }
 
 // globalMatch lowers `EXPR =~ /pattern/g` in list context, where Perl yields

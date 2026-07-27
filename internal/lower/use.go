@@ -123,20 +123,39 @@ func (l *Lowerer) useConstant(n *ast.Use) []ir.Stmt {
 	if len(n.Args) == 0 {
 		return nil
 	}
-	flat := flatten(n.Args[0])
-	if len(flat) < 2 {
-		return nil
+	// `use constant { A => 1, B => 2 }` declares several at once, and
+	// `use constant A => 1` declares one. Both are a flat key/value list.
+	pairs := flatten(n.Args[0])
+	if len(pairs) == 1 {
+		if h, ok := pairs[0].(*ast.AnonHash); ok {
+			pairs = nil
+			for _, e := range h.Elems {
+				pairs = append(pairs, flatten(e)...)
+			}
+		}
 	}
-	name, ok := constantName(flat[0])
+	for i := 0; i+1 < len(pairs); i += 2 {
+		l.defineConstant(n, pairs[i], pairs[i+1])
+	}
+	return nil
+}
+
+// defineConstant declares one name from `use constant`.
+func (l *Lowerer) defineConstant(n *ast.Use, nameExpr, valueExpr ast.Expr) {
+	name, ok := constantName(nameExpr)
 	if !ok {
-		return nil
+		return
 	}
 	b := l.lookup('$', name, n)
-	value := l.scalar(flat[1])
+	value := l.scalar(valueExpr)
 	l.observe(b, typeOrAny(value))
 	if l.pass == 2 {
 		b.Type = typeOrAny(value)
 	}
+	if l.constNames == nil {
+		l.constNames = map[string]*Binding{}
+	}
+	l.constNames[name] = b
 
 	d := &ir.VarDecl{
 		Names:  []string{b.Go},
@@ -149,7 +168,6 @@ func (l *Lowerer) useConstant(n *ast.Use) []ir.Stmt {
 		"out anything that calls a function; those become package-level vars instead.",
 		"constants-iota-named-types")
 	l.constants = append(l.constants, d)
-	return nil
 }
 
 // constantName reads the name from the first argument of `use constant`.

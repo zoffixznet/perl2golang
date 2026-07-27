@@ -39,6 +39,17 @@ func (l *Lowerer) assignStmts(n *ast.Assign) []ir.Stmt {
 		x := l.expr(lhs)
 		rhs := l.assignable(l.expr(n.RHS), typeOrAny(x), n.RHS)
 		return []ir.Stmt{assign("=", []ir.Expr{x}, []ir.Expr{rhs})}
+	case *ast.Call:
+		// `pos($s) = N` moves the cursor a global match starts from, which is
+		// an assignment to the variable holding that position.
+		if lhs.Name == "pos" {
+			if x, ok := l.posTarget(lhs); ok {
+				rhs := l.toInt(l.expr(n.RHS), n.RHS)
+				st := assign("=", []ir.Expr{x}, []ir.Expr{rhs})
+				l.setProv(st, n)
+				return []ir.Stmt{st}
+			}
+		}
 	}
 
 	return []ir.Stmt{l.todoStmt(n, "P2G2540", "assignment target",

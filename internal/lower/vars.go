@@ -109,6 +109,43 @@ func (l *Lowerer) lineCounter(at ast.Node) *Binding {
 	return b
 }
 
+// matchPos returns the variable holding a scalar's match position, creating it
+// the first time a global match or a call to pos needs it.
+//
+// Perl hangs the position off the scalar itself, so it survives between
+// statements and is reset when the variable is assigned. Go has nowhere to hang
+// it, so it becomes a package-level int beside the program's other state.
+func (l *Lowerer) matchPos(b *Binding, at ast.Node) *Binding {
+	if b == nil {
+		return nil
+	}
+	if b.Pos != nil {
+		return b.Pos
+	}
+	key := b.Perl + "\x00pos"
+	p, ok := l.globalSeen[key]
+	if !ok {
+		p = &Binding{
+			Perl:  "pos(" + b.Perl + ")",
+			Sigil: '$',
+			Kind:  KindGlobal,
+			Line:  posLine(at),
+			Type:  ir.TInt,
+			Init:  ir.IntLit("0"),
+		}
+		p.Go = l.names.take(goName(b.Perl[1:]) + "Pos")
+		p.Doc = p.Go + " is how far a global match has walked through " + goName(b.Perl[1:]) + "."
+		p.Explain = "Perl keeps this position on the scalar itself, which is why " +
+			"pos() takes a variable and why assigning to the variable forgets it. " +
+			"Go has nowhere to keep it but a variable of its own."
+		l.globalSeen[key] = p
+		l.globals = append(l.globals, p)
+	}
+	l.observe(p, ir.TInt)
+	b.Pos = p
+	return p
+}
+
 // observe records a type the binding was seen holding. Only pass 1 collects;
 // pass 2 reads the settled answer.
 func (l *Lowerer) observe(b *Binding, t *ir.Type) {

@@ -18,6 +18,16 @@ func (l *Lowerer) callExpr(n *ast.Call) ir.Expr {
 	if s, ok := l.subs[n.Name]; ok {
 		return l.callSub(s, n)
 	}
+	// A name declared with `use constant` reads as a call with no arguments,
+	// because that is exactly what it is in Perl.
+	if b, ok := l.constNames[n.Name]; ok && argCount(n) == 0 {
+		out := l.ident(b)
+		l.note(out, "A Perl constant is really a sub that returns a fixed value, "+
+			"which is why it is called rather than read. Go's const is a name for the "+
+			"value itself, so there is nothing to call.",
+			"constants-iota-named-types")
+		return out
+	}
 	return l.todoExpr(n, "P2G3599", n.Name,
 		"the "+n.Name+" function is not implemented",
 		"There is no rule for "+n.Name+" yet, and guessing at one would produce Go "+
@@ -215,6 +225,8 @@ func (l *Lowerer) builtin(n *ast.Call) ir.Expr {
 		return l.refCall(n)
 	case "undef":
 		return l.undefCall(n)
+	case "pos":
+		return l.posCall(n)
 	case "readdir":
 		return l.readdirCall(n)
 	case "unlink":

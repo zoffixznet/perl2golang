@@ -89,6 +89,12 @@ var notes = map[string]string{
 		"letters followed by one run of digits, which is why \"a9z\", \" a\" " +
 		"and \"1.5\" are all stepped as numbers.",
 
+	"nextMatch": "Walking a string one match at a time. The regexp package " +
+		"has no cursor, so the position has to be carried by the caller and " +
+		"the search runs over the remainder of the string. That means \"^\" " +
+		"matches at the cursor rather than at the start of the whole string, " +
+		"which is what a scan usually wants and is worth knowing about.",
+
 	"refKind": "Asking a value what it is, for the cases where the answer " +
 		"is not already in its declared type. reflect is the only way to ask, " +
 		"and the answer is a word rather than a type, so nothing can be done " +

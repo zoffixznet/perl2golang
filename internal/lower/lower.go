@@ -79,6 +79,9 @@ type Lowerer struct {
 	globalSeen map[string]*Binding
 	// constants are the declarations `use constant` produced.
 	constants []*ir.VarDecl
+	// constNames maps a `use constant` name to its binding, so a bareword
+	// use of it resolves to the constant rather than looking like a call.
+	constNames map[string]*Binding
 
 	// pre holds statements that must be emitted before the statement being
 	// lowered. Perl expressions do work that Go can only do in statement
