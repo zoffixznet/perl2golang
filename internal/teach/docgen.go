@@ -87,10 +87,13 @@ type bundle struct {
 	concepts []*Concept
 	inBundle map[string]*Concept
 
-	// why records, per lesson, the things in the developer's code that pulled
-	// it in. next records which lessons in the bundle build on it.
-	why  map[string][]string
-	next map[string][]string
+	// why records, per lesson, the things that pulled it in. fromCode marks
+	// the ones a fact about the developer's own code pulled in, as opposed to
+	// the ones an exercise or another lesson needs. next records which lessons
+	// in the bundle build on it.
+	why      map[string][]string
+	fromCode map[string]bool
+	next     map[string][]string
 
 	// guide is the long-form orientation text, empty when it is not embedded.
 	guide string
@@ -98,6 +101,12 @@ type bundle struct {
 	// funcs are the functions declared in the generated program, in source
 	// order, so exercises can name the developer's own code.
 	funcs []string
+
+	// tasks are the exercises this bundle ships, either the caller's or the
+	// ones derived from the generated code. taskSeeds is the subset whose
+	// lessons are pulled into the bundle.
+	tasks     []Exercise
+	taskSeeds []Exercise
 
 	script  string // the input's display name, empty when there is no file name
 	program string // the generated program's name
@@ -110,6 +119,7 @@ func newBundle(in DocInput) (*bundle, error) {
 		rep:      in.Report,
 		inBundle: make(map[string]*Concept),
 		why:      make(map[string][]string),
+		fromCode: make(map[string]bool),
 		next:     make(map[string][]string),
 	}
 	if b.rep == nil {
@@ -134,6 +144,20 @@ func newBundle(in DocInput) (*bundle, error) {
 	b.program = programName(in, b.script)
 	b.funcs = goFuncNames(in.GoSource)
 
+	// Two passes, because the tasks are chosen from the lessons and then
+	// contribute lessons of their own. The second pass only ever adds.
+	b.resolveConcepts()
+	b.tasks = in.Exercises
+	if len(b.tasks) == 0 {
+		b.tasks = b.defaultExercises()
+	}
+	if strings.TrimSpace(in.GoSource) != "" {
+		// The tasks name lessons of their own, and those belong in the bundle
+		// so the links resolve. With no generated code there is nothing to set
+		// a task against, and a bundle of lessons nothing triggered would be
+		// the generic tutorial dump this tool exists to avoid.
+		b.taskSeeds = b.tasks
+	}
 	b.resolveConcepts()
 
 	guide, err := guideText()
@@ -157,14 +181,22 @@ func (b *bundle) resolveConcepts() {
 	for _, s := range b.in.Walkthrough {
 		ids = append(ids, s.Concepts...)
 	}
-	for _, x := range b.in.Exercises {
+	for _, x := range b.taskSeeds {
 		ids = append(ids, x.Concepts...)
+	}
+	stdlib := stdlibConcepts(b.in.GoSource)
+	for _, u := range stdlib {
+		ids = append(ids, u.concept)
 	}
 
 	// Unknown ids are dropped rather than reported: a lesson that does not
 	// exist is nothing the developer can act on.
 	concepts, _ := b.kb.Resolve(dedupe(ids))
 	b.concepts = concepts
+	b.inBundle = make(map[string]*Concept, len(concepts))
+	b.why = make(map[string][]string, len(concepts))
+	b.fromCode = make(map[string]bool, len(concepts))
+	b.next = make(map[string][]string, len(concepts))
 	for _, c := range concepts {
 		b.inBundle[c.ID] = c
 	}
@@ -175,6 +207,7 @@ func (b *bundle) resolveConcepts() {
 				continue
 			}
 			b.why[id] = append(b.why[id], fmt.Sprintf("%s%s", e.Construct, positionSuffix(e.Line, b.script)))
+			b.fromCode[id] = true
 		}
 	}
 	for _, s := range b.in.Walkthrough {
@@ -183,6 +216,21 @@ func (b *bundle) resolveConcepts() {
 				continue
 			}
 			b.why[id] = append(b.why[id], fmt.Sprintf("the region %q%s", s.Title, lineRangeSuffix(s.PerlFrom, s.PerlTo)))
+			b.fromCode[id] = true
+		}
+	}
+
+	for _, u := range stdlib {
+		if _, ok := b.inBundle[u.concept]; ok {
+			b.why[u.concept] = append(b.why[u.concept], "the generated code calls `"+u.call+"`")
+			b.fromCode[u.concept] = true
+		}
+	}
+	for _, x := range b.taskSeeds {
+		for _, id := range x.Concepts {
+			if _, ok := b.inBundle[id]; ok {
+				b.why[id] = append(b.why[id], fmt.Sprintf("the exercise %q", x.Title))
+			}
 		}
 	}
 
@@ -195,6 +243,53 @@ func (b *bundle) resolveConcepts() {
 			}
 		}
 	}
+}
+
+// stdlibUse is one standard-library call found in the generated program, with
+// the lesson that explains the package it came from.
+type stdlibUse struct {
+	call    string
+	concept string
+}
+
+// stdlibCalls maps a call the emitter can produce to the lesson a developer
+// reading it will want. The conversion's own triggers come from the Perl side
+// and stop at the language; these come from the Go side, so a program that
+// ends up formatting with fmt or parsing with strconv gets the lesson about
+// the package it now depends on, whatever Perl it started as.
+var stdlibCalls = []stdlibUse{
+	{"fmt.Printf(", "fmt-and-verbs"},
+	{"fmt.Sprintf(", "fmt-and-verbs"},
+	{"fmt.Fprintf(", "fmt-and-verbs"},
+	{"strings.", "strings-package"},
+	{"strconv.", "strconv-parsing"},
+	{"regexp.", "regexp-is-re2"},
+	{"bufio.NewScanner(", "bufio-scanner-limit"},
+	{"slices.Sort", "sort-slice"},
+	{"sort.Slice(", "sort-slice"},
+	{"time.", "time-layouts"},
+	{"filepath.", "filepath-and-paths"},
+	{"flag.", "flag-package"},
+	{"json.", "encoding-json"},
+	{"exec.Command", "os-exec"},
+}
+
+// stdlibConcepts returns the lessons the generated program's own calls earn,
+// each with the call that earned it, in the order the table lists them.
+func stdlibConcepts(goSrc string) []stdlibUse {
+	if strings.TrimSpace(goSrc) == "" {
+		return nil
+	}
+	var out []stdlibUse
+	seen := make(map[string]bool)
+	for _, u := range stdlibCalls {
+		if seen[u.concept] || !strings.Contains(goSrc, u.call) {
+			continue
+		}
+		seen[u.concept] = true
+		out = append(out, stdlibUse{call: strings.TrimSuffix(u.call, "("), concept: u.concept})
+	}
+	return out
 }
 
 // readme is the generated project's own front page.
@@ -213,6 +308,10 @@ func (b *bundle) readme() string {
 	}
 
 	m.h(2, "Build and run")
+	if b.buildFailed() {
+		m.p("Before anything else: **this program does not compile as generated.** The converter built it with a real Go toolchain and the build failed, which is a defect in the converter rather than in your original file. The output is still here to be read and fixed, and %s quotes the errors the toolchain reported.",
+			link("the conversion report", rel(fileReadme, fileReport)))
+	}
 	m.p("There are two copies of the program. The clean one is at the root of this directory: ordinary Go, formatted by `gofmt`, with the kind of comments a Go developer would write and nothing about where it came from.")
 	m.fence("", "go run .")
 	m.p("The annotated one is the same program with the reasoning left in. Every non-obvious construct carries a comment saying what it is, why it was chosen, and which piece of the original it came from. It is a separate program in its own directory, so it compiles and runs on its own:")
@@ -257,7 +356,11 @@ func (b *bundle) startHere() string {
 	m.p("You asked for a conversion and got a directory. This page says what is in it, how far the conversion actually got, and the order to read things in. Ten minutes here saves an hour of guessing.")
 
 	m.h(2, "What was produced")
-	m.bullet("The clean program, at the root of this directory. Run it with `go run .` from the parent directory of this `docs/` folder.")
+	if b.buildFailed() {
+		m.bullet("The clean program, at the root of this directory. It does not build as generated: see below and %s.", link("the conversion report", rel(fileStartHere, fileReport)))
+	} else {
+		m.bullet("The clean program, at the root of this directory. Run it with `go run .` from the parent directory of this `docs/` folder.")
+	}
 	m.bullet("The annotated program, in `annotated/`. Same behaviour, heavy commentary. Run it with `go run ./annotated`.")
 	m.bullet("This documentation. It is specific to your file: the lessons in `concepts/` were chosen by what your code actually does, not from a fixed curriculum.")
 	m.bullet("%s, which repeats the build instructions.", link("The project readme", rel(fileStartHere, fileReadme)))
@@ -274,7 +377,7 @@ func (b *bundle) startHere() string {
 	m.numbered(6, "%s. Small tasks against this code. Reading Go is not learning Go; changing it is.", link("The exercises", rel(fileStartHere, fileExercises)))
 
 	m.h(2, "A word on how to use the annotated program")
-	m.p("The annotated copy is not a text file with code in it. It compiles and runs, so you can edit it, break it, and see what the compiler says. That feedback loop is the fastest way into a new language, and the comments in it are placed where the surprises are rather than where prose is easy to write.")
+	m.p("The annotated copy is not a text file with code in it. It is the same program, so you can edit it, break it, and see what the compiler says. That feedback loop is the fastest way into a new language, and the comments in it are placed where the surprises are rather than where prose is easy to write. Each explanation appears once, at the first place it applies, so the file stays readable top to bottom.")
 
 	m.raw(b.credit())
 	return m.String()
@@ -322,6 +425,8 @@ func (b *bundle) honesty() string {
 		dynamic := s.Symbols - s.SymbolsTyped
 		if dynamic > 0 {
 			parts = append(parts, fmt.Sprintf("Type inference gave a concrete Go type to %d of the %d variables it tracked; the other %d fall back to a dynamic value, which works but is not the Go you would write by hand.", s.SymbolsTyped, s.Symbols, dynamic))
+		} else if s.Symbols == 1 {
+			parts = append(parts, "The one variable it tracked was given a concrete Go type, so there is no dynamic fallback anywhere in the output.")
 		} else {
 			parts = append(parts, fmt.Sprintf("Every one of the %d variables it tracked was given a concrete Go type, so there is no dynamic fallback anywhere in the output.", s.Symbols))
 		}
@@ -335,6 +440,11 @@ func (b *bundle) honesty() string {
 	}
 
 	switch {
+	case b.buildFailed():
+		// Nothing else on this page matters as much as this, so it goes last,
+		// where the paragraph ends.
+		parts = append(parts, fmt.Sprintf("**The generated program does not compile.** That is a defect in the converter, not in your file: the Go was written out anyway so you can see it, and %s quotes what the toolchain said. Expect to fix those lines before `go run .` works.",
+			link("the conversion report", rel(fileStartHere, fileReport))))
 	case s.Refused > 0 || s.ParseErrors > 0:
 		parts = append(parts, "Treat this as a starting point that still needs work, not a finished port.")
 	case s.Approximated > 0:
@@ -409,6 +519,14 @@ func (b *bundle) conversionReport() string {
 	return m.String()
 }
 
+// buildFailed reports whether a real toolchain rejected the generated code.
+// It is the single most important fact about a conversion, so the pages the
+// developer lands on say it rather than leaving it in the report.
+func (b *bundle) buildFailed() bool {
+	v := b.rep.Verified
+	return v.Toolchain && !v.Built
+}
+
 // verificationLines describes how thoroughly the tool checked its own output.
 func (b *bundle) verificationLines() []string {
 	v := b.rep.Verified
@@ -451,21 +569,48 @@ func (b *bundle) entrySection(m *md, from string, sev report.Severity, title, in
 		return
 	}
 
-	m.h(2, "%s (%d)", title, len(group))
+	grouped := groupEntries(group)
+	m.h(2, "%s (%d)", title, len(grouped))
 	m.p("%s", intro)
-	for _, e := range group {
-		b.entryBody(m, from, e, 3)
+	for _, g := range grouped {
+		b.entryBody(m, from, g, 3)
 	}
+}
+
+// groupEntries folds entries that say exactly the same thing about the same
+// construct into one, keeping every line number. The same unconvertible
+// construct usually appears several times in a file, and printing the same
+// three paragraphs for each of them buries the ones that differ.
+func groupEntries(in []report.Entry) []groupedEntry {
+	var out []groupedEntry
+	index := map[string]int{}
+	for _, e := range in {
+		key := e.Code + "\x00" + e.Construct + "\x00" + e.Message + "\x00" + e.Perl + "\x00" + e.Advice
+		if i, ok := index[key]; ok {
+			out[i].lines = append(out[i].lines, e.Line)
+			continue
+		}
+		index[key] = len(out)
+		out = append(out, groupedEntry{Entry: e, lines: []int{e.Line}})
+	}
+	return out
+}
+
+// groupedEntry is one report entry with every line it occurred on.
+type groupedEntry struct {
+	report.Entry
+	lines []int
 }
 
 // entryBody renders one entry: what it was, where it was, what happened, and
 // what to do.
-func (b *bundle) entryBody(m *md, from string, e report.Entry, level int) {
+func (b *bundle) entryBody(m *md, from string, g groupedEntry, level int) {
+	e := g.Entry
 	construct := e.Construct
 	if construct == "" {
 		construct = "unnamed construct"
 	}
-	heading := construct + positionSuffix(e.Line, b.script)
+	heading := construct + linesSuffix(g.lines, b.script)
 	if e.Code != "" {
 		heading = e.Code + ": " + heading
 	}
@@ -536,9 +681,11 @@ func (b *bundle) walkthrough() string {
 		return m.String()
 	}
 
-	m.p("Each section below takes one region of the original, shows the Go it became, and explains the choice. The line numbers refer to the original file, so you can keep it open beside this page. Read the sections in order: later ones assume the earlier ones.")
+	m.p("Each section below takes one region of the original, shows the Go it became, and explains the choice. The line numbers refer to the original file, so you can keep it open beside this page. Read the sections in order: later ones assume the earlier ones, and an explanation is given once, at the first region it applies to.")
 	m.p("Where a region raises something structural about Go rather than something local to your code, it links to a lesson in %s. Those lessons stand alone, so follow them when you want to and skip them when you do not.", link("concepts/", rel(fileWalk, fileConceptIdx)))
 
+	said := map[string]bool{}
+	linked := map[string]bool{}
 	for i, seg := range b.in.Walkthrough {
 		if i > 0 {
 			m.rule()
@@ -557,11 +704,17 @@ func (b *bundle) walkthrough() string {
 			m.p("The Go it became:")
 			m.fence("go", dedent(seg.Go))
 		}
-		if strings.TrimSpace(seg.Explain) != "" {
-			m.p("%s", strings.TrimSpace(seg.Explain))
+		fresh := newParagraphs(seg.Explain, said)
+		for _, para := range fresh {
+			m.p("%s", para)
 		}
-		if links := b.conceptLinks(seg.Concepts, fileWalk); links != "" {
-			m.p("Lessons for this region: %s", links)
+		if len(fresh) == 0 && strings.TrimSpace(seg.Explain) != "" {
+			// Every note here was made earlier. Saying so is better than an
+			// empty section, and better than repeating the paragraphs.
+			m.p("No new ground in this region: every construct in it is one the sections above already explain.")
+		}
+		if links := b.conceptLinks(firstMentions(seg.Concepts, linked, maxRegionLessons), fileWalk); links != "" {
+			m.p("Lessons this region introduces: %s", links)
 		}
 	}
 
@@ -572,20 +725,61 @@ func (b *bundle) walkthrough() string {
 	return m.String()
 }
 
+// maxRegionLessons caps the lesson links under one region. A region can touch
+// a dozen concepts, and a dozen links is a list nobody follows; the ones left
+// out are still in the index.
+const maxRegionLessons = 4
+
+// newParagraphs splits a region's explanation and returns only the paragraphs
+// that have not appeared earlier in the document, recording them as it goes.
+// The same construct recurs all through a script, and repeating its
+// explanation at every occurrence trains the reader to skip the prose.
+func newParagraphs(explain string, said map[string]bool) []string {
+	var out []string
+	for _, para := range strings.Split(explain, "\n\n") {
+		para = strings.TrimSpace(para)
+		if para == "" || said[para] {
+			continue
+		}
+		said[para] = true
+		out = append(out, para)
+	}
+	return out
+}
+
+// firstMentions returns up to max ids that have not been shown yet, recording
+// only the ones it returns. An id displaced by the cap stays unseen, so it can
+// still be introduced by a later region that also raises it.
+func firstMentions(ids []string, seen map[string]bool, max int) []string {
+	var out []string
+	for _, id := range ids {
+		if seen[id] || len(out) == max {
+			continue
+		}
+		seen[id] = true
+		out = append(out, id)
+	}
+	return out
+}
+
 // notTranslated is the work list: everything the developer has to finish.
 func (b *bundle) notTranslated() string {
 	m := &md{}
 	m.h(1, "What did not translate")
 
-	var refused, approximated []report.Entry
+	var refusedEntries, approximatedEntries []report.Entry
 	for _, e := range b.entries {
 		switch e.Severity {
 		case report.Refuse:
-			refused = append(refused, e)
+			refusedEntries = append(refusedEntries, e)
 		case report.Warn:
-			approximated = append(approximated, e)
+			approximatedEntries = append(approximatedEntries, e)
 		}
 	}
+	// Counted after grouping, so that one construct reported at three lines
+	// is one item of work rather than three.
+	refused := groupEntries(refusedEntries)
+	approximated := groupEntries(approximatedEntries)
 
 	if len(refused) == 0 && len(approximated) == 0 {
 		if b.script != "" {
@@ -604,15 +798,15 @@ func (b *bundle) notTranslated() string {
 	if len(refused) > 0 {
 		m.h(2, "Refused: you have to write these (%d)", len(refused))
 		m.p("The generated code marks each of these with a TODO at the place it belongs, so the compiler and your editor will keep reminding you.")
-		for _, e := range refused {
-			b.entryBody(m, fileNotTrans, e, 3)
+		for _, g := range refused {
+			b.entryBody(m, fileNotTrans, g, 3)
 		}
 	}
 	if len(approximated) > 0 {
 		m.h(2, "Approximated: check these (%d)", len(approximated))
 		m.p("These compile and run. Read each one and decide whether the difference matters for your data; sometimes it does not, and then the honest thing is to delete the TODO and move on.")
-		for _, e := range approximated {
-			b.entryBody(m, fileNotTrans, e, 3)
+		for _, g := range approximated {
+			b.entryBody(m, fileNotTrans, g, 3)
 		}
 	}
 
@@ -627,12 +821,8 @@ func (b *bundle) exercises() string {
 	m := &md{}
 	m.h(1, "Exercises")
 
-	list := b.in.Exercises
-	generated := false
-	if len(list) == 0 {
-		list = b.defaultExercises()
-		generated = true
-	}
+	list := b.tasks
+	generated := len(b.in.Exercises) == 0
 
 	m.p("These are tasks against the code in this directory, not toy examples. Each one is small enough for one sitting and ends with a check, so you can tell whether you got it right without asking anyone.")
 	if generated {
@@ -669,6 +859,16 @@ func (b *bundle) exercises() string {
 func (b *bundle) defaultExercises() []Exercise {
 	var out []Exercise
 
+	// A program the toolchain rejected has one task ahead of every other.
+	if b.buildFailed() {
+		out = append(out, Exercise{
+			Title:    "Make it build",
+			Task:     "The converter's own build of this code failed, and the errors are quoted in " + link("the conversion report", rel(fileExercises, fileReport)) + ". Run `go build ./...` yourself, read the first error rather than the whole list, and fix it. Go reports errors in source order and later ones are often consequences of the first, so rebuild after each fix. The usual causes here are a value the converter typed as `any` being used as a number or a slice, which is fixed by giving the variable a concrete type where it is declared.",
+			Success:  "`go build ./...` and `go vet ./...` are both silent, and `go run .` produces the output the original produced for the same input.",
+			Concepts: []string{"static-types-and-zero-values", "type-assertions-and-switches", "compile-time-mindset"},
+		})
+	}
+
 	target, hasFunc := b.exerciseTarget()
 	if hasFunc {
 		out = append(out, Exercise{
@@ -677,14 +877,14 @@ func (b *bundle) defaultExercises() []Exercise {
 				exportedish(target)),
 			Success: fmt.Sprintf("`go test ./...` passes, and `go test -run Test%s -v` lists one subtest per row of your table. Then change `%s` to be wrong on purpose and confirm the failure message names the case that broke.",
 				exportedish(target), target),
-			Concepts: []string{"toolchain-gofmt-godoc", "multiple-return-values"},
+			Concepts: []string{"table-driven-tests", "multiple-return-values"},
 		})
 	} else {
 		out = append(out, Exercise{
 			Title:    "Give the program something to test",
 			Task:     "Everything currently lives in `main`, which is hard to test because it reads the world and writes to it. Pick the innermost piece of work in `main.go` (the part that turns input values into output values, with no printing and no file access), move it into a named function that takes its inputs as parameters and returns its result, and call that function from `main`. Then write `main_test.go` with a table-driven test for it.",
 			Success:  "`go run .` still produces exactly the output it produced before, `go test ./...` passes, and `main` is short enough to read in one screen.",
-			Concepts: []string{"multiple-return-values", "toolchain-gofmt-godoc"},
+			Concepts: []string{"table-driven-tests", "multiple-return-values"},
 		})
 	}
 
@@ -698,23 +898,31 @@ func (b *bundle) defaultExercises() []Exercise {
 		})
 	}
 
-	exitTask := "Find a place in the generated code that ends the program from somewhere other than `main`: a call to `os.Exit`, a call to `log.Fatal`, or a `panic` used as a shortcut."
+	// Both of the next two name a construct rather than a line, so they are
+	// only worth setting when the construct is actually in the output.
 	if hits := exitCalls(b.in.GoSource); hits != "" {
-		exitTask = fmt.Sprintf("The generated code stops the program by calling %s. Pick a call site that is not in `main`.", hits)
+		task := fmt.Sprintf("The generated code stops the program by calling %s.", hits)
+		if hasFunc {
+			task += " Pick a call site that is not in `main`, and change the function it sits in so that it returns an `error` as its last result."
+		} else {
+			task += " Everything is in `main` today, so start by moving the work that can fail into a function of its own, and have that function return an `error` as its last result."
+		}
+		out = append(out, Exercise{
+			Title:    "Return an error instead of exiting",
+			Task:     task + " Propagate the error up with `fmt.Errorf(\"doing the thing: %w\", err)` at each level, and let `main` be the only function that decides to stop the program. `defer` statements do not run when `os.Exit` is called, so this change also fixes cleanup you may not have noticed was being skipped.",
+			Success:  "Only `main` calls `os.Exit` (or nothing does, and `main` simply returns). `go vet ./...` is silent, the program still exits with a non-zero status on the failure path (check with `go run . ; echo $?`), and the error message now says what was being attempted, not just what went wrong.",
+			Concepts: []string{"errors-are-values", "if-err-nil-rhythm", "error-wrapping", "defer-timing"},
+		})
 	}
-	out = append(out, Exercise{
-		Title:    "Return an error instead of exiting",
-		Task:     exitTask + " Change the function it sits in so that it returns an `error` as its last result, propagate that error up with `fmt.Errorf(\"doing the thing: %w\", err)` at each level, and let `main` be the only function that decides to stop the program. `defer` statements do not run when `os.Exit` is called, so this change also fixes cleanup you may not have noticed was being skipped.",
-		Success:  "Only `main` calls `os.Exit` (or nothing does, and `main` simply returns). `go vet ./...` is silent, the program still exits with a non-zero status on the failure path (check with `go run . ; echo $?`), and the error message now says what was being attempted, not just what went wrong.",
-		Concepts: []string{"errors-are-values", "if-err-nil-rhythm", "error-wrapping", "defer-timing"},
-	})
 
-	out = append(out, Exercise{
-		Title:    "Replace one loop with a slices call",
-		Task:     "Find a loop in the generated code that searches for an element, tests membership, or removes elements, and replace it with `slices.Contains`, `slices.IndexFunc`, `slices.ContainsFunc`, or `slices.DeleteFunc` from the standard library. Leave the loops that transform or accumulate alone: Go has no `map` or `grep` over slices, and the explicit loop is the idiom there, not a failure of taste.",
-		Success:  "The program compiles, `go vet ./...` is silent, and running it against the same input produces byte-identical output (`go run . > after.txt` and `diff` it against the output you saved first). The file is shorter than it was.",
-		Concepts: []string{"slices-not-arrays", "range-is-not-foreach", "sort-slice"},
-	})
+	if hasLoop(b.in.GoSource) {
+		out = append(out, Exercise{
+			Title:    "Replace one loop with a slices call",
+			Task:     "Find a loop in the generated code that searches for an element, tests membership, or removes elements, and replace it with `slices.Contains`, `slices.IndexFunc`, `slices.ContainsFunc`, or `slices.DeleteFunc` from the standard library. Leave the loops that transform or accumulate alone: Go has no `map` or `grep` over slices, and the explicit loop is the idiom there, not a failure of taste. If no loop in this program is doing one of those three jobs, say so in a comment and move on; recognising that is the exercise.",
+			Success:  "The program compiles, `go vet ./...` is silent, and running it against the same input produces byte-identical output (`go run . > after.txt` and `diff` it against the output you saved first). The file is shorter than it was.",
+			Concepts: []string{"slices-not-arrays", "range-is-not-foreach", "sort-slice"},
+		})
+	}
 
 	if e, ok := b.firstUnfinished(); ok {
 		construct := e.Construct
@@ -798,10 +1006,19 @@ func (b *bundle) conceptIndex() string {
 		return m.String()
 	}
 
+	var direct, background []*Concept
+	for _, c := range b.concepts {
+		if b.fromCode[c.ID] {
+			direct = append(direct, c)
+			continue
+		}
+		background = append(background, c)
+	}
+
 	m.p("These %d lesson%s were selected by what is in your code, not from a fixed syllabus. They are ordered so that a lesson never depends on one further down the list, which makes top to bottom a sensible way to read them.", len(b.concepts), plural(len(b.concepts)))
 	m.p("A lesson marked as a trap describes something that produces a crash or wrong data from code that looks correct. Read those first if you are short on time.")
 
-	for i, c := range b.concepts {
+	entry := func(i int, c *Concept) {
 		label := ""
 		switch c.Severity {
 		case SeverityTrap:
@@ -809,7 +1026,30 @@ func (b *bundle) conceptIndex() string {
 		case SeverityWarning:
 			label = " (easy to get wrong)"
 		}
-		m.numbered(i+1, "%s%s. %s", link(c.Title, rel(fileConceptIdx, conceptFile(c.ID))), label, sentence(firstParagraph(c.Body)))
+		m.numbered(i, "%s%s. %s", link(c.Title, rel(fileConceptIdx, conceptFile(c.ID))), label, sentence(firstParagraph(c.Body)))
+	}
+
+	if len(background) == 0 {
+		for i, c := range b.concepts {
+			entry(i+1, c)
+		}
+	} else {
+		m.h(2, "Raised by your code")
+		if name := b.scriptOrProgram(); name != "" {
+			m.p("Something in `%s` triggered each of these directly. Each lesson says at the top which part of your file pulled it in.", name)
+		} else {
+			m.p("Something in your file triggered each of these directly. Each lesson says at the top which part of it pulled the lesson in.")
+		}
+		for i, c := range direct {
+			entry(i+1, c)
+		}
+
+		m.h(2, "Background the rest builds on")
+		m.p("Nothing in your file triggered %s directly. %s here because the lessons above, or the exercises, rely on %s, and reading %s first makes the others shorter.",
+			itOrThem(len(background)), theyAre(len(background)), itOrThem(len(background)), itOrThem(len(background)))
+		for i, c := range background {
+			entry(i+1, c)
+		}
 	}
 
 	m.rule()
@@ -853,7 +1093,7 @@ func (b *bundle) whyLine(c *Concept) string {
 	reasons := dedupe(b.why[c.ID])
 	if len(reasons) > 3 {
 		rest := len(reasons) - 3
-		reasons = append(reasons[:3:3], fmt.Sprintf("and %d other place%s", rest, plural(rest)))
+		reasons = append(reasons[:3:3], fmt.Sprintf("%d other place%s", rest, plural(rest)))
 	}
 	if len(reasons) > 0 {
 		return "Why this came up in your code: " + joinList(reasons) + "."
@@ -1132,6 +1372,17 @@ func exitCalls(src string) string {
 	return joinList(found)
 }
 
+// hasLoop reports whether the generated code contains a loop, so that a task
+// about loops is only set when there is one to work on.
+func hasLoop(src string) bool {
+	for _, line := range strings.Split(src, "\n") {
+		if t := strings.TrimSpace(line); strings.HasPrefix(t, "for ") || strings.HasPrefix(t, "for{") || t == "for {" {
+			return true
+		}
+	}
+	return false
+}
+
 // exportedish returns a name usable in a test function name.
 func exportedish(name string) string {
 	if name == "" {
@@ -1171,6 +1422,23 @@ func itOrThem(n int) string {
 	return "them"
 }
 
+// theyAre agrees the subject of a sentence with a count.
+func theyAre(n int) string {
+	if n == 1 {
+		return "It is"
+	}
+	return "They are"
+}
+
+// scriptOrProgram names the input in prose, falling back to the generated
+// program when the input had no file name.
+func (b *bundle) scriptOrProgram() string {
+	if b.script != "" {
+		return b.script
+	}
+	return b.program
+}
+
 // positionSuffix renders " at line 42 of report.pl", or as much of it as is
 // known.
 func positionSuffix(line int, script string) string {
@@ -1181,6 +1449,29 @@ func positionSuffix(line int, script string) string {
 		return fmt.Sprintf(" at line %d", line)
 	default:
 		return ""
+	}
+}
+
+// linesSuffix renders " at line 42 of report.pl", or " at lines 34 and 47 of
+// report.pl" when one construct was reported more than once.
+func linesSuffix(lines []int, script string) string {
+	var known []string
+	for _, l := range lines {
+		if l > 0 {
+			known = append(known, fmt.Sprint(l))
+		}
+	}
+	switch {
+	case len(known) == 0:
+		return ""
+	case len(known) == 1 && script != "":
+		return fmt.Sprintf(" at line %s of `%s`", known[0], script)
+	case len(known) == 1:
+		return fmt.Sprintf(" at line %s", known[0])
+	case script != "":
+		return fmt.Sprintf(" at lines %s of `%s`", joinList(known), script)
+	default:
+		return fmt.Sprintf(" at lines %s", joinList(known))
 	}
 }
 

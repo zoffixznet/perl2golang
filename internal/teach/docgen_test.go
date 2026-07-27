@@ -255,10 +255,11 @@ func TestDocsNonEmpty(t *testing.T) {
 			if !strings.HasSuffix(body, "\n") || strings.HasSuffix(body, "\n\n") {
 				t.Errorf("%s: %s does not end with exactly one newline", name, key)
 			}
-			// The orientation guide is copied through verbatim and teaches
-			// Printf, so it legitimately contains verb mismatches as examples.
-			if key != fileGuide && strings.Contains(body, "%!") {
-				t.Errorf("%s: %s contains a formatting error: %s", name, key, firstLineContaining(body, "%!"))
+			// A stray %! means a Sprintf call was given the wrong argument
+			// while rendering the page. Inside code, it is a lesson quoting
+			// what Go prints for a bad verb, which several of them do.
+			if prose := withoutCode(body); strings.Contains(prose, "%!") {
+				t.Errorf("%s: %s contains a formatting error: %s", name, key, firstLineContaining(prose, "%!"))
 			}
 		}
 	}
@@ -674,6 +675,31 @@ func mustContain(t *testing.T, body, want string) {
 	if !strings.Contains(body, want) {
 		t.Errorf("missing %q in:\n%s", want, body)
 	}
+}
+
+// withoutCode strips fenced blocks and code spans, leaving the prose the
+// generator itself wrote. Lessons quote Go output verbatim, so a check for
+// suspicious text has to look at the writing rather than the samples.
+func withoutCode(body string) string {
+	var out []string
+	inFence := false
+	for _, line := range strings.Split(body, "\n") {
+		if strings.HasPrefix(strings.TrimSpace(line), "```") {
+			inFence = !inFence
+			continue
+		}
+		if inFence {
+			continue
+		}
+		parts := strings.Split(line, "`")
+		for i := range parts {
+			if i%2 == 1 {
+				parts[i] = ""
+			}
+		}
+		out = append(out, strings.Join(parts, ""))
+	}
+	return strings.Join(out, "\n")
 }
 
 func firstLineContaining(body, needle string) string {

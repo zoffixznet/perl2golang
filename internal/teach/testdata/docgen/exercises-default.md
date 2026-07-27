@@ -12,7 +12,7 @@ Create `main_test.go` next to `main.go`, in `package main`, and write `TestSumma
 
 Done when: `go test ./...` passes, and `go test -run TestSummarise -v` lists one subtest per row of your table. Then change `summarise` to be wrong on purpose and confirm the failure message names the case that broke.
 
-Lessons: [Multiple returns replace both list-return and wantarray](concepts/multiple-return-values.md)
+Lessons: [Tests are ordinary code in _test.go, and the table is the culture](concepts/table-driven-tests.md) and [Multiple returns replace both list-return and wantarray](concepts/multiple-return-values.md)
 
 ## 2. Make the "nil is not undef, and nothing autovivifies" trap happen on purpose
 
@@ -24,15 +24,15 @@ Lessons: [nil is not undef, and nothing autovivifies](concepts/nil-vs-undef.md)
 
 ## 3. Return an error instead of exiting
 
-The generated code stops the program by calling `os.Exit`. Pick a call site that is not in `main`. Change the function it sits in so that it returns an `error` as its last result, propagate that error up with `fmt.Errorf("doing the thing: %w", err)` at each level, and let `main` be the only function that decides to stop the program. `defer` statements do not run when `os.Exit` is called, so this change also fixes cleanup you may not have noticed was being skipped.
+The generated code stops the program by calling `os.Exit`. Pick a call site that is not in `main`, and change the function it sits in so that it returns an `error` as its last result. Propagate the error up with `fmt.Errorf("doing the thing: %w", err)` at each level, and let `main` be the only function that decides to stop the program. `defer` statements do not run when `os.Exit` is called, so this change also fixes cleanup you may not have noticed was being skipped.
 
 Done when: Only `main` calls `os.Exit` (or nothing does, and `main` simply returns). `go vet ./...` is silent, the program still exits with a non-zero status on the failure path (check with `go run . ; echo $?`), and the error message now says what was being attempted, not just what went wrong.
 
-Lessons: [Errors are return values, not exceptions](concepts/errors-are-values.md) and [The if err != nil rhythm, and why silence still compiles](concepts/if-err-nil-rhythm.md)
+Lessons: [Errors are return values, not exceptions](concepts/errors-are-values.md), [The if err != nil rhythm, and why silence still compiles](concepts/if-err-nil-rhythm.md), [Wrap with %w, test with errors.Is and errors.As](concepts/error-wrapping.md), and [defer runs at function exit, but evaluates its arguments now](concepts/defer-timing.md)
 
 ## 4. Replace one loop with a slices call
 
-Find a loop in the generated code that searches for an element, tests membership, or removes elements, and replace it with `slices.Contains`, `slices.IndexFunc`, `slices.ContainsFunc`, or `slices.DeleteFunc` from the standard library. Leave the loops that transform or accumulate alone: Go has no `map` or `grep` over slices, and the explicit loop is the idiom there, not a failure of taste.
+Find a loop in the generated code that searches for an element, tests membership, or removes elements, and replace it with `slices.Contains`, `slices.IndexFunc`, `slices.ContainsFunc`, or `slices.DeleteFunc` from the standard library. Leave the loops that transform or accumulate alone: Go has no `map` or `grep` over slices, and the explicit loop is the idiom there, not a failure of taste. If no loop in this program is doing one of those three jobs, say so in a comment and move on; recognising that is the exercise.
 
 Done when: The program compiles, `go vet ./...` is silent, and running it against the same input produces byte-identical output (`go run . > after.txt` and `diff` it against the output you saved first). The file is shorter than it was.
 
@@ -52,7 +52,7 @@ Run `gofmt -l .` and `go vet ./...` and fix anything they report. Then add a pac
 
 Done when: `gofmt -l .` prints nothing, `go vet ./...` prints nothing, and `go doc .` shows a sentence that would be useful to someone who has never seen this program.
 
-Lessons: [Capitalisation is the entire privacy system](concepts/packages-and-exported-names.md)
+Lessons: [One binary drives everything, and gofmt ended the style wars](concepts/toolchain-gofmt-godoc.md) and [Capitalisation is the entire privacy system](concepts/packages-and-exported-names.md)
 
 ---
 

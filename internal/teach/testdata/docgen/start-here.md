@@ -24,6 +24,6 @@ You asked for a conversion and got a directory. This page says what is in it, ho
 
 ## A word on how to use the annotated program
 
-The annotated copy is not a text file with code in it. It compiles and runs, so you can edit it, break it, and see what the compiler says. That feedback loop is the fastest way into a new language, and the comments in it are placed where the surprises are rather than where prose is easy to write.
+The annotated copy is not a text file with code in it. It is the same program, so you can edit it, break it, and see what the compiler says. That feedback loop is the fastest way into a new language, and the comments in it are placed where the surprises are rather than where prose is easy to write. Each explanation appears once, at the first place it applies, so the file stays readable top to bottom.
 
 Written by perl2go 0.1.0, from your source.
