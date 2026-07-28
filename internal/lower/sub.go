@@ -236,8 +236,14 @@ func (l *Lowerer) recoverParams(s *Sub, body []ast.Stmt) ([]ir.Param, []ast.Stmt
 	}
 
 	if len(bindings) == 0 && s.VarArgs == nil && usesArgs(body) {
+		// An anonymous sub has no declaration node to point at, so the
+		// position comes out as unknown rather than as a nil dereference.
+		var at ast.Node
+		if s.Decl != nil {
+			at = s.Decl
+		}
 		s.Variadic = true
-		s.VarArgs = l.declareNamed("args@"+s.Name, '@', "args", KindParam, s.Decl)
+		s.VarArgs = l.declareNamed("args@"+s.Name, '@', "args", KindParam, at)
 	}
 
 	s.Params = bindings
@@ -255,10 +261,16 @@ func (l *Lowerer) recoverParams(s *Sub, body []ast.Stmt) ([]ir.Param, []ast.Stmt
 // addImplicitReturn makes Perl's "the last expression is the return value"
 // explicit, which Go requires.
 func (l *Lowerer) addImplicitReturn(s *Sub, fn *ir.FuncDecl) {
-	if len(fn.Body.Stmts) == 0 {
+	l.implicitReturn(s, fn.Body)
+}
+
+// implicitReturn is addImplicitReturn over a block, so that a function literal
+// gets the same treatment a declared function does.
+func (l *Lowerer) implicitReturn(s *Sub, block *ir.Block) {
+	if block == nil || len(block.Stmts) == 0 {
 		return
 	}
-	last := fn.Body.Stmts[len(fn.Body.Stmts)-1]
+	last := block.Stmts[len(block.Stmts)-1]
 	es, ok := last.(*ir.ExprStmt)
 	if !ok {
 		return
@@ -280,7 +292,7 @@ func (l *Lowerer) addImplicitReturn(s *Sub, fn *ir.FuncDecl) {
 	l.note(ret, "A Perl sub with no return statement yields the value of the last "+
 		"expression it evaluated. Go requires the return to be written, which is "+
 		"one fewer thing to remember when reading the code.")
-	fn.Body.Stmts[len(fn.Body.Stmts)-1] = ret
+	block.Stmts[len(block.Stmts)-1] = ret
 }
 
 // terminatingCall reports whether an expression is a call that never comes
@@ -410,8 +422,12 @@ func usesArgs(body []ast.Stmt) bool {
 
 // settleSubs decides each sub's Go signature from the returns seen on pass 1.
 func (l *Lowerer) settleSubs() {
+	all := make([]*Sub, 0, len(l.subOrd)+len(l.anonOrd))
 	for _, name := range l.subOrd {
-		s := l.subs[name]
+		all = append(all, l.subs[name])
+	}
+	all = append(all, l.anonOrd...)
+	for _, s := range all {
 		shapes := s.ResultEvidence
 		if len(shapes) == 0 {
 			s.Results = nil

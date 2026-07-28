@@ -291,17 +291,44 @@ func (l *Lowerer) refGen(n *ast.RefGen) ir.Expr {
 }
 
 // anonSub lowers `sub { ... }`.
+//
+// An anonymous sub gets the same treatment a named one does: its parameters are
+// recovered from the `my (...) = @_` at the top, and its result types are
+// gathered on the first pass and committed to on the second. Without that a
+// function literal has no signature worth the name, and everything that holds
+// one, a variable, a map of callbacks, a returned closure, ends up as `any`.
 func (l *Lowerer) anonSub(n *ast.AnonSub) ir.Expr {
-	saved := l.scope
-	l.scope = newScope(saved)
-	body := &ir.Block{Stmts: l.stmts(n.Body)}
-	l.scope = saved
+	s := l.anonSubs[n]
+	if s == nil {
+		s = &Sub{Name: "anon@" + itoa(posLine(n)), Line: posLine(n)}
+		s.Go = s.Name
+		if l.anonSubs == nil {
+			l.anonSubs = map[*ast.AnonSub]*Sub{}
+		}
+		l.anonSubs[n] = s
+		l.anonOrd = append(l.anonOrd, s)
+	}
 
-	out := funcLit(nil, nil, body)
+	savedScope, savedSub := l.scope, l.curSub
+	l.scope = newScope(savedScope)
+	l.scope.fn = s
+	l.curSub = s
+	params, rest := l.recoverParams(s, n.Body)
+	body := l.markUnused(&ir.Block{Stmts: l.stmts(rest)})
+	l.implicitReturn(s, body)
+	l.scope, l.curSub = savedScope, savedSub
+
+	var results []*ir.Type
+	if l.pass == 2 {
+		results = s.Results
+	}
+	out := funcLit(params, results, body)
 	l.note(out, "An anonymous sub becomes a Go function literal. It closes over the "+
 		"variables in scope exactly as Perl's does, and it is an ordinary value: it "+
-		"can be stored in a variable, put in a map, or passed to another function.",
-		"closures-and-loop-capture")
+		"can be stored in a variable, put in a map, or passed to another function. "+
+		"Unlike Perl's, it has a written-down signature, so the compiler checks every "+
+		"call to it.",
+		"closures-and-loop-capture", "closures-capture-variables")
 	return out
 }
 
@@ -309,9 +336,51 @@ func (l *Lowerer) anonSub(n *ast.AnonSub) ir.Expr {
 func (l *Lowerer) callRef(n *ast.FuncCallRef) ir.Expr {
 	fn := l.expr(n.Ref)
 	args, _ := l.listParts(n.Args)
-	out := ir.CallOf(fn, ir.TAny, args...)
+	t := typeOrAny(fn)
+
+	if t.Kind != ir.Func {
+		// The value's type did not resolve to a function, so Go needs to be
+		// told what it is before it can be called.
+		want := ir.FuncOf(argTypes(args), []*ir.Type{ir.TAny})
+		asserted := &ir.TypeAssert{X: fn, Assert: want}
+		asserted.T = want
+		fn = asserted
+		l.approximate(n, "P2G7030", "call through a code reference",
+			"the reference is asserted to a function type before it is called",
+			"Nothing in the file pinned down what this reference points at, so it is "+
+				"held in an any. Go will not call an any, so the generated code asserts "+
+				"it to a function type first, and that assertion panics if the value "+
+				"turns out to be something else.",
+			"Give the variable a function type where it is created, so the compiler "+
+				"can check the calls instead of the run time.",
+			"type-assertions-and-switches")
+		out := ir.CallOf(fn, ir.TAny, args...)
+		l.note(out, "A type assertion says what the value in the interface really is. "+
+			"The two-result form, v, ok := x.(T), asks instead of insisting, and is "+
+			"what to use where the answer is not certain.",
+			"type-assertions-and-switches")
+		return out
+	}
+
+	ret := ir.Expr(nil)
+	_ = ret
+	result := ir.TVoid
+	if len(t.Results) == 1 {
+		result = t.Results[0]
+	}
+	out := ir.CallOf(fn, result, args...)
 	l.note(out, "Calling through a code reference needs no arrow in Go: a variable "+
 		"holding a function is called like any other function.")
+	return out
+}
+
+// argTypes reads the types of an argument list, for building the function type
+// a code reference has to be asserted to.
+func argTypes(args []ir.Expr) []*ir.Type {
+	out := make([]*ir.Type, len(args))
+	for i, a := range args {
+		out[i] = typeOrAny(a)
+	}
 	return out
 }
 

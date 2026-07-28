@@ -65,6 +65,11 @@ type Lowerer struct {
 	subs   map[string]*Sub
 	subOrd []string
 
+	// anonSubs records the synthetic Sub behind each `sub { ... }`, keyed by
+	// the AST node so both passes agree about which one they are looking at.
+	anonSubs map[*ast.AnonSub]*Sub
+	anonOrd  []*Sub
+
 	// decls maps a declaration site to its binding so the second pass
 	// reuses exactly the records the first pass built.
 	decls map[ast.Node]*Binding
@@ -588,11 +593,19 @@ func (l *Lowerer) resolveTypes() {
 	}
 	l.settleSubs()
 	for _, name := range l.subOrd {
-		s := l.subs[name]
-		for i, r := range s.Results {
-			if r == nil {
-				s.Results[i] = ir.TAny
-			}
+		fillResults(l.subs[name])
+	}
+	for _, s := range l.anonOrd {
+		fillResults(s)
+	}
+}
+
+// fillResults replaces a result type nothing pinned down with the dynamic
+// fallback, since a signature has to be written down in full.
+func fillResults(s *Sub) {
+	for i, r := range s.Results {
+		if r == nil {
+			s.Results[i] = ir.TAny
 		}
 	}
 }

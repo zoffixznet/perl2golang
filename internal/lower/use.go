@@ -146,7 +146,16 @@ func (l *Lowerer) defineConstant(n *ast.Use, nameExpr, valueExpr ast.Expr) {
 	if !ok {
 		return
 	}
-	b := l.lookup('$', name, n)
+	// The binding is registered so that uses of the name resolve, but it is
+	// deliberately kept out of the package-variable list: it is emitted as a
+	// const, and declaring it twice would not compile.
+	key := varKey('$', name)
+	b, ok := l.globalSeen[key]
+	if !ok {
+		b = &Binding{Perl: key, Sigil: '$', Kind: KindGlobal, Line: posLine(n)}
+		b.Go = l.names.take(goName(name))
+		l.globalSeen[key] = b
+	}
 	value := l.scalar(valueExpr)
 	l.observe(b, typeOrAny(value))
 	if l.pass == 2 {
