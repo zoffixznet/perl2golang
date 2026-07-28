@@ -7,7 +7,7 @@ severity: info
 prerequisites: [table-driven-tests]
 ---
 
-Everything Perl needs a module for, Go builds into `go test`. Benchmarks are functions in the same `_test.go` files as your tests, coverage is a flag, fuzzing is another kind of test function, and CPU and memory profiles come out of the same command and feed a viewer that ships with the toolchain. Nothing to install, nothing to configure, and the same numbers on your machine and in CI.
+Everything Perl needs a module for, Go builds into `go test`. Benchmarks are functions in the same `_test.go` files as your tests, coverage is a flag, fuzzing is another kind of test function, and CPU and memory profiles come out of the same command and feed a viewer that ships with the toolchain. Nothing to install and nothing to configure.
 
 The thing to internalise is that a benchmark is not "run it once and time it". The framework runs your loop repeatedly, increasing the iteration count until the measurement is long enough to mean something, and reports the per-operation cost. Your job is to write the loop and to make sure the compiler cannot delete the work you are trying to measure.
 
@@ -76,7 +76,7 @@ $ go test -bench=. -benchmem -run '^$'
 goos: linux
 goarch: amd64
 pkg: example/hostport
-cpu: <whatever this machine reports>
+cpu: <your processor, as the runtime reports it>
 BenchmarkSplit-24                            	400731218	         2.790 ns/op	       0 B/op	       0 allocs/op
 BenchmarkSplitTable/db.internal:5432-24      	356062050	         2.908 ns/op	       0 B/op	       0 allocs/op
 BenchmarkSplitTable/:8080-24                 	390024504	         2.813 ns/op	       0 B/op	       0 allocs/op

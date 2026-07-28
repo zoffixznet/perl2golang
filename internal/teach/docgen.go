@@ -984,15 +984,24 @@ func (b *bundle) exerciseTarget() (string, bool) {
 	return "", false
 }
 
-// firstTrap returns the first trap-severity lesson in the bundle, in reading
-// order, or nil when there is none.
+// firstTrap returns the trap-severity lesson an exercise should send the
+// reader at: one the developer's own code raised if there is one, since the
+// task ends by finding the same shape in their file, and otherwise the first
+// trap in reading order.
 func (b *bundle) firstTrap() *Concept {
+	var fallback *Concept
 	for _, c := range b.concepts {
-		if c.Severity == SeverityTrap {
+		if c.Severity != SeverityTrap {
+			continue
+		}
+		if b.fromCode[c.ID] {
 			return c
 		}
+		if fallback == nil {
+			fallback = c
+		}
 	}
-	return nil
+	return fallback
 }
 
 // firstUnfinished returns the first refusal, or the first approximation when
