@@ -255,7 +255,7 @@ func TestDefaultJobsAreTheStructuralOnes(t *testing.T) {
 			t.Errorf("%s is not on by default, and the measured evidence says it should be", want)
 		}
 	}
-	for _, unwanted := range []Job{JobWalkthrough, JobHandoffHints, JobIdiomReview} {
+	for _, unwanted := range []Job{JobWalkthrough, JobIdiomReview} {
 		if jobs.Has(unwanted) {
 			t.Errorf("%s is on by default, and it should have to be asked for", unwanted)
 		}
@@ -277,8 +277,8 @@ func TestParseJobs(t *testing.T) {
 		{in: "default", want: "rename,shapes,comments"},
 		{in: "rename", want: "rename"},
 		{in: "code", want: "rename,shapes,comments,idioms"},
-		{in: "docs", want: "walkthrough,hints"},
-		{in: "all", want: "rename,shapes,comments,idioms,walkthrough,hints"},
+		{in: "docs", want: "walkthrough"},
+		{in: "all", want: "rename,shapes,comments,idioms,walkthrough"},
 		{in: "none", want: ""},
 		{in: "comments,rename", want: "rename,comments"},
 		{in: "nonsense", bad: true},

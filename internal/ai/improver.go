@@ -67,6 +67,9 @@ const helpersFile = "helpers.go"
 // there is nothing to do. An error means the model was asked and its answer was
 // not usable, which the converter turns into a note in the report.
 func (im *Improver) Improve(ctx context.Context, a convert.Artifact) ([]byte, error) {
+	if a.Kind == convert.ArtifactMarkdown {
+		return im.improveDoc(ctx, a)
+	}
 	if a.Kind != convert.ArtifactGo {
 		return a.Content, nil
 	}
@@ -79,10 +82,109 @@ func (im *Improver) Improve(ctx context.Context, a convert.Artifact) ([]byte, er
 	if err != nil {
 		return a.Content, err
 	}
-	if decisions.Empty() {
+	content := a.Content
+	if !decisions.Empty() {
+		if content, err = im.gated(ctx, a, decisions); err != nil {
+			return a.Content, err
+		}
+	}
+	return im.reviewed(ctx, a, content)
+}
+
+// reviewed runs the opt-in idiom review, which is the one job here that has the
+// model write Go rather than name things.
+//
+// It touches the clean rendering only. An idiom rewrite is a splice quoted from
+// one particular file, and the annotated rendering is the same program with
+// several times as many lines around it, so a finding from one does not fit the
+// other. Names are shared between the two renderings because a name is a fact
+// about the program; a rewrite is a fact about one file's text.
+func (im *Improver) reviewed(ctx context.Context, a convert.Artifact, content []byte) ([]byte, error) {
+	if !im.client.Jobs().Has(JobIdiomReview) || strings.Contains(a.Name, "/") {
+		return content, nil
+	}
+	res, err := im.client.ReviewCode(ctx, CodeRequest{
+		Path:       a.Name,
+		Source:     string(content),
+		PerlSource: string(a.Perl),
+	})
+	if err != nil {
+		im.noteFailure(a, err)
+		return content, err
+	}
+	if !res.Changed {
+		return content, nil
+	}
+	if err := im.compileGate(ctx, a, string(content), res.Source); err != nil {
+		return content, err
+	}
+	return []byte(res.Source), nil
+}
+
+// walkthroughDoc is the one generated document a model is ever allowed near.
+//
+// It is the per-file tour, written from the converter's own recorded reasoning
+// about the user's specific code, which is the closest thing here to "write up
+// the given rationale". Everything else in the bundle is either curated
+// knowledge base content, reused across every conversion and far too costly to
+// get subtly wrong, or the report, which is the one artefact that has to be
+// exactly true.
+const walkthroughDoc = "docs/walkthrough.md"
+
+// modelLabel is appended to any document a model rewrote. A reader has to be
+// able to tell which page is curated and which is not, and there is no gate
+// here that can prove a sentence about code is true.
+const modelLabel = "\n---\n\nThe prose on this page was rewritten by a local model from the material " +
+	"above it. It is checked for quoting code that exists and naming packages that exist, " +
+	"and it is not checked for being right. The lessons under `concepts/` and the " +
+	"conversion report were not touched.\n"
+
+// improveDoc runs the opt-in prose job, which is off unless it was asked for
+// by name and touches exactly one document.
+func (im *Improver) improveDoc(ctx context.Context, a convert.Artifact) ([]byte, error) {
+	if !im.client.Jobs().Has(JobWalkthrough) || a.Name != walkthroughDoc {
 		return a.Content, nil
 	}
-	return im.gated(ctx, a, decisions)
+	im.mu.Lock()
+	failed := im.failed[a.Name]
+	im.mu.Unlock()
+	if failed {
+		return a.Content, nil
+	}
+
+	improved, err := im.client.EnrichDoc(ctx, DocRequest{
+		Path:        a.Name,
+		Document:    string(a.Content),
+		PerlSource:  string(a.Perl),
+		MustMention: mustMention(a.Report),
+	})
+	if err != nil {
+		im.mu.Lock()
+		im.failed[a.Name] = true
+		im.mu.Unlock()
+		im.noteFailure(a, err)
+		return a.Content, err
+	}
+	if improved == string(a.Content) {
+		return a.Content, nil
+	}
+	return []byte(improved + modelLabel), nil
+}
+
+// mustMention is what the rewritten prose is not allowed to drop: the
+// constructs the converter refused. Prose that quietly loses one of them
+// implies a completeness that does not hold.
+func mustMention(r *report.Report) []string {
+	if r == nil {
+		return nil
+	}
+	var out []string
+	for _, e := range r.BySeverity(report.Refuse) {
+		if e.Construct != "" && len(out) < 4 {
+			out = append(out, e.Construct)
+		}
+	}
+	return out
 }
 
 // decisionsFor returns the naming decisions for one program file, asking the

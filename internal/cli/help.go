@@ -112,9 +112,9 @@ func convertHelp() string {
 	      --ai-timeout D   how long one request may take (default: 2m)
 	      --ai-jobs LIST   which jobs to run. Default rename,shapes,comments: the
 	                       three that only ever produce names. Also accepts idioms,
-	                       walkthrough and hints, the group names code and docs,
-	                       all, and none. The prose jobs are experimental and say
-	                       so when you turn them on.
+	                       walkthrough, the group names code and docs, all,
+	                       and none. The idioms and walkthrough jobs are
+	                       experimental and say so when you turn them on.
 
 	                       Anything the model produces has to parse, compile and
 	                       pass go vet alongside the rest of its package before it

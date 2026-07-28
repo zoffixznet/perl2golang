@@ -24,19 +24,18 @@ const (
 
 // The fine-grained jobs. Each belongs to exactly one group.
 const (
-	JobRename       Job = "rename"      // better names for weak local names
-	JobShapeNaming  Job = "shapes"      // type and field names for inferred shapes
-	JobDocComments  Job = "comments"    // doc comments for exported identifiers
-	JobIdiomReview  Job = "idioms"      // findings against the antipattern checklist
-	JobWalkthrough  Job = "walkthrough" // per-file tutorial prose
-	JobHandoffHints Job = "hints"       // what to do about each refusal or TODO
+	JobRename      Job = "rename"      // better names for weak local names
+	JobShapeNaming Job = "shapes"      // type and field names for inferred shapes
+	JobDocComments Job = "comments"    // doc comments for exported identifiers
+	JobIdiomReview Job = "idioms"      // findings against the antipattern checklist
+	JobWalkthrough Job = "walkthrough" // per-file tutorial prose
 )
 
 // codeJobs and docJobs are the members of the two groups, in the order they
 // appear in a normalised [JobSet].
 var (
 	codeJobs = []Job{JobRename, JobShapeNaming, JobDocComments, JobIdiomReview}
-	docJobs  = []Job{JobWalkthrough, JobHandoffHints}
+	docJobs  = []Job{JobWalkthrough}
 )
 
 // allJobs is every fine-grained job, in canonical order.
@@ -49,17 +48,18 @@ var allJobs = slices.Concat(codeJobs, docJobs)
 // outcome is a mediocre name. Measured on a 7B code model they answer in about
 // a second each and their JSON needs no repair.
 //
-// The other three are deliberately absent. The idiom review has the model
-// author real Go, and the two prose jobs have it write teaching text, which is
-// where a model this size stops being reliable: it writes thinner explanations
-// than the lessons already in the knowledge base and will name a package
-// function that does not exist. Neither is removed, because both are useful to
-// someone who wants to look at the suggestions; both have to be asked for.
+// The other two are deliberately absent. The idiom review has the model author
+// real Go rather than a name, and the walkthrough job has it write teaching
+// text, which is where a model this size stops being reliable: it writes
+// thinner explanations than the lessons already in the knowledge base and will
+// name a package function that does not exist. Neither is removed, because both
+// are useful to someone willing to read what comes out; both have to be asked
+// for.
 var defaultJobs = []Job{JobRename, JobShapeNaming, JobDocComments}
 
 // proseJobs are the jobs whose product is English rather than a name. They are
 // opt-in and labelled wherever they appear.
-var proseJobs = []Job{JobWalkthrough, JobHandoffHints}
+var proseJobs = []Job{JobWalkthrough}
 
 // Group reports which group a fine-grained job belongs to. It returns the
 // group name unchanged for a group name, and the empty string for anything

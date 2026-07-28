@@ -86,8 +86,8 @@ What the model is asked for is narrow on purpose:
 - names for struct types and their fields
 - doc comments on declarations that have none
 
-That is all. The model returns names, never code, and this tool does the
-rewriting. Every name has to be a valid Go identifier in the surrounding style,
+That is all, by default. The model returns names, never code, and this tool does
+the rewriting. Every name has to be a valid Go identifier in the surrounding style,
 must not collide with anything already in the file, and must leave the file
 parsing, compiling and passing `go vet` alongside the rest of its package. A
 name that fails any of those is dropped and the converter's own name is kept.
@@ -256,14 +256,16 @@ want in a script.
 
 These are real and current, not oversights:
 
-- **The optional local model names things and nothing else.** It does not write
-  the tutorials, and it will not be asked to: measured against a 7B model, the
-  explanations it writes are thinner than the ones in the knowledge base and it
-  will occasionally state something false about your code with complete
-  confidence. Naming is a job where the worst outcome is a mediocre name, and
-  every name is checked before it is used. The prose jobs exist behind
-  `--ai-jobs`, they are labelled experimental, and they say so when you turn
-  them on.
+- **By default the optional local model names things and nothing else.** It is
+  not asked to write the tutorials, and that is a measured decision rather than
+  caution: a 7B model writes thinner explanations than the ones in the knowledge
+  base, and it will state something false about your own code with complete
+  confidence. Naming is a job whose worst outcome is a mediocre name, and every
+  name is checked before it is used. The two jobs that go further, an idiom
+  review that has the model rewrite Go and a rewrite of the walkthrough
+  document, are reachable through `--ai-jobs`, are labelled experimental, and
+  say so when you turn them on. The concept lessons and the conversion report
+  are never touched by a model at all.
 - **The session's line editing needs a terminal that supports raw mode**, which
   covers Linux, macOS and the BSDs. Anywhere else, and inside an environment
   that hands the program a pipe rather than a terminal, the session falls back

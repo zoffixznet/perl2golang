@@ -321,3 +321,41 @@ func main() {
 	fmt.Printf("%d words\n", c)
 }
 `
+
+// The prose job is off unless it is asked for by name, and it touches exactly
+// one document when it is.
+func TestImproverProseJobIsOptIn(t *testing.T) {
+	m := newMockRuntime(t, "# The walkthrough\n\nSomething about the code that was shown.\n")
+	doc := convert.Artifact{
+		Kind:    convert.ArtifactMarkdown,
+		Name:    "docs/walkthrough.md",
+		Content: []byte("# The walkthrough\n\nThe deterministic tour of this file.\n"),
+		Perl:    []byte("print \"hi\\n\";\n"),
+		Report:  &report.Report{},
+	}
+
+	off := NewImprover(testClient(t, m, DefaultJobs()))
+	got, err := off.Improve(context.Background(), doc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(got) != string(doc.Content) {
+		t.Error("the walkthrough was rewritten without the job being asked for")
+	}
+	if m.callCount() != 0 {
+		t.Errorf("%d calls for a document with the prose job off, want 0", m.callCount())
+	}
+
+	// Even asked for, it stays away from the curated lessons and the report.
+	on := NewImprover(testClient(t, m, JobSet{JobWalkthrough}))
+	for _, name := range []string{"docs/concepts/map-iteration-order.md", "docs/conversion-report.md", "docs/start-here.md"} {
+		other := doc
+		other.Name = name
+		if _, err := on.Improve(context.Background(), other); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if m.callCount() != 0 {
+		t.Errorf("%d calls for the curated documents, want 0", m.callCount())
+	}
+}
