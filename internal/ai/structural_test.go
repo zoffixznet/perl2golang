@@ -66,8 +66,9 @@ func TestImproveStructureMakesOneCall(t *testing.T) {
 	}
 }
 
-// The spike's headline finding was that a real JSON Schema in the format
-// parameter works first time. That contract has to actually go on the wire.
+// A real JSON Schema in the format parameter is what makes the answer parse
+// first time, so that contract has to actually go on the wire rather than
+// being a bare request for JSON.
 func TestImproveStructureSendsASchema(t *testing.T) {
 	m := newMockRuntime(t, goodAnswer)
 	c := testClient(t, m, DefaultJobs())
