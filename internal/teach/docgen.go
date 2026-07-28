@@ -725,7 +725,14 @@ func (b *bundle) walkthrough() string {
 			// empty section, and better than repeating the paragraphs.
 			m.p("No new ground in this region: every construct in it is one the sections above already explain.")
 		}
-		if links := b.conceptLinks(firstMentions(seg.Concepts, linked, maxRegionLessons), fileWalk); links != "" {
+		// The converter's own concepts come from the Perl side. The packages
+		// the region ended up calling are a second source, and the one that
+		// covers a region whose Perl was unremarkable and whose Go is not.
+		ids := slices.Clone(seg.Concepts)
+		for _, u := range stdlibConcepts(seg.Go) {
+			ids = append(ids, u.concept)
+		}
+		if links := b.conceptLinks(firstMentions(ids, linked, maxRegionLessons), fileWalk); links != "" {
 			m.p("Lessons this region introduces: %s", links)
 		}
 	}

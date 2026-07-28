@@ -92,7 +92,7 @@ for _, k := range keys {
 
 The one-liner became six lines, and the extra lines are the ones that were always there implicitly: collecting the keys, choosing an order for them, then printing. The comparison function returns a bool meaning "i sorts before j" rather than the three-way result of `<=>`, so a descending sort is `>` instead of a reversed pair of operands.
 
-Lessons this region introduces: [Sorting is a function call, and the default is numeric-aware](concepts/sort-slice.md), [Map order is randomised per loop, on purpose](concepts/map-iteration-order.md), and [range gives you the index first, and the element is a copy](concepts/range-is-not-foreach.md)
+Lessons this region introduces: [Sorting is a function call, and the default is numeric-aware](concepts/sort-slice.md), [Map order is randomised per loop, on purpose](concepts/map-iteration-order.md), [range gives you the index first, and the element is a copy](concepts/range-is-not-foreach.md), and [printf survives the port, but the verbs are typed now](concepts/fmt-and-verbs.md)
 
 ---
 
