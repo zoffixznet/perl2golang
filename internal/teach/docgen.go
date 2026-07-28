@@ -1017,13 +1017,17 @@ func (b *bundle) firstTrap() *Concept {
 // firstUnfinished returns the first refusal, or the first approximation when
 // nothing was refused.
 func (b *bundle) firstUnfinished() (report.Entry, bool) {
+	// An entry with no position and no source is about the conversion as a
+	// whole rather than about a construct, so there is nothing in the file for
+	// the reader to go and finish.
+	located := func(e report.Entry) bool { return e.Line > 0 || strings.TrimSpace(e.Perl) != "" }
 	for _, e := range b.entries {
-		if e.Severity == report.Refuse {
+		if e.Severity == report.Refuse && located(e) {
 			return e, true
 		}
 	}
 	for _, e := range b.entries {
-		if e.Severity == report.Warn {
+		if e.Severity == report.Warn && located(e) {
 			return e, true
 		}
 	}
