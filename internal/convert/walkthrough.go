@@ -236,22 +236,76 @@ func titleFor(d ir.Decl) string {
 	return "Declarations"
 }
 
-// defaultTitle names a region that had no comment above it.
+// defaultTitle names a region that had no comment above it. It reads the
+// whole group rather than its first statement, because "Lines 21 to 30" tells
+// a reader nothing they cannot see, while the shape of what is in the region
+// tells them whether to stop here.
 func defaultTitle(group []ir.Stmt, from, to int) string {
-	if len(group) > 0 {
-		switch group[0].(type) {
+	var loops, branches, output, assigns int
+	for _, st := range group {
+		switch s := st.(type) {
 		case *ir.For, *ir.Range:
-			return "The loop at line " + itoa(from)
+			loops++
 		case *ir.If:
-			return "The branch at line " + itoa(from)
+			branches++
 		case *ir.Return:
-			return "Returning at line " + itoa(from)
+			// A region that only returns is named for that below.
+		case *ir.Assign, *ir.DeclStmt:
+			assigns++
+		case *ir.ExprStmt:
+			if isOutputCall(s.X) {
+				output++
+			}
 		}
 	}
-	if from == to {
-		return "Line " + itoa(from)
+
+	span := "line " + itoa(from)
+	if to > from {
+		span = "lines " + itoa(from) + " to " + itoa(to)
 	}
-	return "Lines " + itoa(from) + " to " + itoa(to)
+
+	switch {
+	case loops == 1:
+		return "The loop at " + span
+	case loops > 1:
+		return "The loops at " + span
+	case output > 0 && output == len(group):
+		return "The output at " + span
+	case branches == 1:
+		return "The branch at " + span
+	case branches > 1:
+		return "The branches at " + span
+	case len(group) == 1:
+		if _, ok := group[0].(*ir.Return); ok {
+			return "Returning at " + span
+		}
+	case assigns > 0 && assigns == len(group):
+		return "Setting up at " + span
+	}
+	return capitaliseFirst(span)
+}
+
+// isOutputCall reports whether an expression is a call into fmt, which is what
+// every print, printf and say becomes.
+func isOutputCall(x ir.Expr) bool {
+	call, ok := x.(*ir.Call)
+	if !ok {
+		return false
+	}
+	sel, ok := call.Fun.(*ir.Selector)
+	if !ok {
+		return false
+	}
+	pkg, ok := sel.X.(*ir.Ident)
+	return ok && pkg.Name == "fmt"
+}
+
+// capitaliseFirst upper-cases the first letter of a heading.
+func capitaliseFirst(s string) string {
+	if s == "" {
+		return s
+	}
+	return strings.ToUpper(s[:1]) + s[1:]
 }
 
 // collectNotes walks a set of IR nodes and gathers their explanations in
