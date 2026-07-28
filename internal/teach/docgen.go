@@ -956,7 +956,7 @@ func (b *bundle) defaultExercises() []Exercise {
 		}
 		task += " Implement it by hand in the generated code and delete the TODO that marks it."
 		out = append(out, Exercise{
-			Title:    "Finish " + construct,
+			Title:    unfinishedTitle(e.Severity, construct),
 			Task:     task,
 			Success:  "The TODO is gone, the program compiles, and you have a test that fails against the version without your fix. If you conclude the original behaviour was not worth reproducing, write that decision down in a comment; that is a valid answer, and an undocumented one is not.",
 			Concepts: e.Concepts,
@@ -971,6 +971,16 @@ func (b *bundle) defaultExercises() []Exercise {
 	})
 
 	return out
+}
+
+// unfinishedTitle names the task for a construct the converter did not
+// finish. A refusal left a hole to fill; an approximation left something that
+// runs and is wrong in a known way, which is a different verb.
+func unfinishedTitle(sev report.Severity, construct string) string {
+	if sev == report.Refuse {
+		return "Finish " + construct
+	}
+	return "Fix " + construct
 }
 
 // exerciseTarget picks the function an exercise should name: the first
