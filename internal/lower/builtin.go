@@ -620,29 +620,66 @@ func (l *Lowerer) pushCall(n *ast.Call) []ir.Stmt {
 	if target == nil {
 		target = l.expr(args[0])
 	}
-	elem := elemOf(typeOrAny(target))
+	// Pushing onto something the converter only knows as `any`, which is what
+	// a nested structure usually leaves behind, needs the assertion before
+	// append will look at it.
+	source := l.asSlice(target, args[0])
+	elem := elemOf(typeOrAny(source))
+
+	b := l.bindingOfTarget(args[0])
 	var vals []ir.Expr
+	var spread ir.Expr
 	for _, a := range args[1:] {
 		x := l.expr(a)
 		if x == nil {
 			continue
 		}
-		if typeOrAny(x).Kind == ir.Slice && elem.Kind != ir.Slice {
-			// Perl flattens an array into the push; Go spreads it with ... .
-			c := appendTo(target, x)
-			c.Ellipsis = true
-			st := assign("=", []ir.Expr{target}, []ir.Expr{c})
-			l.setProv(st, n)
-			return []ir.Stmt{st}
+		xt := typeOrAny(x)
+		if xt.Kind == ir.Slice && elem.Kind != ir.Slice {
+			// Perl flattens an array into the push, so the array contributes
+			// its elements.
+			l.observeElem(b, elemOf(xt))
+			spread = x
+			continue
 		}
+		l.observeElem(b, xt)
 		vals = append(vals, l.assignable(x, elem, a))
 	}
-	if b := l.bindingOfTarget(args[0]); b != nil {
-		for _, a := range args[1:] {
-			l.observeElem(b, typeOrAny(l.expr(a)))
+
+	var st ir.Stmt
+	switch {
+	case spread != nil && len(vals) == 0 && elemOf(typeOrAny(spread)).Equal(elem):
+		c := appendTo(source, spread)
+		c.Ellipsis = true
+		st = assign("=", []ir.Expr{target}, []ir.Expr{c})
+	case spread != nil:
+		// The two element types do not match, so the values are appended one
+		// at a time: Go spreads a slice only into a matching element type.
+		item := l.tmp("item")
+		loop := &ir.Range{
+			Key:    ir.NewIdent("_", ir.TInt),
+			Value:  ir.NewIdent(item, elemOf(typeOrAny(spread))),
+			X:      spread,
+			Define: true,
+			Body: &ir.Block{Stmts: []ir.Stmt{
+				assign("=", []ir.Expr{target},
+					[]ir.Expr{appendTo(source, l.assignable(ir.NewIdent(item, elemOf(typeOrAny(spread))), elem, nil))}),
+			}},
 		}
+		l.note(loop, "Go spreads a slice into append only when the element types "+
+			"match. These do not, so the values go in one at a time, which is also "+
+			"where the conversion between them happens.",
+			"slices-not-arrays")
+		if len(vals) > 0 {
+			out := []ir.Stmt{loop, assign("=", []ir.Expr{target}, []ir.Expr{appendTo(source, vals...)})}
+			l.setProv(loop, n)
+			return out
+		}
+		l.setProv(loop, n)
+		return []ir.Stmt{loop}
+	default:
+		st = assign("=", []ir.Expr{target}, []ir.Expr{appendTo(source, vals...)})
 	}
-	st := assign("=", []ir.Expr{target}, []ir.Expr{appendTo(target, vals...)})
 	l.setProv(st, n)
 	l.note(st, "append returns a new slice header rather than modifying the old one, "+
 		"so the result has to be assigned back. Forgetting that assignment is the "+
