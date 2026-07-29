@@ -3,7 +3,9 @@ package ai
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -147,14 +149,52 @@ func Probe(modelStorePath string) (Hardware, error) {
 
 // DefaultModelStore returns where the local runtime keeps its models, honouring
 // the runtime's own environment variable.
+//
+// There are two plausible locations and picking the wrong one reports a
+// directory nothing is reading. A runtime installed as a system service runs
+// under its own account and keeps models under /usr/share; a runtime started by
+// hand keeps them under the invoking user's home. Both can exist on the same
+// machine, because pulling a model before installing the service leaves the
+// user copy behind, so existence alone does not settle it. A populated store is
+// the better signal: whichever one actually holds manifests is the one in use,
+// and the service copy wins a tie because a registered service is what serves
+// the endpoint.
 func DefaultModelStore() string {
 	if dir := strings.TrimSpace(os.Getenv("OLLAMA_MODELS")); dir != "" {
 		return dir
 	}
+
+	const systemStore = "/usr/share/ollama/.ollama/models"
+	userStore := ""
 	if home, err := os.UserHomeDir(); err == nil && home != "" {
-		return filepath.Join(home, ".ollama", "models")
+		userStore = filepath.Join(home, ".ollama", "models")
 	}
-	return "/usr/share/ollama/.ollama/models"
+
+	for _, dir := range []string{systemStore, userStore} {
+		if dir == "" {
+			continue
+		}
+		if entries, err := os.ReadDir(filepath.Join(dir, "manifests")); err == nil && len(entries) > 0 {
+			return dir
+		}
+	}
+	for _, dir := range []string{systemStore, userStore} {
+		if dir == "" {
+			continue
+		}
+		if info, err := os.Stat(dir); err == nil && info.IsDir() {
+			return dir
+		} else if errors.Is(err, fs.ErrPermission) {
+			// Being refused is itself the answer. The path exists and belongs to
+			// another account, which is exactly what a service-managed store
+			// looks like from an ordinary user's shell.
+			return dir
+		}
+	}
+	if userStore != "" {
+		return userStore
+	}
+	return systemStore
 }
 
 // probeCPU reads the model name and physical core count. The flags line in
