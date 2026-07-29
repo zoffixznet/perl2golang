@@ -289,7 +289,7 @@ func (l *Lowerer) listParts(es []ast.Expr) ([]ir.Expr, *ir.Type) {
 			return
 		}
 		out = append(out, x)
-		if xt := x.Type(); xt != nil && xt.Kind == ir.Slice {
+		if xt := x.Type(); xt != nil && xt.Kind == ir.Slice && flattensInList(e) {
 			t = join(t, xt.Elem)
 			return
 		}
@@ -302,6 +302,29 @@ func (l *Lowerer) listParts(es []ast.Expr) ([]ir.Expr, *ir.Type) {
 		t = ir.TAny
 	}
 	return out, t
+}
+
+// flattensInList reports whether an expression contributes its elements to a
+// surrounding list rather than itself.
+//
+// This is the difference between `(1, @rest)`, which is one flat list, and
+// `(1, [@rest])`, which is a list of two things, the second being a reference.
+// Everything that builds a reference keeps its contents to itself; everything
+// else in list context spills.
+func flattensInList(e ast.Expr) bool {
+	switch n := e.(type) {
+	case *ast.AnonArray, *ast.AnonHash, *ast.AnonSub, *ast.RefGen:
+		return false
+	case *ast.Index, *ast.HashIndex:
+		// An element of a container is one value, even when that value is a
+		// reference to a list.
+		return false
+	case *ast.Var:
+		return n.Sigil != '$'
+	case *ast.Deref:
+		return n.Sigil != '$'
+	}
+	return true
 }
 
 // flatten returns the elements of a Perl list expression without lowering

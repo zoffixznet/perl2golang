@@ -233,6 +233,27 @@ func (l *Lowerer) assignable(x ir.Expr, want *ir.Type, n ast.Node) ir.Expr {
 			}
 			return lit
 		}
+		// A collection of one element type is not a collection of any: Go has
+		// no conversion between them, so the values are copied across.
+		if have != nil && have.Kind == want.Kind && want.Elem != nil && want.Elem.Kind == ir.Any &&
+			have.Elem != nil && have.Elem.Kind != ir.Any && l.pass == 2 {
+			helper := hAnyList
+			if want.Kind == ir.Map {
+				helper = hAnyMap
+			}
+			out := l.helperCall(helper, want, x)
+			l.approximate(n, "P2G3020", "a typed collection stored where anything can go",
+				"the values are copied into a new collection",
+				"The destination holds values of no fixed type, and the source holds "+
+					"one particular type. Go has no conversion between the two, because "+
+					"they are laid out differently in memory, so the elements are copied "+
+					"one at a time.",
+				"Give the destination the same element type as the source. The copy then "+
+					"disappears, and so does the difference between changing one and "+
+					"changing the other.",
+				"slice-aliasing-and-copy", "static-types-and-zero-values")
+			return out
+		}
 		return x
 	}
 	return x

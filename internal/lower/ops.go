@@ -403,6 +403,22 @@ func (l *Lowerer) incDecExpr(n *ast.UnOp) ir.Expr {
 		l.emit(assign("=", []ir.Expr{target}, []ir.Expr{out}))
 		return target
 	}
+	if typeOrAny(target).Kind == ir.Any {
+		// Go steps numbers, and this one's type is not known until the program
+		// runs, so the step is written as arithmetic through a conversion.
+		op := "+"
+		if n.Op == "--" {
+			op = "-"
+		}
+		st := assign("=", []ir.Expr{target},
+			[]ir.Expr{ir.Bin(op, l.toFloat(target, n.X), ir.FloatLit("1"), ir.TFloat)})
+		l.note(st, "++ works on numbers, and this value's type did not resolve, so "+
+			"the step goes through a conversion. Giving the container a concrete "+
+			"element type turns this back into a plain ++.",
+			"explicit-conversions-no-coercion")
+		l.emit(st)
+		return target
+	}
 	l.emit(&ir.IncDec{X: target, Dec: step == "--"})
 	if n.Postfix {
 		l.approximate(n, "P2G3520", "post-increment used for its value",

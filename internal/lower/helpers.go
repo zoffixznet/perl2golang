@@ -47,4 +47,6 @@ const (
 	hIsExecutable  = "isExecutable" // -x
 	hDirNames      = "dirNames"     // opendir plus readdir, as a list of names
 	hNextMatch     = "nextMatch"    // one step of a scalar-context //g scan
+	hAnyList       = "anyList"      // []T -> []any
+	hAnyMap        = "anyMap"       // map[K]V -> map[K]any
 )

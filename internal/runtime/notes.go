@@ -24,6 +24,15 @@ var notes = map[string]string{
 		"errors.Is(err, fs.ErrNotExist) would report a directory the program " +
 		"cannot search as existing.",
 
+	"anyList": "A slice of one element type is not a slice of any, and Go " +
+		"has no conversion between them: the memory layouts differ. The copy " +
+		"is the only way across, and it means the two no longer share " +
+		"anything, which is worth knowing wherever one of them is written to.",
+
+	"anyMap": "The same as anyList for a keyed collection, and the same " +
+		"consequence: the result is a separate map, so writing to one does " +
+		"not show up in the other.",
+
 	"dirNames": "Reading a directory hands back entries rather than names, " +
 		"and it never includes \".\" or \"..\", so a filter written for those " +
 		"two silently does nothing. The order is sorted, which the system call " +
