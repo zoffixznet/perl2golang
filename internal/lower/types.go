@@ -23,10 +23,19 @@ import "perl2go/internal/ir"
 func join(a, b *ir.Type) *ir.Type {
 	// A void or invalid contribution carries no information at all, so it is
 	// treated as no observation rather than as a type to reconcile.
-	if a != nil && (a.Kind == ir.Void || a.Kind == ir.Invalid) {
+	//
+	// `any` is treated the same way, and that is the single most important
+	// rule here. It is not a type the program was seen holding: it is what
+	// the converter says when it did not work out the type of an expression.
+	// Joining it with a real observation the way a lattice would would let
+	// one unresolved expression erase everything the rest of the file said,
+	// and a nested structure has plenty of those. A variable really holding
+	// two different kinds of thing still lands on `any`, because joining two
+	// incompatible real observations is what produces it.
+	if a != nil && (a.Kind == ir.Void || a.Kind == ir.Invalid || a.Kind == ir.Any) {
 		a = nil
 	}
-	if b != nil && (b.Kind == ir.Void || b.Kind == ir.Invalid) {
+	if b != nil && (b.Kind == ir.Void || b.Kind == ir.Invalid || b.Kind == ir.Any) {
 		b = nil
 	}
 	switch {

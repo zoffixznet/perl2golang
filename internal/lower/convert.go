@@ -215,12 +215,22 @@ func (l *Lowerer) assignable(x ir.Expr, want *ir.Type, n ast.Node) ir.Expr {
 	case ir.Any:
 		return x
 	case ir.Slice, ir.Map:
-		// An empty literal has no elements to infer an element type from, so
-		// it takes the type of the variable it is going into. `@a = ()` is the
-		// common case and it must not narrow the array to a slice of nothing.
-		if lit, ok := x.(*ir.CompositeLit); ok && len(lit.Elems) == 0 {
+		// A literal is written where it stands, so it can simply be written
+		// with the type it is going into. An empty one has no elements to
+		// infer from at all, which is the `@a = ()` case; a non-empty one
+		// worked out its own element type, and the surrounding declaration is
+		// the better answer whenever the two differ.
+		// Retyping a non-empty literal is a second-pass move only: on the
+		// first pass the literal's own type is the evidence the declaration
+		// is being inferred from, and overwriting it would erase exactly the
+		// observation being collected.
+		if lit, ok := x.(*ir.CompositeLit); ok && (len(lit.Elems) == 0 || l.pass == 2) &&
+			(have == nil || have.Kind == want.Kind) {
 			lit.LitType = want
 			lit.T = want
+			for i, el := range lit.Elems {
+				lit.Elems[i] = l.assignable(el, want.Elem, n)
+			}
 			return lit
 		}
 		return x

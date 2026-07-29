@@ -508,6 +508,13 @@ func (l *Lowerer) callSub(s *Sub, n *ast.Call) ir.Expr {
 			continue
 		}
 		if s.VarArgs != nil {
+			// Perl flattens an array into the argument list, so what the tail
+			// receives is the array's elements, not the array.
+			if at := typeOrAny(a); at.Kind == ir.Slice {
+				l.observeElem(s.VarArgs, elemOf(at))
+				out = append(out, a)
+				continue
+			}
 			l.observeElem(s.VarArgs, typeOrAny(a))
 			out = append(out, l.assignable(a, elemOf(s.VarArgs.Type), nil))
 			continue

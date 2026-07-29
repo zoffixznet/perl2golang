@@ -148,6 +148,34 @@ func (l *Lowerer) sliceElements(n *ast.Slice) []ir.Expr {
 	return out
 }
 
+// countOf recognises `my $n = () = EXPR`, the idiom for counting what a list
+// expression produced.
+//
+// It works in Perl because a list assignment in scalar context yields the
+// number of values on its right. Nothing about that is obvious, which is why
+// it has a name; in Go it is len of the slice.
+func (l *Lowerer) countOf(n *ast.Assign) (ir.Expr, bool) {
+	list, ok := n.LHS.(*ast.List)
+	if !ok || len(list.Elems) != 0 || n.Op != "=" {
+		return nil, false
+	}
+	src := l.list(n.RHS)
+	name := l.tmp("produced")
+	t := typeOrAny(src)
+	if t.Kind != ir.Slice {
+		t = ir.SliceOf(t)
+		src = composite(t, nil, []ir.Expr{src})
+	}
+	decl := assign(":=", []ir.Expr{ir.NewIdent(name, t)}, []ir.Expr{src})
+	l.setProv(decl, n)
+	l.note(decl, "`my $n = () = LIST` counts the list: a list assignment in scalar "+
+		"context yields how many values were on its right. Go has len, which says the "+
+		"same thing without the trick.")
+	l.emit(decl)
+	out := lenOf(ir.NewIdent(name, t))
+	return out, true
+}
+
 // declareAssign lowers `my ... = ...`.
 func (l *Lowerer) declareAssign(my *ast.My, n *ast.Assign) []ir.Stmt {
 	if my.Keyword == "local" {
@@ -746,6 +774,9 @@ func (l *Lowerer) bindingOfTarget(e ast.Expr) *Binding {
 // The assignment is hoisted in front of the statement and the target is
 // returned in its place.
 func (l *Lowerer) assignExpr(n *ast.Assign) ir.Expr {
+	if x, ok := l.countOf(n); ok {
+		return x
+	}
 	for _, st := range l.assignStmts(n) {
 		l.emit(st)
 	}
