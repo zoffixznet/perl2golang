@@ -323,6 +323,9 @@ func (l *Lowerer) anonSub(n *ast.AnonSub) ir.Expr {
 		results = s.Results
 	}
 	out := funcLit(params, results, body)
+	if l.pass == 1 {
+		s.LitType = out.Type()
+	}
 	l.note(out, "An anonymous sub becomes a Go function literal. It closes over the "+
 		"variables in scope exactly as Perl's does, and it is an ordinary value: it "+
 		"can be stored in a variable, put in a map, or passed to another function. "+

@@ -111,6 +111,11 @@ type Sub struct {
 	Comparator bool
 	// CmpElem is the element type the comparator was used on.
 	CmpElem *ir.Type
+	// LitType is the type object of the function literal an anonymous sub
+	// produced on the first pass. It is refreshed once the signature is
+	// settled, in place, because whatever holds the literal was inferred
+	// from this very object.
+	LitType *ir.Type
 	// irDecl is the lowered function, filled in on each pass.
 	irDecl *ir.FuncDecl
 	// Doc is the comment block above the declaration.

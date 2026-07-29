@@ -427,6 +427,23 @@ func (l *Lowerer) settleSubs() {
 		all = append(all, l.subs[name])
 	}
 	all = append(all, l.anonOrd...)
+	defer func() {
+		// A function literal's type was built before its results were known,
+		// so it is refreshed here, in place: the containers that hold it kept
+		// a reference to this very type and are settled after this runs.
+		for _, s := range all {
+			fillResults(s)
+			if s.LitType == nil {
+				continue
+			}
+			s.LitType.Results = s.Results
+			for i, p := range s.Params {
+				if i < len(s.LitType.Params) {
+					s.LitType.Params[i] = p.Type
+				}
+			}
+		}
+	}()
 	for _, s := range all {
 		shapes := s.ResultEvidence
 		if len(shapes) == 0 {

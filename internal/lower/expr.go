@@ -192,7 +192,59 @@ func (l *Lowerer) list(e ast.Expr) ir.Expr {
 				"type-assertions-and-switches", "static-types-and-zero-values")
 		}
 	}
-	return composite(ir.SliceOf(t), nil, parts)
+	return l.listValue(parts, t)
+}
+
+// listValue builds the Go slice a lowered Perl list produces.
+//
+// Perl lists are flat: `(1, @rest, 2)` is one list of however many elements
+// @rest holds, not a list of three things. Go has no such rule, so an array in
+// the middle of a list has to be spliced in explicitly, which slices.Concat
+// does in one call.
+func (l *Lowerer) listValue(parts []ir.Expr, elem *ir.Type) ir.Expr {
+	sliceT := ir.SliceOf(elem)
+	splices := func(p ir.Expr) bool {
+		pt := typeOrAny(p)
+		return pt.Kind == ir.Slice && pt.Elem.Equal(elem)
+	}
+
+	any := false
+	for _, p := range parts {
+		if splices(p) {
+			any = true
+			break
+		}
+	}
+	if !any {
+		return composite(sliceT, nil, parts)
+	}
+
+	var groups []ir.Expr
+	var run []ir.Expr
+	flush := func() {
+		if len(run) > 0 {
+			groups = append(groups, composite(sliceT, nil, run))
+			run = nil
+		}
+	}
+	for _, p := range parts {
+		if splices(p) {
+			flush()
+			groups = append(groups, p)
+			continue
+		}
+		run = append(run, p)
+	}
+	flush()
+	if len(groups) == 1 {
+		return groups[0]
+	}
+	out := call("slices", "slices", "Concat", sliceT, groups...)
+	l.note(out, "A Perl list is flat, so an array written inside one contributes its "+
+		"elements rather than itself. Go keeps them apart, and slices.Concat is how "+
+		"several slices become one.",
+		"slices-not-arrays")
+	return out
 }
 
 // listParts flattens a Perl list into Go expressions, reporting the joined
@@ -308,7 +360,7 @@ func (l *Lowerer) listLit(n *ast.List) ir.Expr {
 	if len(parts) == 1 && typeOrAny(parts[0]).Kind == ir.Slice {
 		return parts[0]
 	}
-	return composite(ir.SliceOf(t), nil, parts)
+	return l.listValue(parts, t)
 }
 
 // anonArray lowers [ ... ]. A Perl array reference is a pointer to an array;
@@ -316,7 +368,7 @@ func (l *Lowerer) listLit(n *ast.List) ir.Expr {
 // pointer.
 func (l *Lowerer) anonArray(n *ast.AnonArray) ir.Expr {
 	parts, t := l.listParts(n.Elems)
-	out := composite(ir.SliceOf(t), nil, parts)
+	out := l.listValue(parts, t)
 	l.note(out, "Perl's [ ... ] builds an array reference because arrays flatten "+
 		"when nested. A Go slice already behaves like a reference: copying the "+
 		"slice value copies a small header that points at the same elements, so "+

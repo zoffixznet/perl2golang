@@ -585,13 +585,31 @@ func (l *Lowerer) resolveTypes() {
 			}
 		}
 	}
-	for _, b := range l.decls {
+	// Parameters settle first, because a function literal's type is built out
+	// of them, and whatever holds that literal (a variable, a map of
+	// callbacks) is inferred from the literal's type in turn. Settling the
+	// containers before the signatures they hold is settled would infer them
+	// from a signature that was still empty.
+	settled := map[*Binding]bool{}
+	once := func(b *Binding) {
+		if settled[b] {
+			return
+		}
+		settled[b] = true
 		settle(b)
 	}
-	for _, b := range l.globals {
-		settle(b)
+	for _, b := range l.decls {
+		if b.Kind == KindParam {
+			once(b)
+		}
 	}
 	l.settleSubs()
+	for _, b := range l.decls {
+		once(b)
+	}
+	for _, b := range l.globals {
+		once(b)
+	}
 	for _, name := range l.subOrd {
 		fillResults(l.subs[name])
 	}
