@@ -168,7 +168,7 @@ func (e *Emitter) notes(n ir.Annotated) {
 			}
 		}
 	}
-	for _, note := range m.Notes {
+	for _, note := range hoistedNotes(n) {
 		if e.firstMention(note.Text) {
 			e.comment(wrap(note.Text, 72))
 		}

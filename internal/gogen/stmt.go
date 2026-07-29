@@ -147,7 +147,7 @@ func (e *Emitter) hasVisibleNotes(n ir.Annotated) bool {
 	if m.Prov.Valid() && m.Prov.Text != "" {
 		return true
 	}
-	for _, note := range m.Notes {
+	for _, note := range hoistedNotes(n) {
 		if e.unsaid(note.Text) {
 			return true
 		}
