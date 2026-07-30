@@ -215,15 +215,21 @@ func (l *Lowerer) listValue(parts []ir.Expr, elem *ir.Type) ir.Expr {
 			break
 		}
 	}
+	fit := func(ps []ir.Expr) []ir.Expr {
+		for i, p := range ps {
+			ps[i] = l.assignable(p, elem, nil)
+		}
+		return ps
+	}
 	if !any {
-		return composite(sliceT, nil, parts)
+		return composite(sliceT, nil, fit(parts))
 	}
 
 	var groups []ir.Expr
 	var run []ir.Expr
 	flush := func() {
 		if len(run) > 0 {
-			groups = append(groups, composite(sliceT, nil, run))
+			groups = append(groups, composite(sliceT, nil, fit(run)))
 			run = nil
 		}
 	}
