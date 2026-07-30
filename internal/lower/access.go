@@ -25,6 +25,7 @@ func (l *Lowerer) indexParts(n *ast.Index) (base ir.Expr, idx ir.Expr, elem *ir.
 	if base == nil {
 		return nil, nil, ir.TAny
 	}
+	base = l.asSlice(base, n)
 	elem = elemOf(typeOrAny(base))
 	idx = l.toInt(l.expr(n.Idx), n.Idx)
 	return base, idx, elem

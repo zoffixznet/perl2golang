@@ -530,6 +530,11 @@ func (l *Lowerer) readLoop(n *ast.While) ([]ir.Stmt, bool) {
 
 	inner := l.block(body)
 	lead := []ir.Stmt{lineDecl}
+	// The line is declared by the loop rather than by the body, so the pass
+	// that drops unread declarations never sees it.
+	if l.pass == 2 && b.Used == 0 && b.Reads == 0 {
+		lead = append(lead, l.discardIfUnused(b)...)
+	}
 	var reset ir.Stmt
 	if l.countsLines {
 		counter := l.lineCounter(n)
