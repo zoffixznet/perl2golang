@@ -67,10 +67,28 @@ func join(a, b *ir.Type) *ir.Type {
 }
 
 // joinAll folds join over a list of observations.
+//
+// The fold is not a plain reduction, because the two ways of arriving at `any`
+// have to be kept apart. An observation that is itself `any` says nothing and
+// is skipped. Two real observations that no single Go type covers are a
+// genuine conflict, and that answer is final: folding further would let the
+// next observation resurrect a type the file has already disproved, and a
+// nested structure has plenty of observations to resurrect one with.
 func joinAll(ts []*ir.Type) *ir.Type {
 	var out *ir.Type
 	for _, t := range ts {
-		out = join(out, t)
+		if t == nil || t.Kind == ir.Void || t.Kind == ir.Invalid || t.Kind == ir.Any {
+			continue
+		}
+		if out == nil {
+			out = t
+			continue
+		}
+		next := join(out, t)
+		if next == nil || next.Kind == ir.Any {
+			return ir.TAny
+		}
+		out = next
 	}
 	return out
 }
@@ -78,6 +96,19 @@ func joinAll(ts []*ir.Type) *ir.Type {
 // isDynamic reports whether the type is the `any` fallback, which is what the
 // scorecard counts.
 func isDynamic(t *ir.Type) bool { return t == nil || t.Kind == ir.Any }
+
+// isOrdered reports whether Go's < applies to the type, which is what the
+// generic ordering functions in slices and cmp require.
+func isOrdered(t *ir.Type) bool {
+	if t == nil {
+		return false
+	}
+	switch t.Kind {
+	case ir.Int, ir.Float, ir.String:
+		return true
+	}
+	return false
+}
 
 // isNum reports whether Go arithmetic applies to the type directly.
 func isNum(t *ir.Type) bool { return t != nil && (t.Kind == ir.Int || t.Kind == ir.Float) }

@@ -55,9 +55,17 @@ func (l *Lowerer) sortCall(n *ast.Call) ir.Expr {
 	case n.Block == nil:
 		l.emit(l.defaultSort(target, elem, n))
 	case ok && kind == cmpAscending:
-		l.emit(exprStmt(call("slices", "slices", "Sort", ir.TVoid, target)))
+		if isOrdered(elem) {
+			l.emit(exprStmt(call("slices", "slices", "Sort", ir.TVoid, target)))
+		} else {
+			l.emit(exprStmt(call("slices", "slices", "SortFunc", ir.TVoid, target,
+				l.numericComparator(elem, false))))
+		}
 	case ok && kind == cmpDescending:
 		fn := l.reverseComparator(elem)
+		if !isOrdered(elem) {
+			fn = l.numericComparator(elem, true)
+		}
 		l.emit(exprStmt(call("slices", "slices", "SortFunc", ir.TVoid, target, fn)))
 	default:
 		fn := l.blockComparator(n, elem)
@@ -150,6 +158,26 @@ func (l *Lowerer) defaultSort(target ir.Expr, elem *ir.Type, n *ast.Call) ir.Stm
 			"original textual order.",
 		"sort-slice")
 	return st
+}
+
+// numericComparator builds a comparator for values Go cannot order directly,
+// reading each one as a number the way Perl's <=> does.
+func (l *Lowerer) numericComparator(elem *ir.Type, reverse bool) ir.Expr {
+	a, b := ir.Expr(ir.NewIdent("a", elem)), ir.Expr(ir.NewIdent("b", elem))
+	if reverse {
+		a, b = b, a
+	}
+	body := &ir.Block{Stmts: []ir.Stmt{
+		&ir.Return{Results: []ir.Expr{
+			call("cmp", "cmp", "Compare", ir.TInt, l.toFloat(a, nil), l.toFloat(b, nil)),
+		}},
+	}}
+	fn := funcLit([]ir.Param{{Name: "a", Type: elem}, {Name: "b", Type: elem}}, []*ir.Type{ir.TInt}, body)
+	l.note(fn, "These values are held in an any, which Go cannot order with <, so "+
+		"the comparator reads them as numbers first. cmp.Compare is the standard "+
+		"three-way comparison and is what a Go comparator returns.",
+		"sort-slice")
+	return fn
 }
 
 // reverseComparator builds func(a, b T) int { return cmp.Compare(b, a) }.

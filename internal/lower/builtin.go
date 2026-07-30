@@ -1080,6 +1080,12 @@ func (l *Lowerer) listUtil(n *ast.Call) ir.Expr {
 		if n.Name == "min" {
 			fn = "Min"
 		}
+		if !isOrdered(elem) {
+			// slices.Max needs a type Go can compare with <, and this one is
+			// not, so the comparison goes through the numeric reading Perl
+			// would have used anyway.
+			return l.numExtreme(n, src, elem)
+		}
 		out := call("slices", "slices", fn, elem, src)
 		l.note(out, "slices.Max and slices.Min came into the standard library in Go "+
 			"1.21. They panic on an empty slice, where List::Util returns undef, so "+

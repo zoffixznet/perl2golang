@@ -258,7 +258,7 @@ func (l *Lowerer) listValue(parts []ir.Expr, elem *ir.Type) ir.Expr {
 // an array contributes its elements rather than itself.
 func (l *Lowerer) listParts(es []ast.Expr) ([]ir.Expr, *ir.Type) {
 	var out []ir.Expr
-	var t *ir.Type
+	var seen []*ir.Type
 	var add func(e ast.Expr)
 	add = func(e ast.Expr) {
 		switch n := e.(type) {
@@ -280,7 +280,7 @@ func (l *Lowerer) listParts(es []ast.Expr) ([]ir.Expr, *ir.Type) {
 			// value, which is a different Go call entirely.
 			if x, ok := l.globalMatch(n); ok {
 				out = append(out, x)
-				t = join(t, elemOf(typeOrAny(x)))
+				seen = append(seen, elemOf(typeOrAny(x)))
 				return
 			}
 			// A plain match in list context yields its capture groups, which
@@ -288,14 +288,14 @@ func (l *Lowerer) listParts(es []ast.Expr) ([]ir.Expr, *ir.Type) {
 			if xs, ok := l.captureList(n); ok {
 				out = append(out, xs...)
 				for _, x := range xs {
-					t = join(t, typeOrAny(x))
+					seen = append(seen, typeOrAny(x))
 				}
 				return
 			}
 		case *ast.Call:
 			if x, ok := l.multiResultCall(n, true); ok {
 				out = append(out, x)
-				t = join(t, elemOf(typeOrAny(x)))
+				seen = append(seen, elemOf(typeOrAny(x)))
 				return
 			}
 		}
@@ -305,14 +305,17 @@ func (l *Lowerer) listParts(es []ast.Expr) ([]ir.Expr, *ir.Type) {
 		}
 		out = append(out, x)
 		if xt := x.Type(); xt != nil && xt.Kind == ir.Slice && flattensInList(e) {
-			t = join(t, xt.Elem)
+			seen = append(seen, xt.Elem)
 			return
 		}
-		t = join(t, x.Type())
+		seen = append(seen, x.Type())
 	}
 	for _, e := range es {
 		add(e)
 	}
+	// The parts decide the element type together, and two that no single Go
+	// type covers settle it at any for good.
+	t := joinAll(seen)
 	if t == nil {
 		t = ir.TAny
 	}
@@ -432,6 +435,7 @@ func (l *Lowerer) pairs(elems []ast.Expr) (keys, vals []ir.Expr, t *ir.Type) {
 	for _, e := range elems {
 		flat = append(flat, flatten(e)...)
 	}
+	var seen []*ir.Type
 	for i := 0; i+1 < len(flat); i += 2 {
 		k := l.expr(flat[i])
 		v := l.expr(flat[i+1])
@@ -440,8 +444,11 @@ func (l *Lowerer) pairs(elems []ast.Expr) (keys, vals []ir.Expr, t *ir.Type) {
 		}
 		keys = append(keys, l.toStr(k, flat[i]))
 		vals = append(vals, v)
-		t = join(t, v.Type())
+		seen = append(seen, v.Type())
 	}
+	// The values decide the map's value type together, and two that no single
+	// Go type covers settle it at any for good.
+	t = joinAll(seen)
 	if t == nil {
 		t = ir.TAny
 	}

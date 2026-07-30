@@ -359,6 +359,46 @@ func (l *Lowerer) strExtremeLoop(n *ast.Call, src ir.Expr, elem *ir.Type) ir.Exp
 	return ir.NewIdent(best, elem)
 }
 
+// numExtreme is max and min over values Go cannot compare with <, which is
+// what a list whose element type did not resolve leaves behind.
+func (l *Lowerer) numExtreme(n *ast.Call, src ir.Expr, elem *ir.Type) ir.Expr {
+	best := l.tmp("best")
+	idx := l.tmp("i")
+	itemName := l.tmp("item")
+	item := ir.NewIdent(itemName, elem)
+
+	op := ">"
+	if n.Name == "min" {
+		op = "<"
+	}
+	better := ir.Bin("||",
+		ir.Bin("==", ir.NewIdent(idx, ir.TInt), ir.IntLit("0"), ir.TBool),
+		ir.Bin(op, l.toFloat(item, nil), l.toFloat(ir.NewIdent(best, elem), nil), ir.TBool),
+		ir.TBool)
+
+	decl := &ir.DeclStmt{Names: []string{best}, Type: elem}
+	loop := &ir.Range{
+		Key:    ir.NewIdent(idx, ir.TInt),
+		Value:  item,
+		X:      src,
+		Define: true,
+		Body: &ir.Block{Stmts: []ir.Stmt{&ir.If{
+			Cond: better,
+			Then: &ir.Block{Stmts: []ir.Stmt{
+				assign("=", []ir.Expr{ir.NewIdent(best, elem)}, []ir.Expr{item}),
+			}},
+		}}},
+	}
+	l.setProv(decl, n)
+	l.note(decl, "slices.Max needs values Go can compare with <, and these are held "+
+		"in an any, so the loop compares them as numbers the way Perl's max does. "+
+		"Giving the list a concrete element type turns this back into one call.",
+		"static-types-and-zero-values")
+	l.emit(decl)
+	l.emit(loop)
+	return ir.NewIdent(best, elem)
+}
+
 // truth renders an expression as a Go bool, leaving one that already is alone.
 func (l *Lowerer) truth(x ir.Expr) ir.Expr {
 	if typeOrAny(x).Kind == ir.Bool {

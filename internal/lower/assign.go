@@ -28,6 +28,9 @@ func (l *Lowerer) assignStmts(n *ast.Assign) []ir.Stmt {
 	case *ast.Index:
 		return l.assignToIndex(lhs, n)
 	case *ast.HashIndex:
+		if sts, ok := l.assignToEnv(lhs, n); ok {
+			return sts
+		}
 		return l.assignToHash(lhs, n)
 	case *ast.Slice:
 		return l.assignToSlice(lhs, n)
@@ -338,6 +341,34 @@ func (l *Lowerer) hashInit(rhs ast.Expr, want *ir.Type) ir.Expr {
 			"so the pairs cannot be matched up statically.",
 		"Build the map with an explicit loop over the list, two elements at a time.")
 	return composite(ir.MapOf(want), nil, nil)
+}
+
+// assignToEnv lowers `$ENV{NAME} = VALUE`.
+//
+// Perl presents the environment as a hash, so setting a variable looks like an
+// ordinary assignment. Go has no such view: os.Setenv is a call, and it returns
+// an error, because setting an environment variable can fail.
+func (l *Lowerer) assignToEnv(lhs *ast.HashIndex, n *ast.Assign) ([]ir.Stmt, bool) {
+	v, ok := lhs.Base.(*ast.Var)
+	if !ok || lhs.Arrow || v.Sigil != '$' || v.Name != "ENV" {
+		return nil, false
+	}
+	key := l.toStr(l.expr(lhs.Key), lhs.Key)
+	value := l.toStr(l.scalar(n.RHS), n.RHS)
+	st := exprStmt(call("os", "os", "Setenv", ir.TError, key, value))
+	l.setProv(st, n)
+	l.note(st, "Perl's %ENV is a hash view of the environment, so setting a variable "+
+		"reads as an assignment. Go has os.Setenv, which is a call and returns an "+
+		"error: the environment is a system resource rather than a map.",
+		"errors-are-values")
+	l.approximate(n, "P2G6070", "assigning to %ENV",
+		"the error os.Setenv returns is not checked",
+		"Setting an environment variable can fail, and os.Setenv says so with an "+
+			"error. The assignment it came from had nowhere to put one.",
+		"Check the returned error where the setting matters, or use t.Setenv in a "+
+			"test, which restores the old value afterwards.",
+		"errors-are-values")
+	return []ir.Stmt{st}, true
 }
 
 // hashFromPairs builds a map out of a flat list of alternating keys and values,
