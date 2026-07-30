@@ -283,6 +283,15 @@ func (l *Lowerer) listParts(es []ast.Expr) ([]ir.Expr, *ir.Type) {
 				t = join(t, elemOf(typeOrAny(x)))
 				return
 			}
+			// A plain match in list context yields its capture groups, which
+			// is what `my ($a, $b) = $s =~ /(x)(y)/` is reading.
+			if xs, ok := l.captureList(n); ok {
+				out = append(out, xs...)
+				for _, x := range xs {
+					t = join(t, typeOrAny(x))
+				}
+				return
+			}
 		case *ast.Call:
 			if x, ok := l.multiResultCall(n, true); ok {
 				out = append(out, x)

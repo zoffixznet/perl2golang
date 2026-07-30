@@ -257,7 +257,7 @@ func (l *Lowerer) closeCall(n *ast.Call) []ir.Stmt {
 	if len(args) == 0 {
 		return nil
 	}
-	if b := l.handleBinding(args[0]); b != nil {
+	if b := l.handleBinding(args[0]); b != nil && b.Type.Equal(fileType) {
 		b.Closed = true
 		st := exprStmt(ir.CallOf(selector(ir.NewIdent(b.Go, fileType), "Close", nil), ir.TError))
 		l.setProv(st, n)

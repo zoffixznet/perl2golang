@@ -270,6 +270,11 @@ func (l *Lowerer) assertTo(x ir.Expr, want *ir.Type) ir.Expr {
 	if typeOrAny(x).Kind != ir.Any || want == nil {
 		return x
 	}
+	// An untyped nil is not an interface value and has nothing to assert; the
+	// type's own zero value is what was meant.
+	if lit, ok := x.(*ir.Lit); ok && lit.Kind == ir.LitNil {
+		return zeroOf(want)
+	}
 	out := &ir.TypeAssert{X: x, Assert: want}
 	out.T = want
 	l.note(out, "This value is held in an any, so Go needs to be told what it is "+

@@ -561,6 +561,46 @@ func (l *Lowerer) scanMatch(n *ast.Match) (ir.Expr, bool) {
 	return ir.Bin("!=", ir.NewIdent(name, matchT), ir.Nil(matchT), ir.TBool), true
 }
 
+// captureList lowers a match used in list context, where Perl yields the
+// capture groups rather than a truth value.
+//
+// This is the shape behind `my ($name, $rest) = $line =~ /(\w+)\s+(.*)/`, one
+// of the most common lines in any Perl script. Go returns the submatches as a
+// slice, so the groups are read out of it by index; a failed match returns nil,
+// and reading past the end of nil is the one place where the tolerant index
+// helper earns its keep.
+func (l *Lowerer) captureList(n *ast.Match) ([]ir.Expr, bool) {
+	if n.Pattern == nil || n.Negate || strings.Contains(n.Pattern.Mods, "g") {
+		return nil, false
+	}
+	groups := countGroups(n.Pattern.Raw)
+	if groups == 0 {
+		return nil, false
+	}
+	depth := l.captureDepth()
+	l.matchExpr(n, false)
+	if l.captureDepth() <= depth {
+		return nil, false
+	}
+	frame := l.captureStack[len(l.captureStack)-1]
+
+	out := make([]ir.Expr, 0, groups)
+	for i := 1; i <= groups; i++ {
+		out = append(out, l.helperCall(hAt, ir.TString,
+			ir.NewIdent(frame.Name, ir.SliceOf(ir.TString)), ir.IntLit(itoa(i))))
+	}
+	l.approximate(n, "P2G4510", "a match read for its captures",
+		"a failed match yields empty strings rather than nothing",
+		"A match in list context yields its capture groups when it succeeds and the "+
+			"empty list when it does not, so the variables on the left are left undef. "+
+			"Go returns a nil slice for no match, and the groups read out of it are "+
+			"empty strings.",
+		"Test whether the match succeeded before using the groups. The submatch "+
+			"slice being nil is that test.",
+		"submatch-and-named-groups", "nil-vs-undef")
+	return out, true
+}
+
 // globalMatch lowers `EXPR =~ /pattern/g` in list context, where Perl yields
 // every match rather than a truth value.
 func (l *Lowerer) globalMatch(n *ast.Match) (ir.Expr, bool) {
