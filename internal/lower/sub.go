@@ -569,7 +569,7 @@ func (l *Lowerer) callSub(s *Sub, n *ast.Call) ir.Expr {
 			// receives is the array's elements, not the array.
 			if at := typeOrAny(a); at.Kind == ir.Slice {
 				l.observeElem(s.VarArgs, elemOf(at))
-				out = append(out, a)
+				out = append(out, l.assignable(a, ir.SliceOf(elemOf(s.VarArgs.Type)), nil))
 				continue
 			}
 			l.observeElem(s.VarArgs, typeOrAny(a))

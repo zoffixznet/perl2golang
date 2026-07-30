@@ -1,6 +1,8 @@
 package lower
 
 import (
+	"sort"
+
 	"perl2go/internal/ir"
 	"perl2go/internal/perl/ast"
 	"perl2go/internal/perl/token"
@@ -342,8 +344,34 @@ func (l *Lowerer) specialVar(v *ast.Var) ir.Expr {
 				"and bufio.Writer with an explicit Flush replaces $| entirely.")
 	}
 
-	if v.Sigil == '%' && v.Name == "ENV" {
-		return nil
+	// %+ is every named capture of the innermost match still in scope. Go
+	// keeps the groups in a slice, so the hash is built from the names the
+	// pattern declared.
+	if v.Sigil == '%' && v.Name == "+" {
+		for i := len(l.captureStack) - 1; i >= 0; i-- {
+			frame := l.captureStack[i]
+			if len(frame.Named) == 0 {
+				continue
+			}
+			names := make([]string, 0, len(frame.Named))
+			for name := range frame.Named {
+				names = append(names, name)
+			}
+			sort.Strings(names)
+			var keys, vals []ir.Expr
+			for _, name := range names {
+				keys = append(keys, ir.Str(quote(name)))
+				vals = append(vals, l.helperCall(hAt, ir.TString,
+					ir.NewIdent(frame.Name, ir.SliceOf(ir.TString)), ir.IntLit(itoa(frame.Named[name]))))
+			}
+			out := composite(ir.MapOf(ir.TString), keys, vals)
+			l.note(out, "%+ holds the named captures of the last match, and it is global "+
+				"and short-lived. Go returns the groups in a slice belonging to this "+
+				"match, so the names have to be written down: the pattern declared them, "+
+				"and they are known at conversion time.",
+				"submatch-and-named-groups")
+			return out
+		}
 	}
 	return nil
 }

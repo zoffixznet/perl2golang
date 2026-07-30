@@ -324,6 +324,13 @@ func (l *Lowerer) hashInit(rhs ast.Expr, want *ir.Type) ir.Expr {
 		keys, vals, t := l.pairs(flat)
 		return composite(ir.MapOf(t), keys, vals)
 	}
+	// A single list whose length is not known until the program runs still
+	// pairs up: Perl walks it two at a time, and so does the loop.
+	if len(flat) == 1 && flattensInList(flat[0]) {
+		if src := l.list(flat[0]); typeOrAny(src).Kind == ir.Slice {
+			return l.hashFromPairs(src, rhs)
+		}
+	}
 	l.approximate(rhs, "P2G2050", "hash from an odd-length list",
 		"a hash was built from a list of unknown length",
 		"Perl builds a hash from a flat list of alternating keys and values. The "+
@@ -331,6 +338,43 @@ func (l *Lowerer) hashInit(rhs ast.Expr, want *ir.Type) ir.Expr {
 			"so the pairs cannot be matched up statically.",
 		"Build the map with an explicit loop over the list, two elements at a time.")
 	return composite(ir.MapOf(want), nil, nil)
+}
+
+// hashFromPairs builds a map out of a flat list of alternating keys and values,
+// which is how Perl builds one from anything longer than a literal.
+func (l *Lowerer) hashFromPairs(src ir.Expr, at ast.Node) ir.Expr {
+	elem := elemOf(typeOrAny(src))
+	mapT := ir.MapOf(elem)
+
+	list := l.tmp("flat")
+	name := l.tmp("byKey")
+	idx := l.tmp("i")
+	listT := typeOrAny(src)
+
+	listDecl := assign(":=", []ir.Expr{ir.NewIdent(list, listT)}, []ir.Expr{src})
+	decl := assign(":=", []ir.Expr{ir.NewIdent(name, mapT)}, []ir.Expr{composite(mapT, nil, nil)})
+	key := l.toStr(index(ir.NewIdent(list, listT), ir.NewIdent(idx, ir.TInt), elem), nil)
+	value := index(ir.NewIdent(list, listT),
+		ir.Bin("+", ir.NewIdent(idx, ir.TInt), ir.IntLit("1"), ir.TInt), elem)
+	loop := &ir.For{
+		Init: assign(":=", []ir.Expr{ir.NewIdent(idx, ir.TInt)}, []ir.Expr{ir.IntLit("0")}),
+		Cond: ir.Bin("<", ir.Bin("+", ir.NewIdent(idx, ir.TInt), ir.IntLit("1"), ir.TInt),
+			lenOf(ir.NewIdent(list, listT)), ir.TBool),
+		Post: assign("+=", []ir.Expr{ir.NewIdent(idx, ir.TInt)}, []ir.Expr{ir.IntLit("2")}),
+		Body: &ir.Block{Stmts: []ir.Stmt{
+			assign("=", []ir.Expr{index(ir.NewIdent(name, mapT), key, elem)}, []ir.Expr{value}),
+		}},
+	}
+	l.setProv(decl, at)
+	l.note(decl, "Perl builds a hash from a flat list of alternating keys and values, "+
+		"which is why a list of odd length is a warning rather than an error. Go "+
+		"walks the list two at a time and puts the pairs in, which is the same rule "+
+		"written where it can be seen.",
+		"nil-slices-vs-nil-maps")
+	l.emit(listDecl)
+	l.emit(decl)
+	l.emit(loop)
+	return ir.NewIdent(name, mapT)
 }
 
 // listAssign lowers `my ($a, $b) = ...` and `($a, $b) = ...`.
