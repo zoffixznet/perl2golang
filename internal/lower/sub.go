@@ -57,6 +57,7 @@ func (l *Lowerer) lowerSubDecl(sd *ast.SubDecl) {
 	}
 	fn.Body = l.markUnused(&ir.Block{Stmts: l.stmts(rest)})
 	l.addImplicitReturn(s, fn)
+	l.ensureReturn(s, fn.Body)
 	l.setProv(fn, sd)
 	l.explainSub(fn, s, sd)
 	s.irDecl = fn
@@ -280,6 +281,11 @@ func (l *Lowerer) implicitReturn(s *Sub, block *ir.Block) {
 	if terminatingCall(es.X) {
 		return
 	}
+	// Nor does a statement that produces nothing, or one whose Go form hands
+	// back several values, such as a print.
+	if t := es.X.Type(); t == nil || t.Kind == ir.Void || t.Kind == ir.Invalid {
+		return
+	}
 	if l.pass == 1 {
 		s.ResultEvidence = append(s.ResultEvidence, []*ir.Type{typeOrAny(es.X)})
 		return
@@ -293,6 +299,40 @@ func (l *Lowerer) implicitReturn(s *Sub, block *ir.Block) {
 		"expression it evaluated. Go requires the return to be written, which is "+
 		"one fewer thing to remember when reading the code.")
 	block.Stmts[len(block.Stmts)-1] = ret
+}
+
+// ensureReturn appends a return of zero values when a function that promises
+// results can fall off its end.
+//
+// Perl functions end wherever the code stops and yield whatever was last
+// evaluated. Go requires the compiler to be able to see that the end is
+// unreachable, and it is stricter about that than a reader would be, so the
+// return is written even where nothing can reach it.
+func (l *Lowerer) ensureReturn(s *Sub, block *ir.Block) {
+	if l.pass != 2 || block == nil || len(s.Results) == 0 {
+		return
+	}
+	if n := len(block.Stmts); n > 0 {
+		switch last := block.Stmts[n-1].(type) {
+		case *ir.Return:
+			return
+		case *ir.ExprStmt:
+			if terminatingCall(last.X) {
+				return
+			}
+		}
+	}
+	results := make([]ir.Expr, len(s.Results))
+	for i, t := range s.Results {
+		results[i] = zeroOf(t)
+	}
+	ret := &ir.Return{Results: results}
+	l.note(ret, "Go will not compile a function that promises a result and can "+
+		"reach its closing brace without returning one. Perl simply yields whatever "+
+		"the last statement produced, so the zero values are written here to say "+
+		"what that turns into.",
+		"static-types-and-zero-values")
+	block.Stmts = append(block.Stmts, ret)
 }
 
 // terminatingCall reports whether an expression is a call that never comes

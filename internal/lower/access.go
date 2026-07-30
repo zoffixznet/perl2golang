@@ -317,6 +317,7 @@ func (l *Lowerer) anonSub(n *ast.AnonSub) ir.Expr {
 	params, rest := l.recoverParams(s, n.Body)
 	body := l.markUnused(&ir.Block{Stmts: l.stmts(rest)})
 	l.implicitReturn(s, body)
+	l.ensureReturn(s, body)
 	l.scope, l.curSub = savedScope, savedSub
 
 	var results []*ir.Type
