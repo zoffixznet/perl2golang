@@ -49,4 +49,5 @@ const (
 	hNextMatch     = "nextMatch"    // one step of a scalar-context //g scan
 	hAnyList       = "anyList"      // []T -> []any
 	hAnyMap        = "anyMap"       // map[K]V -> map[K]any
+	hCountChars    = "countChars"   // tr/// with an empty replacement list
 )

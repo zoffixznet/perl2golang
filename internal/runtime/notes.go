@@ -33,6 +33,11 @@ var notes = map[string]string{
 		"consequence: the result is a separate map, so writing to one does " +
 		"not show up in the other.",
 
+	"countChars": "Counting how many characters of a string come from a " +
+		"given set. strings.Count counts occurrences of one substring and " +
+		"strings.ContainsAny only reports whether any of them appear, so " +
+		"neither answers this without a loop around it.",
+
 	"dirNames": "Reading a directory hands back entries rather than names, " +
 		"and it never includes \".\" or \"..\", so a filter written for those " +
 		"two silently does nothing. The order is sorted, which the system call " +

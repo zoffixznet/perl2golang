@@ -719,15 +719,7 @@ func (l *Lowerer) qrExpr(n *ast.QrExpr) ir.Expr {
 // substStmt lowers s/// in statement position.
 func (l *Lowerer) substStmt(n *ast.Subst) []ir.Stmt {
 	if n.EvalRepl {
-		return []ir.Stmt{l.todoStmt(n, "P2G4040", "s///e",
-			"the /e modifier runs code as the replacement",
-			"With /e the replacement is Perl source, evaluated for every match. Go's "+
-				"regexp package has no such hook in the template form.",
-			"Use ReplaceAllStringFunc, which calls a Go function with each match and "+
-				"uses what it returns. Note that the function receives the whole match, "+
-				"not the capture groups, so a pattern that needs the groups has to "+
-				"re-run FindStringSubmatch inside it.",
-			"replace-and-expansion")}
+		return l.substEval(n)
 	}
 
 	target := l.substTarget(n)
@@ -762,6 +754,68 @@ func (l *Lowerer) substStmt(n *ast.Subst) []ir.Stmt {
 		"${1} names the first capture group. Perl writes that as $1; the braces are "+
 		"required in Go so that ${1}0 is not read as group 10.",
 		"replace-and-expansion", "submatch-and-named-groups")
+	return []ir.Stmt{st}
+}
+
+// substEval lowers `s/pattern/CODE/e`, where the replacement is an expression
+// evaluated once per match rather than a template.
+//
+// Go has the same shape in ReplaceAllStringFunc, with one wrinkle: the function
+// is handed the whole match and not the groups, so a replacement that reads $1
+// has to look them up again inside it.
+func (l *Lowerer) substEval(n *ast.Subst) []ir.Stmt {
+	target := l.substTarget(n)
+	if target == nil {
+		return nil
+	}
+	pattern, ok := l.patternOf(n.Pattern)
+	if !ok {
+		return nil
+	}
+
+	whole := l.tmp("match")
+	matches := l.tmp("groups")
+	matchT := ir.SliceOf(ir.TString)
+
+	find := assign(":=", []ir.Expr{ir.NewIdent(matches, matchT)},
+		[]ir.Expr{ir.CallOf(selector(pattern, "FindStringSubmatch", nil), matchT,
+			ir.NewIdent(whole, ir.TString))})
+
+	frame := &captureFrame{Name: matches, Count: countGroups(n.Pattern.Raw)}
+	if n.Pattern != nil {
+		frame.Named = namedGroups(n.Pattern.Raw)
+	}
+	l.captureStack = append(l.captureStack, frame)
+	depth := len(l.captureStack)
+
+	savedPre := l.pre
+	l.pre = nil
+	value := l.toStr(l.expr(n.Repl), n.Repl)
+	body := append(l.takePre(), &ir.Return{Results: []ir.Expr{value}})
+	l.pre = savedPre
+	l.restoreCaptures(depth - 1)
+
+	fn := funcLit([]ir.Param{{Name: whole, Type: ir.TString}}, []*ir.Type{ir.TString},
+		&ir.Block{Stmts: append([]ir.Stmt{find}, body...)})
+
+	out := ir.CallOf(selector(pattern, "ReplaceAllStringFunc", nil), ir.TString,
+		l.toStr(target, nil), fn)
+	st := assign("=", []ir.Expr{target}, []ir.Expr{out})
+	l.setProv(st, n)
+	l.note(st, "The /e modifier makes the replacement code rather than a template, "+
+		"and ReplaceAllStringFunc is the same idea: it calls a function for every "+
+		"match and uses what comes back. The function is handed the matched text "+
+		"only, so the capture groups are found again inside it.",
+		"replace-and-expansion", "submatch-and-named-groups")
+
+	if !strings.Contains(n.Pattern.Mods, "g") {
+		l.approximate(n, "P2G4040", "s///e without /g",
+			"every match is replaced, not only the first",
+			"ReplaceAllStringFunc has no first-only form, so a substitution with /e "+
+				"and without /g replaces every match here.",
+			"Where only the first match should change, keep a flag in the closure and "+
+				"return the match unchanged once it has fired.")
+	}
 	return []ir.Stmt{st}
 }
 
@@ -892,12 +946,14 @@ func (l *Lowerer) transStmt(n *ast.Trans) []ir.Stmt {
 	}
 
 	if len(repl) == 0 {
-		return []ir.Stmt{l.todoStmt(n, "P2G4521", "tr with an empty replacement",
-			"tr with no replacement list counts rather than replaces",
-			"With an empty replacement list, tr leaves the string alone and returns "+
-				"how many characters matched, which is how Perl counts occurrences.",
-			"strings.Count counts one substring; for a set of characters, "+
-				"strings.ContainsAny inside a range over the string is the direct form.")}
+		// With no replacement list tr leaves the string alone and answers how
+		// many of its characters were in the search list, which is how Perl
+		// counts occurrences of a character class.
+		l.inform(n, "P2G4521", "tr with an empty replacement",
+			"tr with no replacement list does not change the string: it counts how "+
+				"many of its characters are in the search list. The count is the value "+
+				"of the expression, and the string is left as it was.")
+		return nil
 	}
 
 	var pairs []ir.Expr
@@ -928,6 +984,21 @@ const (
 
 // transExpr lowers tr/// used for its value.
 func (l *Lowerer) transExpr(n *ast.Trans) ir.Expr {
+	// With an empty replacement list the value is the count, and the string
+	// is untouched. That is the whole of the `my $n = ($s =~ tr/aeiou//)`
+	// idiom, which is Perl's way of counting characters.
+	if n.Mods == "" && len(expandTrList(n.ReplList)) == 0 {
+		search := expandTrList(n.SearchList)
+		if len(search) > 0 {
+			if target := l.transTarget(n); target != nil {
+				out := l.helperCall(hCountChars, ir.TInt, l.toStr(target, nil), ir.Str(quote(string(search))))
+				l.note(out, "tr with no replacement list counts rather than translates: "+
+					"it reports how many characters of the string are in the search list "+
+					"and leaves the string alone.")
+				return out
+			}
+		}
+	}
 	for _, st := range l.transStmt(n) {
 		l.emit(st)
 	}
