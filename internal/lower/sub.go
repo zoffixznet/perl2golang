@@ -611,6 +611,24 @@ func (l *Lowerer) callSub(s *Sub, n *ast.Call) ir.Expr {
 		ret = s.Results[0]
 	}
 	c := ir.CallOf(ir.NewIdent(s.Go, nil), ret, out...)
+	if len(s.Results) == 0 {
+		// Nothing in the file reads this sub's value, so the Go function
+		// returns nothing and the call cannot stand in an expression. It runs
+		// as its own statement and the expression it was part of gets Perl's
+		// answer for a sub that returns nothing.
+		if l.pass == 2 {
+			l.approximate(n, "P2G2125", "call to a sub that returns nothing",
+				"the call runs on its own line and yields nothing",
+				"Nothing in the file uses what this sub returns, so the Go function "+
+					"returns no value at all and a call to it cannot appear inside a larger "+
+					"expression.",
+				"If the sub is meant to produce a value, return it explicitly and the "+
+					"signature will follow.",
+				"multiple-return-values")
+		}
+		l.emit(exprStmt(c))
+		return ir.Nil(ir.TAny)
+	}
 
 	// Passing a slice where the sub takes a variadic tail needs the ... form.
 	if s.VarArgs != nil && len(args) == len(s.Params)+1 {

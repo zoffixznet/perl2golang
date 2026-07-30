@@ -485,7 +485,9 @@ func (l *Lowerer) use(name string) string {
 // scope, which costs nothing and removes a whole class of shadowing bug from
 // the generated code.
 func (l *Lowerer) tmp(base string) string {
-	if l.tmpNames == nil {
+	// The blank identifier is not a name and can be reused freely; numbering
+	// it would produce a variable nothing reads.
+	if base == "_" || l.tmpNames == nil {
 		return base
 	}
 	return l.tmpNames.take(base)

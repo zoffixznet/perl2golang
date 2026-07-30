@@ -214,7 +214,12 @@ func (l *Lowerer) assignable(x ir.Expr, want *ir.Type, n ast.Node) ir.Expr {
 		return l.toBool(x, n)
 	case ir.Any:
 		return x
+	case ir.Func, ir.Named, ir.Pointer:
+		return l.assertTo(x, want)
 	case ir.Slice, ir.Map:
+		if have != nil && have.Kind == ir.Any {
+			return l.assertTo(x, want)
+		}
 		// A literal is written where it stands, so it can simply be written
 		// with the type it is going into. An empty one has no elements to
 		// infer from at all, which is the `@a = ()` case; a non-empty one
@@ -257,6 +262,21 @@ func (l *Lowerer) assignable(x ir.Expr, want *ir.Type, n ast.Node) ir.Expr {
 		return x
 	}
 	return x
+}
+
+// assertTo states what a value held in an any really is, so that Go will let
+// it be used as that type. A value that already has the type is left alone.
+func (l *Lowerer) assertTo(x ir.Expr, want *ir.Type) ir.Expr {
+	if typeOrAny(x).Kind != ir.Any || want == nil {
+		return x
+	}
+	out := &ir.TypeAssert{X: x, Assert: want}
+	out.T = want
+	l.note(out, "This value is held in an any, so Go needs to be told what it is "+
+		"before it can be used as one. The assertion panics if the value turns out "+
+		"to be something else; the two-result form asks instead of insisting.",
+		"type-assertions-and-switches")
+	return out
 }
 
 // zeroOf builds the zero value of a type as an expression.

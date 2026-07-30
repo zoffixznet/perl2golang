@@ -655,6 +655,19 @@ func (l *Lowerer) compoundAssign(n *ast.Assign) []ir.Stmt {
 		if b := l.bindingOfTarget(n.LHS); b != nil {
 			l.observe(b, ir.TString)
 		}
+		if t.Kind != ir.String {
+			// The target's type did not resolve to text, and Go will not add a
+			// string to anything else, so the concatenation is written out
+			// through the rendering both sides have to go through anyway.
+			st := assign("=", []ir.Expr{target},
+				[]ir.Expr{ir.Bin("+", l.toStr(target, n.LHS), value, ir.TString)})
+			l.setProv(st, n)
+			l.note(st, "Perl's .= appends text to whatever the variable held, converting "+
+				"it on the way. This one's type did not resolve to text, so the "+
+				"conversion is written out.",
+				"explicit-conversions-no-coercion")
+			return []ir.Stmt{st}
+		}
 		st := assign("+=", []ir.Expr{target}, []ir.Expr{value})
 		l.setProv(st, n)
 		l.note(st, "Go's + concatenates strings, so .= becomes +=. For a loop that "+
