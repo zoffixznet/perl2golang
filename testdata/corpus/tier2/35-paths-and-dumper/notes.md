@@ -14,7 +14,10 @@ so the output does not depend on where the tree lives.
   `archive.tar` + `.gz`, not `archive` + `.tar.gz`
 - `File::Spec->catfile` / `catdir` / `splitpath` / `splitdir`
 - `getcwd()` and `abs_path()` from `Cwd`, with `abs_path` returning `undef` for
-  a path that does not exist
+  a path that does not exist. Neither is ever printed: what is printed is a
+  property of the answer (is it absolute, does `getcwd()` agree with
+  `abs_path('.')`), so the transcript is the same in any directory under any
+  name.
 - `File::Spec->abs2rel($abs, $cwd)` to make output location-independent
 - `$Data::Dumper::Sortkeys = 1` (**mandatory** for reproducible output),
   `$Data::Dumper::Indent` (2 default, 1 compact, 0 one-line) and `Terse`

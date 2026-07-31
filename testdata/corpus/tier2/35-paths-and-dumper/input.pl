@@ -46,8 +46,10 @@ print "splitdir: ", join('|', File::Spec->splitdir('files/reports')), "\n";
 print "-- absolute paths, reported relatively --\n";
 my $cwd = getcwd();
 printf "cwd is absolute: %s\n", ($cwd =~ m{^/} ? 'yes' : 'no');
-printf "cwd basename matches this entry: %s\n",
-    (basename($cwd) =~ /paths-and-dumper$/ ? 'yes' : 'no');
+printf "cwd has a non-empty basename: %s\n",
+    (length(basename($cwd)) ? 'yes' : 'no');
+printf "getcwd agrees with abs_path('.'): %s\n",
+    ($cwd eq abs_path('.') ? 'yes' : 'no');
 
 my $abs = abs_path('files/reports/2023-q4.csv');
 printf "abs_path is absolute: %s\n", ($abs =~ m{^/} ? 'yes' : 'no');

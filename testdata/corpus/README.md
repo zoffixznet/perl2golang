@@ -9,6 +9,13 @@ Nothing here needs the network, a database, a particular user account, a
 particular hostname, a particular timezone, or any file outside the entry's
 own directory.
 
+An entry is also run from a copy of its directory rather than from the
+directory itself, under a name the entry cannot predict. An entry that prints
+its own path, or anything derived from it, records an expectation that only
+holds where it was written. Print a property of the path instead of the path:
+whether it is absolute, whether two ways of computing it agree, what it looks
+like once it has been made relative again.
+
 ## Tiers
 
 | Directory | Entries | Purpose |

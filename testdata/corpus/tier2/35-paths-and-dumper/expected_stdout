@@ -17,7 +17,8 @@ splitpath: dirs=files/reports/ file=2023-q4.csv
 splitdir: files|reports
 -- absolute paths, reported relatively --
 cwd is absolute: yes
-cwd basename matches this entry: yes
+cwd has a non-empty basename: yes
+getcwd agrees with abs_path('.'): yes
 abs_path is absolute: yes
 abs2rel: files/reports/2023-q4.csv
 abs_path of a directory: files/reports
