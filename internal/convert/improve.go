@@ -108,17 +108,27 @@ func siblings(files map[string][]byte, self string) map[string][]byte {
 
 // improveDocs runs the configured improver over the generated documents, which
 // happens after they are written because they report what the checks found.
-func (r *Result) improveDocs(ctx context.Context, imp Improver) {
+//
+// It returns the documents the pass actually changed, so a caller that has to
+// render the bundle again can put the rewrites back without asking for them a
+// second time.
+func (r *Result) improveDocs(ctx context.Context, imp Improver) map[string]string {
 	if imp == nil {
-		return
+		return nil
 	}
+	rewritten := map[string]string{}
 	for _, name := range slices.Sorted(maps.Keys(r.Docs)) {
+		was := r.Docs[name]
 		out := r.accept(ctx, imp, Artifact{
-			Kind: ArtifactMarkdown, Name: name, Content: []byte(r.Docs[name]),
+			Kind: ArtifactMarkdown, Name: name, Content: []byte(was),
 			Perl: r.PerlSource, Report: r.Report, Module: r.Module,
 		})
 		r.Docs[name] = string(out)
+		if string(out) != was {
+			rewritten[name] = string(out)
+		}
 	}
+	return rewritten
 }
 
 // accept checks a rewritten artefact and falls back to the original whenever
