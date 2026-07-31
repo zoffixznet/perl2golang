@@ -52,12 +52,12 @@ func runExplain(e *env, args []string) int {
 // explainConcept prints one lesson, or says what to try instead.
 func (e *env) explainConcept(kb *teach.KB, topic string) int {
 	if c, ok := kb.Get(topic); ok {
-		return e.print(c.Render())
+		return e.print(e.lesson(c))
 	}
 	hits := kb.Search(topic)
 	switch {
 	case len(hits) == 1:
-		return e.print(hits[0].Render())
+		return e.print(e.lesson(hits[0]))
 	case len(hits) > 1:
 		var b strings.Builder
 		fmt.Fprintf(&b, "%q matches %d concepts:\n\n", topic, len(hits))
@@ -98,6 +98,20 @@ func (e *env) explainCode(code string) int {
 	built.Message = strings.ReplaceAll(built.Message, "%%", "%")
 	built.SeverityName = built.Severity.String()
 	return e.print(renderEntry(built, code))
+}
+
+// lesson renders one concept for wherever it is going.
+//
+// At a terminal that means folded prose, no hashes on the headings and no
+// fences around the code, because a lesson is something to read at the prompt
+// and not something to scroll sideways through. Redirected, it means the
+// Markdown, which is what a pager, an editor or `perl2go explain x > x.md`
+// wants and is byte for byte the file a conversion writes into docs/concepts/.
+func (e *env) lesson(c *teach.Concept) string {
+	if isCharDevice(e.stdout) {
+		return c.Terminal()
+	}
+	return c.Render()
 }
 
 // renderEntry draws one registry entry without a source file behind it.

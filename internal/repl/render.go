@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"perl2go/internal/report"
+	"perl2go/internal/teach"
 )
 
 // printer writes the session transcript.
@@ -91,33 +92,13 @@ func (p *printer) compact(e report.Entry) {
 	// behind `:diag`, because a construct with no Go equivalent is exactly the
 	// moment somebody needs the answer.
 	if e.Severity == report.Refuse && e.Advice != "" {
-		for _, l := range strings.Split(wrapAt(e.Advice, 72), "\n") {
+		for _, l := range strings.Split(teach.WrapAt(e.Advice, 72), "\n") {
 			p.line("    " + p.style(sgrDim, l))
 		}
 	}
 }
 
-// wrapAt folds prose to a width.
-func wrapAt(text string, width int) string {
-	var out []string
-	line := ""
-	for _, word := range strings.Fields(text) {
-		switch {
-		case line == "":
-			line = word
-		case len(line)+1+len(word) <= width:
-			line += " " + word
-		default:
-			out = append(out, line)
-			line = word
-		}
-	}
-	if line != "" {
-		out = append(out, line)
-	}
-	return strings.Join(out, "\n")
-}
-
+// severityMark is the one-character mark and the colour a severity prints with.
 func severityMark(s report.Severity) (mark, colour string) {
 	switch s {
 	case report.Refuse:

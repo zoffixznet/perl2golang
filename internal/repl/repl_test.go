@@ -469,28 +469,3 @@ func TestLessonRendersForATerminal(t *testing.T) {
 		}
 	}
 }
-
-func TestListItem(t *testing.T) {
-	tests := []struct {
-		line   string
-		marker string
-		rest   string
-		ok     bool
-	}{
-		{line: "- a bullet", marker: "- ", rest: "a bullet", ok: true},
-		{line: "  * an indented bullet", marker: "  * ", rest: "an indented bullet", ok: true},
-		{line: "1. a number", marker: "1. ", rest: "a number", ok: true},
-		{line: "12) another", marker: "12) ", rest: "another", ok: true},
-		{line: "ordinary prose"},
-		{line: "-not a bullet"},
-		{line: "1.no space"},
-		{line: ""},
-	}
-	for _, tc := range tests {
-		marker, rest, ok := listItem(tc.line)
-		if ok != tc.ok || marker != tc.marker || rest != tc.rest {
-			t.Errorf("listItem(%q) = %q, %q, %v; want %q, %q, %v",
-				tc.line, marker, rest, ok, tc.marker, tc.rest, tc.ok)
-		}
-	}
-}
