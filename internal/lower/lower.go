@@ -519,15 +519,26 @@ func (l *Lowerer) finishReport() {
 			return
 		}
 		seen[b] = true
+		// The verdict comes from the type the binding finished with, not from
+		// the flag inference set while it was working. A binding can be marked
+		// dynamic early and be pinned down later, by a use further down the
+		// file or by the shape of what it is finally assigned, and reporting
+		// the flag would call a variable the generated code declares as
+		// []string a variable with no type.
+		dynamic := isDynamic(scalarPart(b.Type))
+		reason := b.Reason
+		if !dynamic {
+			reason = ""
+		}
 		l.rep.Stats.Symbols++
-		if !b.Dynamic {
+		if !dynamic {
 			l.rep.Stats.SymbolsTyped++
 		}
 		l.rep.Symbols = append(l.rep.Symbols, report.Symbol{
 			Name:     b.Perl,
 			Type:     b.Type.String(),
-			Inferred: !b.Dynamic,
-			Reason:   b.Reason,
+			Inferred: !dynamic,
+			Reason:   reason,
 			Line:     b.Line,
 		})
 	}
