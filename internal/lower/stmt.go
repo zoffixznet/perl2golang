@@ -235,8 +235,10 @@ func (l *Lowerer) exprStatement(e ast.Expr) []ir.Stmt {
 				}
 			}
 			// The `something() or die "..."` idiom: a guard, not a value.
+			cond := ir.Un("!", l.cond(n.L), ir.TBool)
+			l.countGuardRead(n.L)
 			guard := &ir.If{
-				Cond: ir.Un("!", l.cond(n.L), ir.TBool),
+				Cond: cond,
 				Then: &ir.Block{Stmts: l.exprStatement(n.R)},
 			}
 			l.setProv(guard, n)
@@ -246,7 +248,9 @@ func (l *Lowerer) exprStatement(e ast.Expr) []ir.Stmt {
 				"errors-are-values", "if-err-nil-rhythm")
 			return []ir.Stmt{guard}
 		case "and", "&&":
-			guard := &ir.If{Cond: l.cond(n.L), Then: &ir.Block{Stmts: l.exprStatement(n.R)}}
+			cond := l.cond(n.L)
+			l.countGuardRead(n.L)
+			guard := &ir.If{Cond: cond, Then: &ir.Block{Stmts: l.exprStatement(n.R)}}
 			l.setProv(guard, n)
 			return []ir.Stmt{guard}
 		}
@@ -679,4 +683,33 @@ func describePattern(perl string) string {
 		trimmed = trimmed[:45] + "..."
 	}
 	return "the pattern " + trimmed
+}
+
+// countGuardRead records the read a guard performs on a variable its own left
+// side just declared.
+//
+// `my $file = shift @ARGV or die "usage\n"` declares $file and then tests it,
+// both on one line. The test goes through the value the assignment produced
+// rather than through a second mention of the name, so nothing counted the
+// read, and a declaration nothing reads is given a blank assignment and a
+// comment saying so. The comment was wrong: the next line reads it.
+func (l *Lowerer) countGuardRead(e ast.Expr) {
+	a, ok := e.(*ast.Assign)
+	if !ok {
+		return
+	}
+	target := a.LHS
+	if m, isMy := target.(*ast.My); isMy {
+		if len(m.Vars) != 1 {
+			return
+		}
+		target = m.Vars[0]
+	}
+	v, ok := target.(*ast.Var)
+	if !ok {
+		return
+	}
+	if b := l.lookup(v.Sigil, v.Name, v); b != nil {
+		b.Reads++
+	}
 }

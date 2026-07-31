@@ -750,20 +750,36 @@ func (l *Lowerer) popCall(n *ast.Call, front bool) ir.Expr {
 		pick = index(target, last, elem)
 		rest = slicing(target, nil, ir.Bin("-", lenOf(target), ir.IntLit("1"), ir.TInt), t)
 	}
-	take := assign(":=", []ir.Expr{ir.NewIdent(name, elem)}, []ir.Expr{pick})
+
+	// Both halves are guarded together, because an empty array is the case
+	// that matters and it is the case that panics. `my $file = shift @ARGV or
+	// die "usage..."` runs with no arguments more often than with them, and
+	// the unguarded read would end the program with a stack trace before the
+	// usage message could be printed.
+	decl := &ir.DeclStmt{Names: []string{name}, Type: elem}
+	l.setProv(decl, n)
+	take := &ir.If{
+		Cond: ir.Bin(">", lenOf(target), ir.IntLit("0"), ir.TBool),
+		Then: &ir.Block{Stmts: []ir.Stmt{
+			assign("=", []ir.Expr{ir.NewIdent(name, elem), target}, []ir.Expr{pick, rest}),
+		}},
+	}
 	l.setProv(take, n)
 	if front {
-		l.note(take, "shift takes the first element and shortens the array. Go has no "+
+		l.note(decl, "shift takes the first element and shortens the array. Go has no "+
 			"such operation: the element is read, then the slice is re-sliced past it. "+
-			"Re-slicing does not copy, it just moves the start of the window.",
+			"Re-slicing does not copy, it just moves the start of the window. Both "+
+			"steps are guarded, because indexing an empty slice panics where Perl's "+
+			"shift simply hands back undef.",
 			"slices-not-arrays", "slice-aliasing-and-copy")
 	} else {
-		l.note(take, "pop takes the last element and shortens the array. In Go that is "+
-			"a read of the last index followed by a re-slice.",
+		l.note(decl, "pop takes the last element and shortens the array. In Go that is "+
+			"a read of the last index followed by a re-slice, guarded because both of "+
+			"those panic on an empty slice where Perl's pop hands back undef.",
 			"slices-not-arrays")
 	}
+	l.emit(decl)
 	l.emit(take)
-	l.emit(assign("=", []ir.Expr{target}, []ir.Expr{rest}))
 	return ir.NewIdent(name, elem)
 }
 
