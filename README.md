@@ -267,11 +267,12 @@ These are real and current, not oversights:
   say so when you turn them on. The concept lessons and the conversion report
   are never touched by a model at all.
 - **The session's line editing needs a terminal that supports raw mode**, which
-  covers Linux, macOS and the BSDs. Anywhere else, and inside an environment
-  that hands the program a pipe rather than a terminal, the session falls back
-  to reading whole lines: everything still works, but the arrow keys, history
-  and `Ctrl-R` do not, and the session says so once when it starts. There is no
-  readline dependency to install, because there is no dependency at all.
+  covers Linux, macOS and the BSDs. Anywhere else the session falls back to
+  reading whole lines: everything still works, but the arrow keys, history and
+  `Ctrl-R` do not, and the session says so once when it starts. Given a pipe
+  rather than a terminal it reads whole lines too, and says nothing, because a
+  transcript should hold the session and not a note about the session. There is
+  no readline dependency to install, because there is no dependency at all.
 - **Coverage is aimed at ordinary script-shaped Perl:** scalars, arrays, hashes,
   subroutines, references, control flow, regular expressions, string and list
   builtins, file reading and writing, and the common CPAN modules whose work the
@@ -280,7 +281,8 @@ These are real and current, not oversights:
   reported rather than converted.
 - **Go's regular expressions are RE2**, which has no backreferences and no
   lookaround. A pattern using either is refused by name rather than translated
-  into something that matches different text.
+  into something that matches different text. The refusal names the feature, the
+  match site carries a `TODO`, and the report says what to write instead.
 - **The generated Go is best effort.** It is meant to be read, run and edited,
   not trusted blindly. Where the two languages disagree in a way that survives
   translation, the report says so; where the tool got something wrong, the Go
