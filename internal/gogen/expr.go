@@ -217,6 +217,12 @@ func (e *Emitter) render(x ir.Expr, noLit bool) string {
 		return t + "(" + e.operand(x.X, precLowest, false) + ")"
 
 	case *ir.RawExpr:
+		// A raw expression spells its own Go, and that Go can name a package.
+		// Rendering its type registers the import the same way every other
+		// expression does; the rendered text itself is not used.
+		if x.T != nil {
+			_ = x.T.Go(func(path string) { e.imports.Add(path) })
+		}
 		return x.Source
 	}
 	// An expression kind the emitter does not know is still rendered as

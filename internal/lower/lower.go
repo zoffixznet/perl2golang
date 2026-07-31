@@ -79,6 +79,12 @@ type Lowerer struct {
 	// to index back into the slice.
 	aliases map[*Binding]ir.Expr
 
+	// patternTodo is the refusal from the pattern most recently turned down,
+	// waiting for whichever caller invents the stand-in expression so the
+	// stand-in can carry the marker. A match that quietly reads as false is
+	// the one shape a reader cannot tell from working code.
+	patternTodo *ir.Todo
+
 	// globals are package-level variables, in declaration order.
 	globals    []*Binding
 	globalSeen map[string]*Binding

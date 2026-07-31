@@ -8,10 +8,10 @@ import (
 )
 
 func TestNewFillsTheEntry(t *testing.T) {
-	e := New(RegexLookahead, Pos{File: "logwatch.pl", Line: 88, Col: 27}, "(?!#)", "(?!#)")
+	e := New(RuntimePattern, Pos{File: "logwatch.pl", Line: 88, Col: 27}, "$pat", "$pat")
 
-	if e.Code != "P2G4004" {
-		t.Errorf("code = %q, want P2G4004", e.Code)
+	if e.Code != "P2G4080" {
+		t.Errorf("code = %q, want P2G4080", e.Code)
 	}
 	if e.Severity != report.Warn {
 		t.Errorf("severity = %v, want warning", e.Severity)
@@ -19,10 +19,10 @@ func TestNewFillsTheEntry(t *testing.T) {
 	if e.SeverityName != "warning" {
 		t.Errorf("severity name = %q, want warning", e.SeverityName)
 	}
-	if e.Construct != "(?!#)" {
+	if e.Construct != "$pat" {
 		t.Errorf("construct = %q", e.Construct)
 	}
-	want := "lookahead `(?!#)` is not available in Go's `regexp` package"
+	want := "the pattern is built from `$pat` at run time, so it compiles at run time too"
 	if e.Message != want {
 		t.Errorf("message = %q, want %q", e.Message, want)
 	}
@@ -104,7 +104,7 @@ func TestLookup(t *testing.T) {
 // here counts in the right column and carries its concepts into the summary.
 func TestEntryFeedsTheReport(t *testing.T) {
 	var r report.Report
-	r.Add(New(RegexLookahead, Pos{Line: 88, Col: 27}, "(?!#)", "(?!#)"))
+	r.Add(New(RuntimePattern, Pos{Line: 88, Col: 27}, "$pat", "$pat"))
 	r.Add(New(EvalString, Pos{Line: 143, Col: 22}, "eval STRING"))
 	r.Add(New(HashOrder, Pos{Line: 12, Col: 5}, "each %counts"))
 

@@ -514,7 +514,7 @@ func (l *Lowerer) splitCall(n *ast.Call) ir.Expr {
 
 	pattern, ok := l.patternOf(args[0])
 	if !ok {
-		return composite(ir.SliceOf(ir.TString), nil, nil)
+		return l.markRefusedPattern(composite(ir.SliceOf(ir.TString), nil, nil))
 	}
 	// No third argument means Perl's default limit of zero, which drops
 	// trailing empty fields. A negative limit is what keeps them.

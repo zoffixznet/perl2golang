@@ -37,14 +37,13 @@ const defaultWidth = 80
 
 // Render writes one diagnostic in the block form:
 //
-//	warning[P2G4004]: lookahead `(?!#)` is not available in Go's `regexp` package
+//	refused[P2G4004]: lookahead `(?!#)` is not available in Go's `regexp` package
 //	  --> logwatch.pl:88:27
 //	   |
 //	88 |     next unless $line =~ /^(?!#)\s*(\S+)\s+(\d+)/;
 //	   |                           ^^^^^
 //	   |
-//	   = converted: the pattern compiles with `github.com/dlclark/regexp2`
-//	   = cost: linear-time matching is no longer guaranteed
+//	   = not converted: the match site is marked and yields no match
 //	   = try: drop the lookahead and test the prefix with `strings.HasPrefix`
 //	   = learn: regexp-is-re2   (perl2go explain regexp-is-re2)
 //

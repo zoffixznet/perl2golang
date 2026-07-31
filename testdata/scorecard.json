@@ -1,7 +1,7 @@
 {
   "format_version": 1,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-14T17:01:32Z",
+  "recorded": "2026-08-14T17:12:31Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -315,7 +315,7 @@
         "refusals": 0,
         "approximations": 0
       },
-      "elapsed_ns": 962888500
+      "elapsed_ns": 1023147828
     },
     {
       "tier": "tier1",
@@ -354,7 +354,7 @@
         "refusals": 0,
         "approximations": 3
       },
-      "elapsed_ns": 947672715
+      "elapsed_ns": 1017787410
     },
     {
       "tier": "tier1",
@@ -393,7 +393,7 @@
         "refusals": 0,
         "approximations": 4
       },
-      "elapsed_ns": 1107853478
+      "elapsed_ns": 1193590529
     },
     {
       "tier": "tier1",
@@ -431,7 +431,7 @@
         "refusals": 0,
         "approximations": 1
       },
-      "elapsed_ns": 933293332
+      "elapsed_ns": 955774175
     },
     {
       "tier": "tier1",
@@ -469,7 +469,7 @@
         "refusals": 0,
         "approximations": 6
       },
-      "elapsed_ns": 974705890
+      "elapsed_ns": 1055699223
     },
     {
       "tier": "tier1",
@@ -508,7 +508,7 @@
         "refusals": 0,
         "approximations": 3
       },
-      "elapsed_ns": 1182739669
+      "elapsed_ns": 1069634248
     },
     {
       "tier": "tier1",
@@ -544,7 +544,7 @@
         "refusals": 0,
         "approximations": 1
       },
-      "elapsed_ns": 1152167634
+      "elapsed_ns": 1055560757
     },
     {
       "tier": "tier1",
@@ -583,7 +583,7 @@
         "refusals": 0,
         "approximations": 0
       },
-      "elapsed_ns": 1025147525
+      "elapsed_ns": 1152932457
     },
     {
       "tier": "tier1",
@@ -622,7 +622,7 @@
         "refusals": 0,
         "approximations": 3
       },
-      "elapsed_ns": 1028990024
+      "elapsed_ns": 1193483680
     },
     {
       "tier": "tier1",
@@ -660,7 +660,7 @@
         "refusals": 0,
         "approximations": 4
       },
-      "elapsed_ns": 1130219231
+      "elapsed_ns": 1243400558
     },
     {
       "tier": "tier1",
@@ -699,7 +699,7 @@
         "refusals": 0,
         "approximations": 1
       },
-      "elapsed_ns": 959189236
+      "elapsed_ns": 977047668
     },
     {
       "tier": "tier1",
@@ -739,7 +739,7 @@
         "refusals": 7,
         "approximations": 7
       },
-      "elapsed_ns": 1100134844
+      "elapsed_ns": 1045718327
     },
     {
       "tier": "tier1",
@@ -777,7 +777,7 @@
         "refusals": 0,
         "approximations": 0
       },
-      "elapsed_ns": 1128471992
+      "elapsed_ns": 1108947323
     },
     {
       "tier": "tier1",
@@ -814,7 +814,7 @@
         "refusals": 0,
         "approximations": 2
       },
-      "elapsed_ns": 1160128004
+      "elapsed_ns": 1124230428
     },
     {
       "tier": "tier1",
@@ -852,7 +852,7 @@
         "refusals": 0,
         "approximations": 0
       },
-      "elapsed_ns": 1171337551
+      "elapsed_ns": 1057879753
     },
     {
       "tier": "tier1",
@@ -892,7 +892,7 @@
         "refusals": 1,
         "approximations": 1
       },
-      "elapsed_ns": 1094733674
+      "elapsed_ns": 1053344559
     },
     {
       "tier": "tier1",
@@ -929,7 +929,7 @@
         "refusals": 0,
         "approximations": 0
       },
-      "elapsed_ns": 1262083180
+      "elapsed_ns": 1342195541
     },
     {
       "tier": "tier1",
@@ -944,7 +944,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "exit status 2, wanted 0; stdout differs: 358 byte(s) missing after line 2, expected \"apples   10\\nfigs     12\\nkiwis   ...\"; stderr differs: 210 extra byte(s) after line 1, starting \"panic: each keeps hidden iterato...\""
+          "reason": "exit status 2, wanted 0; stdout differs: 358 byte(s) missing after line 2, expected \"apples   10\\nfigs     12\\nkiwis   ...\"; stderr differs: 212 extra byte(s) after line 1, starting \"panic: each keeps hidden iterato...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -960,7 +960,7 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "exit status 2, wanted 0; stdout differs: 358 byte(s) missing after line 2, expected \"apples   10\\nfigs     12\\nkiwis   ...\"; stderr differs: 230 extra byte(s) after line 1, starting \"panic: each keeps hidden iterato...\""
+        "reason": "exit status 2, wanted 0; stdout differs: 358 byte(s) missing after line 2, expected \"apples   10\\nfigs     12\\nkiwis   ...\"; stderr differs: 232 extra byte(s) after line 1, starting \"panic: each keeps hidden iterato...\""
       },
       "quality": {
         "todos": 1,
@@ -969,7 +969,7 @@
         "refusals": 1,
         "approximations": 1
       },
-      "elapsed_ns": 1255739366
+      "elapsed_ns": 1187503895
     },
     {
       "tier": "tier1",
@@ -1009,7 +1009,7 @@
         "refusals": 1,
         "approximations": 1
       },
-      "elapsed_ns": 986694530
+      "elapsed_ns": 1074313640
     },
     {
       "tier": "tier1",
@@ -1048,7 +1048,7 @@
         "refusals": 0,
         "approximations": 1
       },
-      "elapsed_ns": 1036126450
+      "elapsed_ns": 979077029
     },
     {
       "tier": "tier1",
@@ -1084,7 +1084,7 @@
         "refusals": 0,
         "approximations": 2
       },
-      "elapsed_ns": 1104118935
+      "elapsed_ns": 1108840360
     },
     {
       "tier": "tier1",
@@ -1099,7 +1099,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "exit status 2, wanted 0; stdout differs: 116 byte(s) missing after line 13, expected \"handled a after 3 attempts\\nhandl...\"; stderr differs: 138 extra byte(s) after line 1, starting \"panic: P2G3510: redo has no Go e...\""
+          "reason": "exit status 2, wanted 0; stdout differs: 116 byte(s) missing after line 13, expected \"handled a after 3 attempts\\nhandl...\"; stderr differs: 139 extra byte(s) after line 1, starting \"panic: P2G3510: redo has no Go e...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -1114,7 +1114,7 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "exit status 2, wanted 0; stdout differs: 116 byte(s) missing after line 13, expected \"handled a after 3 attempts\\nhandl...\"; stderr differs: 149 extra byte(s) after line 1, starting \"panic: P2G3510: redo has no Go e...\""
+        "reason": "exit status 2, wanted 0; stdout differs: 116 byte(s) missing after line 13, expected \"handled a after 3 attempts\\nhandl...\"; stderr differs: 150 extra byte(s) after line 1, starting \"panic: P2G3510: redo has no Go e...\""
       },
       "quality": {
         "todos": 1,
@@ -1123,7 +1123,7 @@
         "refusals": 1,
         "approximations": 1
       },
-      "elapsed_ns": 1054942382
+      "elapsed_ns": 1016660240
     },
     {
       "tier": "tier1",
@@ -1162,7 +1162,7 @@
         "refusals": 0,
         "approximations": 1
       },
-      "elapsed_ns": 1258413344
+      "elapsed_ns": 1160702729
     },
     {
       "tier": "tier1",
@@ -1198,7 +1198,7 @@
         "refusals": 0,
         "approximations": 1
       },
-      "elapsed_ns": 1188331126
+      "elapsed_ns": 1280882022
     },
     {
       "tier": "tier1",
@@ -1237,7 +1237,7 @@
         "refusals": 0,
         "approximations": 0
       },
-      "elapsed_ns": 1266952729
+      "elapsed_ns": 1244683979
     },
     {
       "tier": "tier1",
@@ -1275,7 +1275,7 @@
         "refusals": 0,
         "approximations": 0
       },
-      "elapsed_ns": 1134678592
+      "elapsed_ns": 1032319473
     },
     {
       "tier": "tier1",
@@ -1315,7 +1315,7 @@
         "refusals": 2,
         "approximations": 0
       },
-      "elapsed_ns": 1187373393
+      "elapsed_ns": 1080859283
     },
     {
       "tier": "tier1",
@@ -1351,7 +1351,7 @@
         "refusals": 0,
         "approximations": 0
       },
-      "elapsed_ns": 1083057149
+      "elapsed_ns": 1023454307
     },
     {
       "tier": "tier1",
@@ -1390,7 +1390,7 @@
         "refusals": 0,
         "approximations": 0
       },
-      "elapsed_ns": 1208328179
+      "elapsed_ns": 1099829640
     },
     {
       "tier": "tier1",
@@ -1426,7 +1426,7 @@
         "refusals": 0,
         "approximations": 0
       },
-      "elapsed_ns": 1051366774
+      "elapsed_ns": 969149531
     },
     {
       "tier": "tier1",
@@ -1465,7 +1465,7 @@
         "refusals": 6,
         "approximations": 0
       },
-      "elapsed_ns": 1027587380
+      "elapsed_ns": 1085139554
     },
     {
       "tier": "tier1",
@@ -1504,7 +1504,7 @@
         "refusals": 0,
         "approximations": 3
       },
-      "elapsed_ns": 1139812106
+      "elapsed_ns": 1181829118
     },
     {
       "tier": "tier1",
@@ -1543,7 +1543,7 @@
         "refusals": 0,
         "approximations": 0
       },
-      "elapsed_ns": 1148931880
+      "elapsed_ns": 1229068214
     },
     {
       "tier": "tier1",
@@ -1582,7 +1582,7 @@
         "refusals": 0,
         "approximations": 0
       },
-      "elapsed_ns": 302201421
+      "elapsed_ns": 276735771
     },
     {
       "tier": "tier1",
@@ -1618,7 +1618,7 @@
         "refusals": 0,
         "approximations": 0
       },
-      "elapsed_ns": 839990403
+      "elapsed_ns": 968993858
     },
     {
       "tier": "tier2",
@@ -1658,7 +1658,7 @@
         "refusals": 0,
         "approximations": 5
       },
-      "elapsed_ns": 246475013
+      "elapsed_ns": 234828437
     },
     {
       "tier": "tier2",
@@ -1697,7 +1697,7 @@
         "refusals": 0,
         "approximations": 5
       },
-      "elapsed_ns": 1157651573
+      "elapsed_ns": 1158151007
     },
     {
       "tier": "tier2",
@@ -1712,7 +1712,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "exit status 2, wanted 0; stdout differs: line 8, byte 131: got \"context\\n\", wanted \"scalar context\\nvoid context\\nroot...\"; stderr differs: 301 extra byte(s) after line 1, starting \"panic: interface conversion: int...\""
+          "reason": "exit status 2, wanted 0; stdout differs: line 8, byte 131: got \"context\\n\", wanted \"scalar context\\nvoid context\\nroot...\"; stderr differs: 304 extra byte(s) after line 1, starting \"panic: interface conversion: int...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -1727,7 +1727,7 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "exit status 2, wanted 0; stdout differs: line 8, byte 131: got \"context\\n\", wanted \"scalar context\\nvoid context\\nroot...\"; stderr differs: 324 extra byte(s) after line 1, starting \"panic: interface conversion: int...\""
+        "reason": "exit status 2, wanted 0; stdout differs: line 8, byte 131: got \"context\\n\", wanted \"scalar context\\nvoid context\\nroot...\"; stderr differs: 325 extra byte(s) after line 1, starting \"panic: interface conversion: int...\""
       },
       "quality": {
         "todos": 0,
@@ -1736,7 +1736,7 @@
         "refusals": 0,
         "approximations": 6
       },
-      "elapsed_ns": 1018694714
+      "elapsed_ns": 1060826684
     },
     {
       "tier": "tier2",
@@ -1775,7 +1775,7 @@
         "refusals": 0,
         "approximations": 5
       },
-      "elapsed_ns": 1271167953
+      "elapsed_ns": 1245602625
     },
     {
       "tier": "tier2",
@@ -1815,7 +1815,7 @@
         "refusals": 0,
         "approximations": 6
       },
-      "elapsed_ns": 278895110
+      "elapsed_ns": 279948460
     },
     {
       "tier": "tier2",
@@ -1852,7 +1852,7 @@
         "refusals": 0,
         "approximations": 1
       },
-      "elapsed_ns": 1289030955
+      "elapsed_ns": 1304478743
     },
     {
       "tier": "tier2",
@@ -1892,7 +1892,7 @@
         "refusals": 0,
         "approximations": 5
       },
-      "elapsed_ns": 359428892
+      "elapsed_ns": 271329746
     },
     {
       "tier": "tier2",
@@ -1931,7 +1931,7 @@
         "refusals": 0,
         "approximations": 0
       },
-      "elapsed_ns": 1327315693
+      "elapsed_ns": 1266838012
     },
     {
       "tier": "tier2",
@@ -1946,7 +1946,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "exit status 2, wanted 0; stdout differs: 730 byte(s) missing after line 1, expected \"-- status counts --\\n200 4\\n302 2\\n...\"; stderr differs: 176 extra byte(s) after line 1, starting \"panic: interface conversion: int...\""
+          "reason": "exit status 2, wanted 0; stdout differs: 730 byte(s) missing after line 1, expected \"-- status counts --\\n200 4\\n302 2\\n...\"; stderr differs: 175 extra byte(s) after line 1, starting \"panic: interface conversion: int...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -1961,7 +1961,7 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "exit status 2, wanted 0; stdout differs: 730 byte(s) missing after line 1, expected \"-- status counts --\\n200 4\\n302 2\\n...\"; stderr differs: 187 extra byte(s) after line 1, starting \"panic: interface conversion: int...\""
+        "reason": "exit status 2, wanted 0; stdout differs: 730 byte(s) missing after line 1, expected \"-- status counts --\\n200 4\\n302 2\\n...\"; stderr differs: 186 extra byte(s) after line 1, starting \"panic: interface conversion: int...\""
       },
       "quality": {
         "todos": 0,
@@ -1970,7 +1970,7 @@
         "refusals": 0,
         "approximations": 1
       },
-      "elapsed_ns": 1394923720
+      "elapsed_ns": 1362404018
     },
     {
       "tier": "tier2",
@@ -2010,7 +2010,7 @@
         "refusals": 0,
         "approximations": 3
       },
-      "elapsed_ns": 325165458
+      "elapsed_ns": 323019294
     },
     {
       "tier": "tier2",
@@ -2050,7 +2050,7 @@
         "refusals": 0,
         "approximations": 14
       },
-      "elapsed_ns": 280461165
+      "elapsed_ns": 246899873
     },
     {
       "tier": "tier2",
@@ -2090,7 +2090,7 @@
         "refusals": 0,
         "approximations": 12
       },
-      "elapsed_ns": 307089760
+      "elapsed_ns": 279044030
     },
     {
       "tier": "tier2",
@@ -2130,7 +2130,7 @@
         "refusals": 0,
         "approximations": 2
       },
-      "elapsed_ns": 324962158
+      "elapsed_ns": 333462962
     },
     {
       "tier": "tier2",
@@ -2169,7 +2169,7 @@
         "refusals": 0,
         "approximations": 2
       },
-      "elapsed_ns": 1244401706
+      "elapsed_ns": 1299638441
     },
     {
       "tier": "tier2",
@@ -2207,7 +2207,7 @@
         "refusals": 0,
         "approximations": 23
       },
-      "elapsed_ns": 1255174886
+      "elapsed_ns": 1305572708
     },
     {
       "tier": "tier2",
@@ -2246,7 +2246,7 @@
         "refusals": 0,
         "approximations": 0
       },
-      "elapsed_ns": 1154410153
+      "elapsed_ns": 1235059513
     },
     {
       "tier": "tier2",
@@ -2285,7 +2285,7 @@
         "refusals": 0,
         "approximations": 2
       },
-      "elapsed_ns": 1086458840
+      "elapsed_ns": 1281681340
     },
     {
       "tier": "tier2",
@@ -2324,7 +2324,7 @@
         "refusals": 0,
         "approximations": 1
       },
-      "elapsed_ns": 1448844223
+      "elapsed_ns": 1292514933
     },
     {
       "tier": "tier2",
@@ -2364,7 +2364,7 @@
         "refusals": 0,
         "approximations": 2
       },
-      "elapsed_ns": 363451626
+      "elapsed_ns": 312508737
     },
     {
       "tier": "tier2",
@@ -2379,7 +2379,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: line 1, byte 0: got \"\u0026{0x1ea1119b21e0}%!(EXTRA string...\", wanted \"REGION      TOTAL\\n--------------...\"; files written differ: wrote 0x1ea1118fa270 and the Perl did not"
+          "reason": "stdout differs: line 1, byte 0: got \"\u0026{0x12b991f341e0}%!(EXTRA string...\", wanted \"REGION      TOTAL\\n--------------...\"; files written differ: wrote 0x12b991e7c270 and the Perl did not"
         },
         "honest": {
           "outcome": "n/a"
@@ -2394,7 +2394,7 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: line 1, byte 0: got \"\u0026{0x29109e5001e0}%!(EXTRA string...\", wanted \"REGION      TOTAL\\n--------------...\"; files written differ: wrote 0x29109e516220 and the Perl did not"
+        "reason": "stdout differs: line 1, byte 0: got \"\u0026{0x3d48b9c001e0}%!(EXTRA string...\", wanted \"REGION      TOTAL\\n--------------...\"; files written differ: wrote 0x3d48b9b48270 and the Perl did not"
       },
       "quality": {
         "todos": 0,
@@ -2403,7 +2403,7 @@
         "refusals": 0,
         "approximations": 5
       },
-      "elapsed_ns": 1257308964
+      "elapsed_ns": 1278462699
     },
     {
       "tier": "tier2",
@@ -2443,7 +2443,7 @@
         "refusals": 6,
         "approximations": 1
       },
-      "elapsed_ns": 1137807713
+      "elapsed_ns": 1149744812
     },
     {
       "tier": "tier2",
@@ -2483,7 +2483,7 @@
         "refusals": 0,
         "approximations": 16
       },
-      "elapsed_ns": 303121139
+      "elapsed_ns": 370057066
     },
     {
       "tier": "tier2",
@@ -2522,7 +2522,7 @@
         "refusals": 0,
         "approximations": 2
       },
-      "elapsed_ns": 1395442572
+      "elapsed_ns": 1466111727
     },
     {
       "tier": "tier2",
@@ -2537,7 +2537,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: line 1, byte 9: got \"/tmp/perl2go-score-tier2-1962237...\", wanted \"input.pl\\ninputs:  files/site-a.l...\""
+          "reason": "stdout differs: line 1, byte 9: got \"/tmp/perl2go-score-tier2-3384556...\", wanted \"input.pl\\ninputs:  files/site-a.l...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -2552,7 +2552,7 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: line 1, byte 9: got \"/tmp/perl2go-score-tier2-1962237...\", wanted \"input.pl\\ninputs:  files/site-a.l...\""
+        "reason": "stdout differs: line 1, byte 9: got \"/tmp/perl2go-score-tier2-3384556...\", wanted \"input.pl\\ninputs:  files/site-a.l...\""
       },
       "quality": {
         "todos": 0,
@@ -2561,7 +2561,7 @@
         "refusals": 0,
         "approximations": 2
       },
-      "elapsed_ns": 1251173317
+      "elapsed_ns": 1393468215
     },
     {
       "tier": "tier2",
@@ -2601,7 +2601,7 @@
         "refusals": 0,
         "approximations": 0
       },
-      "elapsed_ns": 414733089
+      "elapsed_ns": 302935487
     },
     {
       "tier": "tier2",
@@ -2641,7 +2641,7 @@
         "refusals": 3,
         "approximations": 3
       },
-      "elapsed_ns": 1341655098
+      "elapsed_ns": 1283051458
     },
     {
       "tier": "tier2",
@@ -2681,7 +2681,7 @@
         "refusals": 0,
         "approximations": 6
       },
-      "elapsed_ns": 336405017
+      "elapsed_ns": 378604654
     },
     {
       "tier": "tier2",
@@ -2696,7 +2696,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "exit status 2, wanted 0; stdout differs: 316 byte(s) missing after line 23, expected \" 3: 4 word(s) are,day,dog,fox\\n 4...\"; stderr differs: 168 extra byte(s) after line 1, starting \"panic: interface conversion: int...\""
+          "reason": "exit status 2, wanted 0; stdout differs: 316 byte(s) missing after line 23, expected \" 3: 4 word(s) are,day,dog,fox\\n 4...\"; stderr differs: 167 extra byte(s) after line 1, starting \"panic: interface conversion: int...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -2711,7 +2711,7 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "exit status 2, wanted 0; stdout differs: 316 byte(s) missing after line 23, expected \" 3: 4 word(s) are,day,dog,fox\\n 4...\"; stderr differs: 178 extra byte(s) after line 1, starting \"panic: interface conversion: int...\""
+        "reason": "exit status 2, wanted 0; stdout differs: 316 byte(s) missing after line 23, expected \" 3: 4 word(s) are,day,dog,fox\\n 4...\"; stderr differs: 177 extra byte(s) after line 1, starting \"panic: interface conversion: int...\""
       },
       "quality": {
         "todos": 0,
@@ -2720,7 +2720,7 @@
         "refusals": 0,
         "approximations": 2
       },
-      "elapsed_ns": 1613805161
+      "elapsed_ns": 1405847429
     },
     {
       "tier": "tier2",
@@ -2760,7 +2760,7 @@
         "refusals": 0,
         "approximations": 5
       },
-      "elapsed_ns": 372335907
+      "elapsed_ns": 394911561
     },
     {
       "tier": "tier2",
@@ -2799,7 +2799,7 @@
         "refusals": 0,
         "approximations": 1
       },
-      "elapsed_ns": 1435325743
+      "elapsed_ns": 1465780163
     },
     {
       "tier": "tier2",
@@ -2838,7 +2838,7 @@
         "refusals": 0,
         "approximations": 13
       },
-      "elapsed_ns": 1392762550
+      "elapsed_ns": 1389633359
     },
     {
       "tier": "tier2",
@@ -2879,7 +2879,7 @@
         "refusals": 18,
         "approximations": 21
       },
-      "elapsed_ns": 314788042
+      "elapsed_ns": 358034652
     },
     {
       "tier": "tier2",
@@ -2919,7 +2919,7 @@
         "refusals": 0,
         "approximations": 10
       },
-      "elapsed_ns": 276636984
+      "elapsed_ns": 337795302
     },
     {
       "tier": "tier2",
@@ -2960,7 +2960,7 @@
         "refusals": 28,
         "approximations": 6
       },
-      "elapsed_ns": 288343607
+      "elapsed_ns": 285998772
     },
     {
       "tier": "tier2",
@@ -3000,7 +3000,7 @@
         "refusals": 19,
         "approximations": 10
       },
-      "elapsed_ns": 1200932802
+      "elapsed_ns": 1170624884
     },
     {
       "tier": "tier3",
@@ -3040,7 +3040,7 @@
         "refusals": 37,
         "approximations": 8
       },
-      "elapsed_ns": 1127288198
+      "elapsed_ns": 1283818818
     },
     {
       "tier": "tier3",
@@ -3080,7 +3080,7 @@
         "refusals": 22,
         "approximations": 3
       },
-      "elapsed_ns": 1186545200
+      "elapsed_ns": 1101585252
     },
     {
       "tier": "tier3",
@@ -3120,7 +3120,7 @@
         "refusals": 16,
         "approximations": 2
       },
-      "elapsed_ns": 1173372351
+      "elapsed_ns": 1098440296
     },
     {
       "tier": "tier3",
@@ -3161,7 +3161,7 @@
         "refusals": 13,
         "approximations": 1
       },
-      "elapsed_ns": 271865159
+      "elapsed_ns": 264329593
     },
     {
       "tier": "tier3",
@@ -3201,7 +3201,7 @@
         "refusals": 9,
         "approximations": 2
       },
-      "elapsed_ns": 1270373072
+      "elapsed_ns": 1183186055
     },
     {
       "tier": "tier3",
@@ -3242,7 +3242,7 @@
         "refusals": 18,
         "approximations": 8
       },
-      "elapsed_ns": 319144419
+      "elapsed_ns": 294419394
     },
     {
       "tier": "tier3",
@@ -3257,7 +3257,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "exit status 2, wanted 0; stdout differs: 483 byte(s) missing after line 1, expected \"TOP 4 PATHS (of 9)\\nPATH         ...\"; stderr differs: 221 extra byte(s) after line 1, starting \"panic: the GetOptions function i...\""
+          "reason": "exit status 2, wanted 0; stdout differs: 483 byte(s) missing after line 1, expected \"TOP 4 PATHS (of 9)\\nPATH         ...\"; stderr differs: 219 extra byte(s) after line 1, starting \"panic: the GetOptions function i...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -3273,7 +3273,7 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "exit status 2, wanted 0; stdout differs: 483 byte(s) missing after line 1, expected \"TOP 4 PATHS (of 9)\\nPATH         ...\"; stderr differs: 241 extra byte(s) after line 1, starting \"panic: the GetOptions function i...\""
+        "reason": "exit status 2, wanted 0; stdout differs: 483 byte(s) missing after line 1, expected \"TOP 4 PATHS (of 9)\\nPATH         ...\"; stderr differs: 239 extra byte(s) after line 1, starting \"panic: the GetOptions function i...\""
       },
       "quality": {
         "todos": 3,
@@ -3282,7 +3282,7 @@
         "refusals": 3,
         "approximations": 0
       },
-      "elapsed_ns": 1428929310
+      "elapsed_ns": 1348443511
     },
     {
       "tier": "tier3",
@@ -3323,7 +3323,7 @@
         "refusals": 1,
         "approximations": 6
       },
-      "elapsed_ns": 275536390
+      "elapsed_ns": 265893441
     },
     {
       "tier": "tier3",
@@ -3363,7 +3363,7 @@
         "refusals": 1,
         "approximations": 7
       },
-      "elapsed_ns": 1207854082
+      "elapsed_ns": 1242691596
     },
     {
       "tier": "tier3",
@@ -3403,7 +3403,7 @@
         "refusals": 0,
         "approximations": 13
       },
-      "elapsed_ns": 259735246
+      "elapsed_ns": 396300015
     },
     {
       "tier": "tier3",
@@ -3443,7 +3443,7 @@
         "refusals": 7,
         "approximations": 9
       },
-      "elapsed_ns": 1193936976
+      "elapsed_ns": 1188360340
     },
     {
       "tier": "tier3",
@@ -3483,7 +3483,7 @@
         "refusals": 2,
         "approximations": 2
       },
-      "elapsed_ns": 1075219182
+      "elapsed_ns": 1168767607
     },
     {
       "tier": "tier3",
@@ -3523,7 +3523,7 @@
         "refusals": 8,
         "approximations": 1
       },
-      "elapsed_ns": 1355692005
+      "elapsed_ns": 1340124959
     },
     {
       "tier": "tier3",
@@ -3563,7 +3563,7 @@
         "refusals": 19,
         "approximations": 3
       },
-      "elapsed_ns": 1348137000
+      "elapsed_ns": 1320759266
     },
     {
       "tier": "tier3",
@@ -3604,7 +3604,7 @@
         "refusals": 16,
         "approximations": 1
       },
-      "elapsed_ns": 328517459
+      "elapsed_ns": 307328742
     },
     {
       "tier": "tier3",
@@ -3619,7 +3619,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "exit status 2, wanted 0; stdout differs: 523 byte(s) missing after line 1, expected \"preflight at 2024-06-01T12:00:00...\"; stderr differs: 213 extra byte(s) after line 1, starting \"panic: the gmtime function is no...\""
+          "reason": "exit status 2, wanted 0; stdout differs: 523 byte(s) missing after line 1, expected \"preflight at 2024-06-01T12:00:00...\"; stderr differs: 217 extra byte(s) after line 1, starting \"panic: the gmtime function is no...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -3635,7 +3635,7 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "exit status 2, wanted 0; stdout differs: 523 byte(s) missing after line 1, expected \"preflight at 2024-06-01T12:00:00...\"; stderr differs: 233 extra byte(s) after line 1, starting \"panic: the gmtime function is no...\""
+        "reason": "exit status 2, wanted 0; stdout differs: 523 byte(s) missing after line 1, expected \"preflight at 2024-06-01T12:00:00...\"; stderr differs: 237 extra byte(s) after line 1, starting \"panic: the gmtime function is no...\""
       },
       "quality": {
         "todos": 4,
@@ -3644,7 +3644,7 @@
         "refusals": 4,
         "approximations": 9
       },
-      "elapsed_ns": 1272895513
+      "elapsed_ns": 1167566738
     },
     {
       "tier": "tier3",
@@ -3685,7 +3685,7 @@
         "refusals": 26,
         "approximations": 13
       },
-      "elapsed_ns": 294669170
+      "elapsed_ns": 326039529
     },
     {
       "tier": "tier3",
@@ -3725,7 +3725,7 @@
         "refusals": 0,
         "approximations": 39
       },
-      "elapsed_ns": 303857467
+      "elapsed_ns": 388602635
     },
     {
       "tier": "tier3",
@@ -3766,7 +3766,7 @@
         "refusals": 6,
         "approximations": 11
       },
-      "elapsed_ns": 320246939
+      "elapsed_ns": 364391477
     },
     {
       "tier": "tier3",
@@ -3806,7 +3806,7 @@
         "refusals": 0,
         "approximations": 8
       },
-      "elapsed_ns": 321648942
+      "elapsed_ns": 319751091
     },
     {
       "tier": "tier3",
@@ -3847,7 +3847,7 @@
         "refusals": 2,
         "approximations": 4
       },
-      "elapsed_ns": 292924717
+      "elapsed_ns": 280798071
     },
     {
       "tier": "tier3",
@@ -3886,7 +3886,7 @@
         "refusals": 0,
         "approximations": 21
       },
-      "elapsed_ns": 1299530511
+      "elapsed_ns": 1099425967
     },
     {
       "tier": "tier3",
@@ -3927,7 +3927,7 @@
         "refusals": 4,
         "approximations": 22
       },
-      "elapsed_ns": 232010684
+      "elapsed_ns": 232924226
     },
     {
       "tier": "tier3",
@@ -3968,7 +3968,7 @@
         "refusals": 29,
         "approximations": 2
       },
-      "elapsed_ns": 248070108
+      "elapsed_ns": 238372036
     },
     {
       "tier": "tier3",
@@ -4008,7 +4008,7 @@
         "refusals": 0,
         "approximations": 4
       },
-      "elapsed_ns": 255081106
+      "elapsed_ns": 203163105
     },
     {
       "tier": "tier4",
@@ -4048,7 +4048,7 @@
         "refusals": 2,
         "approximations": 0
       },
-      "elapsed_ns": 980764181
+      "elapsed_ns": 889348370
     },
     {
       "tier": "tier4",
@@ -4090,7 +4090,7 @@
         "refusals": 0,
         "approximations": 1
       },
-      "elapsed_ns": 263612893
+      "elapsed_ns": 253980164
     },
     {
       "tier": "tier4",
@@ -4133,7 +4133,7 @@
         "refusals": 2,
         "approximations": 0
       },
-      "elapsed_ns": 231838557
+      "elapsed_ns": 188780255
     },
     {
       "tier": "tier4",
@@ -4175,7 +4175,7 @@
         "refusals": 5,
         "approximations": 1
       },
-      "elapsed_ns": 245182357
+      "elapsed_ns": 181353120
     },
     {
       "tier": "tier4",
@@ -4216,7 +4216,7 @@
         "refusals": 3,
         "approximations": 1
       },
-      "elapsed_ns": 887717433
+      "elapsed_ns": 965216349
     },
     {
       "tier": "tier4",
@@ -4256,7 +4256,7 @@
         "refusals": 0,
         "approximations": 1
       },
-      "elapsed_ns": 832258670
+      "elapsed_ns": 1008280471
     },
     {
       "tier": "tier4",
@@ -4298,7 +4298,7 @@
         "refusals": 7,
         "approximations": 3
       },
-      "elapsed_ns": 1009802674
+      "elapsed_ns": 1095947244
     },
     {
       "tier": "tier4",
@@ -4339,7 +4339,7 @@
         "refusals": 3,
         "approximations": 0
       },
-      "elapsed_ns": 820416278
+      "elapsed_ns": 896003094
     },
     {
       "tier": "tier4",
@@ -4380,7 +4380,7 @@
         "refusals": 6,
         "approximations": 3
       },
-      "elapsed_ns": 883990207
+      "elapsed_ns": 893102084
     },
     {
       "tier": "tier4",
@@ -4422,7 +4422,7 @@
         "refusals": 3,
         "approximations": 0
       },
-      "elapsed_ns": 671903522
+      "elapsed_ns": 678827785
     },
     {
       "tier": "tier4",
@@ -4463,7 +4463,7 @@
         "refusals": 4,
         "approximations": 0
       },
-      "elapsed_ns": 934592473
+      "elapsed_ns": 844818089
     },
     {
       "tier": "tier4",
@@ -4504,7 +4504,7 @@
         "refusals": 0,
         "approximations": 9
       },
-      "elapsed_ns": 983461685
+      "elapsed_ns": 1064650621
     },
     {
       "tier": "tier4",
@@ -4544,7 +4544,7 @@
         "refusals": 0,
         "approximations": 1
       },
-      "elapsed_ns": 1003280166
+      "elapsed_ns": 931745292
     },
     {
       "tier": "tier4",
@@ -4586,7 +4586,7 @@
         "refusals": 0,
         "approximations": 5
       },
-      "elapsed_ns": 282892646
+      "elapsed_ns": 372067458
     },
     {
       "tier": "tier4",
@@ -4626,7 +4626,7 @@
         "refusals": 0,
         "approximations": 4
       },
-      "elapsed_ns": 978983581
+      "elapsed_ns": 892240330
     },
     {
       "tier": "tier4",
@@ -4667,7 +4667,7 @@
         "refusals": 2,
         "approximations": 3
       },
-      "elapsed_ns": 967266123
+      "elapsed_ns": 946277257
     },
     {
       "tier": "tier4",
@@ -4709,7 +4709,7 @@
         "refusals": 4,
         "approximations": 0
       },
-      "elapsed_ns": 825342392
+      "elapsed_ns": 903005045
     },
     {
       "tier": "tier4",
@@ -4750,7 +4750,7 @@
         "refusals": 12,
         "approximations": 0
       },
-      "elapsed_ns": 808552827
+      "elapsed_ns": 856967223
     },
     {
       "tier": "tier4",
@@ -4790,7 +4790,7 @@
         "refusals": 5,
         "approximations": 0
       },
-      "elapsed_ns": 833512700
+      "elapsed_ns": 864656163
     },
     {
       "tier": "tier4",
@@ -4832,7 +4832,7 @@
         "refusals": 0,
         "approximations": 2
       },
-      "elapsed_ns": 308734393
+      "elapsed_ns": 212323131
     },
     {
       "tier": "tier4",
@@ -4872,7 +4872,7 @@
         "refusals": 0,
         "approximations": 1
       },
-      "elapsed_ns": 779203161
+      "elapsed_ns": 751372349
     },
     {
       "tier": "tier4",
@@ -4913,7 +4913,7 @@
         "refusals": 0,
         "approximations": 0
       },
-      "elapsed_ns": 705851648
+      "elapsed_ns": 715939629
     },
     {
       "tier": "tier4",
@@ -4952,7 +4952,7 @@
         "refusals": 0,
         "approximations": 1
       },
-      "elapsed_ns": 760076993
+      "elapsed_ns": 759185413
     },
     {
       "tier": "tier4",
@@ -4992,7 +4992,7 @@
         "refusals": 0,
         "approximations": 0
       },
-      "elapsed_ns": 698238852
+      "elapsed_ns": 756559724
     },
     {
       "tier": "tier4",
@@ -5032,7 +5032,7 @@
         "refusals": 0,
         "approximations": 0
       },
-      "elapsed_ns": 633752689
+      "elapsed_ns": 657322233
     },
     {
       "tier": "tier4",
@@ -5072,7 +5072,7 @@
         "refusals": 0,
         "approximations": 0
       },
-      "elapsed_ns": 673453658
+      "elapsed_ns": 662309320
     },
     {
       "tier": "tier4",
@@ -5112,7 +5112,7 @@
         "refusals": 0,
         "approximations": 2
       },
-      "elapsed_ns": 622839863
+      "elapsed_ns": 639280565
     },
     {
       "tier": "tier4",
@@ -5153,7 +5153,7 @@
         "refusals": 0,
         "approximations": 2
       },
-      "elapsed_ns": 209792380
+      "elapsed_ns": 271227715
     },
     {
       "tier": "tier4",
@@ -5193,7 +5193,7 @@
         "refusals": 0,
         "approximations": 4
       },
-      "elapsed_ns": 606653623
+      "elapsed_ns": 633946067
     },
     {
       "tier": "tier4",
@@ -5234,7 +5234,7 @@
         "refusals": 0,
         "approximations": 1
       },
-      "elapsed_ns": 307306105
+      "elapsed_ns": 254606660
     },
     {
       "tier": "tier4",
@@ -5274,7 +5274,7 @@
         "refusals": 0,
         "approximations": 3
       },
-      "elapsed_ns": 577262579
+      "elapsed_ns": 556460894
     },
     {
       "tier": "tier4",
@@ -5315,7 +5315,7 @@
         "refusals": 0,
         "approximations": 1
       },
-      "elapsed_ns": 604889230
+      "elapsed_ns": 560813278
     },
     {
       "tier": "tier4",
@@ -5357,7 +5357,7 @@
         "refusals": 0,
         "approximations": 5
       },
-      "elapsed_ns": 228377670
+      "elapsed_ns": 215574668
     },
     {
       "tier": "tier4",
@@ -5398,7 +5398,7 @@
         "refusals": 1,
         "approximations": 1
       },
-      "elapsed_ns": 569443146
+      "elapsed_ns": 551495154
     },
     {
       "tier": "tier4",
@@ -5437,7 +5437,7 @@
         "refusals": 0,
         "approximations": 0
       },
-      "elapsed_ns": 479586200
+      "elapsed_ns": 526281981
     },
     {
       "tier": "domain",
@@ -5478,7 +5478,7 @@
         "refusals": 1,
         "approximations": 8
       },
-      "elapsed_ns": 382762468
+      "elapsed_ns": 415343292
     },
     {
       "tier": "domain",
@@ -5519,7 +5519,7 @@
         "refusals": 1,
         "approximations": 6
       },
-      "elapsed_ns": 328035008
+      "elapsed_ns": 436023309
     },
     {
       "tier": "domain",
@@ -5559,7 +5559,7 @@
         "refusals": 1,
         "approximations": 2
       },
-      "elapsed_ns": 1524495439
+      "elapsed_ns": 1568635370
     },
     {
       "tier": "domain",
@@ -5600,7 +5600,7 @@
         "refusals": 2,
         "approximations": 9
       },
-      "elapsed_ns": 343308240
+      "elapsed_ns": 419657702
     },
     {
       "tier": "domain",
@@ -5639,7 +5639,7 @@
         "refusals": 0,
         "approximations": 7
       },
-      "elapsed_ns": 1488704655
+      "elapsed_ns": 1510712306
     },
     {
       "tier": "domain",
@@ -5679,7 +5679,7 @@
         "refusals": 3,
         "approximations": 2
       },
-      "elapsed_ns": 1493395420
+      "elapsed_ns": 1527170308
     },
     {
       "tier": "domain",
@@ -5717,7 +5717,7 @@
         "refusals": 1,
         "approximations": 3
       },
-      "elapsed_ns": 1446436013
+      "elapsed_ns": 1474126751
     },
     {
       "tier": "domain",
@@ -5756,7 +5756,7 @@
         "refusals": 0,
         "approximations": 6
       },
-      "elapsed_ns": 1402705004
+      "elapsed_ns": 1329221418
     },
     {
       "tier": "domain",
@@ -5771,7 +5771,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "exit status 2, wanted 1; stdout differs: 395 byte(s) missing after line 1, expected \"log-tail: files/current.log (761...\"; stderr differs: 221 extra byte(s) after line 1, starting \"panic: the md5_hex function is n...\""
+          "reason": "exit status 2, wanted 1; stdout differs: 395 byte(s) missing after line 1, expected \"log-tail: files/current.log (761...\"; stderr differs: 219 extra byte(s) after line 1, starting \"panic: the md5_hex function is n...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -5787,7 +5787,7 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "exit status 2, wanted 1; stdout differs: 395 byte(s) missing after line 1, expected \"log-tail: files/current.log (761...\"; stderr differs: 243 extra byte(s) after line 1, starting \"panic: the md5_hex function is n...\""
+        "reason": "exit status 2, wanted 1; stdout differs: 395 byte(s) missing after line 1, expected \"log-tail: files/current.log (761...\"; stderr differs: 241 extra byte(s) after line 1, starting \"panic: the md5_hex function is n...\""
       },
       "quality": {
         "todos": 5,
@@ -5796,7 +5796,7 @@
         "refusals": 5,
         "approximations": 3
       },
-      "elapsed_ns": 1395406939
+      "elapsed_ns": 1314333373
     },
     {
       "tier": "domain",
@@ -5836,7 +5836,7 @@
         "refusals": 0,
         "approximations": 5
       },
-      "elapsed_ns": 272586209
+      "elapsed_ns": 400516269
     },
     {
       "tier": "domain",
@@ -5877,7 +5877,7 @@
         "refusals": 1,
         "approximations": 5
       },
-      "elapsed_ns": 433013665
+      "elapsed_ns": 359599325
     },
     {
       "tier": "domain",
@@ -5917,7 +5917,7 @@
         "refusals": 1,
         "approximations": 6
       },
-      "elapsed_ns": 1396873102
+      "elapsed_ns": 1430498155
     },
     {
       "tier": "domain",
@@ -5957,7 +5957,7 @@
         "refusals": 0,
         "approximations": 0
       },
-      "elapsed_ns": 353101053
+      "elapsed_ns": 318389600
     },
     {
       "tier": "domain",
@@ -5997,7 +5997,7 @@
         "refusals": 0,
         "approximations": 9
       },
-      "elapsed_ns": 404939935
+      "elapsed_ns": 330590979
     },
     {
       "tier": "domain",
@@ -6037,7 +6037,7 @@
         "refusals": 0,
         "approximations": 5
       },
-      "elapsed_ns": 441516699
+      "elapsed_ns": 472074599
     },
     {
       "tier": "domain",
@@ -6052,7 +6052,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "exit status 2, wanted 0; stdout differs: 598 byte(s) missing after line 1, expected \"ID                LEN    GC%    ...\"; stderr differs: 191 extra byte(s) after line 1, starting \"panic: interface conversion: int...\""
+          "reason": "exit status 2, wanted 0; stdout differs: 598 byte(s) missing after line 1, expected \"ID                LEN    GC%    ...\"; stderr differs: 190 extra byte(s) after line 1, starting \"panic: interface conversion: int...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -6067,7 +6067,7 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "exit status 2, wanted 0; stdout differs: 598 byte(s) missing after line 1, expected \"ID                LEN    GC%    ...\"; stderr differs: 202 extra byte(s) after line 1, starting \"panic: interface conversion: int...\""
+        "reason": "exit status 2, wanted 0; stdout differs: 598 byte(s) missing after line 1, expected \"ID                LEN    GC%    ...\"; stderr differs: 201 extra byte(s) after line 1, starting \"panic: interface conversion: int...\""
       },
       "quality": {
         "todos": 0,
@@ -6076,7 +6076,7 @@
         "refusals": 0,
         "approximations": 3
       },
-      "elapsed_ns": 1483421703
+      "elapsed_ns": 1310478588
     },
     {
       "tier": "domain",
@@ -6115,7 +6115,7 @@
         "refusals": 0,
         "approximations": 5
       },
-      "elapsed_ns": 1628480011
+      "elapsed_ns": 1543526670
     },
     {
       "tier": "domain",
@@ -6155,7 +6155,7 @@
         "refusals": 6,
         "approximations": 3
       },
-      "elapsed_ns": 1590469956
+      "elapsed_ns": 1460664928
     },
     {
       "tier": "domain",
@@ -6195,7 +6195,7 @@
         "refusals": 2,
         "approximations": 3
       },
-      "elapsed_ns": 1446632463
+      "elapsed_ns": 1500268593
     },
     {
       "tier": "domain",
@@ -6236,7 +6236,7 @@
         "refusals": 1,
         "approximations": 6
       },
-      "elapsed_ns": 339499178
+      "elapsed_ns": 424935159
     },
     {
       "tier": "domain",
@@ -6276,7 +6276,7 @@
         "refusals": 0,
         "approximations": 8
       },
-      "elapsed_ns": 371272970
+      "elapsed_ns": 397411692
     },
     {
       "tier": "domain",
@@ -6316,7 +6316,7 @@
         "refusals": 4,
         "approximations": 14
       },
-      "elapsed_ns": 1479880059
+      "elapsed_ns": 1543837014
     },
     {
       "tier": "domain",
@@ -6356,7 +6356,7 @@
         "refusals": 5,
         "approximations": 1
       },
-      "elapsed_ns": 1442707695
+      "elapsed_ns": 1428523235
     },
     {
       "tier": "domain",
@@ -6396,7 +6396,7 @@
         "refusals": 29,
         "approximations": 3
       },
-      "elapsed_ns": 1371702471
+      "elapsed_ns": 1371278815
     },
     {
       "tier": "domain",
@@ -6436,8 +6436,8 @@
         "refusals": 0,
         "approximations": 5
       },
-      "elapsed_ns": 393964158
+      "elapsed_ns": 432045482
     }
   ],
-  "elapsed_ns": 5857656898
+  "elapsed_ns": 5848151088
 }

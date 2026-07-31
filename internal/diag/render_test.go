@@ -33,6 +33,9 @@ func cases() []renderCase {
 	lookahead := WithPerl(
 		New(RegexLookahead, Pos{File: "logwatch.pl", Line: 88, Col: 28}, "(?!#)", "(?!#)"),
 		"(?!#)")
+	runtimePattern := WithPerl(
+		New(RuntimePattern, Pos{File: "logwatch.pl", Line: 31, Col: 21}, "$pat", "$pat"),
+		"$pat")
 	evalString := WithPerl(
 		New(EvalString, Pos{File: "logwatch.pl", Line: 143, Col: 19}, "eval STRING"),
 		`"$threshold_expr"`)
@@ -50,11 +53,20 @@ func cases() []renderCase {
 
 	return []renderCase{
 		{
-			name:  "warn-lookahead",
+			name:  "refuse-lookahead",
 			entry: lookahead,
 			file:  "logwatch.pl",
 			src: source(88,
 				`    next unless $line =~ /^(?!#)\s*(\S+)\s+(\d+)/;`),
+		},
+		{
+			// A warning that names a cost, which is the footer layout a
+			// refusal does not exercise.
+			name:  "warn-runtime-pattern",
+			entry: runtimePattern,
+			file:  "logwatch.pl",
+			src: source(31,
+				`    my $re = qr/$pat/;`),
 		},
 		{
 			name:  "refuse-eval-string",
@@ -282,7 +294,7 @@ func TestCompact(t *testing.T) {
 			name:  "full position",
 			entry: New(RegexLookahead, Pos{Line: 88, Col: 27}, "(?!#)", "(?!#)"),
 			file:  "logwatch.pl",
-			want:  "logwatch.pl:88:27: warning[P2G4004]: lookahead `(?!#)` is not available in Go's `regexp` package",
+			want:  "logwatch.pl:88:27: refused[P2G4004]: lookahead `(?!#)` is not available in Go's `regexp` package",
 		},
 		{
 			name:  "line only",

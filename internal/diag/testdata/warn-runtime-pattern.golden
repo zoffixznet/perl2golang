@@ -1,0 +1,13 @@
+warning[P2G4080]: the pattern is built from `$pat` at run time, so it compiles
+    at run time too
+  --> logwatch.pl:31:21
+   |
+31 |     my $re = qr/$pat/;
+   |                     ^^
+   |
+   = cost: `MustCompile` cannot be used, so the emitted code handles a compile
+           error as a value on every call
+   = try: hoist the pattern to a package-level `regexp.MustCompile` wherever the
+          text turns out to be constant
+   = learn: mustcompile-pattern   (perl2go explain mustcompile-pattern)
+   = learn: errors-are-values   (perl2go explain errors-are-values)

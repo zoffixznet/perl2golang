@@ -176,8 +176,9 @@ func (l *Lowerer) patternText(rx *ast.Regex, at ast.Node) ir.Expr {
 func (l *Lowerer) translatePattern(rx *ast.Regex, at ast.Node) (string, bool) {
 	raw := rx.Raw
 	if feature, ok := unsupportedFeature(raw); ok {
-		l.refuse(at, feature.code, feature.name,
+		todo := l.refuse(at, feature.code, feature.name,
 			feature.short, feature.message, feature.advice, "regexp-is-re2")
+		l.patternTodo = &todo
 		return "", false
 	}
 
@@ -463,7 +464,7 @@ func (l *Lowerer) matchExpr(n *ast.Match, forceBool bool) ir.Expr {
 	subject := l.matchSubject(n.Bound)
 	pattern, ok := l.patternOf(matchPattern(n))
 	if !ok {
-		return ir.BoolLit(false)
+		return l.markRefusedPattern(ir.BoolLit(false))
 	}
 
 	groups := 0
@@ -732,7 +733,12 @@ func (l *Lowerer) namedCapture(name string) (ir.Expr, bool) {
 func (l *Lowerer) qrExpr(n *ast.QrExpr) ir.Expr {
 	p, ok := l.patternOf(n)
 	if !ok {
-		return ir.Nil(ir.NamedType("*regexp.Regexp", "regexp"))
+		// A bare nil has no type, so `re := nil` does not compile. The
+		// conversion is a stand-in either way; it may as well be one the
+		// compiler accepts, so the rest of the file can still be built and
+		// read.
+		return l.markRefusedPattern(
+			ir.Raw("(*regexp.Regexp)(nil)", ir.NamedType("*regexp.Regexp", "regexp")))
 	}
 	l.note(p, "qr// precompiles a pattern into a value that can be stored and reused. "+
 		"A *regexp.Regexp is exactly that, and Go programs normally keep one in a "+
@@ -1070,3 +1076,18 @@ func expandTrList(s string) []rune {
 }
 
 var _ = strconv.Itoa
+
+// markRefusedPattern attaches the refusal from a pattern that could not be
+// translated to whatever stands in for it.
+//
+// The report always names the pattern, but a reader is looking at the code, and
+// `if false {` says nothing at all about why. The marker puts the code and the
+// reason in the same place, which is what the TODO in every other refusal does.
+func (l *Lowerer) markRefusedPattern(x ir.Expr) ir.Expr {
+	if l.patternTodo == nil {
+		return x
+	}
+	ir.MetaOf(x).Todo = l.patternTodo
+	l.patternTodo = nil
+	return x
+}
