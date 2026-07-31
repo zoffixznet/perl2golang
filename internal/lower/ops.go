@@ -333,8 +333,11 @@ func defaultName(e ast.Expr) string {
 
 // rangeExpr lowers the range operator in list context.
 func (l *Lowerer) rangeExpr(n *ast.BinOp) ir.Expr {
-	lx := l.expr(n.L)
-	rx := l.expr(n.R)
+	// Both ends are scalar context, so a parenthesised expression is the
+	// expression rather than a one-element list, and a comma expression is
+	// its last element.
+	lx := l.scalar(n.L)
+	rx := l.scalar(n.R)
 	if typeOrAny(lx).Kind == ir.String || typeOrAny(rx).Kind == ir.String {
 		out := l.helperCall(hStrRange, ir.SliceOf(ir.TString), l.toStr(lx, n.L), l.toStr(rx, n.R))
 		l.approximate(n, "P2G5030", "string range",

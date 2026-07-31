@@ -50,4 +50,8 @@ const (
 	hAnyList       = "anyList"      // []T -> []any
 	hAnyMap        = "anyMap"       // map[K]V -> map[K]any
 	hCountChars    = "countChars"   // tr/// with an empty replacement list
+	hPick          = "pick"         // @a[...] where the indices are a computed list
+	hPickKeys      = "pickKeys"     // @h{...} where the keys are a computed list
+	hIntList       = "intList"      // []T -> []int, for a dynamic list of indices
+	hStrList       = "strList"      // []T -> []string, for a dynamic list of keys
 )

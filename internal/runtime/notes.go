@@ -24,6 +24,25 @@ var notes = map[string]string{
 		"errors.Is(err, fs.ErrNotExist) would report a directory the program " +
 		"cannot search as existing.",
 
+	"pick": "Perl picks several elements at once and gets a list back. Go's " +
+		"index expression takes one index, and its slice expression takes a " +
+		"contiguous range, so a scattered or computed set of indexes is a loop. " +
+		"The loop goes through at, which is what makes a negative index and an " +
+		"index past the end behave the way the original did.",
+
+	"pickKeys": "The keyed form of pick. Reading a key a Go map does not hold " +
+		"yields the value type's zero value rather than undef, so a slice of " +
+		"keys that are not all present comes back the same length as the key " +
+		"list, with zero values in the gaps.",
+
+	"intList": "A list of indexes that came out of a dynamic value is a list " +
+		"of any, and Go will not index a slice with one. Each element is read " +
+		"as a number the way Perl reads it, once, so the change of type is " +
+		"visible in one place instead of at every use.",
+
+	"strList": "The same as intList for keys: a dynamic value used as a map " +
+		"key has to become a string first, and Perl was doing that silently.",
+
 	"anyList": "A slice of one element type is not a slice of any, and Go " +
 		"has no conversion between them: the memory layouts differ. The copy " +
 		"is the only way across, and it means the two no longer share " +

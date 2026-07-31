@@ -256,3 +256,57 @@ func TestUnimprovedConversionRendersDocumentsOnce(t *testing.T) {
 		}
 	}
 }
+
+// TestSliceWithAComputedIndexList guards the shape of the Go a Perl slice
+// becomes.
+//
+// A slice whose indices are written out one by one is a slice literal, which
+// reads well and is what a person would write. A slice indexed by a range or
+// by an array has a length nobody knows until the program runs, and writing
+// that as a literal produces Go that compiles, runs, and quietly returns one
+// element.
+func TestSliceWithAComputedIndexList(t *testing.T) {
+	tests := []struct {
+		name   string
+		perl   string
+		want   string
+		unwant string
+	}{
+		{
+			name:   "literal indices stay a literal",
+			perl:   `my @a = (1,2,3,4,5); my @b = @a[0, 2]; print "@b\n";`,
+			want:   "[]int{a[0], a[2]}",
+			unwant: "pick(",
+		},
+		{
+			name: "a range walks the index list",
+			perl: `my @a = (1,2,3,4,5); my @b = @a[1 .. 3]; print "@b\n";`,
+			want: "pick(a, seq(1, 3))",
+		},
+		{
+			name: "a range end in parentheses is one value, not a list",
+			perl: `my $n = 2; my @a = (1,2,3,4,5); my @b = @a[0 .. ($n + 1)]; print "@b\n";`,
+			want: "seq(0, n+1)",
+		},
+		{
+			name: "an array of keys walks the key list",
+			perl: `my %h = (a => 1); my @k = ("a"); my @v = @h{@k}; print "@v\n";`,
+			want: "pickKeys(h, k)",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			res, err := convert.Convert([]byte(tt.perl), convert.Options{Path: "t.pl", NoDocs: true})
+			if err != nil {
+				t.Fatalf("Convert: %v", err)
+			}
+			got := string(res.Clean["main.go"])
+			if !strings.Contains(got, tt.want) {
+				t.Errorf("generated Go does not contain %q:\n%s", tt.want, got)
+			}
+			if tt.unwant != "" && strings.Contains(got, tt.unwant) {
+				t.Errorf("generated Go contains %q and should not:\n%s", tt.unwant, got)
+			}
+		})
+	}
+}

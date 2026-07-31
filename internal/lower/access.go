@@ -189,25 +189,87 @@ func (l *Lowerer) sliceExpr(n *ast.Slice) ir.Expr {
 	}
 	elem := elemOf(typeOrAny(container))
 
-	var elems []ir.Expr
+	// An index that is itself a list, such as the range in @a[0 .. $n] or the
+	// array in @h{@wanted}, decides how many elements the slice has at run
+	// time. That cannot be written out as a literal, so those go through a
+	// helper that walks the index list instead.
+	var indexes []ast.Expr
 	for _, ie := range n.Idx {
-		for _, one := range flatten(ie) {
-			if n.Hash {
-				elems = append(elems, index(container, l.toStr(l.expr(one), one), elem))
-				continue
-			}
-			if text, neg := negativeLiteral(one); neg {
-				elems = append(elems, index(container,
-					ir.Bin("-", lenOf(container), ir.IntLit(text), ir.TInt), elem))
-				continue
-			}
-			elems = append(elems, index(container, l.toInt(l.expr(one), one), elem))
+		indexes = append(indexes, flatten(ie)...)
+	}
+	if parts, dynamic := l.sliceIndexes(indexes, n.Hash); dynamic {
+		return l.pickElements(container, parts, elem, n.Hash)
+	}
+
+	var elems []ir.Expr
+	for _, one := range indexes {
+		if n.Hash {
+			elems = append(elems, index(container, l.toStr(l.expr(one), one), elem))
+			continue
 		}
+		if text, neg := negativeLiteral(one); neg {
+			elems = append(elems, index(container,
+				ir.Bin("-", lenOf(container), ir.IntLit(text), ir.TInt), elem))
+			continue
+		}
+		elems = append(elems, index(container, l.toInt(l.expr(one), one), elem))
 	}
 	out := composite(ir.SliceOf(elem), nil, elems)
 	l.note(out, "A Perl slice picks several elements at once and yields a list. Go "+
 		"has no such syntax for scattered indices, so the elements are gathered into "+
 		"a slice literal.",
+		"slices-not-arrays")
+	return out
+}
+
+// sliceIndexes lowers the index expressions of a slice into values of the one
+// type an index has, reporting whether any of them is a list rather than a
+// single index.
+func (l *Lowerer) sliceIndexes(indexes []ast.Expr, hash bool) ([]ir.Expr, bool) {
+	want := ir.TInt
+	if hash {
+		want = ir.TString
+	}
+	var parts []ir.Expr
+	dynamic := false
+	for _, one := range indexes {
+		x := l.expr(one)
+		if x == nil {
+			parts = append(parts, ir.Nil(want))
+			continue
+		}
+		if t := typeOrAny(x); t.Kind == ir.Slice {
+			dynamic = true
+			if !elemOf(t).Equal(want) {
+				helper := hIntList
+				if hash {
+					helper = hStrList
+				}
+				x = l.helperCall(helper, ir.SliceOf(want), x)
+			}
+			parts = append(parts, x)
+			continue
+		}
+		if hash {
+			parts = append(parts, l.toStr(x, one))
+			continue
+		}
+		parts = append(parts, l.toInt(x, one))
+	}
+	return parts, dynamic
+}
+
+// pickElements builds the slice whose indices are only known at run time.
+func (l *Lowerer) pickElements(container ir.Expr, parts []ir.Expr, elem *ir.Type, hash bool) ir.Expr {
+	want, helper := ir.TInt, hPick
+	if hash {
+		want, helper = ir.TString, hPickKeys
+	}
+	out := l.helperCall(helper, ir.SliceOf(elem), container, l.listValue(parts, want))
+	l.note(out, "A Perl slice picks several elements at once and yields a list. When "+
+		"the indices are themselves a list, as a range or an array is, how many "+
+		"elements come back is not known until the program runs, so Go walks the "+
+		"index list rather than writing the elements out.",
 		"slices-not-arrays")
 	return out
 }
