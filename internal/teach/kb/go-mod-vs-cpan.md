@@ -37,7 +37,7 @@ The generated `go.mod`:
 ```
 module example.com/payroll
 
-go 1.26.5
+go 1.24
 ```
 
 Adding a dependency is `go get github.com/some/pkg`, which records an exact version in `go.mod` and a cryptographic checksum in `go.sum`; both files are committed. Imports are always full module paths — `import "github.com/some/pkg"` — never file paths, and the mapping from import path to code is `go.mod`'s job, not a runtime search.

@@ -67,3 +67,35 @@ func TestTerminalFoldsEveryConcept(t *testing.T) {
 		}
 	}
 }
+
+// TestLessonsTalkAboutTheReadersSystem is the hygiene guard on the knowledge
+// base.
+//
+// A lesson is read by someone who has this tool installed and a Go toolchain
+// of their own. It may say what a program prints; it may not report that
+// somebody else once checked, or name the toolchain that checked it, because
+// neither is a fact about the reader's system and both age badly.
+func TestLessonsTalkAboutTheReadersSystem(t *testing.T) {
+	// "verified at call time" is a statement about when a language checks
+	// something, which is a different word from the one being banned here.
+	allowed := []string{"verified at call time"}
+	banned := []string{
+		"verified below", "verified output", "verified:", "(verified)",
+		"this machine", "this box", "our machine", "the build machine",
+		"during development", "at build time", "in this session",
+		"subagent", "the spec says",
+	}
+	kb := Load()
+	for _, id := range kb.IDs() {
+		c, _ := kb.Get(id)
+		body := strings.ToLower(c.Title + "\n" + c.Body)
+		for _, ok := range allowed {
+			body = strings.ReplaceAll(body, ok, "")
+		}
+		for _, phrase := range banned {
+			if strings.Contains(body, phrase) {
+				t.Errorf("%s says %q", id, phrase)
+			}
+		}
+	}
+}

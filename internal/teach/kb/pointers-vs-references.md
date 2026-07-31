@@ -15,7 +15,7 @@ Go pointers are Perl references with the training wheels *and* the magic removed
 sub bump { $_[0]++ }         # @_ aliases the caller's args
 my $n = 1;
 bump($n);
-say $n;                      # 2 — verified: mutated through the alias
+say $n;                      # 2, mutated through the alias
 
 my $job = { retries => 0 };  # references are how everything nontrivial moves
 $job->{retries} = 5;

@@ -13,7 +13,7 @@ A Go map lookup always succeeds: `m[k]` on a missing key quietly returns the zer
 
 ```perl
 my %h = (alice => 0, carol => undef);
-# verified:
+# what perl prints:
 # alice  exists:1 defined:1
 # carol  exists:1 defined:0    <- the middle state Go doesn't have
 # dave   exists:0 defined:0

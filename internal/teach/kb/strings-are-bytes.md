@@ -18,7 +18,7 @@ say length $s;                 # 10 — characters
 { use bytes; say length $s; }  # 12 — bytes, only if you ask
 ```
 
-Verified output: `10`, then `12`. Perl decodes source and data into an internal character representation; byte-level access is the special case you opt into.
+The output is `10`, then `12`. Perl decodes source and data into an internal character representation; byte-level access is the special case you opt into.
 
 ## The Go you write
 

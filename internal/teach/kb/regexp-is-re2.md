@@ -15,7 +15,7 @@ Go's `regexp` package implements RE2, not PCRE: backreferences (`\1`), lookahead
 say "doubled" if "go go" =~ /(\w+) \1/;              # backreference
 say $1        if 'price $42' =~ /(?<=\$)(\d+)/;      # lookbehind
 # doubled
-# 42                                                  (verified)
+# 42
 ```
 
 ## The Go you write

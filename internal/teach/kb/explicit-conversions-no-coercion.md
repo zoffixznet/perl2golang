@@ -19,7 +19,7 @@ my $n = 3; my $r = 1.5;
 say $n * $r;           # 4.5  — int/float distinction doesn't exist
 ```
 
-Verified output: `7`, `12`, `3.5`, `4.5`. One scalar type, one numeric tower, `==` for numbers and `eq` for strings doing the disambiguation work.
+The output is `7`, `12`, `3.5`, `4.5`. One scalar type, one numeric tower, `==` for numbers and `eq` for strings doing the disambiguation work.
 
 ## The Go you write
 

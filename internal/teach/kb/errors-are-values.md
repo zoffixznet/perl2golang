@@ -16,7 +16,7 @@ my $ok = eval {
     die "insufficient funds\n";
     1;
 };
-say "caught: $@" if !$ok;     # caught: insufficient funds   (verified)
+say "caught: $@" if !$ok;     # caught: insufficient funds
 say "still running";
 ```
 

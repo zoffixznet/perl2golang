@@ -7,7 +7,7 @@ severity: warning
 prerequisites: [var-vs-short-declaration, range-is-not-foreach]
 ---
 
-Good news first: Go closures are real closures over variables, exactly like Perl's, so your counter-factory and callback instincts transfer intact. The history you must know anyway: before Go 1.22, a `for` loop had *one* loop variable reused across iterations, so every closure created in the loop captured the same variable and observed its final value — the single most-written-about bug in the language's history. Go 1.22 (2024) changed the semantics: each iteration now gets a fresh variable. Verified below on Go 1.26.5 — but you will still meet the old pattern's scar tissue (`i := i` lines) and, in modules whose `go.mod` declares a pre-1.22 language version, the old behaviour itself is still in force.
+Good news first: Go closures are real closures over variables, exactly like Perl's, so your counter-factory and callback instincts transfer intact. The history you must know anyway: before Go 1.22, a `for` loop had *one* loop variable reused across iterations, so every closure created in the loop captured the same variable and observed its final value — the single most-written-about bug in the language's history. Go 1.22 (2024) changed the semantics: each iteration now gets a fresh variable. You will still meet the old pattern's scar tissue (`i := i` lines) and, in modules whose `go.mod` declares a pre-1.22 language version, the old behaviour itself is still in force.
 
 ## The Perl you know
 
@@ -28,7 +28,7 @@ Perl's `foreach my $i` always gave a fresh lexical per iteration, so Perl progra
 
 ## The Go you write
 
-Compiled and run as shown, on Go 1.26.5:
+Compiled and run as shown, under Go 1.22 or newer:
 
 ```go
 package main

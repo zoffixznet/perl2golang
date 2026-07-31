@@ -322,7 +322,7 @@ func (b *bundle) readme() string {
 	} else {
 		m.fence("", "go build .")
 	}
-	m.p("There is nothing to install first. Arguments and standard input work the same as they did before: put them after a `--` separator, as in `go run . -- --verbose input.txt`.")
+	m.p("There is nothing to install first. Arguments and standard input work the same as they did before. Everything after the package on a `go run` line goes to the program, flags included, so `go run . --verbose input.txt` passes both of those through. There is no `--` separator: `go run` would hand that to the program as an argument of its own.")
 
 	m.h(2, "What is in here")
 	m.bullet("`main.go` and any other `.go` files at the root: the clean program.")

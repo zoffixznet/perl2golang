@@ -15,7 +15,7 @@ You already know hashes are unordered — Perl has randomised per-process since 
 my %inv = (apples=>5, pears=>2, plums=>9, figs=>1, dates=>7, limes=>3);
 say join ",", keys %inv for 1..2;
 # apples,dates,plums,pears,limes,figs
-# apples,dates,plums,pears,limes,figs   <- same order within one process (verified)
+# apples,dates,plums,pears,limes,figs   <- same order within one process
 
 for my $k (sort keys %inv) { ... }      # the stable-output reflex you already have
 ```

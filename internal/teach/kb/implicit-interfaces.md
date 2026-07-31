@@ -16,7 +16,7 @@ Go's interface is Perl duck typing with the runtime risk removed: a type satisfi
 for my $sink (@sinks) {
     $sink->notify($msg) if $sink->can('notify');   # defensive can()
 }
-# verified: can() answers method existence at runtime, per object
+# can() answers method existence at run time, per object
 ```
 
 ## The Go you write

@@ -17,7 +17,7 @@ my ($lo, $hi) = minmax(4, 9, 1, 7);
 my $count = () = minmax(4, 9);        # context tricks
 
 sub ctx { return wantarray ? "list" : "scalar" }
-my @a = ctx();   # "list"      (verified)
+my @a = ctx();   # "list"
 my $s = ctx();   # "scalar"    — one sub, two behaviours
 ```
 

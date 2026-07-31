@@ -14,12 +14,12 @@ prerequisites: [static-types-and-zero-values, structs-and-embedding]
 ```perl
 my %h;
 $h{a}{b}{c} = 1;      # intermediate hashes spring into being
-# {'a' => {'b' => {'c' => 1}}}   — verified
+# {'a' => {'b' => {'c' => 1}}}
 
 print $h{x}{y};        # undef, prints nothing... but ALSO vivifies $h{x}!
 ```
 
-Verified: even `exists $h{x}{y}` autovivifies `$h{x}` — Perl's forgiveness has its own famous trap, in the opposite direction from Go's.
+Even `exists $h{x}{y}` autovivifies `$h{x}` — Perl's forgiveness has its own famous trap, in the opposite direction from Go's.
 
 ## The Go you write
 
