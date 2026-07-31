@@ -230,6 +230,7 @@ func (l *Lowerer) declareSingle(v *ast.Var, n *ast.Assign) []ir.Stmt {
 		value = l.scalar(n.RHS)
 		l.observe(b, typeOrAny(value))
 	}
+	notePattern(b, n.RHS)
 
 	coerced := l.assignable(value, b.Type, n.RHS)
 

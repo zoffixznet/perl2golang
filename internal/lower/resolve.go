@@ -69,6 +69,10 @@ type Binding struct {
 	// position, for the code that walks it with a global match. Perl keeps
 	// that position on the variable itself; Go needs somewhere to put it.
 	Pos *Binding
+	// Groups and NamedGroups describe the pattern a qr// assigned here, so
+	// that a match against the variable knows what its captures are called.
+	Groups      int
+	NamedGroups map[string]int
 }
 
 // declared reports whether the binding is a real Go declaration the emitter

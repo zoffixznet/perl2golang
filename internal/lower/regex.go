@@ -30,6 +30,16 @@ func (l *Lowerer) patternOf(e ast.Expr) (ir.Expr, bool) {
 		rx = n.Pattern
 	case *ast.StrLit:
 		rx = &ast.Regex{Raw: regexpQuoteMeta(n.Value)}
+	case *ast.Var:
+		// `my $re = qr/.../; $s =~ $re` holds the compiled pattern in a
+		// variable, which is what a *regexp.Regexp is for.
+		if n.Sigil == '$' {
+			x := l.expr(n)
+			if t := typeOrAny(x); t.Kind == ir.Named && t.Name == "*regexp.Regexp" {
+				return x, true
+			}
+		}
+		return nil, false
 	default:
 		return nil, false
 	}
@@ -457,8 +467,16 @@ func (l *Lowerer) matchExpr(n *ast.Match, forceBool bool) ir.Expr {
 	}
 
 	groups := 0
+	var named map[string]int
 	if n.Pattern != nil {
 		groups = countGroups(n.Pattern.Raw)
+		named = namedGroups(n.Pattern.Raw)
+	} else if v, ok := n.PatternExpr.(*ast.Var); ok && v.Sigil == '$' {
+		// The pattern came from a qr// held in a variable, which recorded what
+		// its groups are called when it was assigned.
+		if b, found := l.scope.lookup(varKey('$', v.Name)); found {
+			groups, named = b.Groups, b.NamedGroups
+		}
 	}
 	if groups == 0 {
 		out := ir.CallOf(selector(pattern, "MatchString", nil), ir.TBool, subject)
@@ -485,10 +503,7 @@ func (l *Lowerer) matchExpr(n *ast.Match, forceBool bool) ir.Expr {
 		"submatch-and-named-groups", "nil-slices-vs-nil-maps")
 	l.emit(st)
 
-	frame := &captureFrame{Name: name, Count: groups}
-	if n.Pattern != nil {
-		frame.Named = namedGroups(n.Pattern.Raw)
-	}
+	frame := &captureFrame{Name: name, Count: groups, Named: named}
 	l.captureStack = append(l.captureStack, frame)
 
 	out := ir.Bin("!=", ir.NewIdent(name, ir.SliceOf(ir.TString)), ir.Nil(ir.SliceOf(ir.TString)), ir.TBool)
@@ -599,6 +614,19 @@ func (l *Lowerer) captureList(n *ast.Match) ([]ir.Expr, bool) {
 			"slice being nil is that test.",
 		"submatch-and-named-groups", "nil-vs-undef")
 	return out, true
+}
+
+// notePattern records what a qr// assigned to a variable captures, so that a
+// later match against that variable knows how many groups it has and what they
+// are called. Perl carries that inside the compiled pattern; Go's
+// *regexp.Regexp knows it too, but only while the program runs.
+func notePattern(b *Binding, rhs ast.Expr) {
+	q, ok := rhs.(*ast.QrExpr)
+	if !ok || q.Pattern == nil || b == nil {
+		return
+	}
+	b.Groups = countGroups(q.Pattern.Raw)
+	b.NamedGroups = namedGroups(q.Pattern.Raw)
 }
 
 // globalMatch lowers `EXPR =~ /pattern/g` in list context, where Perl yields
