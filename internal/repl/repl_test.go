@@ -130,7 +130,7 @@ func TestSession(t *testing.T) {
 			input: "eval \"1 + 1\";\n:quit\n",
 			want: []string{
 				"! P2G8001",
-				"eval is not implemented",
+				"eval of a string is not implemented",
 				"named functions selected from a map",
 				"(no Go for that snippet)",
 			},

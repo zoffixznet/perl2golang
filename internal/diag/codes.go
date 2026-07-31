@@ -153,6 +153,11 @@ const (
 	BareReturnZeroValues Code = "P2G2120"
 	// MissingArguments: a call passes fewer arguments than the sub unpacks.
 	MissingArguments Code = "P2G2130"
+	// UndefClearsToZero: `undef $x` leaves the type's zero value behind.
+	UndefClearsToZero Code = "P2G2115"
+	// ValuelessCall: a call to a sub nothing reads cannot stand in an
+	// expression, so it runs on its own line.
+	ValuelessCall Code = "P2G2125"
 )
 
 // References, aliasing, and mutation.
@@ -241,6 +246,8 @@ const (
 	TrCounts Code = "P2G4521"
 	// MatchPosition: `/g` and `pos` keep match state on the scalar.
 	MatchPosition Code = "P2G4530"
+	// PosNotStarted: `pos` on a scalar no scan has walked reads as 0.
+	PosNotStarted Code = "P2G4531"
 	// BindingRightSide: the right side of `=~` is not a static pattern.
 	BindingRightSide Code = "P2G4590"
 )
@@ -319,10 +326,27 @@ const (
 	AutoflushNoOp Code = "P2G6020"
 	// FileTest: a `-f` style file test became os.Stat.
 	FileTest Code = "P2G6030"
+	// StatReuse: the `_` handle reuses the previous test's stat, and the
+	// generated code inspects the path again.
+	StatReuse Code = "P2G6031"
+	// SizeOfMissingFile: `-s` on a file that cannot be inspected reports 0.
+	SizeOfMissingFile Code = "P2G6032"
+	// PermissionBits: `-w` and `-x` are answered from the permission bits.
+	PermissionBits Code = "P2G6033"
+	// DirRead: opendir reads the whole directory at once.
+	DirRead Code = "P2G6042"
+	// DirClosed: the directory was read in one call, so closedir was dropped.
+	DirClosed Code = "P2G6041"
+	// UnlinkReturnsError: `unlink` counts removals and `os.Remove` returns an
+	// error.
+	UnlinkReturnsError Code = "P2G6045"
 	// WriteErrorChecked: print errors are silent in Perl and checked in Go.
 	WriteErrorChecked Code = "P2G6040"
 	// EncodingLayer: an `:encoding` layer has no Go counterpart.
 	EncodingLayer Code = "P2G6060"
+	// EnvAssignment: writing to `%ENV` becomes os.Setenv, which returns an
+	// error the assignment had nowhere to put.
+	EnvAssignment Code = "P2G6070"
 )
 
 // Processes, signals, and the environment.
@@ -371,6 +395,14 @@ const (
 	SQLPlaceholders Code = "P2G7530"
 	// ModuleFunctionUnmapped: a mapped module's function has no rule.
 	ModuleFunctionUnmapped Code = "P2G7540"
+	// ListUtilFirst: `first` yields the zero value when nothing matches.
+	ListUtilFirst Code = "P2G7541"
+	// ListUtilQuantifier: `any`, `all` and `none` became a loop with a break.
+	ListUtilQuantifier Code = "P2G7542"
+	// ListUtilReduce: `reduce` folds to the zero value on an empty list.
+	ListUtilReduce Code = "P2G7543"
+	// ListUtilPairs: `pairs` drops the last element of an odd-length list.
+	ListUtilPairs Code = "P2G7544"
 	// ModuleUnmapped: a module has no entry in the mapping table.
 	ModuleUnmapped Code = "P2G7550"
 	// StrictWarnings: `use strict` and `use warnings` have no counterpart.
@@ -401,6 +433,8 @@ const (
 const (
 	// EvalString: `eval STRING` compiles Perl at run time.
 	EvalString Code = "P2G8001"
+	// EvalBlock: `eval { }` traps a die, which becomes panic and recover.
+	EvalBlock Code = "P2G8002"
 	// SymbolicRefMapped: a symbolic reference became a dispatch map lookup.
 	SymbolicRefMapped Code = "P2G8010"
 	// SymbolicRefOpen: a symbolic reference names something unenumerable.
@@ -983,12 +1017,121 @@ var catalogue = map[Code]Entry{
 		Concepts:  []string{"strings-are-bytes", "replace-and-expansion"},
 	},
 	TrCounts: {
-		Severity:  report.Refuse,
+		Severity:  report.Note,
 		Message:   "`tr///` with an empty replacement list counts the characters rather than changing them",
 		Short:     "tr with no replacement counts",
-		Advice:    "count with `strings.Count`, or range over the string testing `strings.ContainsAny`",
-		Converted: "the count is not converted; the statement panics with the original Perl text",
+		Advice:    "`strings.Count` counts one substring; a set of characters needs a loop",
+		Converted: "the emitted code calls a helper that counts the characters in the search list",
 		Concepts:  []string{"strings-are-bytes"},
+	},
+	UndefClearsToZero: {
+		Severity:  report.Warn,
+		Message:   "`undef $x` leaves the type's zero value, which is not a state `defined` can see",
+		Short:     "clearing a variable leaves its zero value",
+		Advice:    "declare the variable as a pointer where `nil` really has to mean absent",
+		Converted: "the emitted code assigns the zero value of the declared type",
+		Concepts:  []string{"nil-vs-undef", "static-types-and-zero-values"},
+	},
+	ValuelessCall: {
+		Severity:  report.Warn,
+		Message:   "nothing reads what this sub returns, so the Go function returns nothing and a call to it is not a value",
+		Short:     "a call with no value runs on its own line",
+		Advice:    "return the value explicitly if it is wanted, and the signature will follow",
+		Converted: "the call is emitted as its own statement",
+		Concepts:  []string{"multiple-return-values"},
+	},
+	PosNotStarted: {
+		Severity:  report.Warn,
+		Message:   "`pos` is undef until a global match has walked the scalar, and an int has no undef",
+		Short:     "an unstarted scan reads as 0",
+		Advice:    "keep a separate bool where \"not started\" has to be told from \"at the beginning\"",
+		Converted: "the emitted code reads the position variable, which starts at 0",
+		Concepts:  []string{"nil-vs-undef"},
+	},
+	StatReuse: {
+		Severity:  report.Warn,
+		Message:   "`_` reuses the previous test's stat, and Go keeps no such cache",
+		Short:     "the path is inspected again",
+		Advice:    "call `os.Stat` once, keep the `FileInfo`, and read every answer off it",
+		Converted: "the emitted code tests the same path a second time",
+		Concepts:  []string{"errors-are-values"},
+	},
+	SizeOfMissingFile: {
+		Severity:  report.Warn,
+		Message:   "`-s` returns undef for a file it cannot inspect, and an int cannot say that",
+		Short:     "a missing file reports a size of zero",
+		Advice:    "call `os.Stat` and look at the error where a missing file differs from an empty one",
+		Converted: "the emitted helper answers 0 for both",
+		Concepts:  []string{"nil-vs-undef"},
+	},
+	PermissionBits: {
+		Severity:  report.Warn,
+		Message:   "`-w` and `-x` ask what this process may do; the permission bits do not know who runs it",
+		Short:     "writability is read off the permission bits",
+		Advice:    "try the operation and handle the error, which is the only answer that cannot go stale",
+		Converted: "the emitted helper reads `Mode().Perm()`",
+		Concepts:  []string{"errors-are-values"},
+	},
+	DirRead: {
+		Severity:  report.Warn,
+		Message:   "`opendir` hands back a cursor and `os.ReadDir` reads the whole directory at once",
+		Short:     "the whole directory is read at once",
+		Advice:    "`os.File.ReadDir(n)` reads in batches, for a directory too large to hold",
+		Converted: "the emitted code reads every name before the loop starts",
+	},
+	DirClosed: {
+		Severity:  report.Note,
+		Message:   "the directory was read in one call, so there is no handle left for `closedir` to close",
+		Short:     "closedir was dropped",
+		Advice:    "nothing leaks: `os.ReadDir` closes the directory before it returns",
+		Converted: "the call is not emitted",
+	},
+	UnlinkReturnsError: {
+		Severity:  report.Warn,
+		Message:   "`unlink` returns how many files it removed, and `os.Remove` returns an error instead",
+		Short:     "unlink's count became an error value",
+		Advice:    "test the returned error; `errors.Is(err, fs.ErrNotExist)` is often the case worth ignoring",
+		Converted: "the emitted code calls `os.Remove`",
+		Concepts:  []string{"errors-are-values"},
+	},
+	EnvAssignment: {
+		Severity:  report.Warn,
+		Message:   "setting `%%ENV` becomes `os.Setenv`, which returns an error the assignment had nowhere to put",
+		Short:     "the error os.Setenv returns is not checked",
+		Advice:    "check the returned error where the setting matters",
+		Converted: "the emitted code calls `os.Setenv` and drops the error",
+		Concepts:  []string{"errors-are-values"},
+	},
+	ListUtilFirst: {
+		Severity:  report.Warn,
+		Message:   "`first` returns undef when nothing matches, and a variable of the element type has no undef",
+		Short:     "no match yields the zero value",
+		Advice:    "return the index and use -1 for no match, or a second bool as the standard library does",
+		Converted: "the emitted loop leaves the result at its zero value",
+		Concepts:  []string{"nil-vs-undef", "comma-ok-idiom"},
+	},
+	ListUtilQuantifier: {
+		Severity:  report.Refuse,
+		Message:   "`%s` was given a block that does not end in an expression, so there is no test",
+		Short:     "this quantifier block has no test",
+		Advice:    "write the loop directly, with an `if` and a `break`",
+		Converted: "the expression panics with the original Perl text",
+	},
+	ListUtilReduce: {
+		Severity:  report.Warn,
+		Message:   "`reduce` returns undef for an empty list, and the accumulator is an ordinary variable",
+		Short:     "an empty list folds to the zero value",
+		Advice:    "check the length before folding where the difference matters",
+		Converted: "the emitted loop seeds the accumulator with the first element",
+		Concepts:  []string{"nil-vs-undef"},
+	},
+	ListUtilPairs: {
+		Severity:  report.Warn,
+		Message:   "`pairs` pairs the last element of an odd list with undef, and there is no undef here",
+		Short:     "an odd-length list loses its last element",
+		Advice:    "check the length first where an odd list is possible",
+		Converted: "the emitted loop stops before the unpaired element",
+		Concepts:  []string{"nil-vs-undef"},
 	},
 	MatchPosition: {
 		Severity:  report.Note,
@@ -1240,11 +1383,12 @@ var catalogue = map[Code]Entry{
 		Concepts: []string{"io-reader-writer", "bufio-scanner-limit"},
 	},
 	InputLineNumber: {
-		Severity:  report.Refuse,
-		Message:   "`$.` counts lines globally and changes whenever any handle is read, and Go counts nothing",
-		Short:     "$. has no counter in Go",
-		Advice:    "keep a counter next to the loop, which also says which handle it is counting",
-		Converted: "the variable is not converted; the expression panics with the original Perl text",
+		Severity:  report.Warn,
+		Message:   "`$.` counts lines globally and follows whichever handle was read last",
+		Short:     "the line counter is an ordinary variable",
+		Advice:    "give each loop its own counter where two handles are read in turn",
+		Cost:      "one variable is shared by every read loop, which matches one loop at a time and not two interleaved reads",
+		Converted: "the emitted code keeps a package-level int that each line-reading loop increments",
 	},
 	OutputFormatVars: {
 		Severity:  report.Refuse,
@@ -1544,6 +1688,15 @@ var catalogue = map[Code]Entry{
 
 	// -- Dynamic Perl -------------------------------------------------------
 
+	EvalBlock: {
+		Severity:  report.Warn,
+		Message:   "`eval { }` traps a `die` from anywhere inside it, which in Go is `panic` and `recover`",
+		Short:     "a trapped failure arrives as a panic",
+		Advice:    "return an error from the code inside and check it here, which is what Go code does",
+		Cost:      "Go reserves panic for genuine bugs; a function that can fail returns an error instead",
+		Converted: "the block runs in a function literal with a deferred `recover`",
+		Concepts:  []string{"errors-are-values", "panic-and-recover", "if-err-nil-rhythm"},
+	},
 	EvalString: {
 		Severity: report.Refuse,
 		Message:  "`eval STRING` builds Perl source at run time, and Go has no compiler at run time",

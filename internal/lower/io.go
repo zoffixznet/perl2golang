@@ -342,7 +342,7 @@ func (l *Lowerer) opendirStatements(n *ast.Call, onFail func(errName string) []i
 		Cond: ir.Bin("!=", ir.NewIdent(errName, ir.TError), ir.Nil(ir.TError), ir.TBool),
 		Then: &ir.Block{Stmts: failBody},
 	}
-	l.approximate(n, "P2G6040", "opendir",
+	l.approximate(n, "P2G6042", "opendir",
 		"the whole directory is read at once",
 		"opendir hands back a handle that readdir pulls names off one at a time, so "+
 			"a huge directory never has to be in memory all at once. os.ReadDir reads "+

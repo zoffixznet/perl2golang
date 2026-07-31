@@ -73,7 +73,7 @@ func (l *Lowerer) evalCall(n *ast.Call) ir.Expr {
 	}
 	l.emit(run)
 
-	l.approximate(n, "P2G8001", "eval block",
+	l.approximate(n, "P2G8002", "eval block",
 		"a trapped failure arrives as a panic rather than as an error",
 		"eval traps a die from anywhere inside it, however deep. Go's equivalent of "+
 			"that unwinding is panic and recover, so the generated code uses them. Go "+
