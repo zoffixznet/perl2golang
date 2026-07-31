@@ -565,7 +565,7 @@ var catalogue = map[Code]Entry{
 	},
 	StrictFailed: {
 		Severity: report.Refuse,
-		Message:  "`--strict` was given and this run produced %d warnings",
+		Message:  "`--strict` was given and this run produced %s",
 		Short:    "strict mode failed on warnings",
 		Advice:   "resolve the constructs listed above, or drop `--strict` to take the output as it is",
 	},

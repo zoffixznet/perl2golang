@@ -348,12 +348,13 @@ func collectNotes(nodes []ir.Annotated) (string, []string) {
 		walkIR(n, add)
 	}
 
-	// A region with a dozen notes is a wall of text nobody reads. The first
-	// few carry the region; the rest are still in the annotated program.
-	const maxNotes = 6
-	if len(texts) > maxNotes {
-		texts = texts[:maxNotes]
-	}
+	// Every note the region raised is returned, in source order. Keeping only
+	// the first few would read as a shorter section and be a worse one: the
+	// notes arrive in the order the code does, so a cap here always cuts the
+	// bottom of the region loose and leaves the last third of the Go with no
+	// explanation and nothing saying any is missing. What to show is the
+	// document's decision, and the document already drops a note it has given
+	// in an earlier region.
 	return strings.Join(texts, "\n\n"), concepts
 }
 

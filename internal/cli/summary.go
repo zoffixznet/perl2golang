@@ -222,6 +222,20 @@ func reviewClause(rep *report.Report) string {
 	return strings.Join(parts, ", ")
 }
 
+// strictClause names what tripped --strict, which is refusals and
+// approximations and never notes, so the message agrees with the counts the
+// summary printed a line earlier.
+func strictClause(rep *report.Report) string {
+	var parts []string
+	if n := rep.Stats.Refused; n > 0 {
+		parts = append(parts, fmt.Sprintf("%d refusal%s", n, plural(n)))
+	}
+	if n := rep.Stats.Approximated; n > 0 {
+		parts = append(parts, fmt.Sprintf("%d warning%s", n, plural(n)))
+	}
+	return strings.Join(parts, " and ")
+}
+
 // verifiedClause says how far the tool got in checking its own output. The
 // difference between "this compiles" and "this parses" is the difference
 // between two very different claims, so it is spelled out rather than implied.

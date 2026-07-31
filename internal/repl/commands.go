@@ -291,8 +291,17 @@ func (r *repl) cmdWhy(string) {
 			r.p.blank()
 		}
 		r.p.title(seg.Title)
-		if seg.Explain != "" {
-			r.p.body(teach.WrapAt(seg.Explain, 76))
+		// One paragraph per note, kept apart. Run together they read as one
+		// argument about one thing, when they are several observations about
+		// several lines.
+		for j, para := range strings.Split(seg.Explain, "\n\n") {
+			if strings.TrimSpace(para) == "" {
+				continue
+			}
+			if j > 0 {
+				r.p.blank()
+			}
+			r.p.body(teach.WrapAt(para, 76))
 		}
 		if len(seg.Concepts) > 0 {
 			r.p.note("concepts: %s", strings.Join(seg.Concepts, ", "))

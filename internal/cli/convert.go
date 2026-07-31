@@ -433,7 +433,7 @@ func (r *run) convert(f *convertFlags, stream streamMode, session *aiSession) {
 
 	if f.strict {
 		if n := res.Report.Stats.Approximated + res.Report.Stats.Refused; n > 0 {
-			entry := diag.New(diag.StrictFailed, diag.Pos{File: r.in.display}, "--strict", n)
+			entry := diag.New(diag.StrictFailed, diag.Pos{File: r.in.display}, "--strict", strictClause(res.Report))
 			r.strictEntry = &entry
 			r.exit = ExitStrict
 		}
