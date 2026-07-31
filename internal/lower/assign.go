@@ -415,7 +415,13 @@ func (l *Lowerer) listAssign(targets []ast.Expr, rhs ast.Expr, n *ast.Assign, de
 
 	// The clean case: as many values as targets, each one its own expression.
 	// This is what Go's multiple assignment was made for.
-	if len(sources) == len(targets) && allScalarTargets(targets) {
+	//
+	// A source that is itself a list disqualifies it however the counts line
+	// up. `my ($first) = grep { ... } @rows` has one target and one source and
+	// is not a one-to-one assignment: the right-hand side is in list context,
+	// and $first takes the list's first element. Pairing them here would put
+	// the source in scalar context and assign the count instead.
+	if len(sources) == len(targets) && allScalarTargets(targets) && !l.anyProducesList(sources) {
 		var lhsExprs, rhsExprs []ir.Expr
 		for i, t := range targets {
 			v := t.(*ast.Var)
@@ -478,6 +484,39 @@ func (l *Lowerer) listAssign(targets []ast.Expr, rhs ast.Expr, n *ast.Assign, de
 	return l.listAssignByIndex(targets, rhs, n, declare)
 }
 
+// anyProducesList reports whether any of these expressions yields a list
+// rather than a single value when it is evaluated in list context.
+func (l *Lowerer) anyProducesList(es []ast.Expr) bool {
+	for _, e := range es {
+		if l.producesList(e) {
+			return true
+		}
+	}
+	return false
+}
+
+// producesList reports whether one expression yields a list in list context.
+func (l *Lowerer) producesList(e ast.Expr) bool {
+	switch n := e.(type) {
+	case *ast.Var:
+		return n.Sigil == '@' || n.Sigil == '%'
+	case *ast.Deref:
+		return n.Sigil == '@' || n.Sigil == '%'
+	case *ast.Slice, *ast.List:
+		return true
+	case *ast.BinOp:
+		return n.Op == ".."
+	case *ast.Call:
+		if isListBuiltin(n.Name) {
+			return true
+		}
+		if s, known := l.subs[n.Name]; known {
+			return len(s.Results) > 1
+		}
+	}
+	return false
+}
+
 // listAssignByIndex fills targets from a slice, which is what Perl does when
 // the right side is an array.
 func (l *Lowerer) listAssignByIndex(targets []ast.Expr, rhs ast.Expr, n *ast.Assign, declare bool) []ir.Stmt {
@@ -514,14 +553,28 @@ func (l *Lowerer) listAssignByIndex(targets []ast.Expr, rhs ast.Expr, n *ast.Ass
 		}
 		l.observe(b, elem)
 		val := l.helperCall(hAt, elem, ir.NewIdent(tmp, typeOrAny(src)), ir.IntLit(itoa(i)))
-		out = append(out, assign(declOp(declare), []ir.Expr{ir.NewIdent(b.Go, b.Type)},
-			[]ir.Expr{l.assignable(val, b.Type, nil)}))
+		out = append(out, l.bindDecl(declare, b, val))
 		if declare {
 			out = append(out, l.discardIfUnused(b)...)
 		}
 		i++
 	}
 	return out
+}
+
+// bindDecl writes one binding's declaration or assignment and keeps the Go
+// variable's type and the binding's agreed.
+//
+// A short declaration takes its type from its initialiser. Where the binding
+// stayed dynamic and the initialiser did not, that leaves the Go variable
+// narrower than the binding thinks it is, and every later use asserts a type
+// the variable does not have, which does not compile.
+func (l *Lowerer) bindDecl(declare bool, b *Binding, value ir.Expr) ir.Stmt {
+	coerced := l.assignable(value, b.Type, nil)
+	if declare && b.Type != nil && b.Type.Kind == ir.Any && typeOrAny(coerced).Kind != ir.Any {
+		return &ir.DeclStmt{Names: []string{b.Go}, Type: b.Type, Values: []ir.Expr{coerced}}
+	}
+	return assign(declOp(declare), []ir.Expr{ir.NewIdent(b.Go, b.Type)}, []ir.Expr{coerced})
 }
 
 func declOp(declare bool) string {
