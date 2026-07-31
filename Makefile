@@ -10,11 +10,13 @@ help: ## Show this help
 	@echo "perl2go - convert Perl 5 scripts to Go and learn Go along the way"
 	@echo
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
+	@echo
+	@echo "make install puts the binary in $(BINDIR); set BINDIR to change that."
 
 build: ## Build the perl2go binary into ./bin
 	$(GO) build -o bin/$(BIN) ./cmd/perl2go
 
-install: ## Install perl2go into $(BINDIR)
+install: ## Install perl2go where BINDIR says (see below)
 	$(GO) build -o $(BINDIR)/$(BIN) ./cmd/perl2go
 	@echo "installed $(BINDIR)/$(BIN)"
 

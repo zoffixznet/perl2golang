@@ -582,30 +582,80 @@ func (b *bundle) entrySection(m *md, from string, sev report.Severity, title, in
 	}
 }
 
-// groupEntries folds entries that say exactly the same thing about the same
-// construct into one, keeping every line number. The same unconvertible
-// construct usually appears several times in a file, and printing the same
-// three paragraphs for each of them buries the ones that differ.
+// groupEntries folds entries that say the same thing into one, keeping every
+// place they came from.
+//
+// The same unconvertible construct usually appears many times in a file, at
+// several different expressions. Printing the whole explanation for each of
+// them buries the entries that differ: a file with thirty method calls in it
+// produced thirty copies of one paragraph about how Go declares methods. The
+// explanation is now given once and the places are listed under it.
 func groupEntries(in []report.Entry) []groupedEntry {
 	var out []groupedEntry
 	index := map[string]int{}
 	for _, e := range in {
-		key := e.Code + "\x00" + e.Construct + "\x00" + e.Message + "\x00" + e.Perl + "\x00" + e.Advice
-		if i, ok := index[key]; ok {
-			out[i].lines = append(out[i].lines, e.Line)
-			continue
+		key := e.Code + "\x00" + e.Construct + "\x00" + e.Message + "\x00" + e.Advice
+		i, ok := index[key]
+		if !ok {
+			i = len(out)
+			index[key] = i
+			out = append(out, groupedEntry{Entry: e})
 		}
-		index[key] = len(out)
-		out = append(out, groupedEntry{Entry: e, lines: []int{e.Line}})
+		out[i].places++
+		out[i].addLine(e.Line)
+		out[i].addSite(e.Perl, e.Line)
 	}
 	return out
 }
 
-// groupedEntry is one report entry with every line it occurred on.
+// groupedEntry is one report entry with every place it came from.
 type groupedEntry struct {
 	report.Entry
+	// lines is every distinct line the entry was raised on, in order.
+	lines []int
+	// places is how many times it was raised, which is what the terminal
+	// summary counts.
+	places int
+	// sites are the distinct pieces of source that raised it, in the order
+	// they first appeared.
+	sites []site
+}
+
+// site is one piece of the original that raised an entry, and the lines it
+// appeared on.
+type site struct {
+	perl  string
 	lines []int
 }
+
+// addLine records a line once, keeping the list sorted. One statement can
+// raise the same entry several times, and a heading that says "at lines 69,
+// 69, 69" is noise.
+func (g *groupedEntry) addLine(line int) {
+	at, found := slices.BinarySearch(g.lines, line)
+	if found {
+		return
+	}
+	g.lines = slices.Insert(g.lines, at, line)
+}
+
+// addSite records one occurrence under the piece of source that caused it.
+func (g *groupedEntry) addSite(perl string, line int) {
+	for i := range g.sites {
+		if g.sites[i].perl == perl {
+			if at, found := slices.BinarySearch(g.sites[i].lines, line); !found {
+				g.sites[i].lines = slices.Insert(g.sites[i].lines, at, line)
+			}
+			return
+		}
+	}
+	g.sites = append(g.sites, site{perl: perl, lines: []int{line}})
+}
+
+// maxSites caps how many distinct expressions one entry lists. Past a handful
+// the list stops being a work list and becomes a concordance; the line numbers
+// in the heading still cover every one of them.
+const maxSites = 8
 
 // entryBody renders one entry: what it was, where it was, what happened, and
 // what to do.
@@ -621,10 +671,7 @@ func (b *bundle) entryBody(m *md, from string, g groupedEntry, level int) {
 	}
 	m.h(level, "%s", heading)
 
-	if strings.TrimSpace(e.Perl) != "" {
-		m.p("The original:")
-		m.fence("perl", dedent(e.Perl))
-	}
+	b.entrySites(m, g)
 	if msg := strings.TrimSpace(e.Message); msg != "" {
 		// A message that spans lines is quoted output, usually the compiler's.
 		// Run together as a paragraph it is unreadable, so only the first line
@@ -640,6 +687,45 @@ func (b *bundle) entryBody(m *md, from string, g groupedEntry, level int) {
 	}
 	if links := b.conceptLinks(e.Concepts, from); links != "" {
 		m.p("Lessons: %s", links)
+	}
+}
+
+// entrySites shows the source that raised an entry: the expression itself when
+// there is only one, and a list of them when the same thing was said about
+// several.
+func (b *bundle) entrySites(m *md, g groupedEntry) {
+	var sites []site
+	for _, s := range g.sites {
+		if strings.TrimSpace(s.perl) != "" {
+			sites = append(sites, s)
+		}
+	}
+	switch {
+	case len(sites) == 0:
+		return
+	case len(sites) == 1:
+		m.p("The original:")
+		m.fence("perl", dedent(sites[0].perl))
+		return
+	}
+
+	m.p("Where it happens:")
+	shown := sites
+	if len(shown) > maxSites {
+		shown = shown[:maxSites]
+	}
+	for _, s := range shown {
+		text := dedent(strings.TrimSpace(s.perl))
+		where := strings.TrimPrefix(linesSuffix(s.lines, ""), " ")
+		if strings.Contains(text, "\n") {
+			m.p("%s:", capitalise(where))
+			m.fence("perl", text)
+			continue
+		}
+		m.bullet("`%s`%s", text, linesSuffix(s.lines, ""))
+	}
+	if len(sites) > len(shown) {
+		m.bullet("and %d more like these", len(sites)-len(shown))
 	}
 }
 
@@ -781,6 +867,26 @@ func firstMentions(ids []string, seen map[string]bool, max int) []string {
 	return out
 }
 
+// workItems phrases one severity's count as jobs and, when they differ, the
+// number of places those jobs cover.
+func workItems(kind string, groups []groupedEntry) string {
+	places := countPlaces(groups)
+	head := fmt.Sprintf("%d %s%s", len(groups), kind, plural(len(groups)))
+	if places == len(groups) {
+		return head
+	}
+	return fmt.Sprintf("%s covering %d places", head, places)
+}
+
+// countPlaces totals how many times a set of grouped entries was raised.
+func countPlaces(groups []groupedEntry) int {
+	places := 0
+	for _, g := range groups {
+		places += g.places
+	}
+	return places
+}
+
 // notTranslated is the work list: everything the developer has to finish.
 func (b *bundle) notTranslated() string {
 	m := &md{}
@@ -812,7 +918,13 @@ func (b *bundle) notTranslated() string {
 	}
 
 	m.p("There are two kinds of entry here. A refusal means no Go was produced for a construct, so the program is missing that behaviour until you add it. An approximation means Go was produced, it runs, and it differs from the original in a way that will eventually bite you if you do not know about it. Both are listed with the reasoning and with what to do by hand.")
-	m.p("This file is a work list: %d refusal%s and %d approximation%s.", len(refused), plural(len(refused)), len(approximated), plural(len(approximated)))
+	grouping := ""
+	if countPlaces(refused)+countPlaces(approximated) > len(refused)+len(approximated) {
+		grouping = " It groups by what has to be done rather than by where, so the " +
+			"terminal summary counts the places and this page counts the jobs."
+	}
+	m.p("This file is a work list: %s and %s.%s",
+		workItems("refusal", refused), workItems("approximation", approximated), grouping)
 
 	if len(refused) > 0 {
 		m.h(2, "Refused: you have to write these (%d)", len(refused))
@@ -1504,6 +1616,14 @@ func linesSuffix(lines []int, script string) string {
 			known = append(known, fmt.Sprint(l))
 		}
 	}
+	// A heading that names two dozen line numbers is a heading nobody reads
+	// to the end of. Past a handful, the span says as much and the list of
+	// expressions under it says the rest.
+	const spell = 6
+	where := joinList(known)
+	if len(known) > spell {
+		where = fmt.Sprintf("%s to %s", known[0], known[len(known)-1])
+	}
 	switch {
 	case len(known) == 0:
 		return ""
@@ -1511,10 +1631,14 @@ func linesSuffix(lines []int, script string) string {
 		return fmt.Sprintf(" at line %s of `%s`", known[0], script)
 	case len(known) == 1:
 		return fmt.Sprintf(" at line %s", known[0])
+	case len(known) > spell && script != "":
+		return fmt.Sprintf(" at %d lines of `%s`, %s", len(known), script, where)
+	case len(known) > spell:
+		return fmt.Sprintf(" at %d lines, %s", len(known), where)
 	case script != "":
-		return fmt.Sprintf(" at lines %s of `%s`", joinList(known), script)
+		return fmt.Sprintf(" at lines %s of `%s`", where, script)
 	default:
-		return fmt.Sprintf(" at lines %s", joinList(known))
+		return fmt.Sprintf(" at lines %s", where)
 	}
 }
 
