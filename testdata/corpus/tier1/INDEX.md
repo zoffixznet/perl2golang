@@ -1,6 +1,6 @@
 # Tier 1 corpus -- fundamentals
 
-35 self-contained Perl programs covering the core of the language: scalars,
+37 self-contained Perl programs covering the core of the language: scalars,
 numbers, comparison, booleans, arrays, hashes, control flow, sorting, strings,
 and output. Every entry runs clean under `use strict; use warnings;` with no
 output on stderr (except the two entries marked below, which write to stderr on
@@ -66,6 +66,8 @@ sensitive formatting, or unsorted hash iteration order.
 | 33 | `33-argv-and-arguments` | `@ARGV`, `$#ARGV`, `$0`, consuming arguments with `shift`, a hand-rolled flag scanner. Args: `build -v --name "my project" 42 extra` |
 | 34 | `34-exit-status` | Explicit `exit 2` from a usage branch; output before the exit is still flushed. **Exit status 2** |
 | 35 | `35-die-exit-status` | Uncaught `die "msg\n"` -- message to stderr with no location suffix, **exit status 255** (**writes to stderr**) |
+| 36 | `36-parentheses-and-grouping` | Parentheses as grouping vs as a list, precedence with and without them, the floored-division identity, an array as an operand of `+`, `*`, `==` and `.`, the comma operator in scalar context |
+| 37 | `37-list-slice-in-scalar-context` | `(LIST)[i]` on a literal, on `split` and on `sort`, negative indices, the picked value used in arithmetic and concatenation, and `[0, -1]` making it a list again |
 
 ## Entries with non-zero exit status
 
@@ -100,8 +102,11 @@ against real observed behaviour.
   is integer division.
 - **Number stringification** (04): Perl uses `%.15g`, so `2**53` prints as
   `9.00719925474099e+15`.
-- **Context** (32, 14, 13, 12): the same expression means different things by
-  position. Go has no equivalent; it must become a static analysis pass.
+- **Context** (32, 14, 13, 12, 36, 37): the same expression means different
+  things by position. Go has no equivalent; it must become a static analysis
+  pass. Parentheses are the sharpest case (36): the same three characters group
+  an expression or build a list depending on what surrounds them, and a list
+  slice with one index (37) is a scalar while the same syntax with two is not.
 - **Truthiness** (08): `"0.0"` and `"00"` are true, `"0"` is false.
 - **`//` is not `||`** (03): `0 // 5` is 0.
 - **`undef` is not the zero value** (03, 15): three-way exists/defined/true.

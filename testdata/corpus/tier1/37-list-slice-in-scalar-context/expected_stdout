@@ -1,0 +1,18 @@
+--- picking out of a literal list ---
+mid           = 20
+mid + 5       = 25
+last          = 30
+mid * last    = 600
+--- picking a field out of a split ---
+uid           = 0
+uid + 1000    = 1000
+shell         = /bin/sh
+name is 20 characters
+label         = System Administrator runs /bin/sh
+--- picking out of a sorted list ---
+lowest        = 12
+highest       = 95
+spread        = 83
+--- two at once is a list, not a scalar ---
+ends          = 12 95
+ends count    = 2

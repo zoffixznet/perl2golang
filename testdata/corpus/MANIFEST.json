@@ -1858,5 +1858,29 @@
     "expected_exit": 0,
     "deterministic": true,
     "kind": "honest-failure"
+  },
+  {
+    "tier": "tier1",
+    "name": "36-parentheses-and-grouping",
+    "path": "testdata/corpus/tier1/36-parentheses-and-grouping",
+    "args": [],
+    "has_stdin": false,
+    "has_files": false,
+    "allow_stderr": false,
+    "expected_exit": 0,
+    "deterministic": true,
+    "kind": "convert"
+  },
+  {
+    "tier": "tier1",
+    "name": "37-list-slice-in-scalar-context",
+    "path": "testdata/corpus/tier1/37-list-slice-in-scalar-context",
+    "args": [],
+    "has_stdin": false,
+    "has_files": false,
+    "allow_stderr": false,
+    "expected_exit": 0,
+    "deterministic": true,
+    "kind": "convert"
   }
 ]

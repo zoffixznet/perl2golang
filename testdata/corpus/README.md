@@ -1,6 +1,6 @@
 # Perl conversion corpus
 
-155 self-contained Perl programs with recorded expectations. They are the
+157 self-contained Perl programs with recorded expectations. They are the
 reference material the converter is measured against: every entry pairs a
 real Perl program with the exact output real perl produces for it, so a
 change to the converter can be scored instead of argued about.
@@ -20,7 +20,7 @@ like once it has been made relative again.
 
 | Directory | Entries | Purpose |
 |---|---|---|
-| `tier1/` | 35 | Language fundamentals: scalars, numbers, arrays, hashes, control flow, sorting, strings, output, context, exit status. Small programs, one topic each. |
+| `tier1/` | 37 | Language fundamentals: scalars, numbers, arrays, hashes, control flow, sorting, strings, output, context, exit status. Small programs, one topic each. |
 | `tier2/` | 35 | Script-shaped programs: subroutines, references, nested data, closures, regex, file and stdin I/O, command-line handling, error handling, core modules. |
 | `tier3/` | 25 | Full programs of the kind that decide whether the converter is any good: object systems, operator overloading, parsers, schedulers, template engines, process control. Several span more than one file. |
 | `tier4/` | 35 | Adversarial constructs. These exist to prove the converter **fails honestly** — see below. |
@@ -135,6 +135,13 @@ object per entry:
 Regenerate it whenever an entry is added, removed or renamed, and keep it
 sorted; the harness treats it as the list of entries that exist.
 
+It is an index, not an authority. Everything it claims about an entry is
+checked against the entry's own files before the entry runs, and the files
+win: the arguments come from `cmd`, the exit status from `expected_exit`, and
+a row that has fallen behind is reported as a corpus note rather than acted
+on. So a stale manifest costs you a note, not a wrong result, but the note is
+there to be fixed.
+
 ## Adding an entry
 
 ```sh
@@ -158,7 +165,10 @@ records `expected_stdout` and `expected_exit` by running perl. Then:
 5. If it writes to stderr on purpose, create an empty `allow_stderr` file.
 6. Write `notes.md`: what the entry exercises, and what makes it hard to
    convert.
-7. Add the entry to `MANIFEST.json`.
+7. Update the entry's row in `MANIFEST.json` and add a row for it to the
+   tier's `INDEX.md`.
+8. Run `make score ARGS="-tier <tier> -only <name>"` and read the corpus
+   notes: that is where a manifest row that no longer matches shows up.
 
 An entry that cannot be made deterministic does not belong in tiers 1-3 or
 `domain`. If the non-determinism is the point, it belongs in `tier4/` with an

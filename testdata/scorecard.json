@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-14T17:43:01Z",
+  "recorded": "2026-08-14T17:50:29Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -10,45 +10,45 @@
   "tiers": [
     {
       "tier": "tier1",
-      "entries": 35,
+      "entries": 37,
       "stages": {
         "compiled": {
-          "pass": 34,
+          "pass": 36,
           "fail": 1,
           "skip": 0
         },
         "emitted": {
-          "pass": 35,
+          "pass": 37,
           "fail": 0,
           "skip": 0
         },
         "equivalent": {
-          "pass": 10,
-          "fail": 25,
+          "pass": 11,
+          "fail": 26,
           "skip": 0
         },
         "translated": {
-          "pass": 28,
+          "pass": 30,
           "fail": 7,
           "skip": 0
         },
         "typed": {
-          "pass": 15,
+          "pass": 17,
           "fail": 20,
           "skip": 0
         }
       },
       "equivalent_annotated": {
-        "pass": 10,
-        "fail": 25,
+        "pass": 11,
+        "fail": 26,
         "skip": 0
       },
       "quality": {
         "todos": 19,
-        "symbols": 371,
-        "symbols_typed": 318,
+        "symbols": 398,
+        "symbols_typed": 345,
         "refusals": 19,
-        "approximations": 47
+        "approximations": 49
       }
     },
     {
@@ -226,21 +226,21 @@
   ],
   "total": {
     "tier": "TOTAL",
-    "entries": 155,
+    "entries": 157,
     "stages": {
       "compiled": {
-        "pass": 110,
+        "pass": 112,
         "fail": 45,
         "skip": 0
       },
       "emitted": {
-        "pass": 155,
+        "pass": 157,
         "fail": 0,
         "skip": 0
       },
       "equivalent": {
-        "pass": 14,
-        "fail": 106,
+        "pass": 15,
+        "fail": 107,
         "skip": 0
       },
       "honest": {
@@ -249,35 +249,35 @@
         "skip": 1
       },
       "translated": {
-        "pass": 94,
+        "pass": 96,
         "fail": 61,
         "skip": 0
       },
       "typed": {
-        "pass": 29,
+        "pass": 31,
         "fail": 126,
         "skip": 0
       }
     },
     "equivalent_annotated": {
-      "pass": 14,
-      "fail": 106,
+      "pass": 15,
+      "fail": 107,
       "skip": 0
     },
     "quality": {
       "todos": 440,
-      "symbols": 2947,
-      "symbols_typed": 1807,
+      "symbols": 2974,
+      "symbols_typed": 1834,
       "refusals": 458,
-      "approximations": 624
+      "approximations": 626
     }
   },
   "quality": {
     "todos": 440,
-    "symbols": 2947,
-    "symbols_typed": 1807,
+    "symbols": 2974,
+    "symbols_typed": 1834,
     "refusals": 458,
-    "approximations": 624
+    "approximations": 626
   },
   "entries": [
     {
@@ -1579,6 +1579,78 @@
         "todos": 0,
         "symbols": 3,
         "symbols_typed": 3,
+        "refusals": 0,
+        "approximations": 0
+      }
+    },
+    {
+      "tier": "tier1",
+      "name": "36-parentheses-and-grouping",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "pass"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "pass"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 17,
+        "symbols_typed": 17,
+        "refusals": 0,
+        "approximations": 2
+      }
+    },
+    {
+      "tier": "tier1",
+      "name": "37-list-slice-in-scalar-context",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "stdout differs: line 3, byte 73: got \"5\\nlast          = 30\\nmid * last ...\", wanted \"25\\nlast          = 30\\nmid * last...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "stdout differs: line 3, byte 73: got \"5\\nlast          = 30\\nmid * last ...\", wanted \"25\\nlast          = 30\\nmid * last...\""
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 10,
+        "symbols_typed": 10,
         "refusals": 0,
         "approximations": 0
       }
