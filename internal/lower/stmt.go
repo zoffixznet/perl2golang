@@ -235,7 +235,7 @@ func (l *Lowerer) exprStatement(e ast.Expr) []ir.Stmt {
 				}
 			}
 			// The `something() or die "..."` idiom: a guard, not a value.
-			cond := ir.Un("!", l.cond(n.L), ir.TBool)
+			cond := negated(l.cond(n.L))
 			l.countGuardRead(n.L)
 			guard := &ir.If{
 				Cond: cond,
@@ -322,6 +322,7 @@ func (l *Lowerer) incDecStmt(n *ast.UnOp) []ir.Stmt {
 			l.observe(b, ir.TInt)
 		}
 	}
+	l.autovivifyTarget(n.X)
 	target := l.assignTarget(n.X)
 	if target == nil {
 		return []ir.Stmt{exprStmt(l.expr(n))}
@@ -366,11 +367,16 @@ func (l *Lowerer) incDecStmt(n *ast.UnOp) []ir.Stmt {
 // ifStmt lowers if/elsif/else and unless.
 func (l *Lowerer) ifStmt(n *ast.If) ir.Stmt {
 	depth := l.captureDepth()
-	defer l.restoreCaptures(depth)
+	keepCaptures := false
+	defer func() {
+		if !keepCaptures {
+			l.restoreCaptures(depth)
+		}
+	}()
 
 	cond := l.cond(n.Cond)
 	if n.Unless {
-		cond = ir.Un("!", cond, ir.TBool)
+		cond = negated(cond)
 	}
 	// The condition may have needed setup; it belongs before the if.
 	setup := l.takePre()
@@ -395,6 +401,18 @@ func (l *Lowerer) ifStmt(n *ast.If) ir.Stmt {
 		l.note(out, "unless is if with the condition negated. Go has no unless, and "+
 			"negating at the top is the closest reading of the original.")
 	}
+	// A guard leaves the block only when its condition says so, so whatever
+	// the condition bound is in scope for everything after it. `next unless
+	// $line =~ /re/;` followed by $1 is the shape this exists for: scoping the
+	// submatch slice to the if would leave every capture after it empty.
+	if guardsTheRest(n, out) && l.captureDepth() > depth {
+		keepCaptures = true
+		// Putting the setup back leaves it to the enclosing statement list,
+		// which emits it in front of this statement rather than inside it.
+		l.pre = append(setup, l.pre...)
+		return out
+	}
+
 	if len(setup) == 1 {
 		// A single setup statement fits in the if's own init clause, which is
 		// the Go idiom for scoping a value to the branch that uses it.
@@ -407,6 +425,19 @@ func (l *Lowerer) ifStmt(n *ast.If) ir.Stmt {
 		return &ir.BlockStmt{Body: &ir.Block{Stmts: append(setup, out)}}
 	}
 	return out
+}
+
+// guardsTheRest reports whether an if is the early-exit shape: no else, and a
+// body that does nothing but leave.
+func guardsTheRest(n *ast.If, out *ir.If) bool {
+	if len(n.ElseIfs) > 0 || out.Else != nil || out.Then == nil || len(out.Then.Stmts) != 1 {
+		return false
+	}
+	switch out.Then.Stmts[0].(type) {
+	case *ir.Branch, *ir.Return:
+		return true
+	}
+	return false
 }
 
 // whileStmt lowers while, until, and do-while.
@@ -423,7 +454,7 @@ func (l *Lowerer) whileStmt(n *ast.While) []ir.Stmt {
 
 	cond := l.cond(n.Cond)
 	if n.Until {
-		cond = ir.Un("!", cond, ir.TBool)
+		cond = negated(cond)
 	}
 	setup := l.takePre()
 
@@ -439,7 +470,7 @@ func (l *Lowerer) whileStmt(n *ast.While) []ir.Stmt {
 		body := out.Body
 		out.Cond = nil
 		out.Body = &ir.Block{Stmts: append(append(setup, &ir.If{
-			Cond: ir.Un("!", cond, ir.TBool),
+			Cond: negated(cond),
 			Then: &ir.Block{Stmts: []ir.Stmt{&ir.Branch{Kind: "break"}}},
 		}), body.Stmts...)}
 	}
@@ -450,11 +481,11 @@ func (l *Lowerer) whileStmt(n *ast.While) []ir.Stmt {
 func (l *Lowerer) doWhile(n *ast.While) []ir.Stmt {
 	cond := l.cond(n.Cond)
 	if n.Until {
-		cond = ir.Un("!", cond, ir.TBool)
+		cond = negated(cond)
 	}
 	body := l.block(n.Body)
 	body.Stmts = append(body.Stmts, &ir.If{
-		Cond: ir.Un("!", cond, ir.TBool),
+		Cond: negated(cond),
 		Then: &ir.Block{Stmts: []ir.Stmt{&ir.Branch{Kind: "break"}}},
 	})
 	out := &ir.For{Body: body, Label: l.label(n.Label)}

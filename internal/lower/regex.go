@@ -482,7 +482,7 @@ func (l *Lowerer) matchExpr(n *ast.Match, forceBool bool) ir.Expr {
 	if groups == 0 {
 		out := ir.CallOf(selector(pattern, "MatchString", nil), ir.TBool, subject)
 		if n.Negate {
-			out2 := ir.Un("!", out, ir.TBool)
+			out2 := negated(out)
 			l.note(out2, "!~ is a match that succeeds when the pattern does not match, "+
 				"which Go writes by negating the test.")
 			return out2

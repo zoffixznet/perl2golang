@@ -82,3 +82,70 @@ func assign(op string, lhs, rhs []ir.Expr) *ir.Assign {
 
 // exprStmt wraps an expression as a statement.
 func exprStmt(x ir.Expr) *ir.ExprStmt { return &ir.ExprStmt{X: x} }
+
+// negated is `!x`, written the way a Go developer would write it.
+//
+// A negated equality test has a spelling of its own: `m == nil` rather than
+// `!(m != nil)`. The two say the same thing for every type, including the
+// floating-point values where flipping an ordering comparison would not, and
+// the direct form is what the generated code is read for.
+func negated(x ir.Expr) ir.Expr {
+	if b, ok := x.(*ir.Binary); ok {
+		flip := ""
+		switch b.Op {
+		case "==":
+			flip = "!="
+		case "!=":
+			flip = "=="
+		case "<", ">", "<=", ">=":
+			// Flipping an ordering comparison is only the same statement when
+			// the values are totally ordered. Floats are not: with a NaN on
+			// either side both `a < b` and `a >= b` are false, so `!(a < b)`
+			// and `a >= b` disagree.
+			if totallyOrdered(b.L) && totallyOrdered(b.R) {
+				flip = map[string]string{"<": ">=", ">": "<=", "<=": ">", ">=": "<"}[b.Op]
+			}
+		}
+		// `!(len(x) > 0)` is `len(x) == 0`, which is the spelling every Go
+		// reader expects. `<= 0` is the same test only because a length is
+		// never negative, which is a fact about len rather than about ints.
+		if flip == "<=" && isLenCall(b.L) && isZero(b.R) {
+			flip = "=="
+		}
+		if flip != "" {
+			out := ir.Bin(flip, b.L, b.R, ir.TBool)
+			if m := ir.MetaOf(b); m != nil {
+				*ir.MetaOf(out) = *m
+			}
+			return out
+		}
+	}
+	if u, ok := x.(*ir.Unary); ok && u.Op == "!" {
+		return u.X
+	}
+	return ir.Un("!", x, ir.TBool)
+}
+
+// totallyOrdered reports whether an expression's type has no unordered values,
+// which is what makes flipping a comparison operator sound.
+func totallyOrdered(x ir.Expr) bool {
+	t := typeOrAny(x)
+	return t.Kind == ir.Int || t.Kind == ir.String
+}
+
+// isLenCall reports whether an expression is a call to the len builtin, whose
+// result is never negative.
+func isLenCall(x ir.Expr) bool {
+	c, ok := x.(*ir.Call)
+	if !ok {
+		return false
+	}
+	id, ok := c.Fun.(*ir.Ident)
+	return ok && id.Name == "len"
+}
+
+// isZero reports whether an expression is the integer literal 0.
+func isZero(x ir.Expr) bool {
+	lit, ok := x.(*ir.Lit)
+	return ok && lit.Kind == ir.LitInt && lit.Value == "0"
+}

@@ -74,7 +74,7 @@ func (l *Lowerer) quantifier(n *ast.Call) ir.Expr {
 		start = ir.BoolLit(true)
 		settled = ir.BoolLit(false)
 		if n.Name == "all" {
-			cond = ir.Un("!", cond, ir.TBool)
+			cond = negated(cond)
 		}
 	}
 
@@ -229,7 +229,7 @@ func (l *Lowerer) uniqCall(n *ast.Call, numeric bool) ir.Expr {
 		X:      src,
 		Define: true,
 		Body: &ir.Block{Stmts: []ir.Stmt{&ir.If{
-			Cond: ir.Un("!", lookup, ir.TBool),
+			Cond: negated(lookup),
 			Then: &ir.Block{Stmts: []ir.Stmt{
 				assign("=", []ir.Expr{index(ir.NewIdent(seen, seenType), key, ir.TBool)}, []ir.Expr{ir.BoolLit(true)}),
 				assign("=", []ir.Expr{ir.NewIdent(out, ir.SliceOf(elem))},

@@ -448,7 +448,21 @@ func (l *Lowerer) pairs(elems []ast.Expr) (keys, vals []ir.Expr, t *ir.Type) {
 	}
 	// The values decide the map's value type together, and two that no single
 	// Go type covers settle it at any for good.
+	//
+	// A value whose own type did not resolve settles it too, which is where a
+	// literal differs from a variable. Inference treats `any` as an absence of
+	// evidence because a variable goes on being used and something later may
+	// pin it down. A literal has all its evidence here: `{ path => $path, secs
+	// => $secs + 0 }` with $path unresolved is not a map of numbers, and
+	// deciding that it is means writing the path through a numeric conversion
+	// and storing a zero.
 	t = joinAll(seen)
+	for _, one := range seen {
+		if one == nil || one.Kind == ir.Any {
+			t = ir.TAny
+			break
+		}
+	}
 	if t == nil {
 		t = ir.TAny
 	}

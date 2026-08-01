@@ -243,7 +243,7 @@ func (l *Lowerer) orValue(n *ast.BinOp, definedOr bool) ir.Expr {
 	l.setProv(decl, n)
 	target := ir.NewIdent(name, t)
 	body := &ir.Block{Stmts: []ir.Stmt{assign("=", []ir.Expr{target}, []ir.Expr{l.assignable(rx, t, n.R)})}}
-	guard := &ir.If{Cond: ir.Un("!", l.toBool(target, n.L), ir.TBool), Then: body}
+	guard := &ir.If{Cond: negated(l.toBool(target, n.L)), Then: body}
 	if definedOr {
 		l.note(decl, "// tests whether the left side is defined, not whether it is "+
 			"true, so 0 and the empty string pass it. Go has no undefined value: a "+
@@ -361,7 +361,7 @@ func (l *Lowerer) rangeExpr(n *ast.BinOp) ir.Expr {
 func (l *Lowerer) unop(n *ast.UnOp) ir.Expr {
 	switch n.Op {
 	case "!", "not":
-		return ir.Un("!", l.cond(n.X), ir.TBool)
+		return negated(l.cond(n.X))
 	case "-":
 		x := l.expr(n.X)
 		if isNum(typeOrAny(x)) {
@@ -505,7 +505,7 @@ func (l *Lowerer) cond(e ast.Expr) ir.Expr {
 	case *ast.UnOp:
 		switch n.Op {
 		case "!", "not":
-			return ir.Un("!", l.cond(n.X), ir.TBool)
+			return negated(l.cond(n.X))
 		case "defined":
 			return l.definedExpr(n.X, n)
 		}

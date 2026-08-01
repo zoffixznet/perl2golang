@@ -724,16 +724,28 @@ func (l *Lowerer) autovivify(lhs *ast.HashIndex) []ir.Stmt {
 		return nil
 	}
 	m, key, elem := l.hashParts(inner)
-	if m == nil || key == nil || elem == nil || elem.Kind != ir.Map {
+	if m == nil || key == nil || elem == nil {
+		return nil
+	}
+	// made is what goes in when the key is missing. Where inference settled on
+	// a map, that is the map. Where it did not, the outer map holds `any` and
+	// every read of the inner one asserts a map out of it, so putting a map
+	// there is what makes those assertions true instead of a panic on nil.
+	made := elem
+	switch elem.Kind {
+	case ir.Map:
+	case ir.Any:
+		made = ir.MapOf(ir.TAny)
+	default:
 		return nil
 	}
 	okName := l.tmp("ok")
 	check := assign(":=", []ir.Expr{ir.NewIdent("_", nil), ir.NewIdent(okName, ir.TBool)},
 		[]ir.Expr{indexComma(m, key, elem)})
 	create := &ir.If{
-		Cond: ir.Un("!", ir.NewIdent(okName, ir.TBool), ir.TBool),
+		Cond: negated(ir.NewIdent(okName, ir.TBool)),
 		Then: &ir.Block{Stmts: []ir.Stmt{
-			assign("=", []ir.Expr{index(m, key, elem)}, []ir.Expr{composite(elem, nil, nil)}),
+			assign("=", []ir.Expr{index(m, key, elem)}, []ir.Expr{composite(made, nil, nil)}),
 		}},
 	}
 	l.note(check, "Perl creates the inner hash on the way through, which is called "+
@@ -744,9 +756,27 @@ func (l *Lowerer) autovivify(lhs *ast.HashIndex) []ir.Stmt {
 	return []ir.Stmt{check, create}
 }
 
+// autovivifyTarget emits the map creation Perl would have done implicitly
+// before a statement writes through a nested hash element.
+//
+// `$h{a}{b} = 1` goes through assignToHash, which already does this. `++` and
+// `+=` on the same place do not, and they are how a counting or accumulating
+// hash of hashes is actually written, so without this the first line of the
+// loop panics.
+func (l *Lowerer) autovivifyTarget(e ast.Expr) {
+	h, ok := e.(*ast.HashIndex)
+	if !ok {
+		return
+	}
+	for _, st := range l.autovivify(h) {
+		l.emit(st)
+	}
+}
+
 // compoundAssign lowers +=, .=, //= and the rest.
 func (l *Lowerer) compoundAssign(n *ast.Assign) []ir.Stmt {
 	op := n.Op[:len(n.Op)-1]
+	l.autovivifyTarget(n.LHS)
 	target := l.assignTarget(n.LHS)
 	if target == nil {
 		return []ir.Stmt{l.todoStmt(n, "P2G2540", "compound assignment",
@@ -760,7 +790,7 @@ func (l *Lowerer) compoundAssign(n *ast.Assign) []ir.Stmt {
 	case "||", "//":
 		value := l.assignable(l.scalar(n.RHS), t, n.RHS)
 		guard := &ir.If{
-			Cond: ir.Un("!", l.toBool(target, n.LHS), ir.TBool),
+			Cond: negated(l.toBool(target, n.LHS)),
 			Then: &ir.Block{Stmts: []ir.Stmt{assign("=", []ir.Expr{target}, []ir.Expr{value})}},
 		}
 		l.setProv(guard, n)
