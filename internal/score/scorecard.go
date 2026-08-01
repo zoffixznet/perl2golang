@@ -479,8 +479,12 @@ func headlineStage(kind string) Stage {
 	return StageEquivalent
 }
 
-// describeFilter puts a run's coverage into words, for the table header and for
-// the refusal to compare two runs that did not cover the same ground.
+// Describe puts a run's coverage into words, for the table header, for the
+// refusal to compare two runs that did not cover the same ground, and for the
+// refusal to let a partial run overwrite the record of a full one.
+func (f Filter) Describe() string { return describeFilter(f) }
+
+// describeFilter puts a run's coverage into words.
 func describeFilter(f Filter) string {
 	var parts []string
 	if f.Tier != "" {

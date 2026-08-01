@@ -416,7 +416,7 @@ func (r *runner) equivalence(ctx context.Context, e Entry, f *Fixture, compiled 
 		return s, s
 	}
 
-	perlOut, perlFiles, err := r.runIn(ctx, bins.dir, "perl", f, "perl", append([]string{"input.pl"}, e.Args...), baseline)
+	perlOut, perlFiles, err := r.runIn(ctx, bins.dir, "perl", f, "perl", append([]string{"input.pl"}, f.Args...), baseline)
 	if err != nil {
 		s := fail(err.Error())
 		return s, s
@@ -429,7 +429,7 @@ func (r *runner) equivalence(ctx context.Context, e Entry, f *Fixture, compiled 
 		WantFiles:   perlFiles,
 	}
 	run := func(sub, bin, label string) StageResult {
-		out, files, err := r.runIn(ctx, bins.dir, sub, f, bin, e.Args, baseline)
+		out, files, err := r.runIn(ctx, bins.dir, sub, f, bin, f.Args, baseline)
 		if err != nil {
 			return fail(err.Error())
 		}

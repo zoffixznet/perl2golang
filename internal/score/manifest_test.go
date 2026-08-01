@@ -96,6 +96,7 @@ func TestLoadFixtureBelievesTheDirectory(t *testing.T) {
 		name      string
 		entry     Entry
 		wantStdin string
+		wantArgs  []string
 		wantExit  int
 		wantErr   bool
 		wantNotes []string
@@ -120,6 +121,19 @@ func TestLoadFixtureBelievesTheDirectory(t *testing.T) {
 			},
 		},
 		{
+			name: "the arguments come from the entry's cmd file",
+			entry: Entry{Tier: "tier1", Name: "withcmd", Path: "withcmd", Deterministic: true,
+				Args: []string{"build", "-v", "--name", "my project", "42"}},
+			wantArgs: []string{"build", "-v", "--name", "my project", "42"},
+		},
+		{
+			name: "a manifest that has not kept up with cmd is called out",
+			entry: Entry{Tier: "tier1", Name: "withcmd", Path: "withcmd", Deterministic: true,
+				Args: []string{"build"}},
+			wantArgs:  []string{"build", "-v", "--name", "my project", "42"},
+			wantNotes: []string{"cmd holds"},
+		},
+		{
 			name:    "an entry with no program at all is an error",
 			entry:   Entry{Tier: "tier1", Name: "missing", Path: "no-such-entry"},
 			wantErr: true,
@@ -136,6 +150,9 @@ func TestLoadFixtureBelievesTheDirectory(t *testing.T) {
 			}
 			if err != nil {
 				t.Fatal(err)
+			}
+			if !reflect.DeepEqual(f.Args, tt.wantArgs) {
+				t.Errorf("args = %q, want %q", f.Args, tt.wantArgs)
 			}
 			if string(f.Stdin) != tt.wantStdin {
 				t.Errorf("stdin = %q, want %q", f.Stdin, tt.wantStdin)
@@ -189,5 +206,31 @@ func TestLoadCategories(t *testing.T) {
 				t.Fatalf("categories = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestSplitCmd(t *testing.T) {
+	tests := []struct {
+		line string
+		want []string
+	}{
+		{"", nil},
+		{"\n", nil},
+		{"   ", nil},
+		{"files/df.out", []string{"files/df.out"}},
+		{"--warn 80 --crit 90 files/df.out\n", []string{"--warn", "80", "--crit", "90", "files/df.out"}},
+		{`build -v --name "my project" 42`, []string{"build", "-v", "--name", "my project", "42"}},
+		{`'single quoted' plain`, []string{"single quoted", "plain"}},
+		{`a\ b c`, []string{"a b", "c"}},
+		{`""`, []string{""}},
+		// A shell joins a quoted run to whatever touches it, with no space
+		// between, into one word.
+		{`'it\'s'`, []string{`it\s`}},
+		{`pre"fix"post`, []string{"prefixpost"}},
+	}
+	for _, tt := range tests {
+		if got := splitCmd(tt.line); !reflect.DeepEqual(got, tt.want) {
+			t.Errorf("splitCmd(%q) = %q, want %q", tt.line, got, tt.want)
+		}
 	}
 }

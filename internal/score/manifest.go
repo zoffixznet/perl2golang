@@ -108,6 +108,8 @@ type Fixture struct {
 	Dir string
 	// Source is the Perl program.
 	Source []byte
+	// Args are the program's arguments, read from the entry's cmd file.
+	Args []string
 	// Stdin is what to feed the program, empty when there is no stdin file.
 	Stdin []byte
 	// ExpectedStdout is the recorded stdout. HaveStdout is false for an
@@ -131,6 +133,24 @@ func loadFixture(root string, e Entry) (*Fixture, error) {
 		return nil, fmt.Errorf("%s: %w", e.ID(), err)
 	}
 	f := &Fixture{Dir: dir, Source: src, ExpectedExit: e.ExpectedExit}
+
+	// The entry's own cmd file decides the arguments. Taking them from the
+	// manifest instead would let an entry that gained arguments run without
+	// them, and fail for a reason that looks like a fault in the conversion.
+	cmd, err := os.ReadFile(filepath.Join(dir, "cmd"))
+	switch {
+	case err == nil:
+		f.Args = splitCmd(string(cmd))
+	case os.IsNotExist(err):
+		if len(e.Args) > 0 {
+			f.note("the manifest gives arguments but the directory has no cmd file")
+		}
+	default:
+		return nil, fmt.Errorf("%s: %w", e.ID(), err)
+	}
+	if !sameArgs(f.Args, e.Args) {
+		f.note(fmt.Sprintf("cmd holds %q, the manifest says %q", f.Args, e.Args))
+	}
 
 	stdin, err := os.ReadFile(filepath.Join(dir, "stdin"))
 	switch {
@@ -191,6 +211,58 @@ func loadFixture(root string, e Entry) (*Fixture, error) {
 }
 
 func (f *Fixture) note(s string) { f.Disagreements = append(f.Disagreements, s) }
+
+// splitCmd splits a cmd file into arguments the way a shell would, honouring
+// single quotes, double quotes and backslashes. The line is never handed to a
+// shell, so nothing else a shell does applies: no expansion, no globbing, no
+// substitution, and an argument holding a space is quoted rather than escaped
+// by the surrounding machinery.
+func splitCmd(line string) []string {
+	var args []string
+	var cur strings.Builder
+	started := false
+	var quote byte
+	for i := 0; i < len(line); i++ {
+		c := line[i]
+		switch {
+		case quote == 0 && (c == ' ' || c == '\t' || c == '\n' || c == '\r'):
+			if started {
+				args = append(args, cur.String())
+				cur.Reset()
+				started = false
+			}
+		case quote == 0 && (c == '\'' || c == '"'):
+			quote, started = c, true
+		case quote != 0 && c == quote:
+			quote = 0
+		case c == '\\' && quote != '\'' && i+1 < len(line):
+			i++
+			cur.WriteByte(line[i])
+			started = true
+		default:
+			cur.WriteByte(c)
+			started = true
+		}
+	}
+	if started {
+		args = append(args, cur.String())
+	}
+	return args
+}
+
+// sameArgs compares two argument lists, treating nil and empty as the same
+// thing, because a manifest may spell "no arguments" either way.
+func sameArgs(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // The categories a tier 4 expectation can ask for. They come from the corpus
 // README, and an entry may accept more than one of them.

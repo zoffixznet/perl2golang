@@ -98,6 +98,16 @@ func run() error {
 	if *noWrite {
 		return nil
 	}
+	// A run of one tier says nothing about the rest of the corpus, so it must
+	// not become the record the next full run is compared against. Writing it
+	// somewhere else is still allowed, because that file was asked for by name.
+	if sc.Filter.Partial() && *out == "" {
+		if !*asJSON {
+			fmt.Printf("this run covered %s, so %s was left alone\n",
+				sc.Filter.Describe(), display(root, outPath))
+		}
+		return nil
+	}
 	written, err := sc.Save(outPath)
 	if err != nil {
 		return fmt.Errorf("writing %s: %w", outPath, err)

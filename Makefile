@@ -26,8 +26,8 @@ test: ## Run the full test suite
 test-short: ## Run the quick tests only (skips toolchain-heavy tests)
 	$(GO) test -short ./...
 
-score: ## Run the conversion scorecard over the corpus
-	$(GO) run ./cmd/score
+score: ## Score the conversion over the corpus: ARGS='-tier tier2 -v' narrows it
+	$(GO) run ./cmd/score $(ARGS)
 
 lint: vet ## Run static checks (alias for vet plus gofmt check)
 	@fmtout=$$(gofmt -l . 2>/dev/null); if [ -n "$$fmtout" ]; then echo "gofmt needed on:"; echo "$$fmtout"; exit 1; fi
