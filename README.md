@@ -313,8 +313,13 @@ make deps       # checks for the system tools the other targets need
 `make score` is the measure of conversion quality: it converts every script in
 `testdata/corpus/`, compiles the result, runs it, and compares its output byte
 for byte against what real `perl` produces. It writes the numbers to a file and
-prints the change since the previous run.
+prints the change since the previous run. `ARGS` narrows it, so
+`make score ARGS="-tier tier2 -v"` scores one tier and shows every entry.
 
 The corpus is tiered by difficulty. Tiers 1 and 2 are ordinary Perl and are what
 this release targets. Tiers 3 and 4 and the `domain/` set are harder material
 kept as a measure of where the tool stands, not as a bar it currently clears.
+
+[docs/iterating.md](docs/iterating.md) is the guide to improving the
+conversion: how to read the scorecard, how to pick what to work on, and the
+rules a change has to respect.
