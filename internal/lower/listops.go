@@ -121,7 +121,7 @@ func (l *Lowerer) sortByName(n *ast.Call) ir.Expr {
 		"Perl it read its two values out of the package globals $a and $b, which is "+
 		"why it could not simply be called; in Go they are its parameters, so it is "+
 		"a function value like any other.",
-		"sort-slice", "closures-capture-variables")
+		"sort-slice", "closures-and-loop-capture")
 	l.emit(st)
 	return target
 }

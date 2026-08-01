@@ -395,7 +395,7 @@ func (l *Lowerer) anonSub(n *ast.AnonSub) ir.Expr {
 		"can be stored in a variable, put in a map, or passed to another function. "+
 		"Unlike Perl's, it has a written-down signature, so the compiler checks every "+
 		"call to it.",
-		"closures-and-loop-capture", "closures-capture-variables")
+		"closures-and-loop-capture")
 	return out
 }
 

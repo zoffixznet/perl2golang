@@ -1,6 +1,9 @@
 package teach
 
 import (
+	"os"
+	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -163,4 +166,57 @@ func looksLikeConceptID(s string) bool {
 		}
 	}
 	return strings.Count(s, "-") >= 1 && !strings.HasPrefix(s, "-") && !strings.HasSuffix(s, "-")
+}
+
+// TestConverterNotesReferenceRealConcepts checks the ids the converter itself
+// names when it explains a decision.
+//
+// A note that cites a lesson is the main way a reader gets from a line of
+// generated Go to the page explaining it. An id with no lesson behind it is
+// dropped without a word when the bundle is built, so the note loses its link
+// and nothing anywhere says why. Renaming a lesson without updating the notes
+// used to be silent; it fails here now.
+//
+// Every hyphenated lower-case string literal in the lowering package is a
+// concept id, because that package has no other use for one. A literal added
+// there for some other purpose will fail this test, which is the moment to ask
+// whether it belongs in the code that writes the teaching notes.
+func TestConverterNotesReferenceRealConcepts(t *testing.T) {
+	kb := Load()
+	dir := filepath.Join("..", "lower")
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		t.Skipf("the lowering package is not there to read: %v", err)
+	}
+	looked := 0
+	for _, e := range entries {
+		name := e.Name()
+		if e.IsDir() || !strings.HasSuffix(name, ".go") || strings.HasSuffix(name, "_test.go") {
+			continue
+		}
+		src, err := os.ReadFile(filepath.Join(dir, name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, id := range hyphenatedLiterals(string(src)) {
+			looked++
+			if _, ok := kb.Get(id); !ok {
+				t.Errorf("%s names the concept %q, which is not in the knowledge base", name, id)
+			}
+		}
+	}
+	if looked == 0 {
+		t.Error("no concept ids found in the lowering package; the notes have gone missing")
+	}
+}
+
+// hyphenatedLiterals returns the double-quoted hyphenated lower-case words in
+// a Go source file, which is the shape of a concept id and of nothing else the
+// lowering package writes.
+func hyphenatedLiterals(src string) []string {
+	var out []string
+	for _, m := range regexp.MustCompile(`"([a-z][a-z0-9]*(?:-[a-z0-9]+)+)"`).FindAllStringSubmatch(src, -1) {
+		out = append(out, m[1])
+	}
+	return out
 }

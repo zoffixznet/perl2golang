@@ -68,7 +68,7 @@ func (l *Lowerer) evalCall(n *ast.Call) ir.Expr {
 		l.note(decl, "The block's value has to outlive the function literal, so it is "+
 			"declared outside and assigned inside. A closure can see and write the "+
 			"variables around it, which is what makes that work.",
-			"closures-capture-variables")
+			"closures-and-loop-capture")
 		l.emit(decl)
 	}
 	l.emit(run)
