@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-14T17:41:37Z",
+  "recorded": "2026-08-14T17:43:01Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -23,8 +23,8 @@
           "skip": 0
         },
         "equivalent": {
-          "pass": 9,
-          "fail": 26,
+          "pass": 10,
+          "fail": 25,
           "skip": 0
         },
         "translated": {
@@ -39,8 +39,8 @@
         }
       },
       "equivalent_annotated": {
-        "pass": 9,
-        "fail": 26,
+        "pass": 10,
+        "fail": 25,
         "skip": 0
       },
       "quality": {
@@ -66,8 +66,8 @@
           "skip": 0
         },
         "equivalent": {
-          "pass": 1,
-          "fail": 34,
+          "pass": 2,
+          "fail": 33,
           "skip": 0
         },
         "translated": {
@@ -82,8 +82,8 @@
         }
       },
       "equivalent_annotated": {
-        "pass": 1,
-        "fail": 34,
+        "pass": 2,
+        "fail": 33,
         "skip": 0
       },
       "quality": {
@@ -195,8 +195,8 @@
           "skip": 0
         },
         "equivalent": {
-          "pass": 1,
-          "fail": 24,
+          "pass": 2,
+          "fail": 23,
           "skip": 0
         },
         "translated": {
@@ -211,8 +211,8 @@
         }
       },
       "equivalent_annotated": {
-        "pass": 1,
-        "fail": 24,
+        "pass": 2,
+        "fail": 23,
         "skip": 0
       },
       "quality": {
@@ -239,8 +239,8 @@
         "skip": 0
       },
       "equivalent": {
-        "pass": 11,
-        "fail": 109,
+        "pass": 14,
+        "fail": 106,
         "skip": 0
       },
       "honest": {
@@ -260,8 +260,8 @@
       }
     },
     "equivalent_annotated": {
-      "pass": 11,
-      "fail": 109,
+      "pass": 14,
+      "fail": 106,
       "skip": 0
     },
     "quality": {
@@ -405,7 +405,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: line 17, byte 212: got \"29999999999999999\\nfloat not equa...\", wanted \"30000000000000004\\nfloat not equa...\""
+          "reason": "stdout differs: line 17, byte 212: got \"29999999999999999\\nfloat equal\\n0....\", wanted \"30000000000000004\\nfloat not equa...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -419,7 +419,7 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: line 17, byte 212: got \"29999999999999999\\nfloat not equa...\", wanted \"30000000000000004\\nfloat not equa...\""
+        "reason": "stdout differs: line 17, byte 212: got \"29999999999999999\\nfloat equal\\n0....\", wanted \"30000000000000004\\nfloat not equa...\""
       },
       "quality": {
         "todos": 0,
@@ -442,7 +442,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: line 10, byte 393: got \"0  q*d+m=   3\\n-13:5   mod=  2  f...\", wanted \"2  q*d+m=  13\\n-13:5   mod=  2  f...\""
+          "reason": "stdout differs: line 15, byte 619: got \"2\\nuse integer:   7 % -3 = -2\\nuse...\", wanted \"-1\\nuse integer:   7 % -3 = 1\\nuse...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -456,7 +456,7 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: line 10, byte 393: got \"0  q*d+m=   3\\n-13:5   mod=  2  f...\", wanted \"2  q*d+m=  13\\n-13:5   mod=  2  f...\""
+        "reason": "stdout differs: line 15, byte 619: got \"2\\nuse integer:   7 % -3 = -2\\nuse...\", wanted \"-1\\nuse integer:   7 % -3 = 1\\nuse...\""
       },
       "quality": {
         "todos": 0,
@@ -1226,8 +1226,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 23, byte 491: got \"]\\n[id]\\n--- case-insensitive comp...\", wanted \"      ]\\n[      id]\\n--- case-inse...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -1240,8 +1239,7 @@
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 23, byte 491: got \"]\\n[id]\\n--- case-insensitive comp...\", wanted \"      ]\\n[      id]\\n--- case-inse...\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
@@ -1449,7 +1447,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: line 4, byte 71: got \"0\\nboolean:        nonempty\\n--- t...\", wanted \"4\\nboolean:        nonempty\\n--- t...\""
+          "reason": "stdout differs: line 8, byte 180: got \"4\\n--- split in two contexts ---\\n...\", wanted \"04030201\\n--- split in two contex...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -1464,7 +1462,7 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: line 4, byte 71: got \"0\\nboolean:        nonempty\\n--- t...\", wanted \"4\\nboolean:        nonempty\\n--- t...\""
+        "reason": "stdout differs: line 8, byte 180: got \"4\\n--- split in two contexts ---\\n...\", wanted \"04030201\\n--- split in two contex...\""
       },
       "quality": {
         "todos": 0,
@@ -1863,8 +1861,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 6, byte 146: got \"+Inf max= 91 (web2)\\ndisk  avg= +...\", wanted \"42.5 max= 91 (web2)\\ndisk  avg= 4...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -1878,8 +1875,7 @@
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 6, byte 146: got \"+Inf max= 91 (web2)\\ndisk  avg= +...\", wanted \"42.5 max= 91 (web2)\\ndisk  avg= 4...\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
@@ -5478,7 +5474,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "exit status 0, wanted 1; stdout differs: line 1, byte 14: got \"0 accounts loaded\\n\\n(line 8)     ...\", wanted \"19 accounts loaded\\n\\nCRIT (line 1...\""
+          "reason": "exit status 2, wanted 1; stdout differs: 376 byte(s) missing after line 1, expected \"passwd-audit: 19 accounts loaded...\"; stderr differs: unexpected \"panic: interface conversion: interface {} is nil, not []interface {} ...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -5493,7 +5489,7 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "exit status 0, wanted 1; stdout differs: line 1, byte 14: got \"0 accounts loaded\\n\\n(line 8)     ...\", wanted \"19 accounts loaded\\n\\nCRIT (line 1...\""
+        "reason": "exit status 2, wanted 1; stdout differs: 376 byte(s) missing after line 1, expected \"passwd-audit: 19 accounts loaded...\"; stderr differs: unexpected \"panic: interface conversion: interface {} is nil, not []interface {} ...\""
       },
       "quality": {
         "todos": 0,
@@ -5903,8 +5899,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 2, byte 78: got \"+Inf      0     0     0  length=...\", wanted \"51.7      0     0     0  length=...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -5918,8 +5913,7 @@
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 2, byte 78: got \"+Inf      0     0     0  length=...\", wanted \"51.7      0     0     0  length=...\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
@@ -6052,7 +6046,7 @@
       "stages": {
         "compiled": {
           "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:122:20: multiple-value handlers[base](lines[i]) (value of type (string, string)) in single-value context"
+          "reason": "the generated Go does not compile: ./main.go:123:20: multiple-value handlers[base](lines[i]) (value of type (string, string)) in single-value context"
         },
         "emitted": {
           "outcome": "pass"

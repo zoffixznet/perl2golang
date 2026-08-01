@@ -21,8 +21,8 @@ func (l *Lowerer) binop(n *ast.BinOp) ir.Expr {
 		return ir.Bin(n.Op, lx, rx, t)
 
 	case "/":
-		lx := l.toFloat(l.expr(n.L), n.L)
-		rx := l.toFloat(l.expr(n.R), n.R)
+		lx := l.toFloat(l.scalar(n.L), n.L)
+		rx := l.toFloat(l.scalar(n.R), n.R)
 		out := ir.Bin("/", lx, rx, ir.TFloat)
 		l.note(out, "Perl's / always produces a floating-point result: 7 / 2 is 3.5. "+
 			"Go's / on two ints is integer division and would give 3, so both sides "+
@@ -37,8 +37,8 @@ func (l *Lowerer) binop(n *ast.BinOp) ir.Expr {
 		return l.power(n)
 
 	case ".":
-		lx := l.toStr(l.expr(n.L), n.L)
-		rx := l.toStr(l.expr(n.R), n.R)
+		lx := l.toStr(l.scalar(n.L), n.L)
+		rx := l.toStr(l.scalar(n.R), n.R)
 		return ir.Bin("+", lx, rx, ir.TString)
 
 	case "x":
@@ -50,8 +50,8 @@ func (l *Lowerer) binop(n *ast.BinOp) ir.Expr {
 
 	case "eq", "ne", "lt", "gt", "le", "ge":
 		goOp := map[string]string{"eq": "==", "ne": "!=", "lt": "<", "gt": ">", "le": "<=", "ge": ">="}[n.Op]
-		lx := l.toStr(l.expr(n.L), n.L)
-		rx := l.toStr(l.expr(n.R), n.R)
+		lx := l.toStr(l.scalar(n.L), n.L)
+		rx := l.toStr(l.scalar(n.R), n.R)
 		out := ir.Bin(goOp, lx, rx, ir.TBool)
 		if n.Op == "eq" || n.Op == "ne" {
 			l.note(out, "Perl needs two families of comparison because a scalar has no "+
@@ -70,8 +70,8 @@ func (l *Lowerer) binop(n *ast.BinOp) ir.Expr {
 		return out
 
 	case "cmp":
-		lx := l.toStr(l.expr(n.L), n.L)
-		rx := l.toStr(l.expr(n.R), n.R)
+		lx := l.toStr(l.scalar(n.L), n.L)
+		rx := l.toStr(l.scalar(n.R), n.R)
 		return call("strings", "strings", "Compare", ir.TInt, lx, rx)
 
 	case "&&", "and":
@@ -87,8 +87,8 @@ func (l *Lowerer) binop(n *ast.BinOp) ir.Expr {
 		return ir.Bin("!=", l.cond(n.L), l.cond(n.R), ir.TBool)
 
 	case "&", "|", "^", "<<", ">>":
-		lx := l.toInt(l.expr(n.L), n.L)
-		rx := l.toInt(l.expr(n.R), n.R)
+		lx := l.toInt(l.scalar(n.L), n.L)
+		rx := l.toInt(l.scalar(n.R), n.R)
 		return ir.Bin(n.Op, lx, rx, ir.TInt)
 
 	case "..", "...":
@@ -116,9 +116,12 @@ func (l *Lowerer) binop(n *ast.BinOp) ir.Expr {
 
 // numPair lowers both sides of an arithmetic operator and agrees on a result
 // type: int when both sides are integral, float64 otherwise.
+//
+// Both sides are scalar context, which is what makes `($n - $m) / $d` divide a
+// number rather than a one-element list, and `@items + 0` count the items.
 func (l *Lowerer) numPair(a, b ast.Expr) (ir.Expr, ir.Expr, *ir.Type) {
-	lx := l.expr(a)
-	rx := l.expr(b)
+	lx := l.scalar(a)
+	rx := l.scalar(b)
 	lt, rt := typeOrAny(lx), typeOrAny(rx)
 	if lt.Kind == ir.Int && rt.Kind == ir.Int {
 		return lx, rx, ir.TInt
@@ -135,8 +138,8 @@ func typeOrAny(x ir.Expr) *ir.Type {
 
 // modulo lowers %, which is one of the genuine semantic traps.
 func (l *Lowerer) modulo(n *ast.BinOp) ir.Expr {
-	lx := l.toInt(l.expr(n.L), n.L)
-	rx := l.toInt(l.expr(n.R), n.R)
+	lx := l.toInt(l.scalar(n.L), n.L)
+	rx := l.toInt(l.scalar(n.R), n.R)
 	if mayBeNegative(n.L) || mayBeNegative(n.R) {
 		out := l.helperCall(hMod, ir.TInt, lx, rx)
 		l.approximate(n, "P2G5520", "% with a possibly negative operand",
@@ -177,8 +180,8 @@ func mayBeNegative(e ast.Expr) bool {
 
 // power lowers **.
 func (l *Lowerer) power(n *ast.BinOp) ir.Expr {
-	lx := l.expr(n.L)
-	rx := l.expr(n.R)
+	lx := l.scalar(n.L)
+	rx := l.scalar(n.R)
 	if typeOrAny(lx).Kind == ir.Int && typeOrAny(rx).Kind == ir.Int && !mayBeNegative(n.R) {
 		out := l.helperCall(hPowInt, ir.TInt, lx, rx)
 		l.note(out, "Go has no exponentiation operator. math.Pow works in float64; "+
@@ -195,7 +198,7 @@ func (l *Lowerer) power(n *ast.BinOp) ir.Expr {
 // repeatOp lowers the x operator, which repeats a string or a list depending
 // on what is to its left.
 func (l *Lowerer) repeatOp(n *ast.BinOp) ir.Expr {
-	count := l.toInt(l.expr(n.R), n.R)
+	count := l.toInt(l.scalar(n.R), n.R)
 	if isListish(n.L) {
 		src := l.list(n.L)
 		out := l.helperCall(hRepeatList, typeOrAny(src), src, count)
@@ -363,7 +366,7 @@ func (l *Lowerer) unop(n *ast.UnOp) ir.Expr {
 	case "!", "not":
 		return negated(l.cond(n.X))
 	case "-":
-		x := l.expr(n.X)
+		x := l.scalar(n.X)
 		if isNum(typeOrAny(x)) {
 			return ir.Un("-", x, x.Type())
 		}
@@ -371,7 +374,7 @@ func (l *Lowerer) unop(n *ast.UnOp) ir.Expr {
 	case "+":
 		return l.expr(n.X)
 	case "~":
-		return ir.Un("^", l.toInt(l.expr(n.X), n.X), ir.TInt)
+		return ir.Un("^", l.toInt(l.scalar(n.X), n.X), ir.TInt)
 	case "\\":
 		return l.refGen(&ast.RefGen{X: n.X})
 	case "defined":

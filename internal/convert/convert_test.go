@@ -257,6 +257,73 @@ func TestUnimprovedConversionRendersDocumentsOnce(t *testing.T) {
 	}
 }
 
+// TestParenthesesAroundOneValueAreOnlyParentheses guards the difference
+// between grouping and a list.
+//
+// Perl decides what parentheses mean from the context around them. An operator
+// imposes scalar context on both of its sides, so `($n - $m) / $d` divides one
+// number by another and `@items + 0` counts the items. Reading the parentheses
+// as a one-element list instead produces Go that compiles and then computes
+// something else entirely, which is the worst kind of wrong answer.
+func TestParenthesesAroundOneValueAreOnlyParentheses(t *testing.T) {
+	tests := []struct {
+		name   string
+		perl   string
+		want   string
+		unwant string
+	}{
+		{
+			name:   "grouping in a division",
+			perl:   `my $n = 13; my $m = 3; my $d = 5; my $q = ($n - $m) / $d; print "$q\n";`,
+			want:   "float64(n-m) / float64(d)",
+			unwant: "[]int{n - m}",
+		},
+		{
+			name:   "grouping in a multiplication",
+			perl:   `my $w = 4; my $area = ($w + 1) * 2; print "$area\n";`,
+			want:   "(w + 1) * 2",
+			unwant: "[]int{w + 1}",
+		},
+		{
+			name: "an array in a numeric operator is its count",
+			perl: `my @items = (1,2,3); my $n = @items + 0; print "$n\n";`,
+			want: "len(items) + 0",
+		},
+		{
+			name: "an array in a string operator is its count",
+			perl: `my @items = (1,2,3); print "n=" . @items . "\n";`,
+			want: "strconv.Itoa(len(items))",
+		},
+		{
+			name:   "grouping in a comparison",
+			perl:   `my $a = 3; my $b = 1; print "yes\n" if ($a - $b) > 1;`,
+			want:   "a-b > 1",
+			unwant: "[]int{a - b}",
+		},
+		{
+			name:   "a list is still a list where a list is wanted",
+			perl:   `my @a = (1); push @a, 2; print "@a\n";`,
+			want:   "[]int{1}",
+			unwant: "a := 1",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			res, err := convert.Convert([]byte(tt.perl), convert.Options{Path: "t.pl", NoDocs: true})
+			if err != nil {
+				t.Fatalf("Convert: %v", err)
+			}
+			got := string(res.Clean["main.go"])
+			if !strings.Contains(got, tt.want) {
+				t.Errorf("generated Go does not contain %q:\n%s", tt.want, got)
+			}
+			if tt.unwant != "" && strings.Contains(got, tt.unwant) {
+				t.Errorf("generated Go contains %q and should not:\n%s", tt.unwant, got)
+			}
+		})
+	}
+}
+
 // TestSliceWithAComputedIndexList guards the shape of the Go a Perl slice
 // becomes.
 //
