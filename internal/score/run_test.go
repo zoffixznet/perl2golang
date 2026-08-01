@@ -409,7 +409,7 @@ func TestRunMiniCorpus(t *testing.T) {
 	// The scorecard must survive a trip through its own file, because that
 	// is how one run is compared with the next.
 	path := filepath.Join(t.TempDir(), "scorecard.json")
-	if err := sc.Save(path); err != nil {
+	if _, err := sc.Save(path); err != nil {
 		t.Fatal(err)
 	}
 	back, err := LoadScorecard(path)

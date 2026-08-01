@@ -157,3 +157,42 @@ func TestDescribeBytesQuotesAWindow(t *testing.T) {
 		t.Fatalf("describeBytes is %d characters long, it should quote a window not the whole stream", len(got))
 	}
 }
+
+// TestReasonsDoNotChangeBetweenRuns covers the two things a program can print
+// that are different every run for the same behaviour: a pointer address, and
+// the temporary directory the harness built it in. A reason that quotes either
+// verbatim would make an unchanged run look like a change.
+func TestReasonsDoNotChangeBetweenRuns(t *testing.T) {
+	perlOut := func(stdout, stderr string) Output {
+		return Output{Stdout: []byte(stdout), Stderr: []byte(stderr)}
+	}
+	first := Compare(
+		perlOut("REGION\n", ""),
+		perlOut("&{0x16e01d0fa1e0} rows written to /tmp/perl2go-score-tier2-3080812345/out\n", ""),
+		CompareOptions{})
+	second := Compare(
+		perlOut("REGION\n", ""),
+		perlOut("&{0xc74dfeb4180} rows written to /tmp/perl2go-score-tier2-99/out\n", ""),
+		CompareOptions{})
+	if first.Reason != second.Reason {
+		t.Errorf("two runs of the same fault read differently:\n %q\n %q", first.Reason, second.Reason)
+	}
+	if strings.Contains(first.Reason, "3080812345") {
+		t.Errorf("reason quotes a temporary directory: %q", first.Reason)
+	}
+
+	// A crash prints a stack trace that names the build directory, so the
+	// size of the difference moves while the fault does not.
+	trace := func(dir string) string {
+		return "panic: runtime error: index out of range [-1]\n\ngoroutine 1 [running]:\nmain.main()\n\t" +
+			dir + "/main.go:13 +0x1d\n"
+	}
+	a := Compare(perlOut("a\n", ""), perlOut("a\n", trace("/tmp/perl2go-score-tier1-1")), CompareOptions{})
+	b := Compare(perlOut("a\n", ""), perlOut("a\n", trace("/tmp/perl2go-score-tier1-22222222")), CompareOptions{})
+	if a.Reason != b.Reason {
+		t.Errorf("two runs of the same crash read differently:\n %q\n %q", a.Reason, b.Reason)
+	}
+	if !strings.Contains(a.Reason, "index out of range") {
+		t.Errorf("the reason should name the fault, got %q", a.Reason)
+	}
+}

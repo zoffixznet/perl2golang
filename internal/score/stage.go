@@ -14,9 +14,11 @@ type Stage int
 
 // The ladder, in the order an entry climbs it.
 const (
-	// StageParsed means the Perl parsed and no statement was left
-	// untranslated.
-	StageParsed Stage = iota
+	// StageTranslated means every construct in the file came out the other
+	// side: the Perl parsed, and nothing was refused and left as a TODO.
+	// A file the front end reads perfectly still fails this stage when one
+	// construct in it has no translation, which is the common case by far.
+	StageTranslated Stage = iota
 	// StageTyped means type inference resolved every variable it tracked
 	// without falling back to the dynamic value type.
 	StageTyped
@@ -33,7 +35,7 @@ const (
 	numStages
 )
 
-var stageNames = [numStages]string{"parsed", "typed", "emitted", "compiled", "equivalent", "honest"}
+var stageNames = [numStages]string{"translated", "typed", "emitted", "compiled", "equivalent", "honest"}
 
 // String returns the stage's name as it appears in the table and in JSON.
 func (s Stage) String() string {
@@ -117,9 +119,9 @@ func (r StageResult) passed() bool   { return r.Outcome == Pass }
 // Classification is what a conversion report says about the stages that can be
 // judged from the report alone.
 type Classification struct {
-	Parsed  StageResult
-	Typed   StageResult
-	Emitted StageResult
+	Translated StageResult
+	Typed      StageResult
+	Emitted    StageResult
 
 	// Refusals counts constructs the tool declined to translate. Entries the
 	// tool raises about its own output are not counted here: those are
@@ -155,13 +157,13 @@ func selfCheck(code string) bool {
 }
 
 // Classify reads a conversion report and decides the three stages that need
-// nothing but the report: whether the Perl went through untranslated, whether
-// type inference resolved, and whether valid Go came out.
+// nothing but the report: whether every construct was translated, whether type
+// inference resolved, and whether valid Go came out.
 func Classify(rep *report.Report) Classification {
 	var c Classification
 	if rep == nil {
 		reason := "the conversion produced no report"
-		return Classification{Parsed: fail(reason), Typed: fail(reason), Emitted: fail(reason)}
+		return Classification{Translated: fail(reason), Typed: fail(reason), Emitted: fail(reason)}
 	}
 
 	selfRefusals := 0
@@ -192,14 +194,14 @@ func Classify(rep *report.Report) Classification {
 
 	switch {
 	case c.ParseErrors > 0 && c.Refusals > 0:
-		c.Parsed = fail(fmt.Sprintf("%s and %s",
+		c.Translated = fail(fmt.Sprintf("%s and %s",
 			plural(c.ParseErrors, "parse error"), plural(c.Refusals, "untranslated construct")))
 	case c.ParseErrors > 0:
-		c.Parsed = fail(plural(c.ParseErrors, "parse error"))
+		c.Translated = fail(plural(c.ParseErrors, "parse error"))
 	case c.Refusals > 0:
-		c.Parsed = fail(plural(c.Refusals, "untranslated construct"))
+		c.Translated = fail(plural(c.Refusals, "untranslated construct"))
 	default:
-		c.Parsed = pass()
+		c.Translated = pass()
 	}
 
 	dynamic := c.Symbols - c.SymbolsTyped

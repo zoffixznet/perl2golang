@@ -1,10 +1,12 @@
 package score
 
 import (
+	"os"
 	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 )
 
 // entryResult builds a per-entry result from a compact stage spelling, so a
@@ -28,7 +30,7 @@ func entryResult(tier, name, kind string, stages map[Stage]Outcome) EntryResult 
 
 func passing() map[Stage]Outcome {
 	return map[Stage]Outcome{
-		StageParsed: Pass, StageTyped: Pass, StageEmitted: Pass, StageCompiled: Pass,
+		StageTranslated: Pass, StageTyped: Pass, StageEmitted: Pass, StageCompiled: Pass,
 		StageEquivalent: Pass,
 	}
 }
@@ -37,13 +39,13 @@ func TestSummarize(t *testing.T) {
 	results := []EntryResult{
 		entryResult("tier1", "01", KindConvert, passing()),
 		entryResult("tier1", "02", KindConvert, map[Stage]Outcome{
-			StageParsed: Pass, StageTyped: Fail, StageEmitted: Pass, StageCompiled: Pass, StageEquivalent: Fail,
+			StageTranslated: Pass, StageTyped: Fail, StageEmitted: Pass, StageCompiled: Pass, StageEquivalent: Fail,
 		}),
 		entryResult("tier2", "01", KindConvert, map[Stage]Outcome{
-			StageParsed: Pass, StageTyped: Pass, StageEmitted: Pass, StageCompiled: Pass, StageEquivalent: Skip,
+			StageTranslated: Pass, StageTyped: Pass, StageEmitted: Pass, StageCompiled: Pass, StageEquivalent: Skip,
 		}),
 		entryResult("tier4", "01", KindHonestFailure, map[Stage]Outcome{
-			StageParsed: Fail, StageTyped: Pass, StageEmitted: Pass, StageCompiled: Pass, StageHonest: Pass,
+			StageTranslated: Fail, StageTyped: Pass, StageEmitted: Pass, StageCompiled: Pass, StageHonest: Pass,
 		}),
 	}
 	results[0].Quality = Quality{Todos: 1, Symbols: 4, SymbolsTyped: 4}
@@ -117,17 +119,17 @@ func TestFirstFailure(t *testing.T) {
 	}{
 		{
 			name:   "the earliest failure wins",
-			stages: map[Stage]Outcome{StageParsed: Fail, StageTyped: Fail, StageEmitted: Pass},
-			want:   StageParsed, found: true,
+			stages: map[Stage]Outcome{StageTranslated: Fail, StageTyped: Fail, StageEmitted: Pass},
+			want:   StageTranslated, found: true,
 		},
 		{
 			name:   "a later failure is found when the early stages pass",
-			stages: map[Stage]Outcome{StageParsed: Pass, StageTyped: Pass, StageEmitted: Pass, StageCompiled: Pass, StageEquivalent: Fail},
+			stages: map[Stage]Outcome{StageTranslated: Pass, StageTyped: Pass, StageEmitted: Pass, StageCompiled: Pass, StageEquivalent: Fail},
 			want:   StageEquivalent, found: true,
 		},
 		{
 			name:   "a skip is not a failure",
-			stages: map[Stage]Outcome{StageParsed: Pass, StageTyped: Pass, StageEmitted: Pass, StageCompiled: Skip, StageEquivalent: Skip},
+			stages: map[Stage]Outcome{StageTranslated: Pass, StageTyped: Pass, StageEmitted: Pass, StageCompiled: Skip, StageEquivalent: Skip},
 			found:  false,
 		},
 		{
@@ -154,7 +156,7 @@ func TestCompareDelta(t *testing.T) {
 		results := []EntryResult{
 			entryResult("tier1", "01", KindConvert, passing()),
 			entryResult("tier1", "02", KindConvert, map[Stage]Outcome{
-				StageParsed: Pass, StageTyped: Pass, StageEmitted: Pass, StageCompiled: Pass, StageEquivalent: Fail,
+				StageTranslated: Pass, StageTyped: Pass, StageEmitted: Pass, StageCompiled: Pass, StageEquivalent: Fail,
 			}),
 		}
 		tiers, total := Summarize(results)
@@ -207,10 +209,10 @@ func TestCompareDelta(t *testing.T) {
 			cur: func() *Scorecard {
 				results := []EntryResult{
 					entryResult("tier1", "01", KindConvert, map[Stage]Outcome{
-						StageParsed: Pass, StageTyped: Pass, StageEmitted: Pass, StageCompiled: Pass, StageEquivalent: Fail,
+						StageTranslated: Pass, StageTyped: Pass, StageEmitted: Pass, StageCompiled: Pass, StageEquivalent: Fail,
 					}),
 					entryResult("tier1", "02", KindConvert, map[Stage]Outcome{
-						StageParsed: Pass, StageTyped: Pass, StageEmitted: Pass, StageCompiled: Pass, StageEquivalent: Fail,
+						StageTranslated: Pass, StageTyped: Pass, StageEmitted: Pass, StageCompiled: Pass, StageEquivalent: Fail,
 					}),
 				}
 				tiers, total := Summarize(results)
@@ -303,7 +305,7 @@ func TestSaveAndLoadRoundTrip(t *testing.T) {
 	results := []EntryResult{
 		entryResult("tier1", "01", KindConvert, passing()),
 		entryResult("tier4", "01", KindHonestFailure, map[Stage]Outcome{
-			StageParsed: Fail, StageEmitted: Pass, StageHonest: Pass,
+			StageTranslated: Fail, StageEmitted: Pass, StageHonest: Pass,
 		}),
 	}
 	tiers, total := Summarize(results)
@@ -317,7 +319,7 @@ func TestSaveAndLoadRoundTrip(t *testing.T) {
 		Notes:         []string{"tier1/01: something to say"},
 	}
 	path := filepath.Join(t.TempDir(), "nested", "scorecard.json")
-	if err := sc.Save(path); err != nil {
+	if _, err := sc.Save(path); err != nil {
 		t.Fatal(err)
 	}
 	got, err := LoadScorecard(path)
@@ -332,6 +334,93 @@ func TestSaveAndLoadRoundTrip(t *testing.T) {
 	}
 	if d := got.Compare(sc); !d.Comparable || len(d.Changes) != 0 {
 		t.Errorf("a scorecard compared against itself should show no change, got %+v", d)
+	}
+}
+
+// TestSaveKeepsTheFileStable is what makes the stored scorecard reviewable: a
+// run that finds nothing new must not show up as a change to the file, or the
+// diff stops meaning "the conversion moved".
+func TestSaveKeepsTheFileStable(t *testing.T) {
+	results := []EntryResult{entryResult("tier1", "01", KindConvert, passing())}
+	results[0].Elapsed = 3 * time.Second
+	tiers, total := Summarize(results)
+	sc := &Scorecard{
+		FormatVersion: FormatVersion,
+		Tool:          "0.1.0",
+		Recorded:      time.Now(),
+		Tiers:         tiers,
+		Total:         total,
+		Quality:       total.Quality,
+		Entries:       results,
+		Elapsed:       9 * time.Second,
+	}
+	path := filepath.Join(t.TempDir(), "scorecard.json")
+	written, err := sc.Save(path)
+	if err != nil || !written {
+		t.Fatalf("first save: written=%v err=%v", written, err)
+	}
+	first, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(first), "elapsed_ns") {
+		t.Errorf("the stored scorecard records timings:\n%s", first)
+	}
+
+	// The same results an hour later, and a little slower.
+	sc.Recorded = sc.Recorded.Add(time.Hour)
+	sc.Elapsed = 30 * time.Second
+	sc.Entries[0].Elapsed = 11 * time.Second
+	written, err = sc.Save(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if written {
+		t.Error("an unchanged run rewrote the file")
+	}
+	again, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(again) != string(first) {
+		t.Errorf("the file changed without the results changing:\n%s", again)
+	}
+
+	// A real change is written.
+	sc.Entries[0].Stages[StageEquivalent.String()] = StageResult{Outcome: Fail, Reason: "output differs"}
+	sc.Tiers, sc.Total = Summarize(sc.Entries)
+	if written, err = sc.Save(path); err != nil || !written {
+		t.Fatalf("a changed run should be written: written=%v err=%v", written, err)
+	}
+}
+
+// TestLoadMigratesTheOldStageName keeps a delta honest across the rename: a
+// scorecard recorded when the stage was called "parsed" has to line up with one
+// recorded now, or the first run after the rename would report a stage going
+// from nothing to everything.
+func TestLoadMigratesTheOldStageName(t *testing.T) {
+	old := `{
+  "format_version": 1,
+  "tiers": [{"tier": "tier1", "entries": 2, "stages": {"parsed": {"pass": 1, "fail": 1, "skip": 0}}}],
+  "total": {"tier": "TOTAL", "entries": 2, "stages": {"parsed": {"pass": 1, "fail": 1, "skip": 0}}},
+  "entries": [{"tier": "tier1", "name": "01", "kind": "convert", "stages": {"parsed": {"outcome": "pass"}}}]
+}`
+	path := filepath.Join(t.TempDir(), "scorecard.json")
+	if err := os.WriteFile(path, []byte(old), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	sc, err := LoadScorecard(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := sc.Total.Stage(StageTranslated); got.Pass != 1 || got.Fail != 1 {
+		t.Errorf("the old stage did not carry over: %+v", got)
+	}
+	if _, ok := sc.Total.Stages["parsed"]; ok {
+		t.Error("the old stage name is still in the loaded scorecard")
+	}
+	if got := sc.Entries[0].Stage(StageTranslated); got.Outcome != Pass {
+		t.Errorf("the entry's old stage did not carry over: %+v", got)
 	}
 }
 

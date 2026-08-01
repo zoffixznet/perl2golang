@@ -98,11 +98,16 @@ func run() error {
 	if *noWrite {
 		return nil
 	}
-	if err := sc.Save(outPath); err != nil {
+	written, err := sc.Save(outPath)
+	if err != nil {
 		return fmt.Errorf("writing %s: %w", outPath, err)
 	}
 	if !*asJSON {
-		fmt.Printf("results written to %s\n", display(root, outPath))
+		if written {
+			fmt.Printf("results written to %s\n", display(root, outPath))
+		} else {
+			fmt.Printf("%s already holds these results and was left alone\n", display(root, outPath))
+		}
 	}
 	return nil
 }

@@ -35,7 +35,7 @@ func Render(w io.Writer, sc *Scorecard, delta Delta, opts RenderOptions) {
 }
 
 // tableStages are the columns of the main table, in ladder order.
-var tableStages = []Stage{StageParsed, StageTyped, StageEmitted, StageCompiled, StageEquivalent, StageHonest}
+var tableStages = []Stage{StageTranslated, StageTyped, StageEmitted, StageCompiled, StageEquivalent, StageHonest}
 
 func renderTable(w io.Writer, sc *Scorecard) {
 	header := []string{"tier", "entries"}
@@ -65,8 +65,12 @@ func renderTable(w io.Writer, sc *Scorecard) {
 	}
 	fmt.Fprintln(w)
 	writeTable(w, header, rows, rule, map[int]bool{0: true})
-	fmt.Fprintln(w, "  honest: tier 4 passes by saying something true about a construct it cannot")
-	fmt.Fprintln(w, "  translate, not by translating it. Skipped checks never count as passes.")
+	fmt.Fprintln(w, "  entries reaching each stage: translated (every construct had a translation,")
+	fmt.Fprintln(w, "  so one refusal fails the file), typed (nothing fell back to the dynamic")
+	fmt.Fprintln(w, "  value type), emitted (valid Go came out), compiled (the Go toolchain built")
+	fmt.Fprintln(w, "  it), equivalent (it printed what perl printed, byte for byte), honest (a")
+	fmt.Fprintln(w, "  tier 4 entry said something true about what it could not translate).")
+	fmt.Fprintln(w, "  Skipped checks never count as passes.")
 	if !sc.Environment.Perl {
 		fmt.Fprintln(w, "  "+sc.Environment.PerlWhy)
 	}

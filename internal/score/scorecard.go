@@ -12,14 +12,19 @@ import (
 
 // FormatVersion is the shape of the scorecard file. It changes when a reader
 // would otherwise misread an older file.
-const FormatVersion = 1
+//
+// Version 2 renamed the first stage from "parsed" to "translated", which is
+// what it always measured, and stopped writing timings into the file.
+const FormatVersion = 2
 
 // Scorecard is one run of the corpus: what every entry did, summed up per tier.
 type Scorecard struct {
 	FormatVersion int `json:"format_version"`
 	// Tool is the version of the converter that produced these numbers.
 	Tool string `json:"tool_version"`
-	// Recorded is when the run finished. It is never part of a comparison.
+	// Recorded is when these results were produced. A run that reproduces
+	// the results exactly leaves the file alone, so in a saved scorecard
+	// this is when the numbers last changed. It is never compared.
 	Recorded time.Time `json:"recorded"`
 	// Filter records the restriction the run was made under, so a partial
 	// run is never mistaken for a full one.
@@ -42,8 +47,9 @@ type Scorecard struct {
 	// recorded output no longer matches what perl prints.
 	Notes []string `json:"notes,omitempty"`
 
-	// Elapsed is how long the run took.
-	Elapsed time.Duration `json:"elapsed_ns"`
+	// Elapsed is how long the run took. It is a fact about the machine
+	// rather than about the conversion, so it is left out of the saved file.
+	Elapsed time.Duration `json:"elapsed_ns,omitempty"`
 }
 
 // Filter records how the run was restricted.
@@ -144,7 +150,7 @@ type EntryResult struct {
 	// what the entry recorded.
 	Notes []string `json:"notes,omitempty"`
 
-	Elapsed time.Duration `json:"elapsed_ns"`
+	Elapsed time.Duration `json:"elapsed_ns,omitempty"`
 }
 
 // ID is "tier2/14-regex-captures".
@@ -263,19 +269,92 @@ func LoadScorecard(path string) (*Scorecard, error) {
 	if err := json.Unmarshal(data, &sc); err != nil {
 		return nil, fmt.Errorf("parsing %s: %w", path, err)
 	}
+	sc.migrate()
 	return &sc, nil
 }
 
+// migrate brings an older file up to the current shape, so a delta against a
+// scorecard recorded before a format change is still the real delta rather than
+// a stage appearing to go from nothing to everything.
+func (s *Scorecard) migrate() {
+	if s.FormatVersion >= 2 {
+		return
+	}
+	// Version 1 called the first stage "parsed" while measuring whether every
+	// construct was translated.
+	rename := func(stages map[string]StageCount) {
+		if c, ok := stages["parsed"]; ok {
+			delete(stages, "parsed")
+			stages[StageTranslated.String()] = c
+		}
+	}
+	for i := range s.Tiers {
+		rename(s.Tiers[i].Stages)
+	}
+	rename(s.Total.Stages)
+	for i := range s.Entries {
+		if r, ok := s.Entries[i].Stages["parsed"]; ok {
+			delete(s.Entries[i].Stages, "parsed")
+			s.Entries[i].Stages[StageTranslated.String()] = r
+		}
+	}
+	s.FormatVersion = 2
+}
+
 // Save writes a scorecard, creating the directory if it is missing.
-func (s *Scorecard) Save(path string) error {
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		return err
-	}
-	data, err := json.MarshalIndent(s, "", "  ")
+//
+// The file is the durable record of what the conversion does, so it holds
+// results and nothing else: how long a run took is a fact about the machine it
+// ran on, and writing it down would make every run a change. A run that
+// reproduces the stored results byte for byte leaves the file alone, so `make
+// score` on unchanged code leaves a clean tree and a diff on this file always
+// means the conversion moved.
+// It reports whether the file was written.
+func (s *Scorecard) Save(path string) (bool, error) {
+	data, err := s.stable()
 	if err != nil {
-		return err
+		return false, err
 	}
-	return os.WriteFile(path, append(data, '\n'), 0o644)
+	if old, err := os.ReadFile(path); err == nil && sameResults(old, data) {
+		return false, nil
+	}
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return false, err
+	}
+	if err := os.WriteFile(path, data, 0o644); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+// stable renders the scorecard the way it is stored: timings dropped, so two
+// runs of the same corpus against the same converter produce the same bytes
+// apart from the timestamp.
+func (s *Scorecard) stable() ([]byte, error) {
+	out := *s
+	out.Elapsed = 0
+	out.Entries = make([]EntryResult, len(s.Entries))
+	copy(out.Entries, s.Entries)
+	for i := range out.Entries {
+		out.Entries[i].Elapsed = 0
+	}
+	data, err := json.MarshalIndent(&out, "", "  ")
+	if err != nil {
+		return nil, err
+	}
+	return append(data, '\n'), nil
+}
+
+// sameResults compares two stored scorecards ignoring when they were recorded.
+func sameResults(a, b []byte) bool {
+	var x, y Scorecard
+	if json.Unmarshal(a, &x) != nil || json.Unmarshal(b, &y) != nil {
+		return false
+	}
+	x.Recorded, y.Recorded = time.Time{}, time.Time{}
+	ax, err1 := json.Marshal(&x)
+	by, err2 := json.Marshal(&y)
+	return err1 == nil && err2 == nil && string(ax) == string(by)
 }
 
 // TierScoreFor returns a tier's row by name.

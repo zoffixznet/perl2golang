@@ -228,7 +228,7 @@ func (r *runner) runEntry(ctx context.Context, e Entry) EntryResult {
 		Kind:   e.Kind,
 		Stages: map[string]StageResult{},
 	}
-	set := func(s Stage, sr StageResult) { res.Stages[s.String()] = sr }
+	set := func(s Stage, sr StageResult) { res.Stages[s.String()] = steadyResult(sr) }
 	finish := func() EntryResult {
 		res.Elapsed = time.Since(start)
 		return res
@@ -242,7 +242,9 @@ func (r *runner) runEntry(ctx context.Context, e Entry) EntryResult {
 		}
 		return finish()
 	}
-	res.Notes = append(res.Notes, fixture.Disagreements...)
+	for _, note := range fixture.Disagreements {
+		res.Notes = append(res.Notes, steady(note))
+	}
 	if e.Kind == KindHonestFailure {
 		res.Categories = loadCategories(fixture.Dir)
 	}
@@ -253,11 +255,11 @@ func (r *runner) runEntry(ctx context.Context, e Entry) EntryResult {
 	var class Classification
 	if cerr != nil {
 		reason := "conversion failed: " + firstLine(cerr.Error())
-		class = Classification{Parsed: fail(reason), Typed: fail(reason), Emitted: fail(reason)}
+		class = Classification{Translated: fail(reason), Typed: fail(reason), Emitted: fail(reason)}
 	} else {
 		class = Classify(conv.Report)
 	}
-	set(StageParsed, class.Parsed)
+	set(StageTranslated, class.Translated)
 	set(StageTyped, class.Typed)
 	set(StageEmitted, class.Emitted)
 	res.Quality = Quality{
@@ -288,7 +290,7 @@ func (r *runner) runEntry(ctx context.Context, e Entry) EntryResult {
 		set(StageHonest, honest(res.Categories, class, compiled, clean, annotated))
 	} else {
 		set(StageEquivalent, clean)
-		res.EquivalentAnnotated = annotated
+		res.EquivalentAnnotated = steadyResult(annotated)
 		set(StageHonest, notApplicable())
 	}
 	return finish()

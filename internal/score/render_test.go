@@ -14,13 +14,13 @@ func renderFixture() *Scorecard {
 	results := []EntryResult{
 		entryResult("tier1", "01-hello", KindConvert, passing()),
 		entryResult("tier1", "02-sort", KindConvert, map[Stage]Outcome{
-			StageParsed: Pass, StageTyped: Fail, StageEmitted: Pass, StageCompiled: Pass, StageEquivalent: Fail,
+			StageTranslated: Pass, StageTyped: Fail, StageEmitted: Pass, StageCompiled: Pass, StageEquivalent: Fail,
 		}),
 		entryResult("tier2", "01-getopt", KindConvert, map[Stage]Outcome{
-			StageParsed: Fail, StageTyped: Pass, StageEmitted: Pass, StageCompiled: Pass, StageEquivalent: Skip,
+			StageTranslated: Fail, StageTyped: Pass, StageEmitted: Pass, StageCompiled: Pass, StageEquivalent: Skip,
 		}),
 		entryResult("tier4", "01-eval", KindHonestFailure, map[Stage]Outcome{
-			StageParsed: Fail, StageTyped: Pass, StageEmitted: Pass, StageCompiled: Pass, StageHonest: Pass,
+			StageTranslated: Fail, StageTyped: Pass, StageEmitted: Pass, StageCompiled: Pass, StageHonest: Pass,
 		}),
 	}
 	results[0].Quality = Quality{Symbols: 5, SymbolsTyped: 5}
@@ -53,7 +53,7 @@ func TestRender(t *testing.T) {
 			card: renderFixture,
 			contains: []string{
 				"Conversion scorecard",
-				"tier", "entries", "parsed", "typed", "emitted", "compiled", "equivalent", "honest", "skipped",
+				"tier", "entries", "translated", "typed", "emitted", "compiled", "equivalent", "honest", "skipped",
 				"tier1", "tier2", "tier4", "TOTAL",
 			},
 		},
@@ -72,7 +72,7 @@ func TestRender(t *testing.T) {
 			card: renderFixture,
 			contains: []string{
 				"Where entries fall over first",
-				"parsed (2)",
+				"translated (2)",
 				"tier2/01-getopt",
 				"typed (1)",
 				"tier1/02-sort",
@@ -172,7 +172,7 @@ func TestRenderFailureListIsCapped(t *testing.T) {
 	var results []EntryResult
 	for i := 0; i < 40; i++ {
 		results = append(results, entryResult("tier1", string(rune('a'+i%26))+"-entry", KindConvert,
-			map[Stage]Outcome{StageParsed: Fail}))
+			map[Stage]Outcome{StageTranslated: Fail}))
 	}
 	tiers, total := Summarize(results)
 	sc := &Scorecard{Tiers: tiers, Total: total, Entries: results}
@@ -257,7 +257,7 @@ func TestRenderTableCells(t *testing.T) {
 
 func TestRenderAnnotatedWithNothingRun(t *testing.T) {
 	results := []EntryResult{entryResult("tier1", "01", KindConvert, map[Stage]Outcome{
-		StageParsed: Pass, StageTyped: Pass, StageEmitted: Pass, StageCompiled: Skip, StageEquivalent: Skip,
+		StageTranslated: Pass, StageTyped: Pass, StageEmitted: Pass, StageCompiled: Skip, StageEquivalent: Skip,
 	})}
 	tiers, total := Summarize(results)
 	sc := &Scorecard{Tiers: tiers, Total: total, Entries: results}

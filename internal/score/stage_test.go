@@ -34,25 +34,25 @@ func TestClassify(t *testing.T) {
 	built := report.Verification{Parsed: true, Built: true, Toolchain: true}
 
 	tests := []struct {
-		name        string
-		rep         *report.Report
-		wantParsed  Outcome
-		wantTyped   Outcome
-		wantEmitted Outcome
-		wantTodos   int
-		wantReasons []string
+		name           string
+		rep            *report.Report
+		wantTranslated Outcome
+		wantTyped      Outcome
+		wantEmitted    Outcome
+		wantTodos      int
+		wantReasons    []string
 	}{
 		{
 			name: "a clean conversion reaches every report stage",
 			rep: makeReport(nil,
 				report.Stats{Statements: 20, Converted: 20, Symbols: 6, SymbolsTyped: 6}, built),
-			wantParsed: Pass, wantTyped: Pass, wantEmitted: Pass,
+			wantTranslated: Pass, wantTyped: Pass, wantEmitted: Pass,
 		},
 		{
 			name: "a refused construct means the Perl did not go through untranslated",
 			rep: makeReport([]report.Entry{refusal("P2G8001")},
 				report.Stats{Statements: 20, Todos: 1, Symbols: 4, SymbolsTyped: 4}, built),
-			wantParsed: Fail, wantTyped: Pass, wantEmitted: Pass,
+			wantTranslated: Fail, wantTyped: Pass, wantEmitted: Pass,
 			wantTodos:   1,
 			wantReasons: []string{"1 untranslated construct"},
 		},
@@ -60,14 +60,14 @@ func TestClassify(t *testing.T) {
 			name: "parse errors fail the parsed stage",
 			rep: makeReport(nil,
 				report.Stats{Statements: 5, ParseErrors: 3, Symbols: 1, SymbolsTyped: 1}, built),
-			wantParsed: Fail, wantTyped: Pass, wantEmitted: Pass,
+			wantTranslated: Fail, wantTyped: Pass, wantEmitted: Pass,
 			wantReasons: []string{"3 parse errors"},
 		},
 		{
 			name: "parse errors and refusals are both named",
 			rep: makeReport([]report.Entry{refusal("P2G8001"), refusal("P2G8020")},
 				report.Stats{Statements: 5, ParseErrors: 1, Todos: 2}, built),
-			wantParsed: Fail, wantTyped: Pass, wantEmitted: Pass,
+			wantTranslated: Fail, wantTyped: Pass, wantEmitted: Pass,
 			wantTodos:   2,
 			wantReasons: []string{"1 parse error and 2 untranslated constructs"},
 		},
@@ -75,20 +75,20 @@ func TestClassify(t *testing.T) {
 			name: "a variable left dynamic fails the typed stage",
 			rep: makeReport(nil,
 				report.Stats{Statements: 9, Symbols: 5, SymbolsTyped: 3}, built),
-			wantParsed: Pass, wantTyped: Fail, wantEmitted: Pass,
+			wantTranslated: Pass, wantTyped: Fail, wantEmitted: Pass,
 			wantReasons: []string{"2 variables left dynamic out of 5"},
 		},
 		{
 			name: "a program with no variables has nothing to leave dynamic",
 			rep: makeReport(nil,
 				report.Stats{Statements: 1}, built),
-			wantParsed: Pass, wantTyped: Pass, wantEmitted: Pass,
+			wantTranslated: Pass, wantTyped: Pass, wantEmitted: Pass,
 		},
 		{
 			name: "Go that does not parse fails the emitted stage",
 			rep: makeReport(nil, report.Stats{Statements: 4},
 				report.Verification{Parsed: false, Toolchain: true, Error: "main.go:4:1: expected ';'\nsecond line"}),
-			wantParsed: Pass, wantTyped: Pass, wantEmitted: Fail,
+			wantTranslated: Pass, wantTyped: Pass, wantEmitted: Fail,
 			wantReasons: []string{"not valid Go", "expected ';'"},
 		},
 		{
@@ -96,27 +96,27 @@ func TestClassify(t *testing.T) {
 			rep: makeReport([]report.Entry{refusal("P2G8505")},
 				report.Stats{Statements: 12, Todos: 1, Symbols: 3, SymbolsTyped: 3},
 				report.Verification{Parsed: true, Toolchain: true}),
-			wantParsed: Pass, wantTyped: Pass, wantEmitted: Pass,
+			wantTranslated: Pass, wantTyped: Pass, wantEmitted: Pass,
 			wantTodos: 0,
 		},
 		{
 			name: "an approximation is recorded but does not fail a stage",
 			rep: makeReport([]report.Entry{warning("P2G8050")},
 				report.Stats{Statements: 12, Symbols: 3, SymbolsTyped: 3}, built),
-			wantParsed: Pass, wantTyped: Pass, wantEmitted: Pass,
+			wantTranslated: Pass, wantTyped: Pass, wantEmitted: Pass,
 		},
 		{
-			name:       "no report at all fails everything",
-			rep:        nil,
-			wantParsed: Fail, wantTyped: Fail, wantEmitted: Fail,
+			name:           "no report at all fails everything",
+			rep:            nil,
+			wantTranslated: Fail, wantTyped: Fail, wantEmitted: Fail,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := Classify(tt.rep)
-			if got.Parsed.Outcome != tt.wantParsed {
-				t.Errorf("parsed = %v (%s), want %v", got.Parsed.Outcome, got.Parsed.Reason, tt.wantParsed)
+			if got.Translated.Outcome != tt.wantTranslated {
+				t.Errorf("translated = %v (%s), want %v", got.Translated.Outcome, got.Translated.Reason, tt.wantTranslated)
 			}
 			if got.Typed.Outcome != tt.wantTyped {
 				t.Errorf("typed = %v (%s), want %v", got.Typed.Outcome, got.Typed.Reason, tt.wantTyped)
@@ -127,7 +127,7 @@ func TestClassify(t *testing.T) {
 			if got.Todos != tt.wantTodos {
 				t.Errorf("todos = %d, want %d", got.Todos, tt.wantTodos)
 			}
-			all := got.Parsed.Reason + " | " + got.Typed.Reason + " | " + got.Emitted.Reason
+			all := got.Translated.Reason + " | " + got.Typed.Reason + " | " + got.Emitted.Reason
 			for _, want := range tt.wantReasons {
 				if !strings.Contains(all, want) {
 					t.Errorf("reasons %q do not mention %q", all, want)
@@ -183,7 +183,7 @@ func TestSelfCheck(t *testing.T) {
 }
 
 func TestStageNames(t *testing.T) {
-	want := []string{"parsed", "typed", "emitted", "compiled", "equivalent", "honest"}
+	want := []string{"translated", "typed", "emitted", "compiled", "equivalent", "honest"}
 	got := Stages()
 	if len(got) != len(want) {
 		t.Fatalf("Stages() has %d entries, want %d", len(got), len(want))

@@ -3,6 +3,7 @@ package score
 import (
 	"bytes"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -70,7 +71,7 @@ func Compare(want, got Output, opts CompareOptions) Diff {
 		reasons = append(reasons, "stdout differs: "+describeBytes(want.Stdout, got.Stdout))
 	}
 	if !opts.AllowStderr && (len(want.Stderr) > 0 || len(got.Stderr) > 0) && !bytes.Equal(want.Stderr, got.Stderr) {
-		reasons = append(reasons, "stderr differs: "+describeBytes(want.Stderr, got.Stderr))
+		reasons = append(reasons, "stderr differs: "+describeStderr(want.Stderr, got.Stderr))
 	}
 	if opts.WantFiles != nil || opts.GotFiles != nil {
 		if d := describeFileDiff(opts.WantFiles, opts.GotFiles); d != "" {
@@ -104,18 +105,76 @@ func describeBytes(want, got []byte) string {
 	}
 }
 
+// volatile matches the parts of a captured output that say where a run
+// happened rather than what it did: the temporary directory this harness makes
+// for an entry, and a pointer address a program printed.
+var volatile = regexp.MustCompile(`perl2go-score-[A-Za-z0-9_-]*|0x[0-9a-fA-F]{4,}`)
+
+// steady rewrites those parts to a fixed marker.
+//
+// The scorecard is kept so one run can be compared with the next, which only
+// works while a line that reports the same fact reads the same way. A random
+// directory name or a heap address quoted in a reason changes every run on its
+// own, and a record that changes on its own is a record nobody can read a
+// change out of.
+func steady(reason string) string {
+	return volatile.ReplaceAllStringFunc(reason, func(m string) string {
+		if strings.HasPrefix(m, "0x") {
+			return "0xADDR"
+		}
+		return "perl2go-score-TMP"
+	})
+}
+
+// steadyResult is steady applied to a stage result.
+func steadyResult(r StageResult) StageResult {
+	r.Reason = steady(r.Reason)
+	return r
+}
+
+// describeStderr says how two error streams differed, by what was said rather
+// than by how much of it there was.
+//
+// A crash prints a stack trace naming the directory the program was built in,
+// and that directory has a different name every run, so a length taken from it
+// would change while the fault behind it stayed exactly the same. The first
+// line is what identifies the fault, and it is the same line every time.
+func describeStderr(want, got []byte) string {
+	switch {
+	case len(want) == 0:
+		return "unexpected " + quoteFirstLine(got)
+	case len(got) == 0:
+		return "nothing, expected " + quoteFirstLine(want)
+	}
+	return "got " + quoteFirstLine(got) + ", wanted " + quoteFirstLine(want)
+}
+
+// quoteFirstLine quotes the first line of a stream, shortened to fit a table.
+func quoteFirstLine(b []byte) string {
+	return strconv.Quote(truncate(firstLine(string(b)), 72))
+}
+
 // quoteAround quotes a short window of a byte stream starting at an offset.
+//
+// The window is steadied before it is cut, not after: a pointer address is a
+// different length every run, so cutting first would move where the window ends
+// and change the quoted text even where the program's behaviour did not.
 func quoteAround(b []byte, at int) string {
 	const window = 32
 	if at > len(b) {
 		at = len(b)
 	}
-	end := at + window
+	end := at + 4*window
 	if end > len(b) {
 		end = len(b)
 	}
-	s := strconv.Quote(string(b[at:end]))
-	if end < len(b) {
+	text := steady(string(b[at:end]))
+	more := end < len(b)
+	if len(text) > window {
+		text, more = text[:window], true
+	}
+	s := strconv.Quote(text)
+	if more {
 		s = s[:len(s)-1] + `..."`
 	}
 	return s
