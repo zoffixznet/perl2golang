@@ -159,9 +159,10 @@ records `expected_stdout` and `expected_exit` by running perl. Then:
    from an argument or a pinned constant, never read `/etc`, `/proc` or the
    user's home directory, and never print a path that depends on where the
    repository lives.
-4. Re-record the expectations by running the program from inside its own
-   directory, then run it a second time and confirm the two captures are
-   identical.
+4. Re-record the expectations with
+   `make corpus-record TIER=<tier> NAME=<name>`. It runs the program from
+   inside its own directory, with its own `cmd` and `stdin`, twice, and
+   refuses to record an entry whose two runs disagree.
 5. If it writes to stderr on purpose, create an empty `allow_stderr` file.
 6. Write `notes.md`: what the entry exercises, and what makes it hard to
    convert.

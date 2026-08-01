@@ -4,12 +4,12 @@ BIN     := perl2go
 
 .DEFAULT_GOAL := help
 
-.PHONY: help build install test test-short score lint fmt vet clean run explain repl repl-demo demo deps corpus-add
+.PHONY: help build install test test-short score lint fmt vet clean run explain repl repl-demo demo deps corpus-add corpus-record
 
 help: ## Show this help
 	@echo "perl2go - convert Perl 5 scripts to Go and learn Go along the way"
 	@echo
-	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-14s %s\n", $$1, $$2}'
 	@echo
 	@echo "make install puts the binary in $(BINDIR); set BINDIR to change that."
 
@@ -62,3 +62,6 @@ deps: ## Check for required system tools and offer to install missing ones
 
 corpus-add: ## Scaffold a new corpus entry: make corpus-add TIER=tier2 NAME=my-case
 	./scripts/corpus-add.sh $(TIER) $(NAME)
+
+corpus-record: ## Re-record an entry's expected output: make corpus-record TIER=tier2 NAME=my-case
+	./scripts/corpus-record.sh $(TIER) $(NAME)

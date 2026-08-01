@@ -112,11 +112,19 @@ fails, so the next round has a target with a recorded expectation behind it.
 make corpus-add TIER=tier2 NAME=my-new-case
 ```
 
-The script scaffolds the directory, records the expectations by running `perl`,
-and registers the entry in the manifest. It prints the remaining steps when it
-finishes. `testdata/corpus/README.md` describes the layout and the rules an
-entry has to follow, the most important being that it must be deterministic and
-must not depend on where the repository lives.
+The script scaffolds the directory, registers the entry in the manifest, and
+prints the remaining steps when it finishes. Once the program is written:
+
+```
+make corpus-record TIER=tier2 NAME=my-new-case
+```
+
+records what it prints, by running it under real `perl` the same way the
+scorecard does: from inside its own directory, with its own `cmd` and `stdin`,
+twice, refusing to record an entry whose two runs disagree.
+`testdata/corpus/README.md` describes the layout and the rules an entry has to
+follow, the most important being that it must be deterministic and must not
+depend on where the repository lives.
 
 ## The other half of the round
 
