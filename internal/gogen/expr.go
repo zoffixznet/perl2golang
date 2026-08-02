@@ -382,6 +382,11 @@ func (e *Emitter) results(rs []*ir.Type, names []string) string {
 // positions where a line comment would swallow the rest of the construct: an
 // expression operand, or the header of an else-if. It returns the empty string
 // whenever there is nothing to say.
+//
+// TODOs are not among them. They are written above the statement instead, by
+// prologue, because an explanation in the middle of an expression pushes the
+// code it belongs to off the edge of the screen. The positions prologue cannot
+// reach ask for them explicitly, through inlineTodos.
 func (e *Emitter) inlineNotes(n ir.Annotated) string {
 	m := metaOf(n)
 	if m == nil {
@@ -398,12 +403,54 @@ func (e *Emitter) inlineNotes(n ir.Annotated) string {
 			}
 		}
 	}
-	if m.Todo != nil {
+	if m.Todo != nil && e.fragment {
 		if e.mode == Annotated {
 			parts = appendComment(parts, "TODO: "+todoMessage(*m.Todo))
 		} else {
 			parts = appendComment(parts, "TODO: "+todoShort(*m.Todo))
 		}
+	}
+	if len(parts) == 0 {
+		return ""
+	}
+	return strings.Join(parts, " ") + " "
+}
+
+// inlineTodos renders a node's TODOs as block comments, for the two headers a
+// line comment cannot be written above: an else-if, and a case clause. The
+// short wording is used in both renderings, because the full explanation on one
+// line is what made these unreadable in the first place, and it is in the
+// report either way.
+func (e *Emitter) inlineTodos(n ir.Annotated) string {
+	var todos []ir.Todo
+	if m := metaOf(n); m != nil && m.Todo != nil {
+		todos = append(todos, *m.Todo)
+	}
+	return renderTodos(append(todos, hoistedTodos(n)...))
+}
+
+// inlineExprTodos is inlineTodos for a bare expression list, which is what a
+// case clause is.
+func inlineExprTodos(xs []ir.Expr) string {
+	var todos []ir.Todo
+	for _, x := range xs {
+		walkExprTodos(x, &todos)
+	}
+	return renderTodos(todos)
+}
+
+// renderTodos folds a list of TODOs into one run of block comments, saying each
+// distinct one once.
+func renderTodos(todos []ir.Todo) string {
+	said := map[string]bool{}
+	var parts []string
+	for _, t := range todos {
+		short := todoShort(t)
+		if said[short] {
+			continue
+		}
+		said[short] = true
+		parts = appendComment(parts, "TODO: "+short)
 	}
 	if len(parts) == 0 {
 		return ""

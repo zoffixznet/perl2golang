@@ -24,7 +24,11 @@ func RenderDecl(mode Mode, d ir.Decl) string {
 
 // RenderExpr renders a single expression on its own, formatted where possible.
 func RenderExpr(mode Mode, x ir.Expr) string {
-	src := renderIsolated(mode, func(e *Emitter) { e.w(e.expr(x)) })
+	// A fragment has no statement above it for a TODO to be hoisted onto, so
+	// this is the one place the marker still goes inside the expression. A
+	// walkthrough quoting one expression must not be the only place a refusal
+	// goes unmentioned.
+	src := renderIsolated(mode, func(e *Emitter) { e.fragment = true; e.w(e.expr(x)) })
 	if src == "" {
 		return ""
 	}

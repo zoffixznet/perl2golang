@@ -1,7 +1,6 @@
 package gogen
 
 import (
-	"strconv"
 	"strings"
 
 	"perl2go/internal/ir"
@@ -109,11 +108,11 @@ func (e *Emitter) stmt(s ir.Stmt) {
 		e.comment(s.Lines)
 
 	case *ir.TodoStmt:
-		e.todo(s.Info)
-		if s.Panic {
-			// Identical text in both renderings: the panic is part of the
+		e.todoOnce(s.Info, map[string]bool{})
+		if s.Stub != nil {
+			// Identical text in both renderings: the stand-in is part of the
 			// program, not part of the commentary.
-			e.line("panic(" + strconv.Quote(panicText(s.Info)) + ")")
+			e.line(e.expr(s.Stub))
 		}
 
 	case *ir.RawStmt:
@@ -124,11 +123,35 @@ func (e *Emitter) stmt(s ir.Stmt) {
 // prologue writes everything that precedes a node: its provenance and notes in
 // annotated mode, and its TODO in both, because work the tool could not do is
 // never hidden from the reader.
+//
+// The TODOs of the expressions the node evaluates are written here too, above
+// the statement, rather than as block comments in the middle of it. A statement
+// with three refusals in it used to carry three explanations inline and run to
+// several hundred characters, and the code around a refusal is exactly the code
+// a reader came to learn from. The stand-in expression still names the
+// diagnostic code at the precise spot, so nothing is lost by moving the prose
+// up one line.
 func (e *Emitter) prologue(n ir.Annotated) {
 	e.notes(n)
+	said := map[string]bool{}
 	if m := metaOf(n); m != nil && m.Todo != nil {
-		e.todo(*m.Todo)
+		e.todoOnce(*m.Todo, said)
 	}
+	for _, t := range hoistedTodos(n) {
+		e.todoOnce(t, said)
+	}
+}
+
+// todoOnce writes a TODO unless the same one was already written above this
+// statement. One line can refuse the same construct several times, and three
+// identical comments above it say nothing the first one did not.
+func (e *Emitter) todoOnce(t ir.Todo, said map[string]bool) {
+	key := t.Code + "\x00" + todoShort(t)
+	if said[key] {
+		return
+	}
+	said[key] = true
+	e.todo(t)
 }
 
 // hasVisibleNotes reports whether prologue would write anything, which decides
@@ -138,8 +161,13 @@ func (e *Emitter) hasVisibleNotes(n ir.Annotated) bool {
 	if m == nil {
 		return false
 	}
-	if m.Todo != nil {
+	if m.Todo != nil && e.todoVisible(*m.Todo) {
 		return true
+	}
+	for _, t := range hoistedTodos(n) {
+		if e.todoVisible(t) {
+			return true
+		}
 	}
 	if e.mode != Annotated {
 		return false
@@ -194,7 +222,7 @@ func (e *Emitter) ifStmt(s *ir.If) {
 	case *ir.If:
 		// The annotations of an else-if cannot go on their own line without
 		// splitting the chain, so they are written inline.
-		e.w(" else " + e.inlineNotes(el))
+		e.w(" else " + e.inlineNotes(el) + e.inlineTodos(el))
 		e.ifStmt(el)
 	case *ir.Block:
 		e.w(" else ")
@@ -272,7 +300,10 @@ func (e *Emitter) switchStmt(s *ir.Switch) {
 		if len(c.Values) == 0 {
 			e.line("default:")
 		} else {
-			e.line("case " + e.exprList(c.Values) + ":")
+			// A case clause has no line above it that belongs to it alone, so
+			// a TODO on one of its values is written into the clause itself.
+			values := e.exprList(c.Values)
+			e.line(inlineExprTodos(c.Values) + "case " + values + ":")
 		}
 		e.in()
 		if c.Body != nil {
@@ -393,14 +424,4 @@ func (e *Emitter) inline(s ir.Stmt) string {
 		kept = append(kept, l)
 	}
 	return strings.TrimSpace(strings.Join(kept, "\n"))
-}
-
-// panicText is the message of a TODO panic. It is the clean wording in both
-// renderings, so the two programs stay byte-identical outside comments.
-func panicText(t ir.Todo) string {
-	msg := todoShort(t)
-	if t.Code != "" {
-		msg = t.Code + ": " + msg
-	}
-	return msg
 }

@@ -11,8 +11,15 @@ import "perl2go/internal/ir"
 // So an expression's notes are hoisted to the statement that evaluates it and
 // written above it as ordinary line comments, in the order the expressions are
 // read. The note still sits next to the code it explains, and the code is
-// still readable. A TODO stays where it is, because the exact position is the
-// point of a TODO.
+// still readable.
+//
+// A TODO is hoisted the same way, for the same reason and one more. What used
+// to keep it inline was that the exact position is the point of a TODO, and
+// that is still true; what changed is that the expression standing in for a
+// refusal now names its own diagnostic code, so the position is marked by the
+// code rather than by the comment. A statement with three refused method calls
+// in it was several hundred characters of comment wrapped around a little
+// code, and the code around a refusal is exactly what a reader is there for.
 
 // hoistedNotes returns the annotations to write above n: its own first, then
 // those on the expressions it evaluates. It does not descend into a nested
@@ -26,6 +33,30 @@ func hoistedNotes(n ir.Annotated) []ir.Note {
 		walkExprNotes(x, &out)
 	}
 	return out
+}
+
+// hoistedTodos returns the TODOs of the expressions n evaluates, outermost
+// first. A node's own TODO is not among them: the caller writes that one
+// itself, and it is already in the right place.
+func hoistedTodos(n ir.Annotated) []ir.Todo {
+	var out []ir.Todo
+	for _, x := range ownExprs(n) {
+		walkExprTodos(x, &out)
+	}
+	return out
+}
+
+// walkExprTodos appends the TODOs on an expression and everything inside it.
+func walkExprTodos(x ir.Expr, out *[]ir.Todo) {
+	if x == nil {
+		return
+	}
+	if m := metaOf(x); m != nil && m.Todo != nil {
+		*out = append(*out, *m.Todo)
+	}
+	for _, sub := range subExprs(x) {
+		walkExprTodos(sub, out)
+	}
 }
 
 // walkExprNotes appends the notes on an expression and everything inside it,

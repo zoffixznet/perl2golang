@@ -171,3 +171,51 @@ func TestLowerNeverPanics(t *testing.T) {
 		}()
 	}
 }
+
+// TestStubTypeIsSpellableWithoutAnImport covers the type argument of the
+// stand-in a refusal becomes. The type is written into the source as text, and
+// a type needing an import that nothing registered would produce Go that does
+// not compile, which is a worse outcome than the any it started with.
+func TestStubTypeIsSpellableWithoutAnImport(t *testing.T) {
+	tests := []struct {
+		name string
+		in   *ir.Type
+		want string
+	}{
+		{"nothing at all", nil, "any"},
+		{"a whole number", ir.TInt, "int"},
+		{"text", ir.TString, "string"},
+		{"a list of text", ir.SliceOf(ir.TString), "[]string"},
+		{"a keyed collection", ir.MapOf(ir.TInt), "map[string]int"},
+		{"a local type", ir.NamedType("Record", ""), "Record"},
+		{"a type from another package", ir.NamedType("os.File", "os"), "any"},
+		{"a list of them", ir.SliceOf(ir.NamedType("time.Time", "time")), "any"},
+		{"the absence of a value", ir.TVoid, "any"},
+		{"a function", ir.FuncOf(nil, nil), "any"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := stubType(tt.in).Go(nil); got != tt.want {
+				t.Errorf("stubType(%s) = %q, want %q", tt.in, got, tt.want)
+			}
+		})
+	}
+}
+
+// TestARefusedExpressionBecomesOneReadableCall pins the stand-in's shape at the
+// point it is built, so a change to it has to be deliberate.
+func TestARefusedExpressionBecomesOneReadableCall(t *testing.T) {
+	res := Lower(parser.Parse([]byte("my $x = $obj->name;\n")), []byte("my $x = $obj->name;\n"), Options{File: "t.pl"})
+	found := false
+	for _, name := range res.Helpers {
+		if name == hNotImplemented {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("the stand-in helper was not requested; helpers are %v", res.Helpers)
+	}
+	if res.Report.Stats.Refused == 0 {
+		t.Error("a refused construct was not counted")
+	}
+}

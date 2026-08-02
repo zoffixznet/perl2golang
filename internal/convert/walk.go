@@ -69,7 +69,9 @@ func walkIR(n ir.Annotated, fn func(ir.Annotated)) {
 		walkExpr(x.Call, fn)
 	case *ir.BlockStmt:
 		walkBlock(x.Body, fn)
-	case *ir.Branch, *ir.CommentStmt, *ir.TodoStmt, *ir.RawStmt:
+	case *ir.TodoStmt:
+		walkExpr(x.Stub, fn)
+	case *ir.Branch, *ir.CommentStmt, *ir.RawStmt:
 		// Leaves.
 
 	// Expressions.

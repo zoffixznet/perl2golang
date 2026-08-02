@@ -54,4 +54,11 @@ const (
 	hPickKeys      = "pickKeys"     // @h{...} where the keys are a computed list
 	hIntList       = "intList"      // []T -> []int, for a dynamic list of indices
 	hStrList       = "strList"      // []T -> []string, for a dynamic list of keys
+
+	// The stand-ins for a refusal. They keep a partly converted program
+	// runnable: the expression form yields the zero value of the type the
+	// position wants and the statement form yields nothing at all, and both
+	// name the gap on stderr the first time it is reached.
+	hNotImplemented     = "notImplemented"
+	hNotImplementedHere = "notImplementedHere"
 )

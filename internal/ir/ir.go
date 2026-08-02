@@ -50,6 +50,12 @@ type Todo struct {
 	// Perl is the original source of the construct.
 	Perl string
 	Prov Provenance
+	// Spelled marks a Todo whose code stands in for the construct in a form
+	// that names the diagnostic code and the missing behaviour itself, as the
+	// notImplemented stand-in does. The wording is then written above the
+	// first of them and left off the rest, because the mark is at every one of
+	// them and a paragraph repeated thirty times buries the code between them.
+	Spelled bool
 }
 
 // Meta is embedded in every node that can carry provenance and notes.

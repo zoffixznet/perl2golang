@@ -265,14 +265,21 @@ type CommentStmt struct {
 }
 
 // TodoStmt marks a construct that could not be converted. It emits a TODO
-// comment plus, when Panic is set, a call that fails loudly rather than
-// silently doing the wrong thing.
+// comment plus, when Stub is set, the expression that stands in for the
+// construct at run time.
+//
+// The stand-in never stops the program. A refusal on line 10 that killed the
+// process would make every correctly converted line below it unreachable, and
+// the whole value of a partial conversion is that the parts which did convert
+// can be built, run and read. The stand-in says on stderr which step is
+// missing and lets execution carry on.
 type TodoStmt struct {
 	Meta
 	Info Todo
-	// Panic makes the emitted code fail at run time instead of silently
-	// continuing past a construct that was dropped.
-	Panic bool
+	// Stub is evaluated in place of the construct, and is nil for one with no
+	// run-time effect to stand in for, such as a declaration, where the TODO
+	// comment is the whole of what is left.
+	Stub Expr
 }
 
 // RawStmt is verbatim Go source. It is a last resort and always carries a

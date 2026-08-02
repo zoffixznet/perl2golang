@@ -167,7 +167,8 @@ func count(words []string) (int, error) {
 								Message: "the input record separator has no equivalent",
 								Perl:    "local $/ = undef;",
 							},
-							Panic: true,
+							Stub: ir.CallOf(ir.NewIdent("notImplementedHere", nil), ir.TVoid,
+								ir.Str(`"P2G1301"`), ir.Str(`"reading a whole file at once is not implemented here"`)),
 						}),
 					},
 				},
@@ -176,7 +177,7 @@ func count(words []string) (int, error) {
 
 func slurp() {
 	// TODO: reading a whole file at once is not implemented here
-	panic("P2G1301: reading a whole file at once is not implemented here")
+	notImplementedHere("P2G1301", "reading a whole file at once is not implemented here")
 }
 `,
 			annotated: `package main
@@ -185,7 +186,7 @@ func slurp() {
 	// Perl: local $/ = undef;
 	// TODO: P2G1301: the input record separator has no equivalent
 	//   local $/ = undef;
-	panic("P2G1301: reading a whole file at once is not implemented here")
+	notImplementedHere("P2G1301", "reading a whole file at once is not implemented here")
 }
 `,
 		},
@@ -390,7 +391,7 @@ func TestFragmentsNeverPanic(t *testing.T) {
 		&ir.Block{}, &ir.Assign{}, &ir.DeclStmt{}, &ir.ExprStmt{}, &ir.IncDec{},
 		&ir.If{}, &ir.For{}, &ir.Range{}, &ir.Return{}, &ir.Branch{}, &ir.Labeled{},
 		&ir.Switch{}, &ir.Defer{}, &ir.Go{}, &ir.BlockStmt{}, &ir.CommentStmt{},
-		&ir.TodoStmt{Panic: true}, &ir.RawStmt{},
+		&ir.TodoStmt{Stub: &ir.Call{}}, &ir.TodoStmt{}, &ir.RawStmt{},
 	}
 	exprs := []ir.Expr{
 		&ir.Ident{}, &ir.Lit{}, &ir.Call{}, &ir.Selector{}, &ir.Index{}, &ir.IndexComma{},

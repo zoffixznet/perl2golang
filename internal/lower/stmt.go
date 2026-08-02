@@ -1,6 +1,7 @@
 package lower
 
 import (
+	"strconv"
 	"strings"
 
 	"perl2go/internal/ir"
@@ -552,7 +553,10 @@ func (l *Lowerer) packageStmt(n *ast.PackageDecl) []ir.Stmt {
 	if n.Name == "main" {
 		return nil
 	}
-	return []ir.Stmt{l.todoStmt(n, "P2G7010", "package "+n.Name,
+	// A package declaration does nothing when the program runs; it changes
+	// where the subs after it belong. There is no step to stand in for, so the
+	// marker goes in on its own and the statements around it still run.
+	return []ir.Stmt{l.todoDecl(n, "P2G7010", "package "+n.Name,
 		"a second package in one file is not implemented",
 		"Perl can declare several packages in one file, and a package plus bless is "+
 			"how Perl classes are written. Go maps one package to one directory, and "+
@@ -650,11 +654,33 @@ func (l *Lowerer) returnStmt(n *ast.Return) []ir.Stmt {
 }
 
 // todoStmt records a refusal and produces the statement that stands in for the
-// construct. The generated code panics rather than continuing, because
-// silently skipping a statement would change the program's meaning invisibly.
+// construct: a call that names the missing step on stderr and returns.
+//
+// Skipping the statement outright would change the program's meaning with
+// nothing to show for it, and the panic this used to emit was worse still. A
+// panic is not reached at the point of the refusal; it is reached instead of
+// everything after it. One unconvertible line near the top of a file made the
+// whole of the rest of the program unreachable, including all of the code that
+// did convert, which is the only part a reader can learn anything from.
 func (l *Lowerer) todoStmt(n ast.Node, code, construct, short, message, advice string, concepts ...string) ir.Stmt {
 	todo := l.refuse(n, code, construct, short, message, advice, concepts...)
-	st := &ir.TodoStmt{Info: todo, Panic: true}
+	st := l.todoMarker(todo, n)
+	st.Stub = l.helperCall(hNotImplementedHere, ir.TVoid,
+		ir.Str(strconv.Quote(todo.Code)), ir.Str(strconv.Quote(todoWording(todo))))
+	st.Info.Spelled = true
+	return st
+}
+
+// todoDecl records a refusal for a construct that did nothing at run time, such
+// as a declaration. There is no step to stand in for, so the marker is the
+// whole of what is left behind.
+func (l *Lowerer) todoDecl(n ast.Node, code, construct, short, message, advice string, concepts ...string) ir.Stmt {
+	return l.todoMarker(l.refuse(n, code, construct, short, message, advice, concepts...), n)
+}
+
+// todoMarker builds the bare marker both forms share.
+func (l *Lowerer) todoMarker(todo ir.Todo, n ast.Node) *ir.TodoStmt {
+	st := &ir.TodoStmt{Info: todo}
 	line, col := posOf(n)
 	st.Meta.Prov = ir.Provenance{Line: line, Col: col, Text: todo.Perl}
 	return st

@@ -132,7 +132,7 @@ func TestSession(t *testing.T) {
 				"! P2G8001",
 				"eval of a string is not implemented",
 				"named functions selected from a map",
-				"(no Go for that snippet)",
+				`notImplemented[any]("P2G8001", "eval of a string is not implemented")`,
 			},
 		},
 		{

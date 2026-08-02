@@ -268,7 +268,8 @@ func todoFile() *ir.File {
 				Message: "the input record separator cannot be converted faithfully",
 				Perl:    "local $/ = undef;",
 			},
-			Panic: true,
+			Stub: ir.CallOf(ir.NewIdent("notImplementedHere", nil), ir.TVoid,
+				ir.Str(`"P2G1301"`), ir.Str(`"reading a whole file in one go is not implemented here"`)),
 		},
 		&ir.RawStmt{
 			Meta:   noted(12, "# raw", "This line is written out as it stands."),

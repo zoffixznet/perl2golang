@@ -34,6 +34,10 @@ type Emitter struct {
 	// explanation at every occurrence buries the code it is meant to explain,
 	// so each note is written once, where it first applies.
 	saidBefore map[string]bool
+	// fragment marks an emitter rendering a bare expression for a document
+	// rather than a whole file. There is no statement above it to hold a TODO,
+	// so in that one case the marker is written inside the expression.
+	fragment bool
 }
 
 // New returns an emitter for the given rendering mode.
@@ -178,26 +182,51 @@ func (e *Emitter) notes(n ir.Annotated) {
 // todo writes the TODO marker for a node that carries one. It is written in
 // both modes, because the whole point is that the tool never hides work it
 // could not do. Only the wording differs.
+//
+// In the annotated program the whole explanation is written where the construct
+// first appears and the one-line form everywhere after that. One refused
+// construct usually recurs all through a script, and a script with thirty
+// refused method calls in it carried thirty copies of the same four-line
+// paragraph, which buries the code between them. The one-line form still marks
+// every occurrence, and the report gathers them.
 func (e *Emitter) todo(t ir.Todo) {
 	if e.mode == Annotated {
-		text := t.Message
-		if t.Code != "" {
-			text = t.Code + ": " + text
-		}
-		lines := wrap("TODO: "+text, 72)
-		e.comment(lines)
-		if t.Perl != "" {
-			for _, l := range strings.Split(t.Perl, "\n") {
-				e.line(commentLine("  " + l))
+		text := "TODO: " + todoMessage(t)
+		if e.firstMention(text) {
+			e.comment(wrap(text, 72))
+			if t.Perl != "" {
+				for _, l := range strings.Split(t.Perl, "\n") {
+					e.line(commentLine("  " + l))
+				}
 			}
+			return
 		}
+		if t.Spelled {
+			return
+		}
+		e.comment(wrap("TODO: "+todoShort(t), 72))
 		return
 	}
-	short := t.Short
-	if short == "" {
-		short = "not implemented"
+	short := "TODO: " + todoShort(t)
+	// A construct with no stand-in is marked here or nowhere, so its line is
+	// written every time. One that has a stand-in is already marked by it, at
+	// every one of them, and the wording goes above the first.
+	if t.Spelled && !e.firstMention(short) {
+		return
 	}
-	e.comment(wrap("TODO: "+short, 72))
+	e.comment(wrap(short, 72))
+}
+
+// todoVisible reports whether todo would write anything, without recording
+// that it had.
+func (e *Emitter) todoVisible(t ir.Todo) bool {
+	if !t.Spelled {
+		return true
+	}
+	if e.mode == Annotated {
+		return e.unsaid("TODO: " + todoMessage(t))
+	}
+	return e.unsaid("TODO: " + todoShort(t))
 }
 
 // wrap breaks text into lines no longer than width, on word boundaries.

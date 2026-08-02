@@ -586,16 +586,69 @@ func (l *Lowerer) sprintfParts(pieces []interpPiece) (string, []ir.Expr) {
 // ---------------------------------------------------------------------------
 // Fallback
 
-// todoExpr records a refusal and produces an expression that is honest about
-// it: the generated program panics with the original Perl rather than doing
-// something plausible and wrong.
+// todoExpr records a refusal and produces the expression that stands in for it.
 func (l *Lowerer) todoExpr(n ast.Node, code, construct, short, message, advice string, concepts ...string) ir.Expr {
 	todo := l.refuse(n, code, construct, short, message, advice, concepts...)
-	// Go's panic is a statement and yields nothing, so in a position that
-	// wants a value it has to be wrapped. The program stops here rather than
-	// carrying on with something plausible and wrong.
-	x := ir.Raw("func() any { panic("+strconv.Quote(short)+") }()", ir.TAny)
-	m := ir.MetaOf(x)
-	m.Todo = &todo
+	return l.stub(todo, ir.TAny)
+}
+
+// stub builds the stand-in for a refused expression: one call, naming the
+// diagnostic code and the missing behaviour, that yields the zero value of the
+// type the position wanted.
+//
+// Three things had to be true of it. It has to read as code, because the line
+// it sits in usually converted well and a reader is there to learn from it: an
+// inline `func() any { panic(...) }()` at every refusal turned a statement with
+// three method calls in it into something nobody could follow. It has to carry
+// the diagnostic code, so the line ties back to the entry in the report that
+// explains it. And it must not stop the program, because a refusal near the top
+// of a file would then make every converted line below it dead code, which is
+// the whole of what a partial conversion has to offer.
+func (l *Lowerer) stub(todo ir.Todo, t *ir.Type) ir.Expr {
+	t = stubType(t)
+	fn := ir.NewIdent(l.use(hNotImplemented)+"["+t.Go(nil)+"]", nil)
+	x := ir.CallOf(fn, t, ir.Str(strconv.Quote(todo.Code)), ir.Str(strconv.Quote(todoWording(todo))))
+	todo.Spelled = true
+	ir.MetaOf(x).Todo = &todo
 	return x
+}
+
+// stubType picks the type to instantiate the stand-in at. A type that needs an
+// import cannot be spelled in the helper's type argument without the emitter
+// being told about that import, and one that has no spelling at all cannot be
+// written down anywhere, so both degrade to any: the same type the refusal
+// would have produced before it knew any better.
+func stubType(t *ir.Type) *ir.Type {
+	if spellableType(t) {
+		return t
+	}
+	return ir.TAny
+}
+
+// spellableType reports whether a type can be written into a type argument
+// without an import.
+func spellableType(t *ir.Type) bool {
+	if t == nil {
+		return false
+	}
+	switch t.Kind {
+	case ir.Invalid, ir.Void, ir.Func:
+		return false
+	case ir.Named:
+		return t.Import == "" && t.Name != ""
+	case ir.Slice, ir.Pointer:
+		return spellableType(t.Elem)
+	case ir.Map:
+		return spellableType(t.Elem) && (t.Key == nil || spellableType(t.Key))
+	}
+	return true
+}
+
+// todoWording is the sentence the stand-in prints at run time. It is the clean
+// wording, so the two renderings of the program say exactly the same thing.
+func todoWording(t ir.Todo) string {
+	if t.Short != "" {
+		return t.Short
+	}
+	return "not implemented"
 }
