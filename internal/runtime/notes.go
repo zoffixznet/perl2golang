@@ -146,6 +146,25 @@ var notes = map[string]string{
 		"at a time, so neither half of that matches without help. Prefer the " +
 		"scanner when the whole input does not need to be in memory.",
 
+	"notImplemented": "The stand-in for a construct the conversion refused. " +
+		"Go has no expression that means \"nothing was written here yet\", and " +
+		"the obvious spelling, a panic, would make every correctly converted " +
+		"line below it unreachable. Returning the zero value of the type the " +
+		"position wants keeps the rest of the program running, and saying so " +
+		"on stderr keeps the gap from passing for a result.",
+
+	"notImplementedHere": "The statement form of notImplemented, for a step " +
+		"whose whole effect was a side effect. Dropping it silently would " +
+		"change what the program means with nothing to show for it, and " +
+		"panicking would end the run before the converted statements after it " +
+		"got to prove themselves.",
+
+	"saidGaps": "One gap is one piece of work whether the line runs once or a " +
+		"million times, so each is named once. sync.Map rather than a plain " +
+		"map because a converted program may start goroutines, and a map " +
+		"written from two of them at once is a crash rather than a race the " +
+		"program survives.",
+
 	"mod": "Go's % takes its sign from the left operand and Perl's takes it " +
 		"from the right one, so -7 % 3 is -1 in Go and 2 in Perl. Negative " +
 		"operands are common in wrap-around arithmetic, which is exactly " +
