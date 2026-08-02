@@ -49,6 +49,14 @@ type Class struct {
 	// Options marks a struct synthesised from an option block rather than
 	// from a package, which is documented differently and has no methods.
 	Options bool
+	// Interface marks a type that is an interface rather than a struct: the
+	// thing several classes kept in one collection have in common.
+	Interface bool
+	// ExtraParents are the classes after the first in an @ISA that names
+	// more than one, which Go embedding has no ordering rule for.
+	ExtraParents []string
+	// ISAAt is the statement that declared them, for the diagnostic.
+	ISAAt ast.Node
 	// ArrayBacked records that the class blesses an array reference rather
 	// than a hash. Its fields are positions rather than names, so there is
 	// nothing for a struct's field list to be built from.
@@ -206,8 +214,12 @@ func (l *Lowerer) collectClasses(prog *ast.Program) {
 				c.ParentName = p
 			}
 		case *ast.ExprStmt:
-			if p, ok := parentFromISA(n.X); ok {
-				c.ParentName = p
+			if ps, ok := isaParents(n.X); ok {
+				c.ParentName = ps[0]
+				if len(ps) > 1 {
+					c.ExtraParents = ps[1:]
+					c.ISAAt = n
+				}
 			}
 		}
 	}
@@ -364,13 +376,13 @@ func classGoName(perl string) string {
 	parts := strings.Split(perl, "::")
 	var b strings.Builder
 	for _, p := range parts {
-		b.WriteString(upperFirst(goName(p)))
+		b.WriteString(upperFirst(goPart(p)))
 	}
 	out := b.String()
 	if out == "" {
 		return "Class"
 	}
-	return out
+	return guardName(out)
 }
 
 // ancestors lists a class and everything it inherits from, nearest first.
@@ -617,6 +629,31 @@ func parentFromUse(n *ast.Use) (string, bool) {
 		}
 	}
 	return "", false
+}
+
+// isaParents reads every class named by `our @ISA = (...)`.
+func isaParents(e ast.Expr) ([]string, bool) {
+	a, ok := e.(*ast.Assign)
+	if !ok || a.Op != "=" {
+		return nil, false
+	}
+	target := a.LHS
+	if my, isMy := target.(*ast.My); isMy && len(my.Vars) == 1 {
+		target = my.Vars[0]
+	}
+	v, ok := target.(*ast.Var)
+	if !ok || v.Sigil != '@' || !strings.HasSuffix(v.Name, "ISA") {
+		return nil, false
+	}
+	var out []string
+	for _, one := range flatten(a.RHS) {
+		for _, name := range staticStrings(one) {
+			if name != "" {
+				out = append(out, name)
+			}
+		}
+	}
+	return out, len(out) > 0
 }
 
 // parentFromISA reads the parent class out of `our @ISA = ('Base')` or
@@ -867,4 +904,31 @@ func walkExprs(body []ast.Stmt, fn func(ast.Expr)) {
 		}
 	}
 	stmts(body)
+}
+
+// reportMultipleInheritance turns down an @ISA that names more than one class.
+//
+// Perl walks the list to find a method, and which one it finds depends on the
+// resolution order the file asked for: depth-first by default, C3 under
+// `use mro`, and the two disagree on exactly the shape that makes anyone
+// reach for multiple inheritance. Go embeds both and has no order at all: a
+// name both parents answer to is ambiguous and the program does not compile
+// until the call site says which one it means.
+func (l *Lowerer) reportMultipleInheritance(c *Class, at ast.Node) {
+	if l.pass != 2 || c == nil || len(c.ExtraParents) == 0 {
+		return
+	}
+	l.refuse(at, "P2G7005", "@ISA with "+itoa(len(c.ExtraParents)+1)+" parents",
+		"only the first parent was carried over",
+		c.Perl+" inherits from "+c.ParentName+" and from "+
+			strings.Join(c.ExtraParents, ", ")+". Which of them a method comes from "+
+			"depends on the resolution order, and perl has two that disagree on this "+
+			"very shape. Go embeds types and has no resolution order: a name two "+
+			"embedded types both answer to is ambiguous and does not compile until the "+
+			"call site says which it means. Only "+c.ParentName+" is embedded here.",
+		"Embed the other parents as well and name them at the calls that became "+
+			"ambiguous, or move the shared method into one type. Where the second "+
+			"parent was a mixin of behaviour rather than state, an interface plus a "+
+			"plain function is the Go shape for it.",
+		"structs-and-embedding", "implicit-interfaces", "late-binding-vs-embedding")
 }

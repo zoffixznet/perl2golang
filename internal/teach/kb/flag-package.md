@@ -111,12 +111,98 @@ Usage of report:
     	log every step
 ```
 
+
+## Getting the permutation back
+
+The stopping-at-the-first-argument rule is the one worth fixing rather than living with, because a build script invoked as `build a.c --jobs 4` runs single-threaded forever and nobody finds out until someone reads the timings. Reordering the arguments before parsing restores what the original did, and it is about thirty lines:
+
+```go
+package main
+
+import (
+	"flag"
+	"fmt"
+	"io"
+	"strings"
+)
+
+// permuteArgs moves the options in front of the operands, with a "--" between
+// them, which is what an option parser that permutes does before it starts.
+func permuteArgs(fs *flag.FlagSet, args []string) []string {
+	var opts, operands []string
+	for i := 0; i < len(args); {
+		a := args[i]
+		if a == "--" {
+			operands = append(operands, args[i+1:]...)
+			break
+		}
+		if len(a) < 2 || a[0] != '-' {
+			operands = append(operands, a)
+			i++
+			continue
+		}
+		name := strings.TrimLeft(a, "-")
+		if strings.IndexByte(name, '=') >= 0 {
+			opts = append(opts, a)
+			i++
+			continue
+		}
+		f := fs.Lookup(name)
+		opts = append(opts, a)
+		i++
+		if f != nil && !takesNoValue(f) && i < len(args) {
+			opts = append(opts, args[i])
+			i++
+		}
+	}
+	if len(operands) > 0 {
+		opts = append(opts, "--")
+	}
+	return append(opts, operands...)
+}
+
+func takesNoValue(f *flag.Flag) bool {
+	b, ok := f.Value.(interface{ IsBoolFlag() bool })
+	return ok && b.IsBoolFlag()
+}
+
+func run(args []string, permute bool) {
+	fs := flag.NewFlagSet("build", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	jobs := fs.Int("jobs", 1, "how many at once")
+	verbose := fs.Bool("verbose", false, "say more")
+	if permute {
+		args = permuteArgs(fs, args)
+	}
+	if err := fs.Parse(args); err != nil {
+		fmt.Println("error:", err)
+		return
+	}
+	fmt.Printf("jobs=%d verbose=%-5v files=%q\n", *jobs, *verbose, fs.Args())
+}
+
+func main() {
+	argv := []string{"a.c", "--jobs", "4", "b.c", "--verbose"}
+	run(argv, false)
+	run(argv, true)
+	run([]string{"--jobs", "2", "--", "-weird.c"}, true)
+}
+```
+
+```
+jobs=1 verbose=false files=["a.c" "--jobs" "4" "b.c" "--verbose"]
+jobs=4 verbose=true  files=["a.c" "b.c"]
+jobs=2 verbose=false files=["-weird.c"]
+```
+
+Two details earn their keep. The `--` before the operands stops one of them that begins with a dash from being read as an option once it has moved to the front, which the third line shows. And whether an option swallows the next word is decided by asking the flag set: `Lookup` finds the option and the `IsBoolFlag` method its boolean values carry says whether it takes a value. That is the same information `flag` uses itself, so the reordering never disagrees with the parsing that follows it.
+
 ## The mismatch
 
 The mapping, option type by option type. `'name=s' => \$name` is `flag.StringVar(&name, "name", "anon", "help text")`, or `name := flag.String(...)` if you would rather have a pointer; the `Var` forms are worth preferring because the rest of your code then reads `name` instead of `*name`. `'count=i'` is `flag.Int`, `'rate=f'` is `flag.Float64`, and `'verbose!'` is `flag.Bool`, which has no negated twin: `--no-verbose` does not exist and `-verbose=false` is the spelling. Perl's `=s@` repeatable option has no built-in equivalent at all, which is why the example implements `flag.Value` (a `String()` and a `Set(string) error` method); the same interface is how you accept an enum, a comma-separated list, or a validated path. `flag.Duration` is a small gift with no Perl counterpart: it parses `90s`, `1m30s`, and `2h` into a `time.Duration` (`time-layouts`).
 
 The surrounding behaviour differs more than the types do. There is no such thing as a required flag: check for the zero value after `flag.Parse()` and write your own error. There is no abbreviation, so `-verb` is an unknown flag rather than a prefix match. Positional arguments are `flag.Args()` and `flag.NArg()`, never `os.Args` directly, and `os.Args[0]` is still the program name. On a bad flag the default `flag.ExitOnError` mode prints the usage and calls `os.Exit(2)`, which is fine in `main` and terrible in a library or a test, so construct a `flag.NewFlagSet` with `flag.ContinueOnError` when you want the error back as a value. Subcommands are several `FlagSet`s and a switch on `os.Args[1]`, which is more typing than a CPAN module and easy to read afterwards.
 
-When the stdlib genuinely is not enough (GNU-style `-abc` bundling, `--flag` distinct from `-f`, flags after arguments), the ecosystem answer is `spf13/pflag` or a full CLI framework, and taking that dependency is a normal decision rather than a defeat. Start with `flag`; most scripts never outgrow it.
+When the stdlib genuinely is not enough (GNU-style `-abc` bundling, `--flag` distinct from `-f`, unknown options passed through to a wrapped command), the ecosystem answer is `spf13/pflag` or a full CLI framework, and taking that dependency is a normal decision rather than a defeat. Start with `flag`; most scripts never outgrow it.
 
 Further reading: https://pkg.go.dev/flag

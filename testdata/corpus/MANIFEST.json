@@ -3,7 +3,11 @@
     "tier": "domain",
     "name": "01-logrotate-check",
     "path": "testdata/corpus/domain/01-logrotate-check",
-    "args": ["files/logrotate.conf", "files/logstate.txt", "1755150000"],
+    "args": [
+      "files/logrotate.conf",
+      "files/logstate.txt",
+      "1755150000"
+    ],
     "has_stdin": false,
     "has_files": true,
     "allow_stderr": false,
@@ -15,7 +19,13 @@
     "tier": "domain",
     "name": "02-disk-usage-report",
     "path": "testdata/corpus/domain/02-disk-usage-report",
-    "args": ["--warn", "80", "--crit", "90", "files/df.out"],
+    "args": [
+      "--warn",
+      "80",
+      "--crit",
+      "90",
+      "files/df.out"
+    ],
     "has_stdin": false,
     "has_files": true,
     "allow_stderr": false,
@@ -27,7 +37,10 @@
     "tier": "domain",
     "name": "03-proc-table-summary",
     "path": "testdata/corpus/domain/03-proc-table-summary",
-    "args": ["files/ps.out", "2"],
+    "args": [
+      "files/ps.out",
+      "2"
+    ],
     "has_stdin": false,
     "has_files": true,
     "allow_stderr": false,
@@ -39,7 +52,16 @@
     "tier": "domain",
     "name": "04-cron-lockwrap",
     "path": "testdata/corpus/domain/04-cron-lockwrap",
-    "args": ["--now", "1755103600", "--stale-after", "1800", "--dry-run", "nightly-backup", "health-check", "report-rollup"],
+    "args": [
+      "--now",
+      "1755103600",
+      "--stale-after",
+      "1800",
+      "--dry-run",
+      "nightly-backup",
+      "health-check",
+      "report-rollup"
+    ],
     "has_stdin": false,
     "has_files": true,
     "allow_stderr": false,
@@ -51,7 +73,10 @@
     "tier": "domain",
     "name": "05-passwd-audit",
     "path": "testdata/corpus/domain/05-passwd-audit",
-    "args": ["files/passwd", "files/shells"],
+    "args": [
+      "files/passwd",
+      "files/shells"
+    ],
     "has_stdin": false,
     "has_files": true,
     "allow_stderr": false,
@@ -63,7 +88,10 @@
     "tier": "domain",
     "name": "06-access-log-report",
     "path": "testdata/corpus/domain/06-access-log-report",
-    "args": ["files/access.log.1", "files/access.log"],
+    "args": [
+      "files/access.log.1",
+      "files/access.log"
+    ],
     "has_stdin": false,
     "has_files": true,
     "allow_stderr": false,
@@ -75,7 +103,9 @@
     "tier": "domain",
     "name": "07-error-log-cluster",
     "path": "testdata/corpus/domain/07-error-log-cluster",
-    "args": ["files/error.log"],
+    "args": [
+      "files/error.log"
+    ],
     "has_stdin": false,
     "has_files": true,
     "allow_stderr": false,
@@ -87,7 +117,9 @@
     "tier": "domain",
     "name": "08-stacktrace-extract",
     "path": "testdata/corpus/domain/08-stacktrace-extract",
-    "args": ["files/app.log"],
+    "args": [
+      "files/app.log"
+    ],
     "has_stdin": false,
     "has_files": true,
     "allow_stderr": false,
@@ -99,7 +131,9 @@
     "tier": "domain",
     "name": "09-log-tail-state",
     "path": "testdata/corpus/domain/09-log-tail-state",
-    "args": ["files/tail.state"],
+    "args": [
+      "files/tail.state"
+    ],
     "has_stdin": false,
     "has_files": true,
     "allow_stderr": false,
@@ -111,7 +145,10 @@
     "tier": "domain",
     "name": "10-csv-to-fixed",
     "path": "testdata/corpus/domain/10-csv-to-fixed",
-    "args": ["files/layout.txt", "files/accounts.csv"],
+    "args": [
+      "files/layout.txt",
+      "files/accounts.csv"
+    ],
     "has_stdin": false,
     "has_files": true,
     "allow_stderr": false,
@@ -123,7 +160,16 @@
     "tier": "domain",
     "name": "11-tsv-join",
     "path": "testdata/corpus/domain/11-tsv-join",
-    "args": ["--key", "dept_id", "--mode", "left", "--empty", "-", "files/employees.tsv", "files/departments.tsv"],
+    "args": [
+      "--key",
+      "dept_id",
+      "--mode",
+      "left",
+      "--empty",
+      "-",
+      "files/employees.tsv",
+      "files/departments.tsv"
+    ],
     "has_stdin": false,
     "has_files": true,
     "allow_stderr": false,
@@ -159,7 +205,10 @@
     "tier": "domain",
     "name": "14-template-expand",
     "path": "testdata/corpus/domain/14-template-expand",
-    "args": ["files/vars.conf", "files/motd.tmpl"],
+    "args": [
+      "files/vars.conf",
+      "files/motd.tmpl"
+    ],
     "has_stdin": false,
     "has_files": true,
     "allow_stderr": false,
@@ -171,7 +220,9 @@
     "tier": "domain",
     "name": "15-dedupe-fuzzy",
     "path": "testdata/corpus/domain/15-dedupe-fuzzy",
-    "args": ["files/contacts.tsv"],
+    "args": [
+      "files/contacts.tsv"
+    ],
     "has_stdin": false,
     "has_files": true,
     "allow_stderr": false,
@@ -183,7 +234,9 @@
     "tier": "domain",
     "name": "16-fasta-stats",
     "path": "testdata/corpus/domain/16-fasta-stats",
-    "args": ["files/assembly.fasta"],
+    "args": [
+      "files/assembly.fasta"
+    ],
     "has_stdin": false,
     "has_files": true,
     "allow_stderr": false,
@@ -195,7 +248,10 @@
     "tier": "domain",
     "name": "17-interval-overlap",
     "path": "testdata/corpus/domain/17-interval-overlap",
-    "args": ["files/genes.gff", "files/peaks.bed"],
+    "args": [
+      "files/genes.gff",
+      "files/peaks.bed"
+    ],
     "has_stdin": false,
     "has_files": true,
     "allow_stderr": false,
@@ -207,7 +263,9 @@
     "tier": "domain",
     "name": "18-codon-translate",
     "path": "testdata/corpus/domain/18-codon-translate",
-    "args": ["files/cds.fasta"],
+    "args": [
+      "files/cds.fasta"
+    ],
     "has_stdin": false,
     "has_files": true,
     "allow_stderr": false,
@@ -219,7 +277,11 @@
     "tier": "domain",
     "name": "19-kmer-count",
     "path": "testdata/corpus/domain/19-kmer-count",
-    "args": ["files/reads.fasta", "6", "8"],
+    "args": [
+      "files/reads.fasta",
+      "6",
+      "8"
+    ],
     "has_stdin": false,
     "has_files": true,
     "allow_stderr": false,
@@ -231,7 +293,12 @@
     "tier": "domain",
     "name": "20-version-bump",
     "path": "testdata/corpus/domain/20-version-bump",
-    "args": ["--part", "minor", "--dry-run", "files/src"],
+    "args": [
+      "--part",
+      "minor",
+      "--dry-run",
+      "files/src"
+    ],
     "has_stdin": false,
     "has_files": true,
     "allow_stderr": false,
@@ -243,7 +310,11 @@
     "tier": "domain",
     "name": "21-depgraph-toposort",
     "path": "testdata/corpus/domain/21-depgraph-toposort",
-    "args": ["files/deps.txt", "files/deps-broken.txt", "files/deps-typo.txt"],
+    "args": [
+      "files/deps.txt",
+      "files/deps-broken.txt",
+      "files/deps-typo.txt"
+    ],
     "has_stdin": false,
     "has_files": true,
     "allow_stderr": false,
@@ -255,7 +326,10 @@
     "tier": "domain",
     "name": "22-manifest-md5",
     "path": "testdata/corpus/domain/22-manifest-md5",
-    "args": ["files/MANIFEST", "files/tree"],
+    "args": [
+      "files/MANIFEST",
+      "files/tree"
+    ],
     "has_stdin": false,
     "has_files": true,
     "allow_stderr": false,
@@ -267,7 +341,9 @@
     "tier": "domain",
     "name": "23-url-normalize",
     "path": "testdata/corpus/domain/23-url-normalize",
-    "args": ["files/urls.txt"],
+    "args": [
+      "files/urls.txt"
+    ],
     "has_stdin": false,
     "has_files": true,
     "allow_stderr": false,
@@ -279,7 +355,10 @@
     "tier": "domain",
     "name": "24-cidr-calc",
     "path": "testdata/corpus/domain/24-cidr-calc",
-    "args": ["files/networks.txt", "files/ips.txt"],
+    "args": [
+      "files/networks.txt",
+      "files/ips.txt"
+    ],
     "has_stdin": false,
     "has_files": true,
     "allow_stderr": false,
@@ -291,7 +370,9 @@
     "tier": "domain",
     "name": "25-dns-zone-parse",
     "path": "testdata/corpus/domain/25-dns-zone-parse",
-    "args": ["files/example.zone"],
+    "args": [
+      "files/example.zone"
+    ],
     "has_stdin": false,
     "has_files": true,
     "allow_stderr": false,
@@ -687,7 +768,14 @@
     "tier": "tier1",
     "name": "33-argv-and-arguments",
     "path": "testdata/corpus/tier1/33-argv-and-arguments",
-    "args": ["build", "-v", "--name", "my project", "42", "extra"],
+    "args": [
+      "build",
+      "-v",
+      "--name",
+      "my project",
+      "42",
+      "extra"
+    ],
     "has_stdin": false,
     "has_files": false,
     "allow_stderr": false,
@@ -699,7 +787,9 @@
     "tier": "tier1",
     "name": "34-exit-status",
     "path": "testdata/corpus/tier1/34-exit-status",
-    "args": ["5"],
+    "args": [
+      "5"
+    ],
     "has_stdin": false,
     "has_files": false,
     "allow_stderr": false,
@@ -987,7 +1077,9 @@
     "tier": "tier2",
     "name": "23-stdin-line-filter",
     "path": "testdata/corpus/tier2/23-stdin-line-filter",
-    "args": ["ERROR"],
+    "args": [
+      "ERROR"
+    ],
     "has_stdin": true,
     "has_files": false,
     "allow_stderr": false,
@@ -999,7 +1091,10 @@
     "tier": "tier2",
     "name": "24-diamond-argv",
     "path": "testdata/corpus/tier2/24-diamond-argv",
-    "args": ["files/site-a.log", "files/site-b.log"],
+    "args": [
+      "files/site-a.log",
+      "files/site-b.log"
+    ],
     "has_stdin": false,
     "has_files": true,
     "allow_stderr": false,
@@ -1011,7 +1106,13 @@
     "tier": "tier2",
     "name": "25-argv-manual-parsing",
     "path": "testdata/corpus/tier2/25-argv-manual-parsing",
-    "args": ["--sort=count", "-rv", "--limit=3", "--", "files/data.txt"],
+    "args": [
+      "--sort=count",
+      "-rv",
+      "--limit=3",
+      "--",
+      "files/data.txt"
+    ],
     "has_stdin": false,
     "has_files": true,
     "allow_stderr": false,
@@ -1023,7 +1124,22 @@
     "tier": "tier2",
     "name": "26-getopt-long-options",
     "path": "testdata/corpus/tier2/26-getopt-long-options",
-    "args": ["--no-header", "-t", "40", "--format=csv", "-i", "cpu", "-i", "mem", "--rename", "web1=frontend1", "--rename", "db1=primary", "-vv", "files/metrics.tsv"],
+    "args": [
+      "--no-header",
+      "-t",
+      "40",
+      "--format=csv",
+      "-i",
+      "cpu",
+      "-i",
+      "mem",
+      "--rename",
+      "web1=frontend1",
+      "--rename",
+      "db1=primary",
+      "-vv",
+      "files/metrics.tsv"
+    ],
     "has_stdin": false,
     "has_files": true,
     "allow_stderr": false,
@@ -1035,7 +1151,14 @@
     "tier": "tier2",
     "name": "27-usage-and-exit-codes",
     "path": "testdata/corpus/tier2/27-usage-and-exit-codes",
-    "args": ["--mode=avg", "--strict", "10", "20", "abc", "30"],
+    "args": [
+      "--mode=avg",
+      "--strict",
+      "10",
+      "20",
+      "abc",
+      "30"
+    ],
     "has_stdin": false,
     "has_files": false,
     "allow_stderr": false,
@@ -1191,7 +1314,9 @@
     "tier": "tier3",
     "name": "05-json-pipeline",
     "path": "testdata/corpus/tier3/05-json-pipeline",
-    "args": ["files/orders.json"],
+    "args": [
+      "files/orders.json"
+    ],
     "has_stdin": false,
     "has_files": true,
     "allow_stderr": false,
@@ -1215,7 +1340,11 @@
     "tier": "tier3",
     "name": "07-log-analyzer",
     "path": "testdata/corpus/tier3/07-log-analyzer",
-    "args": ["--top", "4", "files/access.log"],
+    "args": [
+      "--top",
+      "4",
+      "files/access.log"
+    ],
     "has_stdin": false,
     "has_files": true,
     "allow_stderr": false,
@@ -1227,7 +1356,9 @@
     "tier": "tier3",
     "name": "08-csv-report",
     "path": "testdata/corpus/tier3/08-csv-report",
-    "args": ["files/products.csv"],
+    "args": [
+      "files/products.csv"
+    ],
     "has_stdin": false,
     "has_files": true,
     "allow_stderr": false,
@@ -1251,7 +1382,9 @@
     "tier": "tier3",
     "name": "10-ini-config",
     "path": "testdata/corpus/tier3/10-ini-config",
-    "args": ["files/app.ini"],
+    "args": [
+      "files/app.ini"
+    ],
     "has_stdin": false,
     "has_files": true,
     "allow_stderr": false,
@@ -1263,7 +1396,9 @@
     "tier": "tier3",
     "name": "11-fixed-width",
     "path": "testdata/corpus/tier3/11-fixed-width",
-    "args": ["files/ledger.dat"],
+    "args": [
+      "files/ledger.dat"
+    ],
     "has_stdin": false,
     "has_files": true,
     "allow_stderr": false,
@@ -1275,7 +1410,9 @@
     "tier": "tier3",
     "name": "12-tag-stripper",
     "path": "testdata/corpus/tier3/12-tag-stripper",
-    "args": ["files/page.html"],
+    "args": [
+      "files/page.html"
+    ],
     "has_stdin": false,
     "has_files": true,
     "allow_stderr": false,
@@ -1359,7 +1496,9 @@
     "tier": "tier3",
     "name": "19-build-scheduler",
     "path": "testdata/corpus/tier3/19-build-scheduler",
-    "args": ["files/tasks.dep"],
+    "args": [
+      "files/tasks.dep"
+    ],
     "has_stdin": false,
     "has_files": true,
     "allow_stderr": false,
@@ -1371,7 +1510,13 @@
     "tier": "tier3",
     "name": "20-route-planner",
     "path": "testdata/corpus/tier3/20-route-planner",
-    "args": ["files/network.txt", "Depot:Airport", "Riverside:Uptown", "Central:Island", "Nowhere:Central"],
+    "args": [
+      "files/network.txt",
+      "Depot:Airport",
+      "Riverside:Uptown",
+      "Central:Island",
+      "Nowhere:Central"
+    ],
     "has_stdin": false,
     "has_files": true,
     "allow_stderr": false,
@@ -1431,7 +1576,11 @@
     "tier": "tier3",
     "name": "25-wrap-and-diff",
     "path": "testdata/corpus/tier3/25-wrap-and-diff",
-    "args": ["files/policy-v1.txt", "files/policy-v2.txt", "34"],
+    "args": [
+      "files/policy-v1.txt",
+      "files/policy-v2.txt",
+      "34"
+    ],
     "has_stdin": false,
     "has_files": true,
     "allow_stderr": false,
@@ -1876,6 +2025,79 @@
     "name": "37-list-slice-in-scalar-context",
     "path": "testdata/corpus/tier1/37-list-slice-in-scalar-context",
     "args": [],
+    "has_stdin": false,
+    "has_files": false,
+    "allow_stderr": false,
+    "expected_exit": 0,
+    "deterministic": true,
+    "kind": "convert"
+  },
+  {
+    "tier": "tier2",
+    "name": "36-class-with-accessors",
+    "path": "testdata/corpus/tier2/36-class-with-accessors",
+    "args": [],
+    "has_stdin": false,
+    "has_files": false,
+    "allow_stderr": false,
+    "expected_exit": 0,
+    "deterministic": true,
+    "kind": "convert"
+  },
+  {
+    "tier": "tier2",
+    "name": "37-getopt-options-hash",
+    "path": "testdata/corpus/tier2/37-getopt-options-hash",
+    "args": [
+      "-n",
+      "3",
+      "--format=csv",
+      "--no-header",
+      "--factor",
+      "2.25",
+      "-v",
+      "-v",
+      "--tag",
+      "a",
+      "--tag",
+      "b",
+      "--rename",
+      "delta=DELTA",
+      "gamma",
+      "alpha",
+      "delta",
+      "beta"
+    ],
+    "has_stdin": false,
+    "has_files": false,
+    "allow_stderr": false,
+    "expected_exit": 0,
+    "deterministic": true,
+    "kind": "convert"
+  },
+  {
+    "tier": "tier3",
+    "name": "26-class-inheritance",
+    "path": "testdata/corpus/tier3/26-class-inheritance",
+    "args": [],
+    "has_stdin": false,
+    "has_files": false,
+    "allow_stderr": false,
+    "expected_exit": 0,
+    "deterministic": true,
+    "kind": "convert"
+  },
+  {
+    "tier": "tier3",
+    "name": "27-getopt-bundling",
+    "path": "testdata/corpus/tier3/27-getopt-bundling",
+    "args": [
+      "-vvq",
+      "-j4",
+      "--tag",
+      "--unknown-to-us",
+      "rest"
+    ],
     "has_stdin": false,
     "has_files": false,
     "allow_stderr": false,

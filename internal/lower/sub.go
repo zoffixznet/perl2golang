@@ -46,6 +46,13 @@ func (l *Lowerer) hoistSubs() {
 			l.nameMembers(c)
 		}
 	}
+	// A class with no constructor of its own gets one that fills in the
+	// parent's, which needs every parent to have been named first.
+	for _, name := range l.classOrd {
+		if c := l.classes[name]; c.IsType {
+			l.inheritCtor(c)
+		}
+	}
 }
 
 // qualify returns the fully qualified Perl name of a sub.

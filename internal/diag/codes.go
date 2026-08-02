@@ -155,6 +155,8 @@ const (
 	MissingArguments Code = "P2G2130"
 	// BlockArgument: a bare block argument became a function literal.
 	BlockArgument Code = "P2G2135"
+	// ReturnsList: a sub returning a list returns the values, not the count.
+	ReturnsList Code = "P2G2121"
 	// UndefClearsToZero: `undef $x` leaves the type's zero value behind.
 	UndefClearsToZero Code = "P2G2115"
 	// ValuelessCall: a call to a sub nothing reads cannot stand in an
@@ -777,6 +779,14 @@ var catalogue = map[Code]Entry{
 		Cost:      "a caller cannot tell the empty answer from a real one that happens to be the zero value",
 		Converted: "the emitted `return` passes the zero value of each declared result",
 		Concepts:  []string{"multiple-return-values", "comma-ok-idiom"},
+	},
+	ReturnsList: {
+		Severity:  report.Note,
+		Message:   "a sub returning a list hands back the values here, not how many there were",
+		Short:     "the list is returned, not its length",
+		Advice:    "where a caller wanted the count, take `len` of what comes back",
+		Converted: "the emitted function returns a slice",
+		Concepts:  []string{"context-is-gone", "multiple-return-values"},
 	},
 	BlockArgument: {
 		Severity:  report.Note,

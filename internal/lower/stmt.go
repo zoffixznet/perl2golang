@@ -707,10 +707,30 @@ func (l *Lowerer) returnStmt(n *ast.Return) []ir.Stmt {
 				flat = append(flat, flatten(e)...)
 			}
 		}
-		for _, e := range flat {
-			x := l.scalar(e)
+		// `return sort keys %h` yields the list when the caller wanted a
+		// list and the count when it wanted one value. A Go function has to
+		// pick, and the list is the answer that keeps the information: a
+		// caller who wanted the count can still take len of it, and one who
+		// wanted the values cannot get them back out of a number.
+		if len(flat) == 1 && l.producesList(flat[0]) {
+			x := l.list(flat[0])
 			results = append(results, x)
 			kinds = append(kinds, typeOrAny(x))
+			if l.pass == 2 {
+				l.approximate(n, "P2G2121", "return of a list",
+					"the list is returned, not its length",
+					"A Perl sub returning a list hands back the values when the caller "+
+						"wanted a list and how many there were when it wanted one value. A Go "+
+						"function has one shape, and this one returns the values.",
+					"Where a caller wanted the count, take len of what comes back.",
+					"context-is-gone", "multiple-return-values")
+			}
+		} else {
+			for _, e := range flat {
+				x := l.scalar(e)
+				results = append(results, x)
+				kinds = append(kinds, typeOrAny(x))
+			}
 		}
 	}
 	if l.pass == 1 {

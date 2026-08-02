@@ -409,14 +409,8 @@ func (l *Lowerer) optionDest(e ast.Expr, spec optionSpec, at ast.Node) (ir.Expr,
 	b := l.lookup(v.Sigil, v.Name, v)
 	b.Writes++
 	want := spec.destType()
-	if v.Sigil == '$' {
-		l.observe(b, want)
-	} else {
-		l.observe(b, want)
-	}
-	if l.pass == 2 {
-		b.Type = want
-	}
+	l.optionDests[b] = want
+	b.Type = want
 	return l.identFor(b), true
 }
 

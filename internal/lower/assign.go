@@ -688,6 +688,23 @@ func allScalarTargets(targets []ast.Expr) bool {
 
 // assignToVar lowers `$x = ...`, `@a = ...`, `%h = ...`.
 func (l *Lowerer) assignToVar(v *ast.Var, n *ast.Assign) []ir.Stmt {
+	// Assigning to a glob replaces an entry in the symbol table, so every
+	// call already written against that name starts running the new code.
+	// Nothing in Go can be reached through a name at run time.
+	if v.Sigil == '*' {
+		return []ir.Stmt{l.todoStmt(n, "P2G8020", "*"+v.Name+" = ...",
+			"replacing a subroutine at run time has no Go equivalent",
+			"Assigning to `*"+v.Name+"` puts a new subroutine in the symbol table under "+
+				"that name, and every call site already written against it, including the "+
+				"ones in objects that already exist, starts running the new one from the "+
+				"next call onwards. Go resolves a call when it compiles the program and "+
+				"has no symbol table to write into.",
+			"Where the point was to vary behaviour, hold the function in a variable or "+
+				"a field and call through it, which makes the substitution visible at "+
+				"every call site that can see it. Where the point was to patch a package "+
+				"the program does not own, there is no equivalent at all.",
+			"implicit-interfaces", "methods-and-receivers")}
+	}
 	// One of Perl's own variables is not an ordinary name and does not get an
 	// ordinary binding: whatever it maps onto is the assignment target.
 	if target := l.specialVar(v); target != nil {

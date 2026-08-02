@@ -72,10 +72,25 @@ func goName(perl string) string {
 	if out == "" || unicode.IsDigit(rune(out[0])) {
 		out = "v" + upperFirst(out)
 	}
+	return guardName(out)
+}
+
+// guardName keeps an identifier clear of the words Go has already spoken for.
+func guardName(out string) string {
 	if goKeywords[out] || goPredeclared[out] {
-		out += "Val"
+		return out + "Val"
 	}
 	return out
+}
+
+// goPart is goName without the guard, for building a longer name out of
+// several pieces: only the finished identifier can collide with a keyword.
+func goPart(perl string) string {
+	name := goName(perl)
+	if strings.HasSuffix(name, "Val") && (goKeywords[name[:len(name)-3]] || goPredeclared[name[:len(name)-3]]) {
+		return name[:len(name)-3]
+	}
+	return name
 }
 
 // exportedName is goName with an initial capital, for a package-level type.

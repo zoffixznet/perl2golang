@@ -1,0 +1,10 @@
+--- direct ---
+copied archive
+copied backup and verified
+--- through the base ---
+archive: copied archive
+backup: copied backup and verified
+tries: 1 1
+verify isa Copy: yes
+verify isa Job:  yes
+copy isa Verify: no

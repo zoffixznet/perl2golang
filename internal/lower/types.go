@@ -79,7 +79,13 @@ func join(a, b *ir.Type) *ir.Type {
 		return ir.MapOf(join(a.Elem, b.Elem))
 	}
 	if a.Kind == ir.Pointer && b.Kind == ir.Pointer {
-		return ir.PointerTo(join(a.Elem, b.Elem))
+		// Two pointers to different named types have no pointer type in
+		// common: *any is a pointer to an interface, which nothing assigns to.
+		elem := join(a.Elem, b.Elem)
+		if elem == nil || elem.Kind == ir.Any {
+			return unresolved
+		}
+		return ir.PointerTo(elem)
 	}
 
 	return unresolved

@@ -1,0 +1,12 @@
+--- ledger ---
+A-1    Jane Doe        100.00 open
+A-2    John Roe         75.00 open
+B-9    Ada Byron         5.00 frozen
+total: 180.00
+accounts opened: 3
+isa Account: yes
+isa Ledger:  no
+can deposit: yes
+can fly:     no
+ref:         Account
+frozen withdrawal: account is frozen

@@ -88,6 +88,13 @@ type Lowerer struct {
 	// optionHash maps a hash an option block fills in to the struct type it
 	// became, keyed by the hash's Perl name.
 	optionHash map[string]*Class
+	// optionDests holds the type an option specification gave a destination
+	// variable, which is a declaration and beats anything inference saw.
+	optionDests map[*Binding]*ir.Type
+	// interfaces are the types a collection of several classes needed, keyed
+	// by the ancestor and method set they were built from.
+	interfaces   map[string]*Class
+	interfaceOrd []*Class
 	// fieldAt remembers which struct field an access resolved to, so that a
 	// write through it can say what the field holds. A field is not a binding
 	// and has nowhere else to record the evidence.
@@ -214,24 +221,25 @@ type patternVar struct {
 // Lower converts a parsed program.
 func Lower(res parser.Result, src []byte, opts Options) *Result {
 	l := &Lowerer{
-		opts:       opts,
-		src:        string(src),
-		lines:      strings.Split(string(src), "\n"),
-		names:      newNameSet(),
-		subs:       map[string]*Sub{},
-		classes:    map[string]*Class{},
-		byGoType:   map[string]*Class{},
-		hoisted:    map[*ast.Var]bool{},
-		classVars:  map[*Binding]*Class{},
-		optionHash: map[string]*Class{},
-		fieldAt:    map[ast.Node]*ClassField{},
-		arrowCalls: map[string]bool{},
-		qualCalls:  map[string]bool{},
-		curPkg:     "main",
-		decls:      map[ast.Node]*Binding{},
-		globalSeen: map[string]*Binding{},
-		helpers:    map[string]bool{},
-		patterns:   map[string]*patternVar{},
+		opts:        opts,
+		src:         string(src),
+		lines:       strings.Split(string(src), "\n"),
+		names:       newNameSet(),
+		subs:        map[string]*Sub{},
+		classes:     map[string]*Class{},
+		byGoType:    map[string]*Class{},
+		hoisted:     map[*ast.Var]bool{},
+		classVars:   map[*Binding]*Class{},
+		optionHash:  map[string]*Class{},
+		optionDests: map[*Binding]*ir.Type{},
+		fieldAt:     map[ast.Node]*ClassField{},
+		arrowCalls:  map[string]bool{},
+		qualCalls:   map[string]bool{},
+		curPkg:      "main",
+		decls:       map[ast.Node]*Binding{},
+		globalSeen:  map[string]*Binding{},
+		helpers:     map[string]bool{},
+		patterns:    map[string]*patternVar{},
 		rep: &report.Report{
 			Source: opts.File,
 			Module: opts.Module,
@@ -352,6 +360,7 @@ func (l *Lowerer) run(prog *ast.Program) *Result {
 		// declaration has already recorded. There is nothing left to run.
 		if es, ok := u.st.(*ast.ExprStmt); ok {
 			if _, isISA := parentFromISA(es.X); isISA && u.pkg != "main" {
+				l.reportMultipleInheritance(l.classes[u.pkg], es)
 				continue
 			}
 		}
@@ -362,6 +371,9 @@ func (l *Lowerer) run(prog *ast.Program) *Result {
 	// A type and the methods on it belong together, the way a Go file is
 	// laid out, and both come before the code that uses them.
 	emitted := map[*Sub]bool{}
+	for _, c := range l.interfaceOrd {
+		file.Decls = append(file.Decls, l.interfaceDecl(c))
+	}
 	for _, name := range l.classOrd {
 		c := l.classes[name]
 		if !c.IsType {
@@ -370,6 +382,10 @@ func (l *Lowerer) run(prog *ast.Program) *Result {
 		file.Decls = append(file.Decls, l.classDecl(c))
 		for _, s := range c.Subs {
 			emitted[s] = true
+			if s.Inherited != nil {
+				file.Decls = append(file.Decls, l.inheritedCtorDecl(s))
+				continue
+			}
 			if s.irDecl != nil {
 				file.Decls = append(file.Decls, s.irDecl)
 			}
@@ -722,6 +738,12 @@ func (l *Lowerer) resolveTypes() {
 				b.Type = c.Value
 				return
 			}
+		}
+		// An option specification says what its destination holds, which is
+		// a declaration rather than an observation.
+		if t, ok := l.optionDests[b]; ok {
+			b.Type = t
+			return
 		}
 		t := joinAll(b.Evidence)
 		if t == nil {

@@ -1,6 +1,7 @@
 package lower
 
 import (
+	"sort"
 	"strings"
 
 	"perl2go/internal/ir"
@@ -53,9 +54,101 @@ func (l *Lowerer) nameMembers(c *Class) {
 	c.recv = l.receiverName(c)
 }
 
+// inheritCtor gives a class that declares no constructor one that fills in the
+// parent's and returns this type.
+//
+// Perl finds the parent's `new` by walking @ISA and blesses into whichever
+// class was named at the call, so one constructor serves a whole hierarchy.
+// Go has no such lookup: the call resolves to a function when the program is
+// compiled, and that function's result type is fixed. Writing the wrapper is
+// what a Go developer does, so the converter writes it.
+func (l *Lowerer) inheritCtor(c *Class) {
+	if c.Ctor != nil || c.Parent == nil {
+		return
+	}
+	for _, a := range c.ancestors()[1:] {
+		if a.Ctor == nil || a.Ctor.Inherited != nil {
+			continue
+		}
+		s := &Sub{
+			Name:      "new",
+			Pkg:       c.Perl,
+			Class:     c,
+			Kind:      SubCtor,
+			Inherited: a.Ctor,
+		}
+		s.Go = l.names.take("New" + c.Go)
+		c.Ctor = s
+		c.Subs = append(c.Subs, s)
+		c.subBy["new"] = s
+		return
+	}
+}
+
+// inheritedCtorDecl builds the function a synthesised constructor becomes. It
+// runs after the parent's signature has settled, because it forwards it.
+func (l *Lowerer) inheritedCtorDecl(s *Sub) *ir.FuncDecl {
+	c, parent := s.Class, s.Inherited
+	var params []ir.Param
+	var args []ir.Expr
+	add := func(b *Binding) {
+		params = append(params, ir.Param{Name: b.Go, Type: b.Type})
+		args = append(args, ir.NewIdent(b.Go, b.Type))
+	}
+	for _, b := range parent.Params {
+		add(b)
+	}
+	for _, b := range parent.NamedParams {
+		add(b)
+	}
+	// The constructor may live several levels up, and each level in between
+	// embeds the one above it, so the literal nests the same way.
+	value := ir.Expr(ir.Un("*", ir.CallOf(ir.NewIdent(parent.Go, nil), parent.Class.Ptr, args...),
+		parent.Class.Value))
+	var chain []*Class
+	for x := c; x != nil && x != parent.Class; x = x.Parent {
+		chain = append(chain, x)
+	}
+	for i := len(chain) - 1; i >= 0; i-- {
+		inner := chain[i]
+		value = composite(inner.Value,
+			[]ir.Expr{ir.NewIdent(inner.Parent.Go, nil)}, []ir.Expr{value})
+	}
+	lit, _ := value.(*ir.CompositeLit)
+	if lit == nil {
+		lit = composite(c.Value, nil, nil)
+	}
+	fn := &ir.FuncDecl{
+		Name:    s.Go,
+		Params:  params,
+		Results: []*ir.Type{c.Ptr},
+		Body: &ir.Block{Stmts: []ir.Stmt{
+			&ir.Return{Results: []ir.Expr{ir.Un("&", lit, c.Ptr)}},
+		}},
+		Doc: []string{s.Go + " builds a " + c.Go + " on top of " + parent.Class.Go + "'s constructor."},
+	}
+	s.Results = fn.Results
+	if l.pass == 2 {
+		l.note(fn, "Perl finds an inherited constructor by walking @ISA and blesses "+
+			"into whichever class was named at the call, so one `sub new` serves the "+
+			"whole hierarchy. Go resolves the call when it compiles and the function's "+
+			"result type is fixed, so each type gets its own constructor. This one fills "+
+			"in the embedded "+parent.Class.Go+" and hands back a *"+c.Go+".",
+			"structs-and-embedding", "late-binding-vs-embedding")
+	}
+	return fn
+}
+
 // methodName picks a method name that no field or other method on the type,
 // or on anything it embeds, has already claimed.
 func (l *Lowerer) methodName(c *Class, perl string) string {
+	// An override has to carry the same name as the method it overrides, or
+	// it shadows nothing and the base class's version keeps being found.
+	for _, a := range c.ancestors()[1:] {
+		if s, ok := a.subBy[perl]; ok && s.Go != "" && s.Accessor == nil {
+			return s.Go
+		}
+	}
 	base := exportedName(perl)
 	if base == "" {
 		base = "Method"
@@ -115,6 +208,13 @@ func (l *Lowerer) classifySub(c *Class, s *Sub) {
 		s.Kind = SubCtor
 	case isSelf || usesFirstArgAsSelf(body):
 		s.Kind = SubMethod
+	case first == "" && !usesArgs(body) && !sharedName(c, s.Name):
+		// A sub that never looks at its arguments cannot be reading an
+		// object out of them, so it belongs to the class rather than to any
+		// one value however it is called. A name that also appears elsewhere
+		// in the hierarchy is different: it is one end of an override, and
+		// both ends have to be methods for the shadowing to work.
+		s.Kind = SubClass
 	case first == "class" || first == "proto" || first == "pkg":
 		s.Kind = SubClass
 	case l.qualCalls[qualify(c.Perl, s.Name)]:
@@ -690,6 +790,9 @@ func (l *Lowerer) classDispatch(n *ast.MethodCall, c *Class, method string) ir.E
 
 // dispatch lowers a call on an object whose class is known.
 func (l *Lowerer) dispatch(n *ast.MethodCall, c *Class, method string, super bool, recv ir.Expr) ir.Expr {
+	if c.Interface {
+		return l.dispatchInterface(n, c, method, recv)
+	}
 	switch method {
 	case "isa", "DOES":
 		return l.isaCall(n, c)
@@ -800,12 +903,18 @@ func (l *Lowerer) fitArgs(s *Sub, args []ir.Expr, n ast.Node) []ir.Expr {
 // parameters the constructor turned them into.
 func (l *Lowerer) callConstructor(n *ast.MethodCall, c *Class, s *Sub) ir.Expr {
 	s.CallSites++
+	// A synthesised constructor forwards its parent's arguments, so the
+	// parent's signature is what a call has to be matched against.
+	shape := s
+	if s.Inherited != nil {
+		shape = s.Inherited
+	}
 	var out []ir.Expr
-	if s.Named != nil {
-		out = l.namedArgs(s, n)
+	if shape.Named != nil {
+		out = l.namedArgs(shape, n)
 	} else {
 		args, _ := l.listParts(n.Args)
-		out = l.fitArgs(s, args, n)
+		out = l.fitArgs(shape, args, n)
 	}
 	ret := c.Ptr
 	if len(s.Results) > 0 {
@@ -822,16 +931,6 @@ func (l *Lowerer) callConstructor(n *ast.MethodCall, c *Class, s *Sub) ir.Expr {
 // defaultConstructor covers a class that inherits its constructor from a
 // parent, which is the usual shape for an exception subclass.
 func (l *Lowerer) defaultConstructor(n *ast.MethodCall, c *Class) ir.Expr {
-	if p := c.Parent; p != nil && p.IsType && p.Ctor != nil {
-		return l.todoExpr(n, "P2G7047", c.Perl+"->new",
-			"this class inherits its constructor",
-			c.Perl+" has no constructor of its own and Perl finds the parent's by "+
-				"walking @ISA at run time. The parent's constructor blesses into whichever "+
-				"class was named at the call, which is a decision Go makes when it compiles.",
-			"Write a constructor for this type that fills in the embedded "+p.Go+
-				" and returns *"+c.Go+".",
-			"structs-and-embedding", "late-binding-vs-embedding")
-	}
 	lit := composite(c.Value, nil, nil)
 	out := ir.Un("&", lit, c.Ptr)
 	l.note(out, "The Perl class has no constructor of its own, so the object is the "+
@@ -1199,9 +1298,9 @@ func (l *Lowerer) blessTarget(n *ast.Call) *Class {
 				return c
 			}
 		}
-		return nil
 	}
-	// A one-argument bless uses the current package.
+	// `bless {}, shift` and `bless {}` both mean the package the constructor
+	// was written in, which is what a class name reaching it names too.
 	if c, ok := l.classes[l.curPkg]; ok && c.IsType {
 		return c
 	}
@@ -1288,4 +1387,253 @@ func (l *Lowerer) refuseSpecialMethod(s *Sub, sd *ast.SubDecl) {
 			"honest translation, and the caller indexes it rather than writing a "+
 			"method call.",
 		"methods-and-receivers", "implicit-interfaces")
+}
+
+// sharedName reports whether a name is declared anywhere else in the class's
+// hierarchy, above it or below it, which is what makes it an override rather
+// than a sub that happens to live in a package.
+func sharedName(c *Class, name string) bool {
+	for _, a := range c.ancestors()[1:] {
+		if declares(a, name) {
+			return true
+		}
+	}
+	var below func(*Class) bool
+	below = func(x *Class) bool {
+		for _, ch := range x.Children {
+			if declares(ch, name) || below(ch) {
+				return true
+			}
+		}
+		return false
+	}
+	return below(c)
+}
+
+// declares reports whether a class's own package holds a sub of that name.
+func declares(c *Class, name string) bool {
+	for _, sd := range c.decls {
+		if sd.Name == name {
+			return true
+		}
+	}
+	return false
+}
+
+// ---------------------------------------------------------------------------
+// Interfaces
+
+// commonInterface returns the type a collection holding several related
+// classes should be declared as, creating the interface on first use.
+//
+// Perl puts a Rectangle and a Circle in one array and calls area on each,
+// because the method is looked up on the value. Go has one element type per
+// slice, and the type that lets several concrete types share one slot is an
+// interface. Declaring it is what turns a heterogeneous collection from a
+// slice of `any` full of type assertions into ordinary Go.
+func (l *Lowerer) commonInterface(cs []*Class) (*ir.Type, bool) {
+	var uniq []*Class
+	seen := map[*Class]bool{}
+	for _, c := range cs {
+		if c == nil || !c.IsType || c.Interface || c.Options || seen[c] {
+			continue
+		}
+		seen[c] = true
+		uniq = append(uniq, c)
+	}
+	if len(uniq) < 2 {
+		return nil, false
+	}
+	root := commonAncestor(uniq)
+	if root == nil {
+		return nil, false
+	}
+	shared := sharedMethods(uniq)
+	if len(shared) == 0 {
+		return nil, false
+	}
+
+	key := root.Perl + "\x00" + strings.Join(methodKeys(shared), ",")
+	if c, ok := l.interfaces[key]; ok {
+		return c.Value, true
+	}
+	iface := &Class{
+		Perl:      "any " + root.Perl,
+		Go:        l.names.take("Any" + root.Go),
+		IsType:    true,
+		Interface: true,
+		fieldBy:   map[string]*ClassField{},
+		subBy:     shared,
+	}
+	iface.Value = ir.NamedType(iface.Go, "")
+	iface.Ptr = iface.Value
+	l.byGoType[iface.Go] = iface
+	if l.interfaces == nil {
+		l.interfaces = map[string]*Class{}
+	}
+	l.interfaces[key] = iface
+	l.interfaceOrd = append(l.interfaceOrd, iface)
+	return iface.Value, true
+}
+
+// commonAncestor returns the class every one of these descends from, or nil.
+func commonAncestor(cs []*Class) *Class {
+	best := cs[0]
+	for _, c := range cs[1:] {
+		found := (*Class)(nil)
+		for _, a := range c.ancestors() {
+			for _, b := range best.ancestors() {
+				if a == b {
+					found = a
+					break
+				}
+			}
+			if found != nil {
+				break
+			}
+		}
+		if found == nil {
+			return nil
+		}
+		best = found
+	}
+	return best
+}
+
+// sharedMethods returns the methods every one of these classes answers to,
+// which is what the interface can promise.
+func sharedMethods(cs []*Class) map[string]*Sub {
+	out := map[string]*Sub{}
+	for name, s := range collectMethods(cs[0]) {
+		ok := true
+		for _, c := range cs[1:] {
+			m := c.method(name)
+			if m == nil || m.Kind != SubMethod || m.Accessor != nil {
+				ok = false
+				break
+			}
+		}
+		if ok {
+			out[name] = s
+		}
+	}
+	return out
+}
+
+// collectMethods lists every method a class answers to, its own and the ones
+// it inherits, skipping the accessors that became fields.
+func collectMethods(c *Class) map[string]*Sub {
+	out := map[string]*Sub{}
+	for i := len(c.ancestors()) - 1; i >= 0; i-- {
+		for name, s := range c.ancestors()[i].subBy {
+			if s.Kind == SubMethod && s.Accessor == nil {
+				out[name] = s
+			}
+		}
+	}
+	return out
+}
+
+// methodKeys lists a method set's names in a fixed order.
+func methodKeys(m map[string]*Sub) []string {
+	out := make([]string, 0, len(m))
+	for name := range m {
+		out = append(out, name)
+	}
+	sort.Strings(out)
+	return out
+}
+
+// interfaceDecl writes out the interface a heterogeneous collection needed.
+func (l *Lowerer) interfaceDecl(c *Class) ir.Decl {
+	var b strings.Builder
+	b.WriteString("type " + c.Go + " interface {\n")
+	for _, name := range methodKeys(c.subBy) {
+		s := c.subBy[name]
+		b.WriteString("\t" + s.Go + "(")
+		first := true
+		write := func(t *ir.Type, variadic bool) {
+			if !first {
+				b.WriteString(", ")
+			}
+			first = false
+			if variadic {
+				b.WriteString("...")
+			}
+			b.WriteString(t.String())
+		}
+		for _, p := range s.Params {
+			write(p.Type, false)
+		}
+		for _, p := range s.NamedParams {
+			write(p.Type, false)
+		}
+		if s.VarArgs != nil {
+			write(elemOf(s.VarArgs.Type), true)
+		}
+		b.WriteString(")")
+		switch len(s.Results) {
+		case 0:
+		case 1:
+			b.WriteString(" " + s.Results[0].String())
+		default:
+			b.WriteString(" (")
+			for i, r := range s.Results {
+				if i > 0 {
+					b.WriteString(", ")
+				}
+				b.WriteString(r.String())
+			}
+			b.WriteString(")")
+		}
+		b.WriteString("\n")
+	}
+	b.WriteString("}")
+	d := &ir.RawDecl{
+		Source: b.String(),
+		Doc: []string{c.Go + " is what the classes stored together here have in common: " +
+			"the methods every one of them answers to."},
+	}
+	if l.pass == 2 {
+		ir.Annotate(d, "Perl keeps several classes in one array without saying anything, "+
+			"because a method call looks the method up on the value it is called on. Go "+
+			"has one element type per slice, and an interface is the type that lets "+
+			"several concrete types share one slot. Nothing declares that it implements "+
+			"this: a type satisfies an interface by having the methods, which is why the "+
+			"interface can be written here, next to the code that needs it, rather than "+
+			"next to the types.",
+			"implicit-interfaces", "structs-and-embedding")
+	}
+	return d
+}
+
+// dispatchInterface lowers a call on a value whose declared type is the
+// interface several classes share.
+func (l *Lowerer) dispatchInterface(n *ast.MethodCall, c *Class, method string, recv ir.Expr) ir.Expr {
+	switch method {
+	case "isa", "DOES", "can":
+		return l.todoExpr(n, "P2G7045", "->"+method,
+			"this value holds more than one class",
+			"The collection this came out of holds several classes, so its declared "+
+				"type is the interface "+c.Go+" and which class a particular value is "+
+				"cannot be known until the program runs.",
+			"A type switch answers this and hands back the typed value at the same "+
+				"time: `switch v := x.(type) { case *T: ... }`. That is the Go form of the "+
+				"question and the compiler checks every arm of it.",
+			"type-assertions-and-switches", "implicit-interfaces")
+	}
+	if s, ok := c.subBy[method]; ok {
+		args, _ := l.listParts(n.Args)
+		return l.invoke(s, recv, args, n)
+	}
+	return l.todoExpr(n, "P2G7041", "->"+method,
+		"this is not one of the methods the classes here share",
+		"The value's declared type is the interface "+c.Go+", which names only what "+
+			"every class stored alongside it answers to. `"+method+"` is not one of "+
+			"those, and an interface can promise methods but never fields.",
+		"Give the base class a method that returns the field and it joins the "+
+			"interface, which is how Go exposes shared state across several types. Where "+
+			"only one class has it, a type switch or an assertion reaches the concrete "+
+			"value.",
+		"implicit-interfaces", "type-assertions-and-switches")
 }

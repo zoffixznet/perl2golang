@@ -147,6 +147,9 @@ type Sub struct {
 	// SelfVar names the variable a constructor blesses, which is the one
 	// that has to be built as the struct rather than as a map.
 	SelfVar string
+	// Inherited is the ancestor's constructor a synthesised one calls, for a
+	// class that declares no `sub new` of its own.
+	Inherited *Sub
 }
 
 // scope is one lexical level.

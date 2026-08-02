@@ -305,12 +305,33 @@ func (l *Lowerer) listParts(es []ast.Expr) ([]ir.Expr, *ir.Type) {
 		add(e)
 	}
 	// The parts decide the element type together, and two that no single Go
-	// type covers settle it at any for good.
+	// type covers settle it at any for good. Several classes together are the
+	// exception: what they have in common is an interface, and declaring it
+	// is what keeps the collection typed.
 	t := joinAll(seen)
+	if t == nil || t.Kind == ir.Any {
+		if iface, ok := l.commonInterface(l.classesOf(seen)); ok {
+			return out, iface
+		}
+	}
 	if t == nil {
 		t = ir.TAny
 	}
 	return out, t
+}
+
+// classesOf reads the classes out of a list of observed types, reporting
+// nothing when any of them is not a class at all.
+func (l *Lowerer) classesOf(ts []*ir.Type) []*Class {
+	var out []*Class
+	for _, t := range ts {
+		c := l.classOf(t)
+		if c == nil {
+			return nil
+		}
+		out = append(out, c)
+	}
+	return out
 }
 
 // flattensInList reports whether an expression contributes its elements to a
