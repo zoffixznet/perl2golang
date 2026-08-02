@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-14T20:30:05Z",
+  "recorded": "2026-08-14T20:32:09Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -134,7 +134,7 @@
         "symbols": 695,
         "symbols_typed": 448,
         "refusals": 170,
-        "approximations": 207
+        "approximations": 208
       }
     },
     {
@@ -269,7 +269,7 @@
       "symbols": 2942,
       "symbols_typed": 2265,
       "refusals": 318,
-      "approximations": 737
+      "approximations": 738
     }
   },
   "quality": {
@@ -277,7 +277,7 @@
     "symbols": 2942,
     "symbols_typed": 2265,
     "refusals": 318,
-    "approximations": 737
+    "approximations": 738
   },
   "entries": [
     {
@@ -4066,7 +4066,7 @@
         "symbols": 8,
         "symbols_typed": 8,
         "refusals": 5,
-        "approximations": 0
+        "approximations": 1
       }
     },
     {

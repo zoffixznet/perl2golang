@@ -827,7 +827,7 @@ func (l *Lowerer) dispatch(n *ast.MethodCall, c *Class, method string, super boo
 			"Build the object first and call the method on it.",
 			"methods-and-receivers")
 	}
-	l.noteLateBinding(n, c, s, super)
+	l.noteLateBinding(n, s, super, recv)
 	return l.invoke(s, recv, args, n)
 }
 
@@ -1090,53 +1090,55 @@ func (l *Lowerer) canCall(n *ast.MethodCall, c *Class) ir.Expr {
 // Go's embedding will not.
 //
 // This is the one place the struct-and-embedding mapping stops being faithful.
-// Perl looks the method up on the object's real class every time, so a method
-// in the base class calling $self->area reaches the subclass's area. Go
-// resolves the call against the type the receiver is declared as, which inside
-// a base method is always the base.
-func (l *Lowerer) noteLateBinding(n *ast.MethodCall, c *Class, s *Sub, super bool) {
-	if l.pass != 2 || super || l.curClass == nil {
+// A method calling another method on its own object is resolved by Perl on the
+// object's real class, every time, so a base method reaches the subclass's
+// version. Go resolves it against the type the receiver is declared as, which
+// inside a base method is always the base, and the override is never reached.
+func (l *Lowerer) noteLateBinding(n *ast.MethodCall, s *Sub, super bool, recv ir.Expr) {
+	if l.pass != 2 || super || l.curSub == nil || l.curSub.Recv == nil || s.Class == nil {
 		return
 	}
-	if s.Class == nil || s.Class == l.curClass {
+	// Only a call the method makes on its own object is at risk: a call from
+	// outside has the concrete type in hand and finds the override.
+	id, ok := recv.(*ir.Ident)
+	if !ok || id.Name != l.curSub.Recv.Go {
 		return
 	}
-	if !l.overridden(s) {
+	overriders := l.overriders(s)
+	if len(overriders) == 0 {
 		return
 	}
-	l.approximate(n, "P2G7046", "->"+n.Method+" inside a method of "+l.curClass.Perl,
-		"an overridden method will not be reached from the base class",
-		"Perl looks a method up on the object's real class every time it is called, so "+
-			s.Class.Perl+"::"+n.Method+" called from here would run the subclass's "+
-			"version. Go resolves the call against the type of the receiver, which "+
-			"inside this method is "+l.curClass.Go+", so the embedded "+s.Class.Go+
-			"'s version runs and the override is not reached.",
-		"Declare an interface with the methods the base calls on itself, give the base "+
-			"struct a field of that interface type, and have each constructor store the "+
-			"finished object in it. The base then calls through the interface and the "+
-			"override is reached. That is composition plus an interface, which is how Go "+
-			"expresses a template method.",
+	l.approximate(n, "P2G7046", "->"+n.Method+" on this method's own object",
+		"an override will not be reached from here",
+		"Perl looks a method up on the object's real class every time it is called, "+
+			"so this reaches "+strings.Join(overriders, "'s or ")+"'s version of `"+
+			n.Method+"` when the object is one of those. Go resolves the call against "+
+			"the type the receiver is declared as, which inside a method of "+s.Class.Go+
+			" is "+s.Class.Go+", so "+s.Class.Go+"."+s.Go+" runs and the override does "+
+			"not.",
+		"Declare an interface with the methods the base calls on itself, give the "+
+			"base struct a field of that interface type, and have each constructor "+
+			"store the finished object in it. The base then calls through the interface "+
+			"and the override is reached. That is composition plus an interface, which "+
+			"is how Go expresses a template method.",
 		"late-binding-vs-embedding", "implicit-interfaces", "structs-and-embedding")
 }
 
-// overridden reports whether any subclass declares its own version of a method.
-func (l *Lowerer) overridden(s *Sub) bool {
-	if s.Class == nil {
-		return false
-	}
-	var walk func(c *Class) bool
-	walk = func(c *Class) bool {
+// overriders names the classes that declare their own version of a method.
+func (l *Lowerer) overriders(s *Sub) []string {
+	var out []string
+	var walk func(c *Class)
+	walk = func(c *Class) {
 		for _, ch := range c.Children {
 			if _, ok := ch.subBy[s.Name]; ok {
-				return true
+				out = append(out, ch.Go)
 			}
-			if walk(ch) {
-				return true
-			}
+			walk(ch)
 		}
-		return false
 	}
-	return walk(s.Class)
+	walk(s.Class)
+	sort.Strings(out)
+	return out
 }
 
 // ---------------------------------------------------------------------------
