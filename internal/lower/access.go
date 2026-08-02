@@ -452,7 +452,30 @@ func (l *Lowerer) refGen(n *ast.RefGen) ir.Expr {
 	if t := typeOrAny(x); t.Kind == ir.Slice || t.Kind == ir.Map {
 		return x
 	}
-	return ir.Un("&", x, ir.PointerTo(typeOrAny(x)))
+	return l.addressOf(x, n)
+}
+
+// addressOf takes the address of a value, giving it a name first when it does
+// not already have one.
+//
+// Perl takes a reference to anything, a literal included. Go's & needs
+// something that lives somewhere: a constant has no address, so `\'x'` becomes
+// a variable holding "x" and a pointer to that.
+func (l *Lowerer) addressOf(x ir.Expr, at ast.Node) ir.Expr {
+	switch x.(type) {
+	case *ir.Ident, *ir.Selector, *ir.Index, *ir.CompositeLit:
+		return ir.Un("&", x, ir.PointerTo(typeOrAny(x)))
+	}
+	t := typeOrAny(x)
+	name := l.tmp("held")
+	decl := &ir.DeclStmt{Names: []string{name}, Type: t, Values: []ir.Expr{x}}
+	l.setProv(decl, at)
+	l.note(decl, "Go's & needs something that lives somewhere, and a constant does "+
+		"not: only a variable, a field or an element has an address. Perl takes a "+
+		"reference to anything, so the value is given a name first.",
+		"pointers-vs-references")
+	l.emit(decl)
+	return ir.Un("&", ir.NewIdent(name, t), ir.PointerTo(t))
 }
 
 // anonSub lowers `sub { ... }`.
@@ -484,11 +507,10 @@ func (l *Lowerer) anonSub(n *ast.AnonSub) ir.Expr {
 	l.ensureReturn(s, body)
 	l.scope, l.curSub = savedScope, savedSub
 
-	var results []*ir.Type
-	if l.pass == 2 {
-		results = s.Results
-	}
-	out := funcLit(params, results, body)
+	// The signature the previous round settled is used from the second round
+	// of discovery onwards, so that whatever holds the literal is inferred
+	// from the shape the literal will actually have.
+	out := funcLit(params, s.Results, body)
 	if l.pass == 1 {
 		s.LitType = out.Type()
 	}

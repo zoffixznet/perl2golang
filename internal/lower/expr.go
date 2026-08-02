@@ -193,6 +193,7 @@ func (l *Lowerer) list(e ast.Expr) ir.Expr {
 // the middle of a list has to be spliced in explicitly, which slices.Concat
 // does in one call.
 func (l *Lowerer) listValue(parts []ir.Expr, elem *ir.Type) ir.Expr {
+	elem = usableElem(elem, argTypes(parts))
 	sliceT := ir.SliceOf(elem)
 	splices := func(p ir.Expr) bool {
 		pt := typeOrAny(p)
@@ -475,6 +476,7 @@ func (l *Lowerer) pairs(elems []ast.Expr) (keys, vals []ir.Expr, t *ir.Type) {
 			break
 		}
 	}
+	t = usableElem(t, seen)
 	if t == nil {
 		t = ir.TAny
 	}
@@ -663,4 +665,24 @@ func todoWording(t ir.Todo) string {
 		return t.Short
 	}
 	return "not implemented"
+}
+
+// usableElem widens a collection's element type when the values cannot all be
+// stored in it.
+//
+// Two function types that differ are the case this exists for. Go converts
+// between numbers and between named types with the same shape, but there is no
+// conversion at all between func() and func() string: a collection holding
+// both is a collection of `any`, and saying otherwise produces a literal that
+// does not compile.
+func usableElem(t *ir.Type, seen []*ir.Type) *ir.Type {
+	if t == nil || t.Kind != ir.Func {
+		return t
+	}
+	for _, one := range seen {
+		if one != nil && one.Kind == ir.Func && !one.Equal(t) {
+			return ir.TAny
+		}
+	}
+	return t
 }

@@ -63,6 +63,14 @@ func join(a, b *ir.Type) *ir.Type {
 	case b == nil:
 		return a
 	case a.Equal(b):
+		if a.Kind == ir.Func {
+			// A function literal's type is refreshed in place once its
+			// signature settles, because whatever holds a single literal was
+			// inferred from that very object. A join is the other case: the
+			// answer describes a collection of several literals and must not
+			// go on tracking any one of them.
+			return &ir.Type{Kind: ir.Func, Params: a.Params, Results: a.Results, Variadic: a.Variadic}
+		}
 		return a
 	}
 

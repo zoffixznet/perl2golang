@@ -53,7 +53,7 @@ func (l *Lowerer) evalCall(n *ast.Call) ir.Expr {
 			[]ir.Expr{l.assignable(value, t, nil)}))
 	}
 
-	body := &ir.Block{Stmts: append([]ir.Stmt{l.recoverInto(errVar)}, stmts...)}
+	body := l.markUnused(&ir.Block{Stmts: append([]ir.Stmt{l.recoverInto(errVar)}, stmts...)})
 	run := exprStmt(ir.CallOf(funcLit(nil, nil, body), ir.TVoid))
 	l.setProv(run, n)
 	l.note(run, "The block runs inside a function literal so that defer has "+
