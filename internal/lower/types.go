@@ -19,8 +19,27 @@ import "perl2go/internal/ir"
 // `any`, which is the documented fallback: correct, compiles, and reported as
 // a place where the tool did not understand the program well enough.
 
+// unresolved is the `any` that means two observations disagreed, as opposed to
+// the `any` that means nothing said anything.
+//
+// The difference matters when the disagreement is inside a container. A slice
+// seen holding both a function and a number is a slice of `any` for good, and
+// folding the next number into it must not narrow it back to a slice of
+// numbers. Both spell `any` in the generated code; only the fold tells them
+// apart.
+var unresolved = &ir.Type{Kind: ir.Any}
+
+// isUnresolved reports whether a type is the settled kind of `any`. It is the
+// identity of the value that carries the distinction, not anything written
+// down in it, so the two spell the same Go and compare equal everywhere else.
+func isUnresolved(t *ir.Type) bool { return t == unresolved }
+
 // join returns the least type that can hold both a and b.
 func join(a, b *ir.Type) *ir.Type {
+	// A disagreement already reached is final: nothing later can resolve it.
+	if isUnresolved(a) || isUnresolved(b) {
+		return unresolved
+	}
 	// A void or invalid contribution carries no information at all, so it is
 	// treated as no observation rather than as a type to reconcile.
 	//
@@ -63,7 +82,7 @@ func join(a, b *ir.Type) *ir.Type {
 		return ir.PointerTo(join(a.Elem, b.Elem))
 	}
 
-	return ir.TAny
+	return unresolved
 }
 
 // joinAll folds join over a list of observations.
@@ -86,7 +105,7 @@ func joinAll(ts []*ir.Type) *ir.Type {
 		}
 		next := join(out, t)
 		if next == nil || next.Kind == ir.Any {
-			return ir.TAny
+			return unresolved
 		}
 		out = next
 	}

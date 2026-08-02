@@ -58,6 +58,11 @@ func funcLit(params []ir.Param, results []*ir.Type, body *ir.Block) *ir.FuncLit 
 		ptypes[i] = p.Type
 	}
 	n.T = ir.FuncOf(ptypes, results)
+	// A variadic tail is part of the type, and a function value whose type
+	// forgets it cannot be stored anywhere the real function fits.
+	if len(params) > 0 && params[len(params)-1].Variadic {
+		n.T.Variadic = true
+	}
 	return n
 }
 

@@ -458,6 +458,7 @@ func namedGroups(raw string) map[string]int {
 
 // matchExpr lowers `EXPR =~ /pattern/`.
 func (l *Lowerer) matchExpr(n *ast.Match, forceBool bool) ir.Expr {
+	normalizeMatch(n)
 	if x, ok := l.scanMatch(n); ok {
 		return x
 	}
@@ -467,18 +468,7 @@ func (l *Lowerer) matchExpr(n *ast.Match, forceBool bool) ir.Expr {
 		return l.markRefusedPattern(ir.BoolLit(false))
 	}
 
-	groups := 0
-	var named map[string]int
-	if n.Pattern != nil {
-		groups = countGroups(n.Pattern.Raw)
-		named = namedGroups(n.Pattern.Raw)
-	} else if v, ok := n.PatternExpr.(*ast.Var); ok && v.Sigil == '$' {
-		// The pattern came from a qr// held in a variable, which recorded what
-		// its groups are called when it was assigned.
-		if b, found := l.scope.lookup(varKey('$', v.Name)); found {
-			groups, named = b.Groups, b.NamedGroups
-		}
-	}
+	groups, named := l.matchGroups(n)
 	if groups == 0 {
 		out := ir.CallOf(selector(pattern, "MatchString", nil), ir.TBool, subject)
 		if n.Negate {
@@ -586,10 +576,14 @@ func (l *Lowerer) scanMatch(n *ast.Match) (ir.Expr, bool) {
 // and reading past the end of nil is the one place where the tolerant index
 // helper earns its keep.
 func (l *Lowerer) captureList(n *ast.Match) ([]ir.Expr, bool) {
-	if n.Pattern == nil || n.Negate || strings.Contains(n.Pattern.Mods, "g") {
+	normalizeMatch(n)
+	if n.Negate {
 		return nil, false
 	}
-	groups := countGroups(n.Pattern.Raw)
+	if n.Pattern != nil && strings.Contains(n.Pattern.Mods, "g") {
+		return nil, false
+	}
+	groups, _ := l.matchGroups(n)
 	if groups == 0 {
 		return nil, false
 	}
@@ -1090,4 +1084,53 @@ func (l *Lowerer) markRefusedPattern(x ir.Expr) ir.Expr {
 	ir.MetaOf(x).Todo = l.patternTodo
 	l.patternTodo = nil
 	return x
+}
+
+// matchGroups reports how many capture groups a match has, and what the named
+// ones are called.
+//
+// A pattern written out has them in its own text. A pattern held in a variable
+// recorded them when the qr// was assigned, because that is the only moment the
+// converter can see what is inside it.
+func (l *Lowerer) matchGroups(n *ast.Match) (int, map[string]int) {
+	if n.Pattern != nil {
+		return countGroups(n.Pattern.Raw), namedGroups(n.Pattern.Raw)
+	}
+	v, ok := n.PatternExpr.(*ast.Var)
+	if !ok || v.Sigil != '$' {
+		return 0, nil
+	}
+	if b, found := l.scope.lookup(varKey('$', v.Name)); found {
+		return b.Groups, b.NamedGroups
+	}
+	if b, found := l.globalSeen[varKey('$', v.Name)]; found {
+		return b.Groups, b.NamedGroups
+	}
+	return 0, nil
+}
+
+// normalizeMatch rewrites `/$re/` into the same shape as `$x =~ $re`.
+//
+// A pattern whose whole body is one interpolated scalar is that scalar's
+// pattern, not a pattern to compile from the text `$re`. Compiling the text
+// would produce a regular expression that matches an end of line followed by
+// the letters r and e, which is the sort of wrong that never announces itself.
+func normalizeMatch(n *ast.Match) {
+	if n == nil || n.Pattern == nil || n.PatternExpr != nil {
+		return
+	}
+	// A modifier applies to the pattern as written, and there is nowhere to
+	// put it on an already-compiled one.
+	if n.Pattern.Mods != "" {
+		return
+	}
+	if len(n.Pattern.Parts) != 1 {
+		return
+	}
+	v, ok := n.Pattern.Parts[0].(*ast.Var)
+	if !ok || v.Sigil != '$' {
+		return
+	}
+	n.PatternExpr = v
+	n.Pattern = nil
 }
