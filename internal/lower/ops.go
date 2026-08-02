@@ -307,7 +307,7 @@ func orderingLeaves(e ast.Expr) ([]ast.Expr, bool) {
 	switch b.Op {
 	case "<=>", "cmp":
 		return []ast.Expr{b}, true
-	case "||":
+	case "||", "or":
 		left, ok := orderingLeaves(b.L)
 		if !ok {
 			return nil, false

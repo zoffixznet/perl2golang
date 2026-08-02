@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-14T20:16:36Z",
+  "recorded": "2026-08-14T20:23:48Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -99,8 +99,8 @@
       "entries": 27,
       "stages": {
         "compiled": {
-          "pass": 14,
-          "fail": 13,
+          "pass": 15,
+          "fail": 12,
           "skip": 0
         },
         "emitted": {
@@ -130,11 +130,11 @@
         "skip": 0
       },
       "quality": {
-        "todos": 162,
+        "todos": 163,
         "symbols": 695,
-        "symbols_typed": 446,
+        "symbols_typed": 448,
         "refusals": 170,
-        "approximations": 211
+        "approximations": 207
       }
     },
     {
@@ -185,8 +185,8 @@
       "entries": 25,
       "stages": {
         "compiled": {
-          "pass": 17,
-          "fail": 8,
+          "pass": 20,
+          "fail": 5,
           "skip": 0
         },
         "emitted": {
@@ -229,8 +229,8 @@
     "entries": 161,
     "stages": {
       "compiled": {
-        "pass": 124,
-        "fail": 37,
+        "pass": 128,
+        "fail": 33,
         "skip": 0
       },
       "emitted": {
@@ -265,19 +265,19 @@
       "skip": 0
     },
     "quality": {
-      "todos": 306,
+      "todos": 307,
       "symbols": 2942,
-      "symbols_typed": 2267,
+      "symbols_typed": 2269,
       "refusals": 318,
-      "approximations": 742
+      "approximations": 738
     }
   },
   "quality": {
-    "todos": 306,
+    "todos": 307,
     "symbols": 2942,
-    "symbols_typed": 2267,
+    "symbols_typed": 2269,
     "refusals": 318,
-    "approximations": 742
+    "approximations": 738
   },
   "entries": [
     {
@@ -2567,7 +2567,7 @@
       "stages": {
         "compiled": {
           "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:145:20: cmp(a, b) (no value) used as value"
+          "reason": "the generated Go does not compile: ./main.go:143:14: too many arguments in call to cmp"
         },
         "emitted": {
           "outcome": "pass"
@@ -3175,15 +3175,14 @@
       "kind": "convert",
       "stages": {
         "compiled": {
-          "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:38:80: in call to pickKeys, cannot infer V (declared at ./helpers.go:139:29)"
+          "outcome": "pass"
         },
         "emitted": {
           "outcome": "pass"
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "the generated program did not compile"
+          "reason": "exit status 2, wanted 0; stdout differs: line 1, byte 8: got \"]\\ntitle: \\nwidth const: \\ntrunc: \\n...\", wanted \"the quick brown fox jumps over t...\"; stderr differs: unexpected \"TODO P2G3599: the squeeze function is not implemented ...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -3199,10 +3198,10 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "the generated program did not compile"
+        "reason": "exit status 2, wanted 0; stdout differs: line 1, byte 8: got \"]\\ntitle: \\nwidth const: \\ntrunc: \\n...\", wanted \"the quick brown fox jumps over t...\"; stderr differs: unexpected \"TODO P2G3599: the squeeze function is not implemented ...\""
       },
       "quality": {
-        "todos": 12,
+        "todos": 13,
         "symbols": 7,
         "symbols_typed": 2,
         "refusals": 13,
@@ -3677,7 +3676,7 @@
         "symbols": 18,
         "symbols_typed": 7,
         "refusals": 4,
-        "approximations": 9
+        "approximations": 4
       }
     },
     {
@@ -3766,7 +3765,7 @@
       "stages": {
         "compiled": {
           "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:50:9: invalid argument: p.Q[top] (map index expression of interface type any) for built-in len"
+          "reason": "the generated Go does not compile: ./main.go:151:26: cannot use deps (variable of type map[string]any) as map[string][]any value in argument to schedule"
         },
         "emitted": {
           "outcome": "pass"
@@ -3783,7 +3782,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "9 variables left dynamic out of 44"
+          "reason": "7 variables left dynamic out of 44"
         }
       },
       "equivalent_annotated": {
@@ -3793,9 +3792,9 @@
       "quality": {
         "todos": 0,
         "symbols": 44,
-        "symbols_typed": 35,
+        "symbols_typed": 37,
         "refusals": 0,
-        "approximations": 19
+        "approximations": 20
       }
     },
     {
@@ -5505,7 +5504,7 @@
       "stages": {
         "compiled": {
           "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:135:24: cannot use paths (variable of type []string) as map[string]any value in assignment"
+          "reason": "the generated Go does not compile: ./main.go:136:24: cannot use paths (variable of type []string) as map[string]any value in assignment"
         },
         "emitted": {
           "outcome": "pass"
@@ -5544,15 +5543,14 @@
       "kind": "convert",
       "stages": {
         "compiled": {
-          "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:131:12: cannot use func() int {…} (value of type func() int) as func() value in map literal"
+          "outcome": "pass"
         },
         "emitted": {
           "outcome": "pass"
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "the generated program did not compile"
+          "reason": "stdout differs: 360 byte(s) missing after line 2, expected \"CRIT   96%        20G      18.9G...\"; stderr differs: unexpected \"panic: interface conversion: interface {} is func() int, not map[stri...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -5567,7 +5565,7 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "the generated program did not compile"
+        "reason": "stdout differs: 360 byte(s) missing after line 2, expected \"CRIT   96%        20G      18.9G...\"; stderr differs: unexpected \"panic: interface conversion: interface {} is func() int, not map[stri...\""
       },
       "quality": {
         "todos": 0,
@@ -5889,15 +5887,14 @@
       "kind": "convert",
       "stages": {
         "compiled": {
-          "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:80:34: cannot use lhdr (variable of type []string) as string value in array or slice literal"
+          "outcome": "pass"
         },
         "emitted": {
           "outcome": "pass"
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "the generated program did not compile"
+          "reason": "stdout differs: line 1, byte 24: got \" E001\\tJane Doe\\tD10\\tlisbon E002\\tB...\", wanted \"\\tdept_name\\tcost_center\\nE001\\tJane...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -5912,7 +5909,7 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "the generated program did not compile"
+        "reason": "stdout differs: line 1, byte 24: got \" E001\\tJane Doe\\tD10\\tlisbon E002\\tB...\", wanted \"\\tdept_name\\tcost_center\\nE001\\tJane...\""
       },
       "quality": {
         "todos": 0,
@@ -6006,15 +6003,14 @@
       "kind": "convert",
       "stages": {
         "compiled": {
-          "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:189:56: cannot use path (variable of type []string) as string value in array or slice literal"
+          "outcome": "pass"
         },
         "emitted": {
           "outcome": "pass"
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "the generated program did not compile"
+          "reason": "exit status 255, wanted 1; stdout differs: 600 byte(s) missing after line 2, expected \" Welcome to WidgetWorks (staging...\"; stderr differs: unexpected \"line 2: expansion did not converge\""
         },
         "honest": {
           "outcome": "n/a"
@@ -6029,7 +6025,7 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "the generated program did not compile"
+        "reason": "exit status 255, wanted 1; stdout differs: 600 byte(s) missing after line 2, expected \" Welcome to WidgetWorks (staging...\"; stderr differs: unexpected \"line 2: expansion did not converge\""
       },
       "quality": {
         "todos": 0,
@@ -6046,7 +6042,7 @@
       "stages": {
         "compiled": {
           "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:230:10: cannot use cur (variable of type []float64) as []int value in assignment"
+          "reason": "the generated Go does not compile: ./main.go:226:10: cannot use cur (variable of type []float64) as []int value in assignment"
         },
         "emitted": {
           "outcome": "pass"

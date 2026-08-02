@@ -1316,13 +1316,16 @@ func (l *Lowerer) blessTarget(n *ast.Call) *Class {
 type container struct {
 	bind  *Binding
 	field *ClassField
+	// wrap turns the element type into the type the field itself has, which
+	// is what the levels between the two amount to.
+	wrap func(*ir.Type) *ir.Type
 }
 
 // containerOf finds the place an expression names, reaching through the
 // dereference Perl needs and Go does not.
 func (l *Lowerer) containerOf(e ast.Expr) container {
-	if f := l.fieldOf(e); f != nil {
-		return container{field: f}
+	if f, wrap, ok := l.fieldPlace(e); ok {
+		return container{field: f, wrap: wrap}
 	}
 	// The binding is looked up from the expression as written. A dereference
 	// has no binding of its own, and treating `@{ $h{k} }` as naming %h would
@@ -1330,27 +1333,61 @@ func (l *Lowerer) containerOf(e ast.Expr) container {
 	return container{bind: l.bindingOfTarget(e)}
 }
 
-// fieldOf reports the struct field an expression names, reaching through the
-// dereference Perl writes around a reference and Go does not need.
-func (l *Lowerer) fieldOf(e ast.Expr) *ClassField {
+// fieldPlace resolves an expression to the struct field behind it, together
+// with the levels of container between the field and the element.
+//
+// `$self->{queues}{$prio}` is a field holding a map of whatever goes in at
+// this point, and `push @{ $self->{queues}{$prio} }, $x` says that what goes
+// in is a list of x. Following that back to the field is what keeps a field of
+// lists of jobs from settling as a map of anything.
+func (l *Lowerer) fieldPlace(e ast.Expr) (*ClassField, func(*ir.Type) *ir.Type, bool) {
+	e = stripDeref(e)
+	if f := l.fieldAt[e]; f != nil {
+		return f, func(t *ir.Type) *ir.Type { return t }, true
+	}
+	var inner ast.Expr
+	var wrap func(*ir.Type) *ir.Type
+	switch n := e.(type) {
+	case *ast.HashIndex:
+		inner, wrap = n.Base, ir.MapOf
+	case *ast.Index:
+		inner, wrap = n.Base, ir.SliceOf
+	default:
+		return nil, nil, false
+	}
+	f, outer, ok := l.fieldPlace(inner)
+	if !ok {
+		return nil, nil, false
+	}
+	return f, func(t *ir.Type) *ir.Type { return outer(wrap(t)) }, true
+}
+
+// stripDeref removes the sigils Perl needs in front of a reference.
+func stripDeref(e ast.Expr) ast.Expr {
 	for {
 		d, ok := e.(*ast.Deref)
 		if !ok {
-			break
+			return e
 		}
 		e = d.X
 	}
-	return l.fieldAt[e]
+}
+
+// fieldOf reports the struct field an expression names, when there is nothing
+// between the two.
+func (l *Lowerer) fieldOf(e ast.Expr) *ClassField {
+	return l.fieldAt[stripDeref(e)]
 }
 
 // observeIn records the type of what goes into a container.
 func (l *Lowerer) observeIn(c container, t *ir.Type, hash bool) {
 	if c.field != nil {
 		if hash {
-			l.observeField(c.field, ir.MapOf(t))
+			t = ir.MapOf(t)
 		} else {
-			l.observeField(c.field, ir.SliceOf(t))
+			t = ir.SliceOf(t)
 		}
+		l.observeField(c.field, c.wrap(t))
 		return
 	}
 	l.observeElem(c.bind, t)

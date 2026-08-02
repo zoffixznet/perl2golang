@@ -284,6 +284,11 @@ func (l *Lowerer) sliceExpr(n *ast.Slice) ir.Expr {
 	if container == nil {
 		return ir.Nil(ir.TAny)
 	}
+	if n.Hash {
+		container = l.asMap(container, n)
+	} else {
+		container = l.asSlice(container, n)
+	}
 	elem := elemOf(typeOrAny(container))
 
 	// An index that is itself a list, such as the range in @a[0 .. $n] or the

@@ -823,10 +823,10 @@ func (l *Lowerer) assignToHash(lhs *ast.HashIndex, n *ast.Assign) []ir.Stmt {
 	if b := l.hashBindingOf(lhs); b != nil {
 		b.Writes++
 		l.observeElem(b, typeOrAny(l.scalar(n.RHS)))
-	} else if f := l.fieldOf(lhs.Base); f != nil {
-		// The container is a struct field rather than a variable, and a field
-		// of a map type learns what it holds the same way.
-		l.observeField(f, ir.MapOf(typeOrAny(l.scalar(n.RHS))))
+	} else if f, wrap, ok := l.fieldPlace(lhs.Base); ok {
+		// The container is a struct field rather than a variable, however
+		// many levels of map and slice lie between the two.
+		l.observeField(f, wrap(ir.MapOf(typeOrAny(l.scalar(n.RHS)))))
 	}
 	st := assign("=", []ir.Expr{index(m, key, elem)}, []ir.Expr{value})
 	l.setProv(st, n)

@@ -394,8 +394,13 @@ func (l *Lowerer) ensureReturn(s *Sub, block *ir.Block) {
 		case *ir.Return:
 			return
 		case *ir.ExprStmt:
-			if terminatingCall(last.X) {
-				return
+			// Go's rule for a terminating statement names panic and not
+			// os.Exit, so a function ending in an exit still needs a return
+			// written even though it can never be reached.
+			if c, ok := last.X.(*ir.Call); ok {
+				if id, isID := c.Fun.(*ir.Ident); isID && id.Name == "panic" {
+					return
+				}
 			}
 		}
 	}
@@ -785,10 +790,15 @@ func valueTail(body []ast.Stmt) []ast.Stmt {
 func yieldsValue(e ast.Expr) bool {
 	switch n := e.(type) {
 	case *ast.BinOp:
-		// A comma expression is a sequence, and `or`/`and` are control flow.
+		// A comma expression is a sequence and yields nothing worth keeping.
+		// `or` and `and` are control flow when one side is a call, which is
+		// the `open(...) or die` shape, and an expression when both sides
+		// produce values, which is how a comparator chains its keys.
 		switch n.Op {
-		case ",", "or", "and", "||", "&&", "//":
+		case ",":
 			return false
+		case "or", "and", "||", "&&", "//":
+			return yieldsValue(n.L) && yieldsValue(n.R)
 		}
 		return true
 	case *ast.NumberLit, *ast.StrLit, *ast.InterpLit, *ast.QwLit, *ast.Ternary,

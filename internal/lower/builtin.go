@@ -566,8 +566,10 @@ func (l *Lowerer) joinCall(n *ast.Call) ir.Expr {
 	if len(args) == 2 {
 		list = l.list(args[1])
 	} else {
+		// The values are a flat Perl list, so an array among them
+		// contributes its elements rather than itself.
 		parts, t := l.listParts(args[1:])
-		list = composite(ir.SliceOf(t), nil, parts)
+		list = l.listValue(parts, t)
 	}
 	out := l.stringsJoin(list, sep)
 	l.note(out, "strings.Join is join with the arguments the other way round: the "+
