@@ -249,6 +249,17 @@ A refusal names the construct, says why Go cannot express it the same way, and
 tells you what to write instead. That is the intended output for the parts of
 Perl that have no Go counterpart, not a failure to be worked around.
 
+A refusal never stops the program. Where a construct could not be converted the
+code calls `notImplemented`, which hands back the zero value of the type that
+position wanted and carries on, so a script with five refusals in it still
+builds, still runs, and still does the parts that converted. The first time the
+program reaches one it prints a line beginning `TODO` on standard error and
+keeps going, and standard output is left alone so the two programs can still be
+compared. Search the generated code for `notImplemented` to find every gap, or
+for a diagnostic code to find one. Nothing the stand-in returns is an answer:
+treat anything downstream of a gap the program actually reached as unproven
+until you have written the real code in its place.
+
 Pass `--strict` to make any refusal a nonzero exit status, which is what you
 want in a script.
 

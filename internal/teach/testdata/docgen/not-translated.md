@@ -6,7 +6,26 @@ This file is a work list: 1 refusal and 1 approximation.
 
 ## Refused: you have to write these (1)
 
-The generated code marks each of these with a TODO at the place it belongs, so the compiler and your editor will keep reminding you.
+The generated code marks each of these at the place it belongs, so the compiler and your editor will keep reminding you.
+
+### What a refusal looks like in the code
+
+A refusal is not a gap in the file. Each one leaves a call behind, carrying the same diagnostic code this page uses:
+
+```go
+// TODO: object method calls are not implemented
+sku := notImplemented[any]("P2G7001", "object method calls are not implemented")
+```
+
+A refused step that produced no value, rather than standing in for one, leaves the statement form instead, `notImplementedHere(code, what)`. The explanatory comment is written above the first place each distinct refusal appears; the call is at every one of them, so searching the code for `notImplemented` finds them all and searching for a code finds one.
+
+Three things follow from that shape.
+
+- **The program builds and runs.** It runs past every one of these until something else stops it, which is the point: the parts that did convert are ordinary Go, and you can watch them work. A refusal that ended the program would make every converted line below it unreachable, and a partial conversion whose converted half cannot run is worth very little.
+- **Each gap says so, once, on standard error.** The first time the program reaches one it prints `TODO` and the code, then carries on. Standard output is left alone, so a diff of the program's real output against the original's is still a diff of the two programs.
+- **The value it hands back is not the answer.** It is the zero value of whatever type that position wanted: `0`, `""`, `nil`, an empty slice. Everything downstream of a gap that ran is unproven, however plausible it looks. That is the trade for being able to run the thing at all, and it is why the marks are loud.
+
+To close one: find the call, read the entry below that carries its code, write the Go the entry describes, and delete the call and the comment above it. When the last of them is gone the program has no `notImplemented` left in it and nothing to print on standard error, which is a check you can run rather than a claim you have to trust.
 
 ### P2G3410: string eval at line 21 of `summarise.pl`
 

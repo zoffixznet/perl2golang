@@ -25,7 +25,7 @@ Dynamic fallback rate: 29%. That is the share of variables the tool could not gi
 
 ## Refused (1)
 
-Nothing was generated for these. The program does not do what the original did until you write them yourself.
+Nothing was generated for these. The program does not do what the original did until you write them yourself, though it does still run: each one stands in for the value its position wanted and names itself on standard error when it is reached.
 
 ### P2G3410: string eval at line 21 of `summarise.pl`
 

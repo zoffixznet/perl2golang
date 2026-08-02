@@ -323,6 +323,10 @@ func (b *bundle) readme() string {
 		m.fence("", "go build .")
 	}
 	m.p("There is nothing to install first. Arguments and standard input work the same as they did before. Everything after the package on a `go run` line goes to the program, flags included, so `go run . --verbose input.txt` passes both of those through. There is no `--` separator: `go run` would hand that to the program as an argument of its own.")
+	if b.rep.Stats.Refused > 0 {
+		m.p("Run it even though parts of it were refused, because that is what the refusals were shaped to allow. Where a construct could not be converted the code calls `notImplemented`, which hands back the zero value of the type that position wanted and carries on, so everything around the hole still runs. The first time the program reaches one it prints a line beginning `TODO` on standard error and keeps going: that is a report, not a crash. %s says what each one is and what to write in its place.",
+			link("What did not translate", rel(fileReadme, fileNotTrans)))
+	}
 
 	m.h(2, "What is in here")
 	m.bullet("`main.go` and any other `.go` files at the root: the clean program.")
@@ -421,6 +425,9 @@ func (b *bundle) honesty() string {
 	if s.Todos > 0 {
 		parts = append(parts, fmt.Sprintf("There %s %d TODO marker%s in the generated code, each naming the specific problem at the place it occurs.", verbIs(s.Todos), s.Todos, plural(s.Todos)))
 	}
+	if s.Refused > 0 {
+		parts = append(parts, "No refusal stops the program: each one stands in for the value its position wanted, so this builds and runs, does the parts it could, and says on standard error which gap it walked past.")
+	}
 
 	if s.Symbols > 0 {
 		dynamic := s.Symbols - s.SymbolsTyped
@@ -506,7 +513,7 @@ func (b *bundle) conversionReport() string {
 		m.h(2, "Entries")
 		m.p("The converter had nothing to flag: no note, no approximation, no refusal. Read %s anyway; a clean report means the tool understood the constructs it saw, not that the resulting Go is the Go you would have written.", link("the walkthrough", rel(fileReport, fileWalk)))
 	} else {
-		b.entrySection(m, fileReport, report.Refuse, "Refused", "Nothing was generated for these. The program does not do what the original did until you write them yourself.")
+		b.entrySection(m, fileReport, report.Refuse, "Refused", "Nothing was generated for these. The program does not do what the original did until you write them yourself, though it does still run: each one stands in for the value its position wanted and names itself on standard error when it is reached.")
 		b.entrySection(m, fileReport, report.Warn, "Approximated", "Go was generated for these, but it differs from the original in a way you need to know about.")
 		b.entrySection(m, fileReport, report.Note, "Notes", "These converted cleanly. They are here because the difference between the two languages is worth pointing out at this spot.")
 	}
@@ -928,7 +935,8 @@ func (b *bundle) notTranslated() string {
 
 	if len(refused) > 0 {
 		m.h(2, "Refused: you have to write these (%d)", len(refused))
-		m.p("The generated code marks each of these with a TODO at the place it belongs, so the compiler and your editor will keep reminding you.")
+		m.p("The generated code marks each of these at the place it belongs, so the compiler and your editor will keep reminding you.")
+		standInSection(m, 3)
 		for _, g := range refused {
 			b.entryBody(m, fileNotTrans, g, 3)
 		}
@@ -945,6 +953,27 @@ func (b *bundle) notTranslated() string {
 	m.p("When you have worked through this list, the fastest way to prove it is to write a test for each item you fixed. %s cover the mechanics.", link("The exercises", rel(fileNotTrans, fileExercises)))
 	m.raw(b.credit())
 	return m.String()
+}
+
+// standInSection explains what a refusal leaves behind in the code, what the
+// program does when it reaches one, and how to close it.
+//
+// It earns its place because the first thing anyone does with a partly
+// converted program is run it, and the first thing they see is a line they did
+// not write appearing on standard error. Left unexplained, that line reads like
+// a crash. It is the opposite: it is the program telling you it walked past a
+// hole and kept going.
+func standInSection(m *md, level int) {
+	m.h(level, "What a refusal looks like in the code")
+	m.p("A refusal is not a gap in the file. Each one leaves a call behind, carrying the same diagnostic code this page uses:")
+	m.fence("go", `// TODO: object method calls are not implemented
+sku := notImplemented[any]("P2G7001", "object method calls are not implemented")`)
+	m.p("A refused step that produced no value, rather than standing in for one, leaves the statement form instead, `notImplementedHere(code, what)`. The explanatory comment is written above the first place each distinct refusal appears; the call is at every one of them, so searching the code for `notImplemented` finds them all and searching for a code finds one.")
+	m.p("Three things follow from that shape.")
+	m.bullet("**The program builds and runs.** It runs past every one of these until something else stops it, which is the point: the parts that did convert are ordinary Go, and you can watch them work. A refusal that ended the program would make every converted line below it unreachable, and a partial conversion whose converted half cannot run is worth very little.")
+	m.bullet("**Each gap says so, once, on standard error.** The first time the program reaches one it prints `TODO` and the code, then carries on. Standard output is left alone, so a diff of the program's real output against the original's is still a diff of the two programs.")
+	m.bullet("**The value it hands back is not the answer.** It is the zero value of whatever type that position wanted: `0`, `\"\"`, `nil`, an empty slice. Everything downstream of a gap that ran is unproven, however plausible it looks. That is the trade for being able to run the thing at all, and it is why the marks are loud.")
+	m.p("To close one: find the call, read the entry below that carries its code, write the Go the entry describes, and delete the call and the comment above it. When the last of them is gone the program has no `notImplemented` left in it and nothing to print on standard error, which is a check you can run rather than a claim you have to trust.")
 }
 
 // exercises renders the tasks against this specific generated code.

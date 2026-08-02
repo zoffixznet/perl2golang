@@ -11,7 +11,7 @@ You asked for a conversion and got a directory. This page says what is in it, ho
 
 ## How completely it converted
 
-`summarise.pl` is 21 lines long. Of the 24 statements in it, 22 converted directly. 1 construct was approximated, meaning the Go runs but does not do exactly what the original did, and 1 construct was refused outright, meaning no Go was produced for it at all. There are 2 TODO markers in the generated code, each naming the specific problem at the place it occurs. Type inference gave a concrete Go type to 5 of the 7 variables it tracked; the other 2 fall back to a dynamic value, which works but is not the Go you would write by hand. Treat this as a starting point that still needs work, not a finished port.
+`summarise.pl` is 21 lines long. Of the 24 statements in it, 22 converted directly. 1 construct was approximated, meaning the Go runs but does not do exactly what the original did, and 1 construct was refused outright, meaning no Go was produced for it at all. There are 2 TODO markers in the generated code, each naming the specific problem at the place it occurs. No refusal stops the program: each one stands in for the value its position wanted, so this builds and runs, does the parts it could, and says on standard error which gap it walked past. Type inference gave a concrete Go type to 5 of the 7 variables it tracked; the other 2 fall back to a dynamic value, which works but is not the Go you would write by hand. Treat this as a starting point that still needs work, not a finished port.
 
 ## What to read, in what order
 
