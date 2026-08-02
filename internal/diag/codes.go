@@ -153,6 +153,8 @@ const (
 	BareReturnZeroValues Code = "P2G2120"
 	// MissingArguments: a call passes fewer arguments than the sub unpacks.
 	MissingArguments Code = "P2G2130"
+	// BlockArgument: a bare block argument became a function literal.
+	BlockArgument Code = "P2G2135"
 	// UndefClearsToZero: `undef $x` leaves the type's zero value behind.
 	UndefClearsToZero Code = "P2G2115"
 	// ValuelessCall: a call to a sub nothing reads cannot stand in an
@@ -379,6 +381,32 @@ const (
 	CanCheck Code = "P2G7020"
 	// Destroy: `DESTROY` runs at scope exit and Go collects later.
 	Destroy Code = "P2G7030"
+	// AccessorField: a sub that only reads one key became an exported field.
+	AccessorField Code = "P2G7040"
+	// MethodNotFound: no sub of that name exists in the class or its parents.
+	MethodNotFound Code = "P2G7041"
+	// MethodNeedsObject: an instance method was reached without an object.
+	MethodNeedsObject Code = "P2G7042"
+	// ConstructorArgs: the named arguments were not a written-out list.
+	ConstructorArgs Code = "P2G7043"
+	// ConstructorArgUnread: a named argument the constructor never reads.
+	ConstructorArgUnread Code = "P2G7044"
+	// IsaCheck: `->isa` was answered from the class hierarchy in the file.
+	IsaCheck Code = "P2G7045"
+	// LateBinding: an override cannot be reached from an embedded parent.
+	LateBinding Code = "P2G7046"
+	// InheritedConstructor: a class inherits its constructor from its parent.
+	InheritedConstructor Code = "P2G7047"
+	// ComputedFieldName: a blessed hash was given a key worked out at run time.
+	ComputedFieldName Code = "P2G7048"
+	// AccessorReadOnly: a read-only accessor was called with a value.
+	AccessorReadOnly Code = "P2G7049"
+	// ClassAlias: `ref($proto) || $proto` has one answer in Go.
+	ClassAlias Code = "P2G7050"
+	// Autoload: `AUTOLOAD` catches calls to methods that were never written.
+	Autoload Code = "P2G7035"
+	// Overload: `use overload` makes an operator a method call.
+	Overload Code = "P2G7025"
 )
 
 // Modules and the CPAN mapping table.
@@ -731,6 +759,14 @@ var catalogue = map[Code]Entry{
 		Cost:      "a caller cannot tell the empty answer from a real one that happens to be the zero value",
 		Converted: "the emitted `return` passes the zero value of each declared result",
 		Concepts:  []string{"multiple-return-values", "comma-ok-idiom"},
+	},
+	BlockArgument: {
+		Severity:  report.Note,
+		Message:   "a bare block argument became the function literal the `&` prototype stood for",
+		Short:     "the block became an argument",
+		Advice:    "nothing to change: the block was always a code reference, and Go writes it as one",
+		Converted: "the emitted call passes a function literal first",
+		Concepts:  []string{"variadic-and-no-defaults"},
 	},
 	MissingArguments: {
 		Severity:  report.Warn,
@@ -1541,6 +1577,105 @@ var catalogue = map[Code]Entry{
 		Cost:      "sites where the object outlives the sub cannot take a `defer` and are listed in the report",
 		Converted: "the emitted code defers the cleanup at the sites where the object does not escape",
 		Concepts:  []string{"defer-timing"},
+	},
+	AccessorField: {
+		Severity:  report.Note,
+		Message:   "a sub that only reads one hash key became an exported field",
+		Short:     "the accessor became a field",
+		Advice:    "read and write the field directly; Go adds the method later without changing any caller",
+		Converted: "the sub is gone and its callers name the field",
+		Concepts:  []string{"methods-and-receivers", "structs-and-embedding"},
+	},
+	MethodNotFound: {
+		Severity: report.Warn,
+		Message:  "no `sub %s` was found in the class or in anything it inherits from",
+		Short:    "no such method in this file",
+		Advice:   "convert the module that declares it too, so the type and its methods land in one package",
+		Cost:     "the call has nothing to resolve to and is left as a refusal",
+		Concepts: []string{"methods-and-receivers"},
+	},
+	MethodNeedsObject: {
+		Severity: report.Warn,
+		Message:  "`%s` reads the fields of an object and was called without one",
+		Short:    "an instance method needs a receiver",
+		Advice:   "build the object first and call the method on it",
+		Concepts: []string{"methods-and-receivers"},
+	},
+	ConstructorArgs: {
+		Severity: report.Warn,
+		Message:  "the constructor's arguments are built at run time, so no key can be matched to a parameter",
+		Short:    "constructor arguments not matchable",
+		Advice:   "pass the values positionally, in the order the generated constructor declares them",
+		Cost:     "every parameter is passed its zero value",
+		Concepts: []string{"variadic-and-no-defaults"},
+	},
+	ConstructorArgUnread: {
+		Severity: report.Warn,
+		Message:  "the call names `%s` and the constructor never reads that key",
+		Short:    "an unread constructor argument was dropped",
+		Advice:   "remove it from the call, or read it in the constructor so it becomes a field",
+		Concepts: []string{"variadic-and-no-defaults"},
+	},
+	IsaCheck: {
+		Severity:  report.Warn,
+		Message:   "`->isa(%s)` was answered from the class hierarchy this file declares",
+		Short:     "isa decided at conversion time",
+		Advice:    "where the value can hold more than one class, give it an interface type and use a type switch",
+		Converted: "the emitted code has the constant answer",
+		Concepts:  []string{"type-assertions-and-switches", "structs-and-embedding"},
+	},
+	LateBinding: {
+		Severity: report.Warn,
+		Message:  "Go resolves `%s` against the embedded parent, where Perl looked it up on the object's real class",
+		Short:    "embedding cannot express late binding",
+		Advice:   "declare an interface for the methods the base calls on itself, hold it in the base struct, and set it in each constructor",
+		Cost:     "the base class's own version runs where Perl would have run the subclass's",
+		Concepts: []string{"late-binding-vs-embedding", "implicit-interfaces", "structs-and-embedding"},
+	},
+	InheritedConstructor: {
+		Severity: report.Warn,
+		Message:  "`%s` has no constructor of its own and Perl finds the parent's by walking `@ISA`",
+		Short:    "the constructor is inherited",
+		Advice:   "write a constructor for this type that fills in the embedded parent and returns a pointer to it",
+		Concepts: []string{"structs-and-embedding", "late-binding-vs-embedding"},
+	},
+	ComputedFieldName: {
+		Severity: report.Warn,
+		Message:  "a blessed hash was given a key worked out at run time, and a struct's fields are fixed",
+		Short:    "a computed field name was dropped",
+		Advice:   "give the type a map field for the part whose keys vary, and keep the fixed keys as fields",
+		Concepts: []string{"structs-and-embedding"},
+	},
+	AccessorReadOnly: {
+		Severity: report.Warn,
+		Message:  "`%s` ignores anything passed to it, so the argument does nothing",
+		Short:    "this accessor only reads",
+		Advice:   "drop the argument, or assign to the field directly",
+		Concepts: []string{"methods-and-receivers"},
+	},
+	Overload: {
+		Severity: report.Refuse,
+		Message:  "`use overload` makes an operator a method call, and Go has no operator overloading at all",
+		Short:    "operator overloading has no equivalent",
+		Advice:   "give the type named methods, and implement `fmt.Stringer` in place of the `\"\"` overload",
+		Cost:     "`\"\"` does not fire for concatenation even with a Stringer, only for the fmt verbs",
+		Concepts: []string{"methods-and-receivers", "fmt-and-verbs"},
+	},
+	Autoload: {
+		Severity: report.Refuse,
+		Message:  "`AUTOLOAD` runs for any method the class does not define, and Go resolves method names as it compiles",
+		Short:    "AUTOLOAD has no Go equivalent",
+		Advice:   "write the methods out, or hold a map from name to function value and index it",
+		Cost:     "a call that AUTOLOAD would have caught has nothing to resolve to",
+		Concepts: []string{"methods-and-receivers", "implicit-interfaces"},
+	},
+	ClassAlias: {
+		Severity:  report.Note,
+		Message:   "`ref($proto) || $proto` picks the class to bless into, and Go has one type here either way",
+		Short:     "the class alias disappeared",
+		Advice:    "nothing to do: the constructor returns the one type whichever way it was called",
+		Converted: "the line is gone",
+		Concepts:  []string{"methods-and-receivers"},
 	},
 
 	// -- Modules ------------------------------------------------------------

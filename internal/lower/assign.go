@@ -218,6 +218,18 @@ func (l *Lowerer) declareSingle(v *ast.Var, n *ast.Assign) []ir.Stmt {
 	b := l.declare(v, KindLocal)
 	b.Writes++
 
+	// The hash reference a constructor is about to bless is the object
+	// itself, so it is built as the struct rather than as a map.
+	if c := l.ctorSelf(v); c != nil {
+		if h, ok := n.RHS.(*ast.AnonHash); ok {
+			b.Type = c.Ptr
+			l.observe(b, c.Ptr)
+			st := assign(":=", []ir.Expr{ir.NewIdent(b.Go, b.Type)}, []ir.Expr{l.structLit(c, h)})
+			l.setProv(st, n)
+			return []ir.Stmt{st}
+		}
+	}
+
 	var value ir.Expr
 	switch v.Sigil {
 	case '@':
@@ -242,6 +254,15 @@ func (l *Lowerer) declareSingle(v *ast.Var, n *ast.Assign) []ir.Stmt {
 	// specific type the initialiser brought.
 	var st ir.Stmt
 	switch {
+	case b.Kind == KindGlobal:
+		// The declaration was hoisted to package level because a sub reads
+		// the same variable, so the line that declared it now assigns to it.
+		st = assign("=", []ir.Expr{ir.NewIdent(b.Go, b.Type)}, []ir.Expr{coerced})
+		l.note(st, "This was a file-scope `my` that the subs below also read, so in Perl "+
+			"they all close over one variable. Go has no file-scope lexical: the variable "+
+			"is declared at package level and this line sets its starting value.",
+			"packages-and-exported-names", "closures-and-loop-capture")
+		return []ir.Stmt{st}
 	case b.Type == nil || typeOrAny(coerced).Equal(b.Type):
 		st = assign(":=", []ir.Expr{ir.NewIdent(b.Go, b.Type)}, []ir.Expr{coerced})
 	case b.Type.Kind == ir.Any:
@@ -423,14 +444,38 @@ func (l *Lowerer) listAssign(targets []ast.Expr, rhs ast.Expr, n *ast.Assign, de
 	// the source in scalar context and assign the count instead.
 	if len(sources) == len(targets) && allScalarTargets(targets) && !l.anyProducesList(sources) {
 		var lhsExprs, rhsExprs []ir.Expr
+		var binds []*Binding
+		var values []ir.Expr
+		dynamic := false
 		for i, t := range targets {
 			v := t.(*ast.Var)
 			value := l.scalar(sources[i])
 			b := l.bindingFor(v, declare)
 			b.Writes++
 			l.observe(b, typeOrAny(value))
+			if b.Type != nil && b.Type.Kind == ir.Any && typeOrAny(value).Kind != ir.Any {
+				dynamic = true
+			}
+			binds = append(binds, b)
+			values = append(values, value)
 			lhsExprs = append(lhsExprs, ir.NewIdent(b.Go, b.Type))
 			rhsExprs = append(rhsExprs, l.assignable(value, b.Type, sources[i]))
+		}
+		if declare && dynamic {
+			// The short form takes each variable's type from its initialiser,
+			// which would declare one of these narrower than the rest of the
+			// file needs it. Declaring them separately keeps the type the
+			// inference settled on.
+			var out []ir.Stmt
+			for i, b := range binds {
+				st := l.bindDecl(true, b, values[i])
+				l.setProv(st, n)
+				out = append(out, st)
+			}
+			for _, b := range binds {
+				out = append(out, l.discardIfUnused(b)...)
+			}
+			return out
 		}
 		op := "="
 		if declare {
@@ -454,7 +499,7 @@ func (l *Lowerer) listAssign(targets []ast.Expr, rhs ast.Expr, n *ast.Assign, de
 	// A call that returns exactly as many values as there are targets.
 	if len(sources) == 1 {
 		if c, ok := sources[0].(*ast.Call); ok {
-			if s, known := l.subs[c.Name]; known && len(s.Results) == len(targets) && allScalarTargets(targets) {
+			if s, known := l.findSub(c.Name); known && len(s.Results) == len(targets) && allScalarTargets(targets) {
 				value := l.callExpr(c)
 				var lhsExprs []ir.Expr
 				for i, t := range targets {
@@ -510,7 +555,7 @@ func (l *Lowerer) producesList(e ast.Expr) bool {
 		if isListBuiltin(n.Name) {
 			return true
 		}
-		if s, known := l.subs[n.Name]; known {
+		if s, known := l.findSub(n.Name); known {
 			return len(s.Results) > 1
 		}
 	}
@@ -544,7 +589,34 @@ func (l *Lowerer) listAssignByIndex(targets []ast.Expr, rhs ast.Expr, n *ast.Ass
 		if v.Sigil == '@' {
 			l.observe(b, ir.SliceOf(elem))
 			rest := slicing(ir.NewIdent(tmp, typeOrAny(src)), ir.IntLit(itoa(i)), nil, ir.SliceOf(elem))
-			st := assign(declOp(declare), []ir.Expr{ir.NewIdent(b.Go, b.Type)}, []ir.Expr{rest})
+			var st ir.Stmt
+			if declare && b.Type != nil && !b.Type.Equal(ir.SliceOf(elem)) {
+				// The rest of this list is not what the rest of the file puts
+				// in the array, and Go has no conversion between two slice
+				// types. Declaring the array with the type the whole file
+				// agreed on keeps every later use of it compiling; what the
+				// list had to offer goes in one element at a time.
+				st = &ir.DeclStmt{Names: []string{b.Go}, Type: b.Type}
+				loop := &ir.Range{
+					Key:    ir.NewIdent("_", ir.TInt),
+					Value:  ir.NewIdent(l.tmp("rest"), elem),
+					X:      rest,
+					Define: true,
+				}
+				loop.Body = &ir.Block{Stmts: []ir.Stmt{
+					assign("=", []ir.Expr{ir.NewIdent(b.Go, b.Type)},
+						[]ir.Expr{appendTo(ir.NewIdent(b.Go, b.Type),
+							l.assignable(loop.Value, elemOf(b.Type), nil))}),
+				}}
+				l.note(st, "An array on the left of a list assignment swallows everything "+
+					"that is left. The rest of the file puts a different kind of value in "+
+					"this array than this list holds, and Go converts between two slice "+
+					"types one element at a time.")
+				out = append(out, st, loop)
+				i++
+				continue
+			}
+			st = assign(declOp(declare), []ir.Expr{ir.NewIdent(b.Go, b.Type)}, []ir.Expr{rest})
 			l.note(st, "An array on the left of a list assignment swallows everything "+
 				"that is left, which Go writes as a slice expression from that index on.")
 			out = append(out, st)
@@ -626,7 +698,9 @@ func (l *Lowerer) assignToVar(v *ast.Var, n *ast.Assign) []ir.Stmt {
 	default:
 		value = l.scalar(n.RHS)
 	}
-	l.observe(b, typeOrAny(value))
+	if !selfReferential(v, n.RHS) {
+		l.observe(b, typeOrAny(value))
+	}
 
 	st := assign("=", []ir.Expr{ir.NewIdent(b.Go, b.Type)}, []ir.Expr{l.assignable(value, b.Type, n.RHS)})
 	l.setProv(st, n)
@@ -698,14 +772,33 @@ func (l *Lowerer) assignToHash(lhs *ast.HashIndex, n *ast.Assign) []ir.Stmt {
 	var out []ir.Stmt
 	out = append(out, l.autovivify(lhs)...)
 
-	m, key, elem := l.hashParts(lhs)
+	m, key, elem, field := l.hashPartsField(lhs)
 	if m == nil {
 		return out
 	}
+	if field != nil {
+		// A struct field: the place is the whole expression rather than a
+		// lookup inside a container, and the value says what the field holds.
+		if !selfReferential(lhs, n.RHS) {
+			l.observeField(field, typeOrAny(l.scalar(n.RHS)))
+		}
+		st := assign("=", []ir.Expr{m}, []ir.Expr{l.assignable(l.scalar(n.RHS), field.Type, n.RHS)})
+		l.setProv(st, n)
+		return append(out, st)
+	}
 	value := l.assignable(l.scalar(n.RHS), elem, n.RHS)
+	if key == nil {
+		st := assign("=", []ir.Expr{m}, []ir.Expr{value})
+		l.setProv(st, n)
+		return append(out, st)
+	}
 	if b := l.hashBindingOf(lhs); b != nil {
 		b.Writes++
 		l.observeElem(b, typeOrAny(l.scalar(n.RHS)))
+	} else if f := l.fieldOf(lhs.Base); f != nil {
+		// The container is a struct field rather than a variable, and a field
+		// of a map type learns what it holds the same way.
+		l.observeField(f, ir.MapOf(typeOrAny(l.scalar(n.RHS))))
 	}
 	st := assign("=", []ir.Expr{index(m, key, elem)}, []ir.Expr{value})
 	l.setProv(st, n)
@@ -913,8 +1006,15 @@ func (l *Lowerer) assignTarget(e ast.Expr) ir.Expr {
 		}
 		return index(base, idx, elem)
 	case *ast.HashIndex:
-		m, key, elem := l.hashParts(n)
-		if m == nil || key == nil {
+		m, key, elem, field := l.hashPartsField(n)
+		if m == nil {
+			return nil
+		}
+		if field != nil {
+			// A struct field is already the place; there is nothing to index.
+			return m
+		}
+		if key == nil {
 			return nil
 		}
 		return index(m, key, elem)
@@ -962,4 +1062,72 @@ func (l *Lowerer) assignExpr(n *ast.Assign) ir.Expr {
 		}
 	}
 	return ir.Nil(ir.TAny)
+}
+
+// selfReferential reports whether an assignment reads the very place it
+// writes, as `$x = $x + 1` and `$self->{n} = $self->{n} + $by` both do.
+//
+// Such an assignment says nothing new about what the place holds: the type of
+// its right-hand side was worked out from the place's own type, so recording
+// it as evidence would feed a guess back in as a fact. That matters most
+// early, while the type is still unknown and the arithmetic has fallen back to
+// float64 for want of anything better.
+func selfReferential(lhs, rhs ast.Expr) bool {
+	found := false
+	var walk func(ast.Expr)
+	walk = func(e ast.Expr) {
+		if e == nil || found {
+			return
+		}
+		if samePlace(lhs, e) {
+			found = true
+			return
+		}
+		switch n := e.(type) {
+		case *ast.BinOp:
+			walk(n.L)
+			walk(n.R)
+		case *ast.UnOp:
+			walk(n.X)
+		case *ast.Ternary:
+			walk(n.Cond)
+			walk(n.A)
+			walk(n.B)
+		case *ast.List:
+			for _, el := range n.Elems {
+				walk(el)
+			}
+		case *ast.Call:
+			for _, a := range n.Args {
+				walk(a)
+			}
+		}
+	}
+	walk(rhs)
+	return found
+}
+
+// samePlace reports whether two expressions name the same variable or the same
+// element of the same container, judged by their spelling.
+func samePlace(a, b ast.Expr) bool {
+	switch x := a.(type) {
+	case *ast.Var:
+		y, ok := b.(*ast.Var)
+		return ok && x.Sigil == y.Sigil && x.Name == y.Name
+	case *ast.HashIndex:
+		y, ok := b.(*ast.HashIndex)
+		if !ok || x.Arrow != y.Arrow || !samePlace(x.Base, y.Base) {
+			return false
+		}
+		ka, oka := staticString(x.Key)
+		kb, okb := staticString(y.Key)
+		return oka && okb && ka == kb
+	case *ast.Index:
+		y, ok := b.(*ast.Index)
+		return ok && x.Arrow == y.Arrow && samePlace(x.Base, y.Base) && samePlace(x.Idx, y.Idx)
+	case *ast.NumberLit:
+		y, ok := b.(*ast.NumberLit)
+		return ok && x.Text == y.Text
+	}
+	return false
 }

@@ -65,10 +65,44 @@ type Lowerer struct {
 	subs   map[string]*Sub
 	subOrd []string
 
+	// classes are the packages the file declares, keyed by their Perl name,
+	// and classOrd keeps them in declaration order so two runs agree.
+	classes  map[string]*Class
+	classOrd []string
+	// byGoType finds a class from the generated type name, which is how an
+	// expression's type answers "what class is this".
+	byGoType map[string]*Class
+	// units are the file's statements, each tagged with the package it was
+	// written in. Perl lets one file hold several.
+	units []pkgStmt
+	// curPkg is the package whose code is being lowered, which decides how
+	// an unqualified call resolves.
+	curPkg string
+	// hoisted marks a file-scope `my` whose variable a sub also reads. Perl
+	// closes over it; Go needs one package-level variable for both to be
+	// talking about the same thing.
+	hoisted map[*ast.Var]bool
+	// classVars marks the bindings that hold a class name rather than an
+	// object: the $class of a constructor and the $proto it came from.
+	classVars map[*Binding]*Class
+	// fieldAt remembers which struct field an access resolved to, so that a
+	// write through it can say what the field holds. A field is not a binding
+	// and has nowhere else to record the evidence.
+	fieldAt map[ast.Node]*ClassField
+	// curClass is the class whose method is being lowered.
+	curClass *Class
+	// arrowCalls and qualCalls record how the file calls its subs, which is
+	// what decides whether a sub in a package is a method or a function.
+	arrowCalls map[string]bool
+	qualCalls  map[string]bool
+
 	// anonSubs records the synthetic Sub behind each `sub { ... }`, keyed by
 	// the AST node so both passes agree about which one they are looking at.
 	anonSubs map[*ast.AnonSub]*Sub
-	anonOrd  []*Sub
+	// blockSubs holds the function literal a bare block argument stands for,
+	// keyed by its call so that every pass sees the same node.
+	blockSubs map[*ast.Call]*ast.AnonSub
+	anonOrd   []*Sub
 
 	// decls maps a declaration site to its binding so the second pass
 	// reuses exactly the records the first pass built.
@@ -182,6 +216,14 @@ func Lower(res parser.Result, src []byte, opts Options) *Result {
 		lines:      strings.Split(string(src), "\n"),
 		names:      newNameSet(),
 		subs:       map[string]*Sub{},
+		classes:    map[string]*Class{},
+		byGoType:   map[string]*Class{},
+		hoisted:    map[*ast.Var]bool{},
+		classVars:  map[*Binding]*Class{},
+		fieldAt:    map[ast.Node]*ClassField{},
+		arrowCalls: map[string]bool{},
+		qualCalls:  map[string]bool{},
+		curPkg:     "main",
 		decls:      map[ast.Node]*Binding{},
 		globalSeen: map[string]*Binding{},
 		helpers:    map[string]bool{},
@@ -200,13 +242,33 @@ func Lower(res parser.Result, src []byte, opts Options) *Result {
 		_ = d
 	}
 
-	l.hoistSubs(res.Program.Stmts)
+	l.collectClasses(res.Program)
+	l.markShared()
+	l.hoistSubs()
 
 	// Pass 1 discovers types. Its IR is thrown away.
-	l.pass = 1
-	l.scope = newScope(nil)
-	l.run(res.Program)
-	l.resolveTypes()
+	//
+	// It runs until the answers stop moving, because some of what it learns
+	// depends on what it has already learned. A variable holding an object
+	// takes its type from the constructor call; the method called on it takes
+	// its parameter types from that call site; the struct field filled from
+	// that parameter takes its type from there in turn. Each sweep resolves
+	// one more link in such a chain, and the loop stops as soon as a sweep
+	// changes nothing, which on an ordinary script is after two or three.
+	prev := ""
+	for round := 0; round < maxDiscoveryRounds; round++ {
+		l.pass = 1
+		l.scope = newScope(nil)
+		l.curPkg = "main"
+		l.run(res.Program)
+		l.resolveTypes()
+		l.settleFields()
+		state := l.typeState()
+		if state == prev {
+			break
+		}
+		prev = state
+	}
 
 	// Pass 2 builds the real tree.
 	l.pass = 2
@@ -234,17 +296,79 @@ func Lower(res parser.Result, src []byte, opts Options) *Result {
 	return out
 }
 
+// maxDiscoveryRounds caps the type-discovery loop. Each round can only make a
+// type more specific, so the loop terminates on its own; the cap is there so
+// that a program the converter models badly costs bounded time rather than
+// spinning.
+const maxDiscoveryRounds = 6
+
+// typeState renders every type the discovery pass settled, so that two rounds
+// can be compared for whether anything moved.
+func (l *Lowerer) typeState() string {
+	var sb strings.Builder
+	names := make([]string, 0, len(l.decls)+len(l.globals))
+	for _, b := range l.decls {
+		names = append(names, b.Go+"\x00"+b.Type.String())
+	}
+	for _, b := range l.globals {
+		names = append(names, b.Go+"\x00"+b.Type.String())
+	}
+	for _, name := range l.classOrd {
+		for _, f := range l.classes[name].Fields {
+			names = append(names, name+"."+f.Go+"\x00"+f.Type.String())
+		}
+	}
+	for _, name := range l.subOrd {
+		s := l.subs[name]
+		for _, r := range s.Results {
+			names = append(names, name+"\x00"+r.String())
+		}
+	}
+	sort.Strings(names)
+	for _, n := range names {
+		sb.WriteString(n)
+		sb.WriteByte('\n')
+	}
+	return sb.String()
+}
+
 // run performs one whole pass over the program.
 func (l *Lowerer) run(prog *ast.Program) *Result {
 	file := &ir.File{Name: "main.go", Package: "main"}
 
 	var top []ir.Stmt
-	for _, st := range prog.Stmts {
-		if sd, ok := st.(*ast.SubDecl); ok {
+	for _, u := range l.units {
+		l.curPkg = u.pkg
+		if sd, ok := u.st.(*ast.SubDecl); ok {
 			l.lowerSubDecl(sd)
 			continue
 		}
-		top = append(top, l.stmts([]ast.Stmt{st})...)
+		// `our @ISA = ...` says what a class inherits from, which the type
+		// declaration has already recorded. There is nothing left to run.
+		if es, ok := u.st.(*ast.ExprStmt); ok {
+			if _, isISA := parentFromISA(es.X); isISA && u.pkg != "main" {
+				continue
+			}
+		}
+		top = append(top, l.stmts([]ast.Stmt{u.st})...)
+	}
+	l.curPkg = "main"
+
+	// A type and the methods on it belong together, the way a Go file is
+	// laid out, and both come before the code that uses them.
+	emitted := map[*Sub]bool{}
+	for _, name := range l.classOrd {
+		c := l.classes[name]
+		if !c.IsType {
+			continue
+		}
+		file.Decls = append(file.Decls, l.classDecl(c))
+		for _, s := range c.Subs {
+			emitted[s] = true
+			if s.irDecl != nil {
+				file.Decls = append(file.Decls, s.irDecl)
+			}
+		}
 	}
 
 	// Package-level regular expressions come first: they are compiled once
@@ -271,7 +395,11 @@ func (l *Lowerer) run(prog *ast.Program) *Result {
 	file.Decls = append(file.Decls, mainFn)
 
 	for _, name := range l.subOrd {
-		if fn := l.subs[name].irDecl; fn != nil {
+		s := l.subs[name]
+		if emitted[s] {
+			continue
+		}
+		if fn := s.irDecl; fn != nil {
 			file.Decls = append(file.Decls, fn)
 		}
 	}

@@ -16,8 +16,38 @@ import (
 
 // refCall lowers ref.
 func (l *Lowerer) refCall(n *ast.Call) ir.Expr {
+	// `ref $obj` on an object is its class name, and `ref` on a class name is
+	// the empty string, which is how a sub tells the two calling styles apart.
+	if len(n.Args) == 1 {
+		if c, ok := l.classNamed(n.Args[0]); ok {
+			out := ir.Str(quote(""))
+			l.note(out, "This holds a class name rather than an object, and Perl's ref "+
+				"reports the empty string for anything that is not a reference. A "+
+				"constructor uses that to tell `Class->new` from `$obj->new`; the "+
+				"generated Go has one function either way.",
+				"methods-and-receivers")
+			_ = c
+			return out
+		}
+	}
 	x := l.argExpr(n, 0)
 	node := l.argNode(n, 0)
+
+	if c := l.classOf(typeOrAny(x)); c != nil {
+		out := ir.Str(quote(c.Perl))
+		l.note(out, "Perl answers ref with the class the reference was blessed into, "+
+			"looked up on the value while the program runs. The Go value's type is "+
+			"decided when the program is compiled, so the name is written in here.",
+			"static-types-and-zero-values", "type-assertions-and-switches")
+		l.approximate(n, "P2G7020", "ref on an object",
+			"the class name is written in as a constant",
+			"ref reports the class a reference was blessed into. This value has one "+
+				"Go type, so the answer is the same on every run and is written in.",
+			"Where the variable can hold more than one class, give it an interface type "+
+				"and use a type switch, which yields the typed value along with the answer.",
+			"type-assertions-and-switches")
+		return out
+	}
 
 	if kind, ok := staticRefKind(typeOrAny(x)); ok {
 		out := ir.Str(quote(kind))

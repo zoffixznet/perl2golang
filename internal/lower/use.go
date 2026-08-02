@@ -1,6 +1,8 @@
 package lower
 
 import (
+	"strings"
+
 	"perl2go/internal/ir"
 	"perl2go/internal/perl/ast"
 )
@@ -17,8 +19,11 @@ func (l *Lowerer) useStmt(n *ast.Use) []ir.Stmt {
 		// `use 5.010` and friends: a version requirement.
 		return nil
 
+	case "overload":
+		return l.useOverload(n)
+
 	case "strict", "warnings", "utf8", "feature", "vars", "lib", "integer",
-		"overload", "diagnostics", "open", "bytes", "less", "sigtrap", "subs":
+		"diagnostics", "open", "bytes", "less", "sigtrap", "subs":
 		if n.Module == "strict" && l.pass == 2 {
 			l.inform(n, "P2G7555", "use strict",
 				"`use strict` and `use warnings` ask perl to enforce at run time a "+
@@ -190,4 +195,58 @@ func constantName(e ast.Expr) (string, bool) {
 		}
 	}
 	return "", false
+}
+
+// useOverload turns down `use overload`.
+//
+// Overloading makes an operator a method call on the object, decided while the
+// program runs. Go has no operator overloading of any kind: + on two values of
+// a named type is either the built-in operation or a compile error, and there
+// is no hook to install.
+func (l *Lowerer) useOverload(n *ast.Use) []ir.Stmt {
+	ops := overloadedOps(n)
+	c := l.classes[l.curPkg]
+	if c != nil {
+		if c.Overloads == nil {
+			c.Overloads = map[string]bool{}
+		}
+		for _, op := range ops {
+			c.Overloads[op] = true
+		}
+	}
+	where := l.curPkg
+	if where == "" || where == "main" {
+		where = "this package"
+	}
+	list := "its operators"
+	if len(ops) > 0 {
+		list = "`" + strings.Join(ops, "`, `") + "`"
+	}
+	l.refuse(n, "P2G7025", "use overload",
+		"operator overloading has no Go equivalent",
+		"`use overload` in "+where+" makes "+list+" method calls on the object, "+
+			"chosen while the program runs from what the operands were blessed into. "+
+			"Go has no operator overloading at all, and `\"\"` in particular has no "+
+			"counterpart: interpolating a value calls no method the type can supply.",
+		"Give the type ordinary methods and call them: Add, Mul, Equal. For `\"\"`, "+
+			"implement fmt.Stringer, which is the one place Go does dispatch on a type "+
+			"for formatting, and remember that it only fires for %v, %s and Print, not "+
+			"for string concatenation.",
+		"methods-and-receivers", "fmt-and-verbs")
+	return nil
+}
+
+// overloadedOps reads the operator names out of a `use overload` list.
+func overloadedOps(n *ast.Use) []string {
+	var out []string
+	var flat []ast.Expr
+	for _, a := range n.Args {
+		flat = append(flat, flatten(a)...)
+	}
+	for i := 0; i < len(flat); i += 2 {
+		if op, ok := staticString(flat[i]); ok && op != "" {
+			out = append(out, op)
+		}
+	}
+	return out
 }

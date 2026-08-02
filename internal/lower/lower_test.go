@@ -1,6 +1,7 @@
 package lower
 
 import (
+	"strings"
 	"testing"
 
 	"perl2go/internal/ir"
@@ -113,7 +114,10 @@ func TestLowerReportsRefusals(t *testing.T) {
 		{"wantarray", `sub f { return wantarray ? 1 : 2; }`, "P2G2031"},
 		{"lookahead", `my $s = "x"; print 1 if $s =~ /(?=foo)/;`, "P2G4004"},
 		{"backreference", `my $s = "x"; print 1 if $s =~ /(a)\1/;`, "P2G4001"},
-		{"bless", `my $o = bless {}, "C";`, "P2G7001"},
+		{"bless on an array", `my $o = bless [1, 2], "C"; print $o->[0];`, "P2G7001"},
+		{"overload", `package M; use overload '+' => sub { 1 }; sub new { bless {}, shift }`, "P2G7025"},
+		{"AUTOLOAD", `package M; sub new { bless {}, shift } our $AUTOLOAD; sub AUTOLOAD { 1 }`, "P2G7035"},
+		{"DESTROY", `package M; sub new { bless {}, shift } sub DESTROY { my $s = shift; $s->{n} }`, "P2G7030"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -218,4 +222,82 @@ func TestARefusedExpressionBecomesOneReadableCall(t *testing.T) {
 	if res.Report.Stats.Refused == 0 {
 		t.Error("a refused construct was not counted")
 	}
+}
+
+// TestLowerBuildsClasses checks the shape a package plus bless comes out as:
+// one struct per package, fields named after the hash keys, methods on a
+// pointer receiver, and an accessor replaced by the field it read.
+func TestLowerBuildsClasses(t *testing.T) {
+	const perl = `
+package Counter;
+sub new { my ($class, %args) = @_; return bless { name => $args{name}, n => 0 }, $class }
+sub name { $_[0]{name} }
+sub bump { my ($self, $by) = @_; $self->{n} = $self->{n} + $by; return $self }
+package Loud;
+our @ISA = ('Counter');
+sub shout { my ($self) = @_; return uc $self->{name} }
+package main;
+my $c = Counter->new(name => 'hits');
+$c->bump(2);
+print $c->name, "\n";
+`
+	src := []byte(perl)
+	res := Lower(parser.Parse(src), src, Options{File: "t.pl", Program: "t", Module: "t"})
+	got := renderDecls(res)
+
+	for _, want := range []string{
+		"type Counter struct",
+		"Name string",
+		"N int",
+		"func NewCounter(name string) *Counter",
+		"func (c *Counter) Bump(by int) *Counter",
+		"type Loud struct",
+		"Counter",                // the parent is embedded, not copied field by field
+		"func (l *Loud) Shout()", // a subclass method of its own
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("generated declarations do not contain %q\n%s", want, got)
+		}
+	}
+	// A sub that only reads one key is not a method at all: the field took
+	// its place, and emitting both would not compile.
+	if strings.Contains(got, "func (c *Counter) Name(") {
+		t.Errorf("the accessor was emitted as a method as well as a field\n%s", got)
+	}
+}
+
+// renderDecls prints a lowered program's declarations for a test to match
+// against, without pulling the emitter into this package's tests.
+func renderDecls(res *Result) string {
+	var sb strings.Builder
+	for _, f := range res.Program.Files {
+		for _, d := range f.Decls {
+			switch d := d.(type) {
+			case *ir.TypeDecl:
+				sb.WriteString("type " + d.Name + " struct {\n")
+				for _, fl := range d.Fields {
+					sb.WriteString("\t" + fl.Name + " " + fl.Type.String() + "\n")
+				}
+				sb.WriteString("}\n")
+			case *ir.FuncDecl:
+				sb.WriteString("func ")
+				if d.Recv != nil {
+					sb.WriteString("(" + d.Recv.Name + " " + d.Recv.Type.String() + ") ")
+				}
+				sb.WriteString(d.Name + "(")
+				for i, p := range d.Params {
+					if i > 0 {
+						sb.WriteString(", ")
+					}
+					sb.WriteString(p.Name + " " + p.Type.String())
+				}
+				sb.WriteString(")")
+				for _, r := range d.Results {
+					sb.WriteString(" " + r.String())
+				}
+				sb.WriteString("\n")
+			}
+		}
+	}
+	return sb.String()
 }

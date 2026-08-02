@@ -9,13 +9,13 @@ import (
 
 // callExpr lowers a call used for its value.
 func (l *Lowerer) callExpr(n *ast.Call) ir.Expr {
-	if s, ok := l.subs[n.Name]; ok && !isBuiltinName(n.Name) {
+	if s, ok := l.findSub(n.Name); ok && !isBuiltinName(n.Name) {
 		return l.callSub(s, n)
 	}
 	if x := l.builtin(n); x != nil {
 		return x
 	}
-	if s, ok := l.subs[n.Name]; ok {
+	if s, ok := l.findSub(n.Name); ok {
 		return l.callSub(s, n)
 	}
 	// A name declared with `use constant` reads as a call with no arguments,
@@ -227,6 +227,9 @@ func (l *Lowerer) builtin(n *ast.Call) ir.Expr {
 	case "unlink":
 		return l.unlinkCall(n)
 	case "bless":
+		if x, ok := l.blessCall(n); ok {
+			return x
+		}
 		return l.todoExpr(n, "P2G7001", "bless",
 			"bless has no Go equivalent",
 			"bless marks a reference as belonging to a class, which is how Perl "+
@@ -626,7 +629,7 @@ func (l *Lowerer) pushCall(n *ast.Call) []ir.Stmt {
 	source := l.asSlice(target, args[0])
 	elem := elemOf(typeOrAny(source))
 
-	b := l.bindingOfTarget(args[0])
+	into := l.containerOf(args[0])
 	var vals []ir.Expr
 	var spread ir.Expr
 	for _, a := range args[1:] {
@@ -635,14 +638,15 @@ func (l *Lowerer) pushCall(n *ast.Call) []ir.Stmt {
 			continue
 		}
 		xt := typeOrAny(x)
-		if xt.Kind == ir.Slice && elem.Kind != ir.Slice {
+		if xt.Kind == ir.Slice && elem.Kind != ir.Slice && flattensInList(a) {
 			// Perl flattens an array into the push, so the array contributes
-			// its elements.
-			l.observeElem(b, elemOf(xt))
+			// its elements. A reference does not: `push @a, [ ... ]` adds one
+			// element that happens to be a list.
+			l.observeIn(into, elemOf(xt), false)
 			spread = x
 			continue
 		}
-		l.observeElem(b, xt)
+		l.observeIn(into, xt, false)
 		vals = append(vals, l.assignable(x, elem, a))
 	}
 

@@ -14,6 +14,17 @@ import (
 // and the element type. It returns a nil container when the shape is not one
 // the converter understands.
 func (l *Lowerer) indexParts(n *ast.Index) (base ir.Expr, idx ir.Expr, elem *ir.Type) {
+	// $_[n] inside a sub reads the argument list, which is a parameter here
+	// and not a variable the file declared.
+	if v, ok := n.Base.(*ast.Var); ok && !n.Arrow && v.Sigil == '$' && v.Name == "_" &&
+		l.curSub != nil && l.curSub.VarArgs != nil {
+		b := l.curSub.VarArgs
+		b.Reads++
+		base = ir.NewIdent(b.Go, b.Type)
+		elem = elemOf(typeOrAny(base))
+		idx = l.toInt(l.expr(n.Idx), n.Idx)
+		return base, idx, elem
+	}
 	if v, ok := n.Base.(*ast.Var); ok && !n.Arrow && v.Sigil == '$' {
 		// $a[0] reads element 0 of @a: the sigil describes the element, not
 		// the container, which is one of the first things to unlearn.
@@ -33,6 +44,16 @@ func (l *Lowerer) indexParts(n *ast.Index) (base ir.Expr, idx ir.Expr, elem *ir.
 
 // indexExpr lowers $a[i] and $ref->[i].
 func (l *Lowerer) indexExpr(n *ast.Index) ir.Expr {
+	// $_[0] inside a method is the object the method was called on, which the
+	// receiver already names.
+	if isFirstArg(n) && l.curSub != nil && l.curSub.Recv != nil {
+		out := l.ident(l.curSub.Recv)
+		l.note(out, "A Perl method finds its object in $_[0], because a method call is "+
+			"a sub call with the object prepended. Go names it in the receiver, before "+
+			"the method name, so there is nothing to index.",
+			"methods-and-receivers")
+		return out
+	}
 	base, idx, elem := l.indexParts(n)
 	if base == nil {
 		return ir.Nil(ir.TAny)
@@ -82,6 +103,20 @@ func negativeLiteral(e ast.Expr) (string, bool) {
 // hashParts resolves a hash element access into the map, the key, and the
 // value type.
 func (l *Lowerer) hashParts(n *ast.HashIndex) (m ir.Expr, key ir.Expr, elem *ir.Type) {
+	m, key, elem, _ = l.hashPartsField(n)
+	return m, key, elem
+}
+
+// hashPartsField is hashParts plus the struct field it resolved, when the
+// container turned out to be an object rather than a hash. A nil key means the
+// place is the whole expression: a field, a parameter, or an environment
+// variable, none of which is a lookup inside a container.
+func (l *Lowerer) hashPartsField(n *ast.HashIndex) (m ir.Expr, key ir.Expr, elem *ir.Type, field *ClassField) {
+	// $args{name} inside a constructor is the parameter that named argument
+	// turned into, and never a hash at all.
+	if b, ok := l.namedArgRead(n); ok {
+		return l.ident(b), nil, b.Type, nil
+	}
 	if v, ok := n.Base.(*ast.Var); ok && !n.Arrow && v.Sigil == '$' && v.Name == "+" {
 		// $+{name} reads a named capture group.
 		if k, ok := staticString(n.Key); ok {
@@ -90,31 +125,64 @@ func (l *Lowerer) hashParts(n *ast.HashIndex) (m ir.Expr, key ir.Expr, elem *ir.
 					"regexp.SubexpIndex looks the number up by name when the pattern is "+
 					"not known at conversion time.",
 					"submatch-and-named-groups")
-				return x, nil, ir.TString
+				return x, nil, ir.TString, nil
 			}
 		}
 	}
-	if v, ok := n.Base.(*ast.Var); ok && !n.Arrow && v.Sigil == '$' {
-		if v.Name == "ENV" {
-			k := l.toStr(l.expr(n.Key), n.Key)
-			out := call("os", "os", "Getenv", ir.TString, k)
-			l.note(out, "Perl's %ENV is a hash view of the environment. Go reads one "+
-				"variable at a time with os.Getenv, which returns the empty string when "+
-				"the name is not set.")
-			return out, nil, ir.TString
+	switch {
+	case isFirstArg(n.Base) && l.curSub != nil && l.curSub.Recv != nil:
+		// $_[0]{field} is the compact way a method reaches its own object.
+		m = l.ident(l.curSub.Recv)
+	default:
+		v, isVar := n.Base.(*ast.Var)
+		if isVar && !n.Arrow && v.Sigil == '$' {
+			if v.Name == "ENV" {
+				k := l.toStr(l.expr(n.Key), n.Key)
+				out := call("os", "os", "Getenv", ir.TString, k)
+				l.note(out, "Perl's %ENV is a hash view of the environment. Go reads one "+
+					"variable at a time with os.Getenv, which returns the empty string when "+
+					"the name is not set.")
+				return out, nil, ir.TString, nil
+			}
+			b := l.lookup('%', v.Name, v)
+			m = l.ident(b)
+		} else {
+			m = l.expr(n.Base)
 		}
-		b := l.lookup('%', v.Name, v)
-		m = l.ident(b)
-	} else {
-		m = l.expr(n.Base)
 	}
 	if m == nil {
-		return nil, nil, ir.TAny
+		return nil, nil, ir.TAny, nil
+	}
+	// The container is lowered before anything decides what it is, because a
+	// blessed hash reference and a plain one look the same in the source and
+	// only the value's type tells them apart.
+	if c := l.classOf(typeOrAny(m)); c != nil {
+		if k, ok := staticString(n.Key); ok {
+			f := c.field(k)
+			if f == nil && l.pass == 1 {
+				f = l.declareField(c, k, n)
+			}
+			if f != nil {
+				l.fieldAt[n] = f
+				return selector(m, f.Go, f.Type), nil, f.Type, f
+			}
+			return nil, nil, ir.TAny, nil
+		}
+		if l.pass == 2 {
+			l.approximate(n, "P2G7048", "a computed key on an object",
+				"the field name is worked out at run time",
+				"Perl objects are hashes, so a field can be reached by a name the "+
+					"program computes. A Go struct's fields are fixed when it is compiled.",
+				"Where the set of names is small, a switch over them reads well. Where it "+
+					"is open-ended, that part of the object wants to be a map field.",
+				"structs-and-embedding")
+		}
+		return nil, nil, ir.TAny, nil
 	}
 	m = l.asMap(m, n)
 	elem = elemOf(typeOrAny(m))
 	key = l.toStr(l.expr(n.Key), n.Key)
-	return m, key, elem
+	return m, key, elem, nil
 }
 
 // asMap makes a value usable as a map.
@@ -325,7 +393,7 @@ func (l *Lowerer) refGen(n *ast.RefGen) ir.Expr {
 				"pointers-vs-references", "slice-aliasing-and-copy")
 			return x
 		case '&':
-			if s, ok := l.subs[inner.Name]; ok {
+			if s, ok := l.findSub(inner.Name); ok {
 				out := ir.NewIdent(s.Go, nil)
 				l.note(out, "A code reference is just the function value in Go. "+
 					"Functions are ordinary values that can be stored, passed and "+
@@ -376,7 +444,7 @@ func (l *Lowerer) anonSub(n *ast.AnonSub) ir.Expr {
 	l.scope = newScope(savedScope)
 	l.scope.fn = s
 	l.curSub = s
-	params, rest := l.recoverParams(s, n.Body)
+	params, rest := l.recoverParams(s, valueTail(n.Body))
 	body := l.markUnused(&ir.Block{Stmts: l.stmts(rest)})
 	l.implicitReturn(s, body)
 	l.ensureReturn(s, body)

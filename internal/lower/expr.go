@@ -86,16 +86,7 @@ func (l *Lowerer) exprInner(e ast.Expr) ir.Expr {
 	case *ast.FileHandle:
 		return l.fileHandleExpr(n)
 	case *ast.MethodCall:
-		return l.todoExpr(n, "P2G7001", "method call",
-			"object method calls are not implemented",
-			"This calls a method on an object. Perl objects are blessed references "+
-				"whose class is decided at run time, and method resolution walks @ISA. "+
-				"Go has methods, but they are declared on a named type at compile time "+
-				"and there is no inheritance.",
-			"Declare a struct type for the class, turn each sub in the package into a "+
-				"method with a receiver, and replace inheritance with embedding or with "+
-				"an interface the concrete types satisfy.",
-			"methods-and-receivers", "structs-and-embedding", "implicit-interfaces")
+		return l.methodCall(n)
 	case *ast.BacktickCmd:
 		return l.todoExpr(n, "P2G6501", "backticks",
 			"running an external command is not implemented",

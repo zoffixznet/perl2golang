@@ -15,6 +15,9 @@ import (
 // operator here first coerces its sides into the shape the Go operator needs,
 // and the coercion is exactly the lesson the annotated output carries.
 func (l *Lowerer) binop(n *ast.BinOp) ir.Expr {
+	if x, ok := l.overloadedOperator(n); ok {
+		return x
+	}
 	switch n.Op {
 	case "+", "-", "*":
 		lx, rx, t := l.numPair(n.L, n.R)
@@ -446,7 +449,13 @@ func (l *Lowerer) incDecExpr(n *ast.UnOp) ir.Expr {
 func (l *Lowerer) definedExpr(x ast.Expr, at ast.Node) ir.Expr {
 	switch n := x.(type) {
 	case *ast.HashIndex:
-		m, key, _ := l.hashParts(n)
+		m, key, _, field := l.hashPartsField(n)
+		if m != nil && key == nil {
+			// A struct field or a constructor parameter: there is no key to
+			// ask about, so the question becomes the zero-value test.
+			_ = field
+			return l.definedValue(m, at)
+		}
 		if m != nil {
 			name := l.tmp("ok")
 			val := l.tmp("_")
@@ -466,7 +475,11 @@ func (l *Lowerer) definedExpr(x ast.Expr, at ast.Node) ir.Expr {
 		}
 	}
 
-	e := l.expr(x)
+	return l.definedValue(l.expr(x), at)
+}
+
+// definedValue answers `defined` for a value whose type is already known.
+func (l *Lowerer) definedValue(e ir.Expr, at ast.Node) ir.Expr {
 	t := typeOrAny(e)
 	switch t.Kind {
 	case ir.Any, ir.Pointer, ir.Slice, ir.Map, ir.Error:
@@ -559,3 +572,50 @@ func (l *Lowerer) evalForEffect(e ast.Expr) {
 
 // quote is strconv.Quote, kept short because it appears everywhere.
 func quote(s string) string { return strconv.Quote(s) }
+
+// overloadedOperator turns down an operator that `use overload` made a method
+// call on one of its operands.
+//
+// Nothing about it can be translated as an operator: Go has no way to give a
+// named type its own +, and applying the built-in one to the struct would not
+// compile even if it were the right thing to do.
+func (l *Lowerer) overloadedOperator(n *ast.BinOp) (ir.Expr, bool) {
+	var overloader *Class
+	for _, side := range []ast.Expr{n.L, n.R} {
+		c := l.classOf(typeOrAny(l.peek(side)))
+		if c != nil && c.Overloads[n.Op] {
+			overloader = c
+			break
+		}
+	}
+	if overloader == nil {
+		return nil, false
+	}
+	return l.todoExpr(n, "P2G7025", "overloaded "+n.Op,
+		"this operator is a method call on "+overloader.Perl,
+		"`use overload` in "+overloader.Perl+" gave `"+n.Op+"` its own subroutine, so "+
+			"this line calls that subroutine rather than doing arithmetic. Go decides "+
+			"what an operator means from the operand types alone and has no hook to "+
+			"install one.",
+		"Call the method by name. `"+overloader.Go+"` has the same subroutine on it, "+
+			"so `a.Add(b)` says what `a + b` was doing and reads the same to anyone who "+
+			"has not seen the overload declaration.",
+		"methods-and-receivers"), true
+}
+
+// peek lowers an expression only far enough to ask what type it has, for the
+// shapes where doing so has no side effect. Anything else answers nothing.
+func (l *Lowerer) peek(e ast.Expr) ir.Expr {
+	switch n := e.(type) {
+	case *ast.Var:
+		if n.Sigil == '$' {
+			if b, ok := l.scope.lookup(varKey('$', n.Name)); ok {
+				return l.identFor(b)
+			}
+			if b, ok := l.globalSeen[varKey('$', n.Name)]; ok {
+				return l.identFor(b)
+			}
+		}
+	}
+	return nil
+}

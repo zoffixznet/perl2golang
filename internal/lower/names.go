@@ -145,6 +145,9 @@ func (n *nameSet) take(base string) string {
 // emitter introduces itself.
 func (n *nameSet) reserve(name string) { n.used[name] = true }
 
+// has reports whether a name is already spoken for.
+func (n *nameSet) has(name string) bool { return n.used[name] }
+
 func itoa(n int) string {
 	if n == 0 {
 		return "0"

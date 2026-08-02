@@ -16,6 +16,14 @@ func (l *Lowerer) declare(v *ast.Var, kind Kind) *Binding {
 		l.scope.define(varKey(v.Sigil, v.Name), b)
 		return b
 	}
+	// A file-scope `my` that a sub also reads is one variable in Perl and has
+	// to be one variable here, which at file scope means a package-level one.
+	if l.hoisted[v] {
+		b := l.lookup(v.Sigil, v.Name, v)
+		b.Kind = KindGlobal
+		l.decls[v] = b
+		return b
+	}
 	b := &Binding{
 		Perl:  string(v.Sigil) + v.Name,
 		Sigil: v.Sigil,
@@ -212,7 +220,7 @@ func (l *Lowerer) varExpr(v *ast.Var) ir.Expr {
 			"slices-not-arrays")
 		return out
 	case '&':
-		if s, ok := l.subs[v.Name]; ok {
+		if s, ok := l.findSub(v.Name); ok {
 			return ir.NewIdent(s.Go, nil)
 		}
 	}

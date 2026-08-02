@@ -94,7 +94,7 @@ func (l *Lowerer) sortByName(n *ast.Call) ir.Expr {
 	t := typeOrAny(src)
 	elem := elemOf(t)
 
-	s, ok := l.subs[n.SortSub]
+	s, ok := l.findSub(n.SortSub)
 	if !ok {
 		return l.todoExpr(n, "P2G5590", "sort with a named comparator",
 			"the comparator sub is not declared in this file",

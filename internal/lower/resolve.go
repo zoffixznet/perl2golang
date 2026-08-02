@@ -124,6 +124,29 @@ type Sub struct {
 	irDecl *ir.FuncDecl
 	// Doc is the comment block above the declaration.
 	Doc []string
+
+	// Pkg is the Perl package the sub was declared in.
+	Pkg string
+	// Class is the class it belongs to, nil for a plain function.
+	Class *Class
+	// Kind says whether it became a method, a constructor, a class method,
+	// or an ordinary function.
+	Kind SubKind
+	// Recv is the receiver binding of a method.
+	Recv *Binding
+	// Accessor is the field a sub that only reads one hash key stands for.
+	// Such a sub is not emitted at all: the field takes its place.
+	Accessor *ClassField
+	// Setter records that the accessor also writes when handed a value.
+	Setter bool
+	// Named is the binding of a `%args` named-argument hash, which becomes
+	// one Go parameter per key the sub reads.
+	Named       *Binding
+	NamedParams []*Binding
+	namedBy     map[string]*Binding
+	// SelfVar names the variable a constructor blesses, which is the one
+	// that has to be built as the struct rather than as a map.
+	SelfVar string
 }
 
 // scope is one lexical level.

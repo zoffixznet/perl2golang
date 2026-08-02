@@ -12,42 +12,112 @@ import (
 // Perl resolves a call to a sub declared later in the file, and so does Go for
 // package-level functions, so the whole file is scanned first. It also means
 // the type of a call is known before the call site is reached.
-func (l *Lowerer) hoistSubs(list []ast.Stmt) {
-	for _, st := range list {
-		sd, ok := st.(*ast.SubDecl)
+//
+// Subs are keyed by their fully qualified Perl name, because a file with two
+// packages in it can hold two subs called `new` and they are different
+// functions.
+func (l *Lowerer) hoistSubs() {
+	for _, u := range l.units {
+		sd, ok := u.st.(*ast.SubDecl)
 		if !ok {
 			continue
 		}
-		if _, dup := l.subs[sd.Name]; dup {
+		key := qualify(u.pkg, sd.Name)
+		if _, dup := l.subs[key]; dup {
 			continue
 		}
-		s := &Sub{Name: sd.Name, Decl: sd, Line: posLine(sd)}
-		s.Go = l.names.take(goName(sd.Name))
+		s := &Sub{Name: sd.Name, Pkg: u.pkg, Decl: sd, Line: posLine(sd)}
 		s.Doc = leadComments(sd)
-		l.subs[sd.Name] = s
-		l.subOrd = append(l.subOrd, sd.Name)
+		l.subs[key] = s
+		l.subOrd = append(l.subOrd, key)
+		if c, ok := l.classes[u.pkg]; ok && c.IsType {
+			s.Class = c
+			c.Subs = append(c.Subs, s)
+			c.subBy[sd.Name] = s
+			continue
+		}
+		s.Go = l.plainName(u.pkg, sd.Name)
 	}
+	// Naming the members of a class needs the whole class in hand: a method
+	// and a field share one namespace in Go, and the constructor's name is
+	// built from the type's.
+	for _, name := range l.classOrd {
+		if c := l.classes[name]; c.IsType {
+			l.nameMembers(c)
+		}
+	}
+}
+
+// qualify returns the fully qualified Perl name of a sub.
+func qualify(pkg, name string) string {
+	if strings.Contains(name, "::") {
+		return name
+	}
+	if pkg == "" {
+		pkg = "main"
+	}
+	return pkg + "::" + name
+}
+
+// plainName picks the Go identifier for a sub that is not a method. A sub in a
+// second package keeps its own name where nothing else has claimed it, and is
+// qualified with the package only when it would otherwise collide.
+func (l *Lowerer) plainName(pkg, name string) string {
+	base := goName(name)
+	if pkg != "main" && l.names.has(base) {
+		base = goName(lastPart(pkg) + "_" + name)
+	}
+	return l.names.take(base)
+}
+
+// lastPart returns the final component of a :: separated package name.
+func lastPart(pkg string) string {
+	if i := strings.LastIndex(pkg, "::"); i >= 0 {
+		return pkg[i+2:]
+	}
+	return pkg
+}
+
+// findSub resolves a call by name from inside the package being lowered, the
+// way Perl does: an unqualified name means this package, falling back to main
+// for a script that declares its helpers before its classes.
+func (l *Lowerer) findSub(name string) (*Sub, bool) {
+	if strings.Contains(name, "::") {
+		s, ok := l.subs[name]
+		return s, ok
+	}
+	if s, ok := l.subs[qualify(l.curPkg, name)]; ok {
+		return s, true
+	}
+	s, ok := l.subs["main::"+name]
+	return s, ok
 }
 
 // lowerSubDecl builds the Go function for one subroutine.
 func (l *Lowerer) lowerSubDecl(sd *ast.SubDecl) {
-	s := l.subs[sd.Name]
+	s := l.subs[qualify(l.curPkg, sd.Name)]
 	if s == nil {
 		return
 	}
 
-	savedScope, savedSub := l.scope, l.curSub
+	savedScope, savedSub, savedClass := l.scope, l.curSub, l.curClass
 	l.scope = newScope(nil)
 	l.scope.fn = s
 	l.curSub = s
-	defer func() { l.scope, l.curSub = savedScope, savedSub }()
+	l.curClass = s.Class
+	defer func() { l.scope, l.curSub, l.curClass = savedScope, savedSub, savedClass }()
+
+	if s.Class != nil {
+		l.lowerMethodDecl(s, sd)
+		return
+	}
 
 	if s.Comparator {
 		l.lowerComparatorSub(s, sd)
 		return
 	}
 
-	body := sd.Body
+	body := valueTail(sd.Body)
 	params, rest := l.recoverParams(s, body)
 
 	fn := &ir.FuncDecl{Name: s.Go, Params: params}
@@ -385,6 +455,11 @@ func usesArgs(body []ast.Stmt) bool {
 				found = true
 			}
 		case *ast.Index:
+			// $_[0] reads the argument list as surely as @_ does, and it is
+			// how a one-line sub gets at its arguments without naming them.
+			if v, ok := n.Base.(*ast.Var); ok && !n.Arrow && v.Sigil == '$' && v.Name == "_" {
+				found = true
+			}
 			walkE(n.Base)
 			walkE(n.Idx)
 		case *ast.Assign:
@@ -523,7 +598,7 @@ func (l *Lowerer) settleSubs() {
 // in scalar context Perl yields the last value of the returned list, and so
 // does this.
 func (l *Lowerer) multiResultCall(c *ast.Call, wantList bool) (ir.Expr, bool) {
-	s, ok := l.subs[c.Name]
+	s, ok := l.findSub(c.Name)
 	if !ok || len(s.Results) < 2 || isBuiltinName(c.Name) {
 		return nil, false
 	}
@@ -552,7 +627,7 @@ func (l *Lowerer) multiResultCall(c *ast.Call, wantList bool) (ir.Expr, bool) {
 // callSub lowers a call to a user-declared subroutine.
 func (l *Lowerer) callSub(s *Sub, n *ast.Call) ir.Expr {
 	s.CallSites++
-	args, _ := l.listParts(n.Args)
+	args, _ := l.listParts(l.callArgs(n))
 
 	// Fixed parameters take their values in order; anything left over goes to
 	// the variadic tail.
@@ -641,4 +716,82 @@ func (l *Lowerer) callSub(s *Sub, n *ast.Call) ir.Expr {
 		}
 	}
 	return c
+}
+
+// callArgs returns a call's arguments, with a leading block turned into the
+// function value it stands for.
+//
+// A sub declared with an `&` prototype can be called as `apply { ... } @list`,
+// where the block is the first argument written without the word `sub`. Go has
+// no such syntax and no prototypes: the block is a function literal like any
+// other, and it goes in as the first argument.
+func (l *Lowerer) callArgs(n *ast.Call) []ast.Expr {
+	if len(n.Block) == 0 {
+		return n.Args
+	}
+	blk, ok := l.blockSubs[n]
+	if !ok {
+		blk = &ast.AnonSub{Body: n.Block}
+		if l.blockSubs == nil {
+			l.blockSubs = map[*ast.Call]*ast.AnonSub{}
+		}
+		l.blockSubs[n] = blk
+	}
+	if l.pass == 2 {
+		l.approximate(n, "P2G2135", "a block passed to a sub",
+			"the block became the first argument",
+			"A `&` prototype lets a sub be called with a bare block, which perl reads "+
+				"as a code reference in the first argument. Go has no prototypes and no "+
+				"such call syntax.",
+			"Nothing to change at the call site: the block is passed as a function "+
+				"literal, which is what it always was.",
+			"variadic-and-no-defaults")
+	}
+	return append([]ast.Expr{blk}, n.Args...)
+}
+
+// valueTail rewrites a sub body whose last statement is a bare value into an
+// explicit return.
+//
+// A Perl sub yields whatever it evaluated last, so `sub { $_[0] * 2 }` returns
+// twice its argument without saying so. Go has no such rule, and a bare
+// expression is not even a legal statement there, so the value would otherwise
+// be dropped on the floor along with the whole point of the sub.
+func valueTail(body []ast.Stmt) []ast.Stmt {
+	if len(body) == 0 {
+		return body
+	}
+	es, ok := body[len(body)-1].(*ast.ExprStmt)
+	if !ok || !yieldsValue(es.X) {
+		return body
+	}
+	ret := &ast.Return{Exprs: []ast.Expr{es.X}}
+	ret.StmtComments = es.StmtComments
+	out := make([]ast.Stmt, len(body))
+	copy(out, body)
+	out[len(out)-1] = ret
+	return out
+}
+
+// yieldsValue reports whether an expression is one that exists only for its
+// value, so that reaching it at the end of a sub means returning it.
+func yieldsValue(e ast.Expr) bool {
+	switch n := e.(type) {
+	case *ast.BinOp:
+		// A comma expression is a sequence, and `or`/`and` are control flow.
+		switch n.Op {
+		case ",", "or", "and", "||", "&&", "//":
+			return false
+		}
+		return true
+	case *ast.NumberLit, *ast.StrLit, *ast.InterpLit, *ast.QwLit, *ast.Ternary,
+		*ast.Index, *ast.HashIndex, *ast.Slice, *ast.Deref, *ast.RefGen,
+		*ast.AnonArray, *ast.AnonHash, *ast.MethodCall:
+		return true
+	case *ast.Var:
+		return true
+	case *ast.UnOp:
+		return n.Op != "++" && n.Op != "--"
+	}
+	return false
 }

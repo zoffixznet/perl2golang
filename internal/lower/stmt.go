@@ -286,6 +286,11 @@ func (l *Lowerer) declarationOnly(n *ast.My) []ir.Stmt {
 	var out []ir.Stmt
 	for _, v := range declaredVars(n) {
 		b := l.declare(v, KindLocal)
+		if b.Kind == KindGlobal {
+			// Hoisted to package level, where the declaration already
+			// stands. Repeating it here would not compile.
+			continue
+		}
 		var st ir.Stmt = &ir.DeclStmt{Names: []string{b.Go}, Type: b.Type}
 		if b.Type != nil && b.Type.Kind == ir.Map {
 			// A map needs making, and the short form says so in one line
@@ -550,19 +555,25 @@ func (l *Lowerer) forStmt(n *ast.ForC) []ir.Stmt {
 
 // packageStmt handles a package declaration.
 func (l *Lowerer) packageStmt(n *ast.PackageDecl) []ir.Stmt {
-	if n.Name == "main" {
+	if n.Name == "main" || n.Name == l.curPkg {
+		return nil
+	}
+	if c, ok := l.classes[n.Name]; ok && c.IsType {
+		// The file's packages were partitioned before lowering began, so the
+		// declaration has already done its work and there is nothing to run.
 		return nil
 	}
 	// A package declaration does nothing when the program runs; it changes
 	// where the subs after it belong. There is no step to stand in for, so the
 	// marker goes in on its own and the statements around it still run.
 	return []ir.Stmt{l.todoDecl(n, "P2G7010", "package "+n.Name,
-		"a second package in one file is not implemented",
-		"Perl can declare several packages in one file, and a package plus bless is "+
-			"how Perl classes are written. Go maps one package to one directory, and "+
-			"types rather than packages are what carry methods.",
-		"Put the type in its own file with methods on it, or split the package into "+
-			"its own directory under the module.",
+		"this package declaration is somewhere the converter could not follow",
+		"Perl decides the current package while it compiles the file, so a package "+
+			"statement inside a loop or a conditional still applies to everything "+
+			"written after it. The converter partitions a file's packages block by "+
+			"block, and this one is nested somewhere it could not follow.",
+		"Move the package statement to file scope, which is where a script normally "+
+			"declares a class.",
 		"packages-and-exported-names", "methods-and-receivers")}
 }
 
