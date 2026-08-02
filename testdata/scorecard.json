@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-14T20:32:09Z",
+  "recorded": "2026-08-14T20:50:49Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -56,8 +56,8 @@
       "entries": 37,
       "stages": {
         "compiled": {
-          "pass": 30,
-          "fail": 7,
+          "pass": 31,
+          "fail": 6,
           "skip": 0
         },
         "emitted": {
@@ -89,9 +89,9 @@
       "quality": {
         "todos": 55,
         "symbols": 829,
-        "symbols_typed": 640,
+        "symbols_typed": 631,
         "refusals": 56,
-        "approximations": 246
+        "approximations": 251
       }
     },
     {
@@ -130,11 +130,11 @@
         "skip": 0
       },
       "quality": {
-        "todos": 164,
-        "symbols": 695,
-        "symbols_typed": 448,
-        "refusals": 170,
-        "approximations": 208
+        "todos": 141,
+        "symbols": 753,
+        "symbols_typed": 497,
+        "refusals": 147,
+        "approximations": 235
       }
     },
     {
@@ -173,10 +173,10 @@
         "skip": 0
       },
       "quality": {
-        "todos": 42,
+        "todos": 41,
         "symbols": 152,
         "symbols_typed": 105,
-        "refusals": 43,
+        "refusals": 42,
         "approximations": 52
       }
     },
@@ -216,11 +216,11 @@
         "skip": 0
       },
       "quality": {
-        "todos": 29,
-        "symbols": 870,
-        "symbols_typed": 710,
-        "refusals": 30,
-        "approximations": 184
+        "todos": 20,
+        "symbols": 919,
+        "symbols_typed": 758,
+        "refusals": 21,
+        "approximations": 198
       }
     }
   ],
@@ -229,8 +229,8 @@
     "entries": 161,
     "stages": {
       "compiled": {
-        "pass": 130,
-        "fail": 31,
+        "pass": 131,
+        "fail": 30,
         "skip": 0
       },
       "emitted": {
@@ -265,19 +265,19 @@
       "skip": 0
     },
     "quality": {
-      "todos": 309,
-      "symbols": 2942,
-      "symbols_typed": 2265,
-      "refusals": 318,
-      "approximations": 738
+      "todos": 276,
+      "symbols": 3049,
+      "symbols_typed": 2353,
+      "refusals": 285,
+      "approximations": 784
     }
   },
   "quality": {
-    "todos": 309,
-    "symbols": 2942,
-    "symbols_typed": 2265,
-    "refusals": 318,
-    "approximations": 738
+    "todos": 276,
+    "symbols": 3049,
+    "symbols_typed": 2353,
+    "refusals": 285,
+    "approximations": 784
   },
   "entries": [
     {
@@ -1825,7 +1825,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "15 variables left dynamic out of 32"
+          "reason": "14 variables left dynamic out of 32"
         }
       },
       "equivalent_annotated": {
@@ -1835,7 +1835,7 @@
       "quality": {
         "todos": 0,
         "symbols": 32,
-        "symbols_typed": 17,
+        "symbols_typed": 18,
         "refusals": 0,
         "approximations": 10
       }
@@ -2051,7 +2051,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "10 variables left dynamic out of 33"
+          "reason": "15 variables left dynamic out of 33"
         }
       },
       "equivalent_annotated": {
@@ -2061,9 +2061,9 @@
       "quality": {
         "todos": 0,
         "symbols": 33,
-        "symbols_typed": 23,
+        "symbols_typed": 18,
         "refusals": 0,
-        "approximations": 6
+        "approximations": 11
       }
     },
     {
@@ -2720,15 +2720,14 @@
       "kind": "convert",
       "stages": {
         "compiled": {
-          "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:65:27: cannot use row (variable of type map[string]any) as map[string]string value in argument to append"
+          "outcome": "pass"
         },
         "emitted": {
           "outcome": "pass"
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "the generated program did not compile"
+          "reason": "exit status 2, wanted 0; stdout differs: 1457 byte(s) missing after line 1, expected \"columns: order_id|customer|regio...\"; stderr differs: unexpected \"panic: regexp: Compile(`\\\\G(?:\\\"((?:[^\\\"]|\\\"\\\")*)\\\"|([^,]*))(?:,|$)`): erro...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -2738,17 +2737,17 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "3 variables left dynamic out of 28"
+          "reason": "8 variables left dynamic out of 28"
         }
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "the generated program did not compile"
+        "reason": "exit status 2, wanted 0; stdout differs: 1457 byte(s) missing after line 1, expected \"columns: order_id|customer|regio...\"; stderr differs: unexpected \"panic: regexp: Compile(`\\\\G(?:\\\"((?:[^\\\"]|\\\"\\\")*)\\\"|([^,]*))(?:,|$)`): erro...\""
       },
       "quality": {
         "todos": 0,
         "symbols": 28,
-        "symbols_typed": 25,
+        "symbols_typed": 20,
         "refusals": 0,
         "approximations": 12
       }
@@ -3084,8 +3083,8 @@
       },
       "quality": {
         "todos": 0,
-        "symbols": 28,
-        "symbols_typed": 28,
+        "symbols": 29,
+        "symbols_typed": 29,
         "refusals": 0,
         "approximations": 14
       }
@@ -3103,30 +3102,30 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: line 2, byte 18: got \"\\n\\n\\n\\n--- by area ---\\n ()\\n ()\\n ()\\n...\", wanted \"#1 rectangle  area=  12.000 peri...\"; stderr differs: unexpected \"TODO P2G7041: this class was not declared in this file ...\""
+          "reason": "exit status 255, wanted 0; stdout differs: 577 byte(s) missing after line 2, expected \"#1 rectangle  area=  12.000 peri...\"; stderr differs: unexpected \"Shape does not implement area()\""
         },
         "honest": {
           "outcome": "n/a"
         },
         "translated": {
           "outcome": "fail",
-          "reason": "21 untranslated constructs"
+          "reason": "7 untranslated constructs"
         },
         "typed": {
           "outcome": "fail",
-          "reason": "8 variables left dynamic out of 11"
+          "reason": "5 variables left dynamic out of 39"
         }
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: line 2, byte 18: got \"\\n\\n\\n\\n--- by area ---\\n ()\\n ()\\n ()\\n...\", wanted \"#1 rectangle  area=  12.000 peri...\"; stderr differs: unexpected \"TODO P2G7041: this class was not declared in this file ...\""
+        "reason": "exit status 255, wanted 0; stdout differs: 577 byte(s) missing after line 2, expected \"#1 rectangle  area=  12.000 peri...\"; stderr differs: unexpected \"Shape does not implement area()\""
       },
       "quality": {
-        "todos": 21,
-        "symbols": 11,
-        "symbols_typed": 3,
-        "refusals": 21,
-        "approximations": 3
+        "todos": 7,
+        "symbols": 39,
+        "symbols_typed": 34,
+        "refusals": 7,
+        "approximations": 12
       }
     },
     {
@@ -3181,30 +3180,30 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "exit status 2, wanted 0; stdout differs: line 1, byte 8: got \"]\\ntitle: \\nwidth const: \\ntrunc: \\n...\", wanted \"the quick brown fox jumps over t...\"; stderr differs: unexpected \"TODO P2G3599: the squeeze function is not implemented ...\""
+          "reason": "exit status 2, wanted 0; stdout differs: 468 byte(s) missing after line 1, expected \"clean: [the quick brown fox jump...\"; stderr differs: unexpected \"panic: runtime error: index out of range [0] with length 0 ...\""
         },
         "honest": {
           "outcome": "n/a"
         },
         "translated": {
           "outcome": "fail",
-          "reason": "13 untranslated constructs"
+          "reason": "4 untranslated constructs"
         },
         "typed": {
           "outcome": "fail",
-          "reason": "5 variables left dynamic out of 7"
+          "reason": "12 variables left dynamic out of 35"
         }
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "exit status 2, wanted 0; stdout differs: line 1, byte 8: got \"]\\ntitle: \\nwidth const: \\ntrunc: \\n...\", wanted \"the quick brown fox jumps over t...\"; stderr differs: unexpected \"TODO P2G3599: the squeeze function is not implemented ...\""
+        "reason": "exit status 2, wanted 0; stdout differs: 468 byte(s) missing after line 1, expected \"clean: [the quick brown fox jump...\"; stderr differs: unexpected \"panic: runtime error: index out of range [0] with length 0 ...\""
       },
       "quality": {
-        "todos": 13,
-        "symbols": 7,
-        "symbols_typed": 2,
-        "refusals": 13,
-        "approximations": 1
+        "todos": 4,
+        "symbols": 35,
+        "symbols_typed": 23,
+        "refusals": 4,
+        "approximations": 14
       }
     },
     {
@@ -3350,7 +3349,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "14 variables left dynamic out of 31"
+          "reason": "17 variables left dynamic out of 31"
         }
       },
       "equivalent_annotated": {
@@ -3360,7 +3359,7 @@
       "quality": {
         "todos": 0,
         "symbols": 31,
-        "symbols_typed": 17,
+        "symbols_typed": 14,
         "refusals": 1,
         "approximations": 1
       }
@@ -3411,7 +3410,7 @@
       "stages": {
         "compiled": {
           "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:70:26: cannot use cfg3 (variable of type map[string]any) as map[string]map[string]any value in argument to resolveSection"
+          "reason": "the generated Go does not compile: ./main.go:70:26: cannot use cfg3 (variable of type map[string]any) as map[string]map[string]string value in argument to resolveSection"
         },
         "emitted": {
           "outcome": "pass"
@@ -3428,7 +3427,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "8 variables left dynamic out of 34"
+          "reason": "6 variables left dynamic out of 34"
         }
       },
       "equivalent_annotated": {
@@ -3438,9 +3437,9 @@
       "quality": {
         "todos": 0,
         "symbols": 34,
-        "symbols_typed": 26,
+        "symbols_typed": 28,
         "refusals": 0,
-        "approximations": 15
+        "approximations": 14
       }
     },
     {
@@ -3467,7 +3466,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "18 variables left dynamic out of 33"
+          "reason": "17 variables left dynamic out of 33"
         }
       },
       "equivalent_annotated": {
@@ -3477,7 +3476,7 @@
       "quality": {
         "todos": 7,
         "symbols": 33,
-        "symbols_typed": 15,
+        "symbols_typed": 16,
         "refusals": 7,
         "approximations": 8
       }
@@ -3702,7 +3701,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "9 variables left dynamic out of 29"
+          "reason": "9 variables left dynamic out of 30"
         }
       },
       "equivalent_annotated": {
@@ -3711,8 +3710,8 @@
       },
       "quality": {
         "todos": 10,
-        "symbols": 29,
-        "symbols_typed": 20,
+        "symbols": 30,
+        "symbols_typed": 21,
         "refusals": 10,
         "approximations": 17
       }
@@ -3724,7 +3723,7 @@
       "stages": {
         "compiled": {
           "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:93:13: assignment mismatch: 1 variable but evaluate returns 2 values"
+          "reason": "the generated Go does not compile: ./main.go:103:72: use of package fmt not in selector"
         },
         "emitted": {
           "outcome": "pass"
@@ -3753,7 +3752,7 @@
         "symbols": 32,
         "symbols_typed": 29,
         "refusals": 0,
-        "approximations": 15
+        "approximations": 16
       }
     },
     {
@@ -3802,7 +3801,7 @@
       "stages": {
         "compiled": {
           "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:121:13: assignment mismatch: 1 variable but route returns 2 values"
+          "reason": "the generated Go does not compile: ./main.go:138:30: cannot use r3 (variable of type map[string]float64) as map[string]any value in array or slice literal"
         },
         "emitted": {
           "outcome": "pass"
@@ -3859,7 +3858,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "5 variables left dynamic out of 31"
+          "reason": "7 variables left dynamic out of 31"
         }
       },
       "equivalent_annotated": {
@@ -3869,9 +3868,9 @@
       "quality": {
         "todos": 1,
         "symbols": 31,
-        "symbols_typed": 26,
+        "symbols_typed": 24,
         "refusals": 2,
-        "approximations": 5
+        "approximations": 6
       }
     },
     {
@@ -4016,7 +4015,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "6 variables left dynamic out of 36"
+          "reason": "9 variables left dynamic out of 36"
         }
       },
       "equivalent_annotated": {
@@ -4026,9 +4025,9 @@
       "quality": {
         "todos": 0,
         "symbols": 36,
-        "symbols_typed": 30,
+        "symbols_typed": 27,
         "refusals": 0,
-        "approximations": 6
+        "approximations": 10
       }
     },
     {
@@ -4809,7 +4808,7 @@
         },
         "translated": {
           "outcome": "fail",
-          "reason": "3 untranslated constructs"
+          "reason": "2 untranslated constructs"
         },
         "typed": {
           "outcome": "pass"
@@ -4819,10 +4818,10 @@
         "outcome": "n/a"
       },
       "quality": {
-        "todos": 2,
+        "todos": 1,
         "symbols": 7,
         "symbols_typed": 7,
-        "refusals": 3,
+        "refusals": 2,
         "approximations": 0
       }
     },
@@ -5520,7 +5519,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "5 variables left dynamic out of 57"
+          "reason": "6 variables left dynamic out of 57"
         }
       },
       "equivalent_annotated": {
@@ -5530,9 +5529,9 @@
       "quality": {
         "todos": 0,
         "symbols": 57,
-        "symbols_typed": 52,
+        "symbols_typed": 51,
         "refusals": 1,
-        "approximations": 18
+        "approximations": 19
       }
     },
     {
@@ -5548,7 +5547,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: 360 byte(s) missing after line 2, expected \"CRIT   96%        20G      18.9G...\"; stderr differs: unexpected \"panic: interface conversion: interface {} is func() int, not map[stri...\""
+          "reason": "stdout differs: 411 byte(s) missing after line 1, expected \"LVL   USE%       SIZE       USED...\"; stderr differs: unexpected \"panic: interface conversion: interface {} is func() int, not func() ...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -5558,17 +5557,17 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "9 variables left dynamic out of 35"
+          "reason": "8 variables left dynamic out of 35"
         }
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: 360 byte(s) missing after line 2, expected \"CRIT   96%        20G      18.9G...\"; stderr differs: unexpected \"panic: interface conversion: interface {} is func() int, not map[stri...\""
+        "reason": "stdout differs: 411 byte(s) missing after line 1, expected \"LVL   USE%       SIZE       USED...\"; stderr differs: unexpected \"panic: interface conversion: interface {} is func() int, not func() ...\""
       },
       "quality": {
         "todos": 0,
         "symbols": 35,
-        "symbols_typed": 26,
+        "symbols_typed": 27,
         "refusals": 0,
         "approximations": 8
       }
@@ -6166,11 +6165,11 @@
         },
         "translated": {
           "outcome": "fail",
-          "reason": "6 untranslated constructs"
+          "reason": "2 untranslated constructs"
         },
         "typed": {
           "outcome": "fail",
-          "reason": "6 variables left dynamic out of 29"
+          "reason": "8 variables left dynamic out of 56"
         }
       },
       "equivalent_annotated": {
@@ -6178,11 +6177,11 @@
         "reason": "exit status 255, wanted 1; stdout differs: 308 byte(s) missing after line 1, expected \"\u003eorf1 len=10\\nMADEGFKDL*\\n\u003eorf2_re...\"; stderr differs: unexpected \"interface conversion: interface {} is map[string]string, not map[stri...\""
       },
       "quality": {
-        "todos": 6,
-        "symbols": 29,
-        "symbols_typed": 23,
-        "refusals": 6,
-        "approximations": 6
+        "todos": 2,
+        "symbols": 56,
+        "symbols_typed": 48,
+        "refusals": 2,
+        "approximations": 11
       }
     },
     {
@@ -6354,30 +6353,30 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: line 1, byte 3: got \"REJECT  HTTP://Shop.Example.COM:...\", wanted \"http    http://shop.example.com/...\"; stderr differs: unexpected \"TODO P2G7041: this class was not declared in this file\""
+          "reason": "exit status 255, wanted 1; stdout differs: line 1, byte 48: got \"\\n\", wanted \"?a=1\u0026b=2\\n 2 http    http://shop....\"; stderr differs: unexpected \"interface conversion: interface {} is nil, not []interface {}\""
         },
         "honest": {
           "outcome": "n/a"
         },
         "translated": {
           "outcome": "fail",
-          "reason": "6 untranslated constructs"
+          "reason": "1 untranslated construct"
         },
         "typed": {
           "outcome": "fail",
-          "reason": "5 variables left dynamic out of 15"
+          "reason": "4 variables left dynamic out of 37"
         }
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: line 1, byte 3: got \"REJECT  HTTP://Shop.Example.COM:...\", wanted \"http    http://shop.example.com/...\"; stderr differs: unexpected \"TODO P2G7041: this class was not declared in this file\""
+        "reason": "exit status 255, wanted 1; stdout differs: line 1, byte 48: got \"\\n\", wanted \"?a=1\u0026b=2\\n 2 http    http://shop....\"; stderr differs: unexpected \"interface conversion: interface {} is nil, not []interface {}\""
       },
       "quality": {
-        "todos": 6,
-        "symbols": 15,
-        "symbols_typed": 10,
-        "refusals": 6,
-        "approximations": 1
+        "todos": 1,
+        "symbols": 37,
+        "symbols_typed": 33,
+        "refusals": 1,
+        "approximations": 9
       }
     },
     {

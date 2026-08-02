@@ -35,6 +35,21 @@ type Options struct {
 	Program string
 	// Module is the generated Go module path.
 	Module string
+	// Modules are the Perl modules the script pulls in from beside itself,
+	// in load order. Their packages become types and functions in the one Go
+	// package the conversion produces, because Go has no way to reach a
+	// second file except through a second directory.
+	Modules []SourceFile
+}
+
+// SourceFile is one parsed Perl file taking part in a conversion.
+type SourceFile struct {
+	// Path is what a diagnostic names, for example "Shape.pm".
+	Path string
+	Src  []byte
+	Prog *ast.Program
+
+	lines []string
 }
 
 // Result is everything one lowering run produced.
@@ -72,9 +87,20 @@ type Lowerer struct {
 	// byGoType finds a class from the generated type name, which is how an
 	// expression's type answers "what class is this".
 	byGoType map[string]*Class
-	// units are the file's statements, each tagged with the package it was
-	// written in. Perl lets one file hold several.
+	// units are the statements of every file taking part, each tagged with
+	// the package it was written in and the file it came from. Perl lets one
+	// file hold several packages and one program hold several files.
 	units []pkgStmt
+	// curFile is the file whose statements are being lowered, which decides
+	// what a diagnostic quotes and which path it names.
+	curFile *SourceFile
+	// mainFile is the script itself, as opposed to a module beside it.
+	mainFile *SourceFile
+	// files are every source taking part, modules first and the script last,
+	// which is the order perl loads them in.
+	files []*SourceFile
+	// loaded names the modules whose own file is part of this conversion.
+	loaded map[string]bool
 	// curPkg is the package whose code is being lowered, which decides how
 	// an unqualified call resolves.
 	curPkg string
@@ -231,6 +257,8 @@ func Lower(res parser.Result, src []byte, opts Options) *Result {
 		hoisted:     map[*ast.Var]bool{},
 		classVars:   map[*Binding]*Class{},
 		optionHash:  map[string]*Class{},
+		loaded:      map[string]bool{},
+		aliases:     map[*Binding]ir.Expr{},
 		optionDests: map[*Binding]*ir.Type{},
 		fieldAt:     map[ast.Node]*ClassField{},
 		arrowCalls:  map[string]bool{},
@@ -254,8 +282,20 @@ func Lower(res parser.Result, src []byte, opts Options) *Result {
 		_ = d
 	}
 
-	l.collectClasses(res.Program)
-	l.collectOptions(res.Program)
+	l.mainFile = &SourceFile{Path: opts.File, Src: src, Prog: res.Program, lines: l.lines}
+	for i := range l.opts.Modules {
+		m := &l.opts.Modules[i]
+		m.lines = strings.Split(string(m.Src), "\n")
+		l.files = append(l.files, m)
+		for _, pkg := range declaredPackages(m.Prog.Stmts) {
+			l.loaded[pkg] = true
+		}
+	}
+	l.files = append(l.files, l.mainFile)
+	l.curFile = l.mainFile
+
+	l.collectClasses()
+	l.collectOptions()
 	l.markShared()
 	l.hoistSubs()
 
@@ -273,7 +313,12 @@ func Lower(res parser.Result, src []byte, opts Options) *Result {
 		l.pass = 1
 		l.scope = newScope(nil)
 		l.curPkg = "main"
-		l.run(res.Program)
+		// A round sees every return the file has, so what the previous round
+		// concluded is stale rather than extra evidence. Keeping it would
+		// leave a signature promising the type a variable had before the
+		// round that pinned it down.
+		l.forgetResults()
+		l.run()
 		l.resolveTypes()
 		l.settleFields()
 		state := l.typeState()
@@ -303,7 +348,7 @@ func Lower(res parser.Result, src []byte, opts Options) *Result {
 	l.patternOrd = nil
 	l.helpers = map[string]bool{}
 	l.helperOrd = nil
-	out := l.run(res.Program)
+	out := l.run()
 
 	l.finishReport()
 	return out
@@ -314,6 +359,16 @@ func Lower(res parser.Result, src []byte, opts Options) *Result {
 // that a program the converter models badly costs bounded time rather than
 // spinning.
 const maxDiscoveryRounds = 6
+
+// forgetResults drops the return shapes gathered by the previous round.
+func (l *Lowerer) forgetResults() {
+	for _, name := range l.subOrd {
+		l.subs[name].ResultEvidence = nil
+	}
+	for _, s := range l.anonOrd {
+		s.ResultEvidence = nil
+	}
+}
 
 // typeState renders every type the discovery pass settled, so that two rounds
 // can be compared for whether anything moved.
@@ -345,13 +400,26 @@ func (l *Lowerer) typeState() string {
 	return sb.String()
 }
 
+// setFile points the source-quoting machinery at one of the files taking part,
+// so that a diagnostic raised while lowering it names that file and quotes
+// from it rather than from the script.
+func (l *Lowerer) setFile(f *SourceFile) {
+	if f == nil || f == l.curFile {
+		return
+	}
+	l.curFile = f
+	l.src = string(f.Src)
+	l.lines = f.lines
+}
+
 // run performs one whole pass over the program.
-func (l *Lowerer) run(prog *ast.Program) *Result {
+func (l *Lowerer) run() *Result {
 	file := &ir.File{Name: "main.go", Package: "main"}
 
 	var top []ir.Stmt
 	for _, u := range l.units {
 		l.curPkg = u.pkg
+		l.setFile(u.file)
 		if sd, ok := u.st.(*ast.SubDecl); ok {
 			l.lowerSubDecl(sd)
 			continue
@@ -367,6 +435,7 @@ func (l *Lowerer) run(prog *ast.Program) *Result {
 		top = append(top, l.stmts([]ast.Stmt{u.st})...)
 	}
 	l.curPkg = "main"
+	l.setFile(l.mainFile)
 
 	// A type and the methods on it belong together, the way a Go file is
 	// laid out, and both come before the code that uses them.
@@ -539,7 +608,10 @@ func (l *Lowerer) entry(e report.Entry, n ast.Node) report.Entry {
 	if e.Perl == "" {
 		e.Perl = l.snippet(n)
 	}
-	key := e.Code + ":" + itoa(e.Line) + ":" + itoa(e.Col) + ":" + e.Construct
+	if l.curFile != nil && l.curFile != l.mainFile {
+		e.File = l.curFile.Path
+	}
+	key := e.File + ":" + e.Code + ":" + itoa(e.Line) + ":" + itoa(e.Col) + ":" + e.Construct
 	if l.seenEntry[key] {
 		return e
 	}

@@ -22,6 +22,18 @@ func (l *Lowerer) useStmt(n *ast.Use) []ir.Stmt {
 	case "overload":
 		return l.useOverload(n)
 
+	case "parent", "base":
+		// The parent it names is already embedded in the generated struct.
+		if l.pass == 2 && l.curPkg != "main" {
+			l.inform(n, "P2G7552", "use "+n.Module,
+				"Perl's @ISA makes method lookup walk to the parent class. The generated "+
+					"type embeds the parent instead, which promotes its fields and its "+
+					"methods onto this one and covers the same ground for everything except "+
+					"overriding a method the parent calls on itself.",
+				"structs-and-embedding", "late-binding-vs-embedding")
+		}
+		return nil
+
 	case "strict", "warnings", "utf8", "feature", "vars", "lib", "integer",
 		"diagnostics", "open", "bytes", "less", "sigtrap", "subs":
 		if n.Module == "strict" && l.pass == 2 {
@@ -109,6 +121,22 @@ func (l *Lowerer) useStmt(n *ast.Use) []ir.Stmt {
 
 // entryForModule records a module the converter has no mapping for.
 func (l *Lowerer) entryForModule(n *ast.Use) {
+	// A module whose own file is part of this conversion is already here:
+	// its packages became types and functions in the one Go package.
+	if l.loaded[n.Module] {
+		l.inform(n, "P2G7551", "use "+n.Module,
+			"`"+n.Module+"` was converted along with this file. Go has no way to reach "+
+				"a second file except through a second directory, so everything it "+
+				"declared is in this package: its classes are types here and the names it "+
+				"exported are ordinary functions. Splitting them back out is a matter of "+
+				"moving the declarations into their own directory and exporting the names "+
+				"the script uses.",
+			"packages-and-exported-names", "go-mod-vs-cpan")
+		return
+	}
+	if n.Module == "Exporter" || n.Module == "vars" || n.Module == "mro" {
+		return
+	}
 	verb := "use"
 	if n.No {
 		verb = "no"

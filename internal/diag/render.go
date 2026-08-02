@@ -90,6 +90,12 @@ func Render(out io.Writer, e report.Entry, file string, srcLines []string, o Opt
 		b.WriteByte('\n')
 	}
 
+	// An entry from a module the script pulled in names its own file, and
+	// the source to quote from is not the one this call was given.
+	if e.File != "" && e.File != file {
+		file, srcLines = e.File, nil
+	}
+
 	gw := gutterWidth(e.Line)
 	pad := strings.Repeat(" ", gw)
 	b.WriteString(pad)
@@ -138,6 +144,9 @@ func Compact(e report.Entry, file string) string {
 	message := e.Message
 	if message == "" {
 		message = e.Short
+	}
+	if e.File != "" {
+		file = e.File
 	}
 	return location(file, e.Line, e.Col) + ": " + e.Severity.String() + "[" + e.Code + "]: " + message
 }

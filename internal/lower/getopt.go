@@ -150,8 +150,12 @@ func parseOptionSpec(raw string) (optionSpec, bool) {
 // Go struct declaration is. Leaving it a map would mean one value type for a
 // hash whose values are a number, a number and a flag, and that value type
 // would have to be `any`.
-func (l *Lowerer) collectOptions(prog *ast.Program) {
-	walkExprs(prog.Stmts, func(e ast.Expr) {
+func (l *Lowerer) collectOptions() {
+	var stmts []ast.Stmt
+	for _, f := range l.files {
+		stmts = append(stmts, f.Prog.Stmts...)
+	}
+	walkExprs(stmts, func(e ast.Expr) {
 		c, ok := e.(*ast.Call)
 		if !ok || !isGetOptions(c.Name) {
 			return

@@ -279,7 +279,14 @@ func (l *Lowerer) declareSingle(v *ast.Var, n *ast.Assign) []ir.Stmt {
 	case b.Type.Kind == ir.Any:
 		st = &ir.DeclStmt{Names: []string{b.Go}, Type: b.Type, Values: []ir.Expr{coerced}}
 	default:
-		b.Type = typeOrAny(coerced)
+		// The declaration and the type the whole file agreed on disagree, and
+		// the initialiser wins because the Go variable takes its type from it.
+		// That decision belongs to the pass that emits: making it while types
+		// are still being discovered would undo, for the rest of the sweep,
+		// exactly what the sweep had concluded.
+		if l.pass == 2 {
+			b.Type = typeOrAny(coerced)
+		}
 		st = assign(":=", []ir.Expr{ir.NewIdent(b.Go, b.Type)}, []ir.Expr{coerced})
 	}
 	l.setProv(st, n)
@@ -511,7 +518,10 @@ func (l *Lowerer) listAssign(targets []ast.Expr, rhs ast.Expr, n *ast.Assign, de
 	if len(sources) == 1 {
 		if c, ok := sources[0].(*ast.Call); ok {
 			if s, known := l.findSub(c.Name); known && len(s.Results) == len(targets) && allScalarTargets(targets) {
-				value := l.callExpr(c)
+				// This is the one place a multi-valued call stands as it is,
+				// because every result is taken at once, which is exactly
+				// what Go allows.
+				value := l.callSub(s, c)
 				var lhsExprs []ir.Expr
 				for i, t := range targets {
 					v := t.(*ast.Var)

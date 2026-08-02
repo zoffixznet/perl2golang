@@ -10,8 +10,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"path"
+	"path/filepath"
 	"strings"
+
+	"perl2go/internal/perl/ast"
 
 	"perl2go/internal/gogen"
 	"perl2go/internal/ir"
@@ -44,6 +48,10 @@ type Options struct {
 	// NoDocs skips the teaching bundle, which the snippet mode uses when it
 	// only wants the code and the notes.
 	NoDocs bool
+	// Modules finds the Perl modules that sit beside the input, so a script
+	// split across several files converts as one program. Nil means only the
+	// input itself is read, which is what a snippet and the REPL want.
+	Modules ModuleResolver
 	// Improve is an optional pass over the generated artefacts. Its output is
 	// checked before it is accepted, so it can improve the result or leave it
 	// alone but never corrupt it. Nil means the deterministic output is the
@@ -111,6 +119,7 @@ func Convert(src []byte, opts Options) (result *Result, err error) {
 		File:    displayPath(opts.Path),
 		Program: name,
 		Module:  module,
+		Modules: loadModules(parsed.Program, opts.Modules),
 	})
 
 	res := &Result{
@@ -348,4 +357,69 @@ func displayPath(p string) string {
 		return "standard input"
 	}
 	return p
+}
+
+// ModuleResolver finds a Perl module that sits beside the file being
+// converted. It returns the module's source and the path to name it by.
+//
+// The resolver is supplied by the caller so that this package keeps no
+// dependency on the filesystem and a test can drive a multi-file conversion
+// from memory.
+type ModuleResolver func(module string) (src []byte, path string, ok bool)
+
+// FilesBeside builds a resolver that looks for a module in one directory, the
+// way `use lib '.'` in a script does: Foo becomes Foo.pm and Foo::Bar becomes
+// Foo/Bar.pm.
+func FilesBeside(dir string) ModuleResolver {
+	if dir == "" {
+		dir = "."
+	}
+	return func(module string) ([]byte, string, bool) {
+		rel := strings.ReplaceAll(module, "::", string(filepath.Separator)) + ".pm"
+		full := filepath.Join(dir, rel)
+		src, err := os.ReadFile(full)
+		if err != nil {
+			return nil, "", false
+		}
+		return src, rel, true
+	}
+}
+
+// loadModules follows the `use` statements of a program, and of everything
+// they pull in, collecting the ones whose own file sits beside the input.
+//
+// Perl finds a module through @INC and compiles it into its own package.
+// Everything the conversion produces lands in one Go package, because Go
+// reaches a second package only through a second directory, so the modules are
+// parsed here and lowered alongside the script.
+func loadModules(prog *ast.Program, resolve ModuleResolver) []lower.SourceFile {
+	if resolve == nil {
+		return nil
+	}
+	var out []lower.SourceFile
+	seen := map[string]bool{}
+	var walk func(stmts []ast.Stmt, depth int)
+	walk = func(stmts []ast.Stmt, depth int) {
+		if depth > 8 {
+			return
+		}
+		for _, st := range stmts {
+			use, ok := st.(*ast.Use)
+			if !ok || use.No || use.Module == "" || seen[use.Module] {
+				continue
+			}
+			seen[use.Module] = true
+			src, path, found := resolve(use.Module)
+			if !found {
+				continue
+			}
+			parsed := parser.Parse(src)
+			// A module's own dependencies come first, so that a class is
+			// declared before whatever inherits from it.
+			walk(parsed.Program.Stmts, depth+1)
+			out = append(out, lower.SourceFile{Path: path, Src: src, Prog: parsed.Program})
+		}
+	}
+	walk(prog.Stmts, 0)
+	return out
 }

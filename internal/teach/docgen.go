@@ -206,7 +206,7 @@ func (b *bundle) resolveConcepts() {
 			if _, ok := b.inBundle[id]; !ok {
 				continue
 			}
-			b.why[id] = append(b.why[id], fmt.Sprintf("%s%s", e.Construct, positionSuffix(e.Line, b.script)))
+			b.why[id] = append(b.why[id], fmt.Sprintf("%s%s", e.Construct, positionSuffix(e.Line, entryScript(e, b.script))))
 			b.fromCode[id] = true
 		}
 	}
@@ -1089,7 +1089,7 @@ func (b *bundle) defaultExercises() []Exercise {
 		if construct == "" {
 			construct = "the construct the converter refused"
 		}
-		task := fmt.Sprintf("The converter %s %s%s.", verbFor(e.Severity), construct, positionSuffix(e.Line, b.script))
+		task := fmt.Sprintf("The converter %s %s%s.", verbFor(e.Severity), construct, positionSuffix(e.Line, entryScript(e, b.script)))
 		if strings.TrimSpace(e.Advice) != "" {
 			task += " " + strings.TrimSpace(e.Advice)
 		} else if strings.TrimSpace(e.Message) != "" {
@@ -1625,6 +1625,15 @@ func (b *bundle) scriptOrProgram() string {
 
 // positionSuffix renders " at line 42 of report.pl", or as much of it as is
 // known.
+// entryScript names the file an entry came from, which is the file being
+// converted unless the entry came out of a module beside it.
+func entryScript(e report.Entry, script string) string {
+	if e.File != "" {
+		return e.File
+	}
+	return script
+}
+
 func positionSuffix(line int, script string) string {
 	switch {
 	case line > 0 && script != "":

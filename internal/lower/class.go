@@ -129,10 +129,12 @@ func (l *Lowerer) classFor(name string, at ast.Node) *Class {
 	return c
 }
 
-// pkgStmt is one statement together with the package it was written in.
+// pkgStmt is one statement together with the package it was written in and the
+// file it came from.
 type pkgStmt struct {
-	pkg string
-	st  ast.Stmt
+	pkg  string
+	st   ast.Stmt
+	file *SourceFile
 }
 
 // splitPackages flattens a statement list into statements tagged with the
@@ -141,14 +143,14 @@ type pkgStmt struct {
 // Perl's `package Foo;` changes the current package for everything after it in
 // the enclosing block, and the braced form scopes it to its own body. Both are
 // ordinary in a script, and both mean the file holds more than one class.
-func splitPackages(list []ast.Stmt, pkg string) []pkgStmt {
+func splitPackages(list []ast.Stmt, pkg string, file *SourceFile) []pkgStmt {
 	var out []pkgStmt
 	cur := pkg
 	for _, st := range list {
 		switch n := st.(type) {
 		case *ast.PackageDecl:
 			if n.Body != nil {
-				out = append(out, splitPackages(n.Body, n.Name)...)
+				out = append(out, splitPackages(n.Body, n.Name, file)...)
 				continue
 			}
 			cur = n.Name
@@ -158,11 +160,11 @@ func splitPackages(list []ast.Stmt, pkg string) []pkgStmt {
 			// declares a small class inline. Its contents belong to that
 			// package and are file-scope for it.
 			if containsPackage(n.Body) {
-				out = append(out, splitPackages(n.Body, cur)...)
+				out = append(out, splitPackages(n.Body, cur, file)...)
 				continue
 			}
 		}
-		out = append(out, pkgStmt{pkg: cur, st: st})
+		out = append(out, pkgStmt{pkg: cur, st: st, file: file})
 	}
 	return out
 }
@@ -178,23 +180,27 @@ func containsPackage(list []ast.Stmt) bool {
 
 // collectClasses reads the whole file once and works out which packages are
 // classes, what their parents are, and which subs belong to each.
-func (l *Lowerer) collectClasses(prog *ast.Program) {
-	l.units = splitPackages(prog.Stmts, "main")
-	// How the file calls a sub is the evidence for what it is. A name
-	// reached through an arrow is a method; a name written with its package
-	// in front is a function.
-	walkExprs(prog.Stmts, func(e ast.Expr) {
-		switch n := e.(type) {
-		case *ast.MethodCall:
-			if n.Method != "" {
-				l.arrowCalls[n.Method] = true
+func (l *Lowerer) collectClasses() {
+	for _, f := range l.files {
+		l.units = append(l.units, splitPackages(f.Prog.Stmts, "main", f)...)
+	}
+	// How a file calls a sub is the evidence for what it is. A name reached
+	// through an arrow is a method; a name written with its package in front
+	// is a function.
+	for _, f := range l.files {
+		walkExprs(f.Prog.Stmts, func(e ast.Expr) {
+			switch n := e.(type) {
+			case *ast.MethodCall:
+				if n.Method != "" {
+					l.arrowCalls[n.Method] = true
+				}
+			case *ast.Call:
+				if strings.Contains(n.Name, "::") {
+					l.qualCalls[n.Name] = true
+				}
 			}
-		case *ast.Call:
-			if strings.Contains(n.Name, "::") {
-				l.qualCalls[n.Name] = true
-			}
-		}
-	})
+		})
+	}
 	for _, ps := range l.units {
 		if ps.pkg == "main" {
 			continue
@@ -225,9 +231,11 @@ func (l *Lowerer) collectClasses(prog *ast.Program) {
 	}
 	// A bless naming a package makes that package a class even when the
 	// package itself declares nothing, and `Class->new` does the same.
-	for _, name := range blessTargets(prog.Stmts) {
-		if name != "main" {
-			l.classFor(name, nil).Blessed = true
+	for _, f := range l.files {
+		for _, name := range blessTargets(f.Prog.Stmts) {
+			if name != "main" {
+				l.classFor(name, nil).Blessed = true
+			}
 		}
 	}
 
@@ -931,4 +939,16 @@ func (l *Lowerer) reportMultipleInheritance(c *Class, at ast.Node) {
 			"parent was a mixin of behaviour rather than state, an interface plus a "+
 			"plain function is the Go shape for it.",
 		"structs-and-embedding", "implicit-interfaces", "late-binding-vs-embedding")
+}
+
+// declaredPackages lists the packages a file declares, which is what a `use`
+// of that file brings into the conversion.
+func declaredPackages(list []ast.Stmt) []string {
+	var out []string
+	for _, ps := range splitPackages(list, "main", nil) {
+		if ps.pkg != "main" {
+			out = append(out, ps.pkg)
+		}
+	}
+	return out
 }

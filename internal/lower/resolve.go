@@ -150,6 +150,13 @@ type Sub struct {
 	// Inherited is the ancestor's constructor a synthesised one calls, for a
 	// class that declares no `sub new` of its own.
 	Inherited *Sub
+	// File is the source the sub was written in.
+	File *SourceFile
+	// ClassParam is the parameter holding the class name, for a constructor
+	// whose body reads it. Perl passes the class as the first argument and
+	// most constructors only pass it straight to bless; one that also tests
+	// it or builds a default out of it needs it written down.
+	ClassParam *Binding
 }
 
 // scope is one lexical level.

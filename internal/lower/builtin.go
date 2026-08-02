@@ -10,6 +10,14 @@ import (
 // callExpr lowers a call used for its value.
 func (l *Lowerer) callExpr(n *ast.Call) ir.Expr {
 	if s, ok := l.findSub(n.Name); ok && !isBuiltinName(n.Name) {
+		// A Go function returning several values can only be called where
+		// all of them are taken at once, so anywhere else the call gets its
+		// own statement first.
+		if len(s.Results) > 1 {
+			if x, done := l.multiResultCall(n, false); done {
+				return x
+			}
+		}
 		return l.callSub(s, n)
 	}
 	if x := l.builtin(n); x != nil {
@@ -245,6 +253,13 @@ func (l *Lowerer) builtin(n *ast.Call) ir.Expr {
 			return ir.Nil(ir.TVoid)
 		}
 		return ir.Nil(ir.TVoid)
+	case "__PACKAGE__":
+		out := ir.Str(quote(l.curPkg))
+		l.note(out, "__PACKAGE__ is the name of the package the line was compiled in, "+
+			"which perl fills in when it compiles. It is known here too, so it is "+
+			"written in.",
+			"packages-and-exported-names")
+		return out
 	case "bless":
 		if x, ok := l.blessCall(n); ok {
 			return x

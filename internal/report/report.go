@@ -52,6 +52,9 @@ type Entry struct {
 	Advice    string `json:"advice,omitempty"`
 	// Perl is the original source text of the construct.
 	Perl string `json:"perl,omitempty"`
+	// File names the source this came from when it is not the file being
+	// converted, which happens once a script pulls in a module beside it.
+	File string `json:"file,omitempty"`
 	Line int    `json:"line,omitempty"`
 	Col  int    `json:"col,omitempty"`
 	// Concepts are teaching concept ids that explain the mismatch.

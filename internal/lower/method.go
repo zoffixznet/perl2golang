@@ -95,6 +95,11 @@ func (l *Lowerer) inheritedCtorDecl(s *Sub) *ir.FuncDecl {
 		params = append(params, ir.Param{Name: b.Go, Type: b.Type})
 		args = append(args, ir.NewIdent(b.Go, b.Type))
 	}
+	// This constructor knows which class it builds, so the name the ancestor
+	// reads is written in rather than passed on.
+	if parent.ClassParam != nil {
+		args = append(args, ir.Str(quote(c.Perl)))
+	}
 	for _, b := range parent.Params {
 		add(b)
 	}
@@ -492,12 +497,21 @@ func (l *Lowerer) recoverMethodParams(s *Sub, body []ast.Stmt) ([]ir.Param, []as
 					b.Go = s.Class.recv
 				} else {
 					// The invocant of a constructor or a class method is the
-					// class name, which Go does not pass at all.
+					// class name. Most only hand it to bless, and there it is
+					// the type the function already returns; one that reads it
+					// for anything else needs it as a real parameter, because
+					// an inherited constructor is called with the subclass's
+					// name and has to see that name.
 					b.Type = ir.TString
 					b.Kind = KindSpecial
 					l.classVars[b] = s.Class
+					if readsClassName(s.Decl) {
+						s.ClassParam = b
+						b.Kind = KindParam
+						l.aliases[b] = ir.NewIdent(b.Go, ir.TString)
+					}
 				}
-			case v.Sigil == '%' && (s.Kind == SubCtor || s.Kind == SubClass) && s.VarArgs == nil:
+			case v.Sigil == '%' && s.VarArgs == nil:
 				b := l.declare(v, KindParam)
 				b.Kind = KindSpecial
 				s.Named = b
@@ -530,6 +544,9 @@ func (l *Lowerer) recoverMethodParams(s *Sub, body []ast.Stmt) ([]ir.Param, []as
 
 	s.Params = bindings
 	var params []ir.Param
+	if s.ClassParam != nil {
+		params = append(params, ir.Param{Name: s.ClassParam.Go, Type: ir.TString})
+	}
 	for _, b := range bindings {
 		params = append(params, ir.Param{Name: b.Go, Type: b.Type})
 	}
@@ -571,6 +588,9 @@ func (l *Lowerer) dropClassAlias(s *Sub, rest []ast.Stmt) []ast.Stmt {
 		b.Kind = KindSpecial
 		b.Type = ir.TString
 		l.classVars[b] = s.Class
+		if s.ClassParam != nil {
+			l.aliases[b] = ir.NewIdent(s.ClassParam.Go, ir.TString)
+		}
 		if l.pass == 2 {
 			l.inform(es, "P2G7050", "ref($proto) || $proto",
 				"This picks the class to bless into so that the constructor works when "+
@@ -777,7 +797,7 @@ func (l *Lowerer) classDispatch(n *ast.MethodCall, c *Class, method string) ir.E
 		return l.callConstructor(n, c, s)
 	case SubClass, SubPlain:
 		args, _ := l.listParts(n.Args)
-		return l.callFunction(s, args, n)
+		return l.callFunction(s, c, args, n)
 	}
 	return l.todoExpr(n, "P2G7042", c.Perl+"->"+method,
 		"an instance method was called on the class itself",
@@ -817,7 +837,7 @@ func (l *Lowerer) dispatch(n *ast.MethodCall, c *Class, method string, super boo
 	case SubCtor:
 		return l.callConstructor(n, c, s)
 	case SubClass, SubPlain:
-		return l.callFunction(s, args, n)
+		return l.callFunction(s, c, args, n)
 	}
 	if recv == nil {
 		return l.todoExpr(n, "P2G7042", "->"+method,
@@ -827,6 +847,9 @@ func (l *Lowerer) dispatch(n *ast.MethodCall, c *Class, method string, super boo
 			"Build the object first and call the method on it.",
 			"methods-and-receivers")
 	}
+	if s.Named != nil {
+		args = l.namedArgs(s, n)
+	}
 	l.noteLateBinding(n, s, super, recv)
 	return l.invoke(s, recv, args, n)
 }
@@ -834,7 +857,10 @@ func (l *Lowerer) dispatch(n *ast.MethodCall, c *Class, method string, super boo
 // invoke builds the Go method call itself.
 func (l *Lowerer) invoke(s *Sub, recv ir.Expr, args []ir.Expr, n ast.Node) ir.Expr {
 	s.CallSites++
-	out := l.fitArgs(s, args, n)
+	out := args
+	if s.Named == nil {
+		out = l.fitArgs(s, args, n)
+	}
 	ret := ir.TVoid
 	if len(s.Results) > 0 {
 		ret = s.Results[0]
@@ -848,9 +874,18 @@ func (l *Lowerer) invoke(s *Sub, recv ir.Expr, args []ir.Expr, n ast.Node) ir.Ex
 }
 
 // callFunction builds a call to a class method or a package function.
-func (l *Lowerer) callFunction(s *Sub, args []ir.Expr, n ast.Node) ir.Expr {
+func (l *Lowerer) callFunction(s *Sub, cls *Class, args []ir.Expr, n ast.Node) ir.Expr {
 	s.CallSites++
 	out := l.fitArgs(s, args, n)
+	// A class method that reads the class it was called on is given that
+	// name, because Perl passed it and inheritance made it vary.
+	if s.ClassParam != nil {
+		named := s.Class
+		if cls != nil {
+			named = cls
+		}
+		out = append([]ir.Expr{ir.Str(quote(named.Perl))}, out...)
+	}
 	ret := ir.TVoid
 	if len(s.Results) > 0 {
 		ret = s.Results[0]
@@ -916,6 +951,11 @@ func (l *Lowerer) callConstructor(n *ast.MethodCall, c *Class, s *Sub) ir.Expr {
 		args, _ := l.listParts(n.Args)
 		out = l.fitArgs(shape, args, n)
 	}
+	// The class named at the call is what an inherited constructor blesses
+	// into, so it travels as an argument.
+	if s.ClassParam != nil {
+		out = append([]ir.Expr{ir.Str(quote(c.Perl))}, out...)
+	}
 	ret := c.Ptr
 	if len(s.Results) > 0 {
 		ret = s.Results[0]
@@ -946,6 +986,25 @@ func (l *Lowerer) namedArgs(s *Sub, n *ast.MethodCall) []ir.Expr {
 	flat := make([]ast.Expr, 0, len(n.Args))
 	for _, a := range n.Args {
 		flat = append(flat, flatten(a)...)
+	}
+	// `$self->init(%args)` hands the whole named list on, which here is one
+	// argument per name the callee reads.
+	if len(flat) == 1 && l.isCallerNamedHash(flat[0]) {
+		out := make([]ir.Expr, 0, len(s.NamedParams))
+		for _, p := range s.NamedParams {
+			src := l.namedParam(l.curSub, namedKey(p), n)
+			l.observe(src, p.Type)
+			l.observe(p, src.Type)
+			out = append(out, l.assignable(l.ident(src), p.Type, nil))
+		}
+		if l.pass == 2 {
+			l.inform(n, "P2G7044", "forwarded named arguments",
+				"The whole `%args` hash is passed on, so the caller hands over one "+
+					"argument per name the callee reads. Go has no way to forward a set of "+
+					"named arguments, because it has no named arguments to forward.",
+				"variadic-and-no-defaults")
+		}
+		return out
 	}
 	given := map[string]ir.Expr{}
 	var unknown []string
@@ -998,7 +1057,7 @@ func (l *Lowerer) namedArgs(s *Sub, n *ast.MethodCall) []ir.Expr {
 	}
 	out := make([]ir.Expr, 0, len(s.NamedParams))
 	for _, p := range s.NamedParams {
-		if v, found := given[p.Perl[len("$args{"):len(p.Perl)-1]]; found {
+		if v, found := given[namedKey(p)]; found {
 			out = append(out, l.assignable(v, p.Type, nil))
 			continue
 		}
@@ -1492,8 +1551,11 @@ func (l *Lowerer) commonInterface(cs []*Class) (*ir.Type, bool) {
 		return nil, false
 	}
 
-	key := root.Perl + "\x00" + strings.Join(methodKeys(shared), ",")
+	// The type is remembered by the ancestor alone, so that a later round of
+	// inference refines its method list rather than declaring a second type.
+	key := root.Perl
 	if c, ok := l.interfaces[key]; ok {
+		c.subBy = shared
 		return c.Value, true
 	}
 	iface := &Class{
@@ -1547,7 +1609,7 @@ func sharedMethods(cs []*Class) map[string]*Sub {
 		ok := true
 		for _, c := range cs[1:] {
 			m := c.method(name)
-			if m == nil || m.Kind != SubMethod || m.Accessor != nil {
+			if m == nil || m.Kind != SubMethod || m.Accessor != nil || !sameSignature(s, m) {
 				ok = false
 				break
 			}
@@ -1557,6 +1619,46 @@ func sharedMethods(cs []*Class) map[string]*Sub {
 		}
 	}
 	return out
+}
+
+// sameSignature reports whether two methods can be one entry in an interface.
+//
+// A name is not enough: an interface names a method's whole signature, and two
+// classes whose versions take different arguments have nothing in common to
+// promise. That happens as soon as one subclass reads a named argument the
+// other does not.
+func sameSignature(a, b *Sub) bool {
+	if a == b {
+		return true
+	}
+	params := func(s *Sub) []*ir.Type {
+		out := make([]*ir.Type, 0, len(s.Params)+len(s.NamedParams))
+		for _, p := range s.Params {
+			out = append(out, p.Type)
+		}
+		for _, p := range s.NamedParams {
+			out = append(out, p.Type)
+		}
+		return out
+	}
+	pa, pb := params(a), params(b)
+	if len(pa) != len(pb) || len(a.Results) != len(b.Results) {
+		return false
+	}
+	if (a.VarArgs == nil) != (b.VarArgs == nil) {
+		return false
+	}
+	for i := range pa {
+		if !pa[i].Equal(pb[i]) {
+			return false
+		}
+	}
+	for i := range a.Results {
+		if !a.Results[i].Equal(b.Results[i]) {
+			return false
+		}
+	}
+	return true
 }
 
 // collectMethods lists every method a class answers to, its own and the ones
@@ -1675,4 +1777,223 @@ func (l *Lowerer) dispatchInterface(n *ast.MethodCall, c *Class, method string, 
 			"only one class has it, a type switch or an assertion reaches the concrete "+
 			"value.",
 		"implicit-interfaces", "type-assertions-and-switches")
+}
+
+// namedKey reads back the hash key a named parameter stands for.
+func namedKey(b *Binding) string {
+	const prefix = "$args{"
+	if strings.HasPrefix(b.Perl, prefix) && strings.HasSuffix(b.Perl, "}") {
+		return b.Perl[len(prefix) : len(b.Perl)-1]
+	}
+	return b.Perl
+}
+
+// isCallerNamedHash reports whether an expression is the `%args` hash of the
+// sub currently being lowered.
+func (l *Lowerer) isCallerNamedHash(e ast.Expr) bool {
+	if l.curSub == nil || l.curSub.Named == nil {
+		return false
+	}
+	v, ok := e.(*ast.Var)
+	if !ok || v.Sigil != '%' {
+		return false
+	}
+	b, found := l.scope.lookup(varKey('%', v.Name))
+	return found && b == l.curSub.Named
+}
+
+// readsClassName reports whether a constructor does anything with its class
+// argument beyond handing it to bless.
+//
+// `bless $self, $class` is the usual and only use, and there the class is the
+// type the generated function already returns, so nothing has to carry it. A
+// constructor that also tests the name, or builds a default out of it, is
+// relying on being called with a subclass's name, which is a value the Go
+// function has to be given.
+func readsClassName(sd *ast.SubDecl) bool {
+	if sd == nil {
+		return false
+	}
+	names, prologue := classAliasNames(sd.Body)
+	if len(names) == 0 {
+		return false
+	}
+	// The statements that unpack the arguments name the variable without
+	// reading it, and the alias chain only copies it along.
+	body := sd.Body[prologue:]
+	found := false
+	var expr func(ast.Expr, bool)
+	var stmts func([]ast.Stmt)
+	expr = func(e ast.Expr, blessed bool) {
+		if e == nil || found {
+			return
+		}
+		switch n := e.(type) {
+		case *ast.Var:
+			if !blessed && n.Sigil == '$' && names[n.Name] {
+				found = true
+			}
+		case *ast.Call:
+			for i, a := range n.Args {
+				// The second argument of bless is the class to bless into,
+				// which the generated constructor's result type already says.
+				expr(a, n.Name == "bless" && i == 1)
+			}
+			stmts(n.Block)
+		case *ast.Assign:
+			// `my $class = ref($proto) || $proto` is the alias chain itself.
+			if _, isAlias := classAliasTarget(n); isAlias {
+				return
+			}
+			expr(n.LHS, false)
+			expr(n.RHS, false)
+		case *ast.BinOp:
+			expr(n.L, false)
+			expr(n.R, false)
+		case *ast.UnOp:
+			expr(n.X, false)
+		case *ast.Ternary:
+			expr(n.Cond, false)
+			expr(n.A, false)
+			expr(n.B, false)
+		case *ast.List:
+			for _, el := range n.Elems {
+				expr(el, false)
+			}
+		case *ast.My:
+			for _, v := range n.Vars {
+				expr(v, false)
+			}
+		case *ast.MethodCall:
+			expr(n.Invocant, false)
+			for _, a := range n.Args {
+				expr(a, false)
+			}
+		case *ast.InterpLit:
+			for _, p := range n.Parts {
+				expr(p, false)
+			}
+		case *ast.HashIndex:
+			expr(n.Base, false)
+			expr(n.Key, false)
+		case *ast.Index:
+			expr(n.Base, false)
+			expr(n.Idx, false)
+		case *ast.AnonHash:
+			for _, el := range n.Elems {
+				expr(el, false)
+			}
+		case *ast.AnonArray:
+			for _, el := range n.Elems {
+				expr(el, false)
+			}
+		}
+	}
+	stmts = func(list []ast.Stmt) {
+		for _, st := range list {
+			switch n := st.(type) {
+			case *ast.ExprStmt:
+				expr(n.X, false)
+			case *ast.If:
+				expr(n.Cond, false)
+				stmts(n.Then)
+				for _, ei := range n.ElseIfs {
+					expr(ei.Cond, false)
+					stmts(ei.Then)
+				}
+				stmts(n.Else)
+			case *ast.While:
+				expr(n.Cond, false)
+				stmts(n.Body)
+			case *ast.ForC:
+				expr(n.Init, false)
+				expr(n.Cond, false)
+				expr(n.Post, false)
+				stmts(n.Body)
+			case *ast.Foreach:
+				for _, e := range n.List {
+					expr(e, false)
+				}
+				stmts(n.Body)
+			case *ast.Block:
+				stmts(n.Body)
+			case *ast.Return:
+				for _, e := range n.Exprs {
+					expr(e, false)
+				}
+			}
+		}
+	}
+	stmts(body)
+	return found
+}
+
+// classAliasNames lists the variables a constructor holds its class name in:
+// the first argument, and anything `ref($proto) || $proto` copies it into. It
+// also reports how many statements that prologue took.
+func classAliasNames(body []ast.Stmt) (map[string]bool, int) {
+	out := map[string]bool{}
+	n := 0
+	for _, st := range body {
+		es, ok := st.(*ast.ExprStmt)
+		if !ok {
+			break
+		}
+		as, ok := es.X.(*ast.Assign)
+		if !ok || as.Op != "=" {
+			break
+		}
+		my, ok := as.LHS.(*ast.My)
+		if !ok {
+			break
+		}
+		vars := declaredVars(my)
+		if len(vars) == 0 {
+			break
+		}
+		if isArgsVar(as.RHS) || isShiftArgs(as.RHS) {
+			if len(out) == 0 {
+				out[vars[0].Name] = true
+			}
+			n++
+			continue
+		}
+		if name, ok := classAliasTarget(as); ok && len(vars) == 1 {
+			if out[name] {
+				out[vars[0].Name] = true
+			}
+			n++
+			continue
+		}
+		break
+	}
+	return out, n
+}
+
+// classAliasTarget reports the variable a `ref($x) || $x` chain reads.
+func classAliasTarget(a *ast.Assign) (string, bool) {
+	if a.Op != "=" {
+		return "", false
+	}
+	var name string
+	var walk func(ast.Expr) bool
+	walk = func(e ast.Expr) bool {
+		switch n := e.(type) {
+		case *ast.Var:
+			if n.Sigil != '$' || (name != "" && name != n.Name) {
+				return false
+			}
+			name = n.Name
+			return true
+		case *ast.BinOp:
+			return (n.Op == "||" || n.Op == "or" || n.Op == "//") && walk(n.L) && walk(n.R)
+		case *ast.Call:
+			return n.Name == "ref" && len(n.Args) == 1 && walk(n.Args[0])
+		}
+		return false
+	}
+	if !walk(a.RHS) || name == "" {
+		return "", false
+	}
+	return name, true
 }

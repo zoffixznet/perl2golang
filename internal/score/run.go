@@ -251,7 +251,10 @@ func (r *runner) runEntry(ctx context.Context, e Entry) EntryResult {
 
 	// Conversion. A failure here is a failure of every stage, because there
 	// is nothing further to measure.
-	conv, cerr := convert.Convert(fixture.Source, convert.Options{Path: "input.pl"})
+	conv, cerr := convert.Convert(fixture.Source, convert.Options{
+		Path:    "input.pl",
+		Modules: convert.FilesBeside(fixture.Dir),
+	})
 	var class Classification
 	if cerr != nil {
 		reason := "conversion failed: " + firstLine(cerr.Error())

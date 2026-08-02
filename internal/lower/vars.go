@@ -202,6 +202,11 @@ func (l *Lowerer) identFor(b *Binding) ir.Expr {
 	if x, ok := l.aliases[b]; ok {
 		return x
 	}
+	// The class name a constructor was called with is one name here, so the
+	// variable holding it is that name and no variable is needed.
+	if c := l.classVars[b]; c != nil {
+		return ir.Str(quote(c.Perl))
+	}
 	return ir.NewIdent(b.Go, b.Type)
 }
 

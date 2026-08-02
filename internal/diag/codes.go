@@ -453,6 +453,10 @@ const (
 	ListUtilPairs Code = "P2G7544"
 	// ModuleUnmapped: a module has no entry in the mapping table.
 	ModuleUnmapped Code = "P2G7550"
+	// ModuleInlined: a module beside the script was converted with it.
+	ModuleInlined Code = "P2G7551"
+	// ParentEmbedded: `use parent` became embedding.
+	ParentEmbedded Code = "P2G7552"
 	// StrictWarnings: `use strict` and `use warnings` have no counterpart.
 	StrictWarnings Code = "P2G7555"
 	// PosixFloor: POSIX::floor maps to math.Floor.
@@ -1824,6 +1828,22 @@ var catalogue = map[Code]Entry{
 		Advice:    "write the call by hand; `go doc` over the standard library finds what corresponds",
 		Converted: "the call is not converted; the call site panics with the original Perl text",
 		Concepts:  []string{"small-stdlib-philosophy", "go-mod-vs-cpan"},
+	},
+	ParentEmbedded: {
+		Severity:  report.Note,
+		Message:   "`use parent` became embedding, which promotes the parent's fields and methods",
+		Short:     "the parent is embedded",
+		Advice:    "nothing to do unless the parent calls a method the child overrides, which embedding cannot reach",
+		Converted: "the emitted struct embeds the parent type",
+		Concepts:  []string{"structs-and-embedding", "late-binding-vs-embedding"},
+	},
+	ModuleInlined: {
+		Severity:  report.Note,
+		Message:   "the module beside this file was converted with it, into the same Go package",
+		Short:     "the module came along",
+		Advice:    "to split it out again, move its declarations into their own directory and export the names the script uses",
+		Converted: "its classes are types here and the names it exported are ordinary functions",
+		Concepts:  []string{"packages-and-exported-names", "go-mod-vs-cpan"},
 	},
 	ModuleUnmapped: {
 		Severity:  report.Warn,

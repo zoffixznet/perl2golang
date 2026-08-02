@@ -405,8 +405,11 @@ func (r *run) convert(f *convertFlags, stream streamMode, session *aiSession) {
 		improve = session.improver
 	}
 	res, err := convert.Convert(r.in.src, convert.Options{
-		Path:   r.in.path,
-		Verify: true,
+		Path: r.in.path,
+		// A script that pulls in a module beside it is one program, so the
+		// modules are read from the input's own directory.
+		Modules: moduleResolver(r.in),
+		Verify:  true,
 		// The compact case asks for the Go and the notes, not a documentation
 		// tree it has nowhere to put. --json is the exception: it promises
 		// every artifact, so it always asks for the documents.
@@ -546,4 +549,13 @@ func emitArtifacts(e *env, runs []*run, stream streamMode, exit int) error {
 		}
 	}
 	return nil
+}
+
+// moduleResolver reads the Perl modules that sit beside a file being
+// converted. Input that did not come from a file has no directory to look in.
+func moduleResolver(in input) convert.ModuleResolver {
+	if !in.fromFile {
+		return nil
+	}
+	return convert.FilesBeside(filepath.Dir(in.path))
 }

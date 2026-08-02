@@ -26,7 +26,7 @@ func (l *Lowerer) hoistSubs() {
 		if _, dup := l.subs[key]; dup {
 			continue
 		}
-		s := &Sub{Name: sd.Name, Pkg: u.pkg, Decl: sd, Line: posLine(sd)}
+		s := &Sub{Name: sd.Name, Pkg: u.pkg, Decl: sd, Line: posLine(sd), File: u.file}
 		s.Doc = leadComments(sd)
 		l.subs[key] = s
 		l.subOrd = append(l.subOrd, key)
@@ -96,8 +96,25 @@ func (l *Lowerer) findSub(name string) (*Sub, bool) {
 	if s, ok := l.subs[qualify(l.curPkg, name)]; ok {
 		return s, true
 	}
-	s, ok := l.subs["main::"+name]
-	return s, ok
+	if s, ok := l.subs["main::"+name]; ok {
+		return s, true
+	}
+	// A module exports names into whoever used it, and every package in the
+	// conversion lands in one Go package, so a name only one of them declares
+	// resolves to that one. Two packages declaring it is a real ambiguity and
+	// is left alone.
+	var found *Sub
+	for _, key := range l.subOrd {
+		s := l.subs[key]
+		if s.Name != name || s.Class != nil {
+			continue
+		}
+		if found != nil {
+			return nil, false
+		}
+		found = s
+	}
+	return found, found != nil
 }
 
 // lowerSubDecl builds the Go function for one subroutine.
@@ -107,12 +124,16 @@ func (l *Lowerer) lowerSubDecl(sd *ast.SubDecl) {
 		return
 	}
 
-	savedScope, savedSub, savedClass := l.scope, l.curSub, l.curClass
+	savedScope, savedSub, savedClass, savedFile := l.scope, l.curSub, l.curClass, l.curFile
 	l.scope = newScope(nil)
 	l.scope.fn = s
 	l.curSub = s
 	l.curClass = s.Class
-	defer func() { l.scope, l.curSub, l.curClass = savedScope, savedSub, savedClass }()
+	l.setFile(s.File)
+	defer func() {
+		l.scope, l.curSub, l.curClass = savedScope, savedSub, savedClass
+		l.setFile(savedFile)
+	}()
 
 	if s.Class != nil {
 		l.lowerMethodDecl(s, sd)
@@ -691,6 +712,12 @@ func (l *Lowerer) callSub(s *Sub, n *ast.Call) ir.Expr {
 					"arguments.",
 				"variadic-and-no-defaults")
 		}
+	}
+
+	// A class method reached by its plain name is being called on the class
+	// it was written in.
+	if s.ClassParam != nil && s.Class != nil {
+		out = append([]ir.Expr{ir.Str(quote(s.Class.Perl))}, out...)
 	}
 
 	ret := ir.TVoid
