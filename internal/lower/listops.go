@@ -50,21 +50,35 @@ func (l *Lowerer) sortCall(n *ast.Call) ir.Expr {
 	l.emit(clone)
 	target := ir.NewIdent(name, t)
 
-	kind, ok := comparatorShape(n.Block)
+	kind, numeric, ok := comparatorShape(n.Block)
+	// `<=>` orders numerically and `cmp` orders as text, whatever the values
+	// happen to be held as. Sorting a slice of strings with Go's own ordering
+	// answers the `cmp` question and gets `<=>` wrong: "142" comes before
+	// "30" as text and after it as a number.
+	native := (numeric && isNum(elem)) || (!numeric && isStr(elem))
 	switch {
 	case n.Block == nil:
 		l.emit(l.defaultSort(target, elem, n))
 	case ok && kind == cmpAscending:
-		if isOrdered(elem) {
+		switch {
+		case native:
 			l.emit(exprStmt(call("slices", "slices", "Sort", ir.TVoid, target)))
-		} else {
+		case numeric:
 			l.emit(exprStmt(call("slices", "slices", "SortFunc", ir.TVoid, target,
 				l.numericComparator(elem, false))))
+		default:
+			l.emit(exprStmt(call("slices", "slices", "SortFunc", ir.TVoid, target,
+				l.textComparator(elem, false))))
 		}
 	case ok && kind == cmpDescending:
-		fn := l.reverseComparator(elem)
-		if !isOrdered(elem) {
+		var fn ir.Expr
+		switch {
+		case native:
+			fn = l.reverseComparator(elem)
+		case numeric:
 			fn = l.numericComparator(elem, true)
+		default:
+			fn = l.textComparator(elem, true)
 		}
 		l.emit(exprStmt(call("slices", "slices", "SortFunc", ir.TVoid, target, fn)))
 	default:
@@ -264,30 +278,53 @@ const (
 
 // comparatorShape recognises the two comparators that make up almost all real
 // sort blocks.
-func comparatorShape(block []ast.Stmt) (cmpKind, bool) {
+func comparatorShape(block []ast.Stmt) (kind cmpKind, numeric bool, ok bool) {
 	if len(block) != 1 {
-		return cmpOther, false
+		return cmpOther, false, false
 	}
-	es, ok := block[0].(*ast.ExprStmt)
-	if !ok {
-		return cmpOther, false
+	es, isExpr := block[0].(*ast.ExprStmt)
+	if !isExpr {
+		return cmpOther, false, false
 	}
-	bin, ok := es.X.(*ast.BinOp)
-	if !ok || (bin.Op != "<=>" && bin.Op != "cmp") {
-		return cmpOther, false
+	bin, isBin := es.X.(*ast.BinOp)
+	if !isBin || (bin.Op != "<=>" && bin.Op != "cmp") {
+		return cmpOther, false, false
 	}
+	numeric = bin.Op == "<=>"
 	lv, lok := bin.L.(*ast.Var)
 	rv, rok := bin.R.(*ast.Var)
 	if !lok || !rok || lv.Sigil != '$' || rv.Sigil != '$' {
-		return cmpOther, false
+		return cmpOther, numeric, false
 	}
 	switch {
 	case lv.Name == "a" && rv.Name == "b":
-		return cmpAscending, true
+		return cmpAscending, numeric, true
 	case lv.Name == "b" && rv.Name == "a":
-		return cmpDescending, true
+		return cmpDescending, numeric, true
 	}
-	return cmpOther, false
+	return cmpOther, numeric, false
+}
+
+// textComparator builds the comparator for `cmp` over values that are not
+// already strings, which orders them the way their text does.
+func (l *Lowerer) textComparator(elem *ir.Type, reverse bool) ir.Expr {
+	a := ir.Expr(ir.NewIdent("a", elem))
+	b := ir.Expr(ir.NewIdent("b", elem))
+	if reverse {
+		a, b = b, a
+	}
+	body := &ir.Block{Stmts: []ir.Stmt{
+		&ir.Return{Results: []ir.Expr{
+			call("cmp", "cmp", "Compare", ir.TInt, l.toStr(a, nil), l.toStr(b, nil)),
+		}},
+	}}
+	fn := funcLit([]ir.Param{{Name: "a", Type: elem}, {Name: "b", Type: elem}}, []*ir.Type{ir.TInt}, body)
+	l.note(fn, "`cmp` orders values by their text whatever they are held as, so the "+
+		"comparator renders them first. Ordering them as they stand would sort 10 "+
+		"before 9 or the other way round depending on the type, which is exactly the "+
+		"confusion the two operators exist to avoid.",
+		"sort-slice", "explicit-conversions-no-coercion")
+	return fn
 }
 
 // ---------------------------------------------------------------------------

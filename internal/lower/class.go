@@ -46,6 +46,9 @@ type Class struct {
 	// Overloads names the operators `use overload` gave the class, which Go
 	// has no way to hook at all.
 	Overloads map[string]bool
+	// Options marks a struct synthesised from an option block rather than
+	// from a package, which is documented differently and has no methods.
+	Options bool
 	// ArrayBacked records that the class blesses an array reference rather
 	// than a hash. Its fields are positions rather than names, so there is
 	// nothing for a struct's field list to be built from.
@@ -73,6 +76,9 @@ type ClassField struct {
 	// Type is the field's settled Go type.
 	Type     *ir.Type
 	Evidence []*ir.Type
+	// Fixed marks a field whose type is known from a declaration rather than
+	// inferred from use, which is what an option specification gives.
+	Fixed bool
 	// Owner is the class that declares it, which matters once a parent is
 	// embedded and its fields are reachable through promotion.
 	Owner *Class
@@ -484,6 +490,9 @@ func (l *Lowerer) settleFields() {
 	for _, name := range l.classOrd {
 		c := l.classes[name]
 		for _, f := range c.Fields {
+			if f.Fixed {
+				continue
+			}
 			t := joinAll(f.Evidence)
 			if t == nil {
 				t = ir.TAny
@@ -507,8 +516,19 @@ func (l *Lowerer) classDecl(c *Class) ir.Decl {
 		d.Fields = append(d.Fields, ir.Field{Name: f.Go, Type: f.Type})
 	}
 	d.Doc = []string{c.Go + " is one " + lastPart(c.Perl) + " and everything it knows about itself."}
+	if c.Options {
+		d.Doc = []string{c.Go + " holds the command line options this program takes."}
+	}
 	if len(c.Doc) > 0 {
 		d.Doc = append([]string{c.Go + " is defined as follows."}, c.Doc...)
+	}
+	if l.pass == 2 && c.Options {
+		ir.Annotate(d, "The option block names every key this hash will ever hold and "+
+			"says what type each one is, which is what a struct declaration is. Leaving "+
+			"it a map would mean one value type for a set of values that are a number, a "+
+			"string and a flag, and that value type could only be `any`.",
+			"structs-and-embedding", "flag-package")
+		return d
 	}
 	if l.pass == 2 {
 		ir.Annotate(d, "Perl builds an object by blessing a hash reference, so the "+

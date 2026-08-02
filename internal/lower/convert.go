@@ -103,6 +103,28 @@ func (l *Lowerer) toInt(x ir.Expr, n ast.Node) ir.Expr {
 	}
 	t := x.Type()
 	switch {
+	case t != nil && t.Kind == ir.Bool:
+		// Perl's true is the number 1 and its false is the empty string,
+		// which prints as nothing and counts as zero. Go has no arithmetic on
+		// a bool at all, so the choice is written out.
+		if lit, ok := x.(*ir.Lit); ok && lit.Kind == ir.LitBool {
+			if lit.Value == "true" {
+				return ir.IntLit("1")
+			}
+			return ir.IntLit("0")
+		}
+		name := l.tmp("n")
+		decl := &ir.DeclStmt{Names: []string{name}, Type: ir.TInt}
+		set := &ir.If{Cond: x, Then: &ir.Block{Stmts: []ir.Stmt{
+			assign("=", []ir.Expr{ir.NewIdent(name, ir.TInt)}, []ir.Expr{ir.IntLit("1")}),
+		}}}
+		l.note(decl, "Perl's true is the number 1 and its false is the empty string, so "+
+			"a flag prints as 1 or as nothing and counts as 1 or 0. Go has no arithmetic "+
+			"on a bool and no conversion from one, so the choice is written out.",
+			"explicit-conversions-no-coercion")
+		l.emit(decl)
+		l.emit(set)
+		return ir.NewIdent(name, ir.TInt)
 	case t == nil:
 		return conversion(ir.TInt, l.helperCall(hToNum, ir.TFloat, x))
 	case t.Kind == ir.Int:
@@ -168,6 +190,11 @@ func (l *Lowerer) toBool(x ir.Expr, n ast.Node) ir.Expr {
 	case t.Kind == ir.Bool:
 		return x
 	case t.Kind == ir.Int:
+		if lit, ok := x.(*ir.Lit); ok && lit.Kind == ir.LitInt {
+			// A written-out number is true or false here and now, and saying
+			// so reads better than comparing a constant with zero.
+			return ir.BoolLit(lit.Value != "0")
+		}
 		out := ir.Bin("!=", x, ir.IntLit("0"), ir.TBool)
 		l.note(out, "Go has no truthiness: only a bool can be a condition. A Perl "+
 			"number is false when it is zero, so the test is written out.",

@@ -226,6 +226,25 @@ func (l *Lowerer) builtin(n *ast.Call) ir.Expr {
 		return l.readdirCall(n)
 	case "unlink":
 		return l.unlinkCall(n)
+	case "GetOptions", "GetOptionsFromArray", "Getopt::Long::GetOptions",
+		"Getopt::Long::GetOptionsFromArray":
+		if x, ok := l.getOptions(n); ok {
+			return x
+		}
+		return l.todoExpr(n, "P2G7500", n.Name,
+			"this option block was not understood",
+			"The converter reads an option block's specification strings to work out "+
+				"each option's name, type and destination, and this one is not a shape it "+
+				"could take apart.",
+			"Register the options by hand with the flag package: one call per name, the "+
+				"destination passed by address, and flag.NewFlagSet with ContinueOnError "+
+				"so that a bad option is an error rather than an exit.",
+			"flag-package")
+	case "Getopt::Long::Configure", "Getopt::Long::config":
+		if l.configureNote(n) {
+			return ir.Nil(ir.TVoid)
+		}
+		return ir.Nil(ir.TVoid)
 	case "bless":
 		if x, ok := l.blessCall(n); ok {
 			return x

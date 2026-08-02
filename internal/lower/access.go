@@ -182,7 +182,36 @@ func (l *Lowerer) hashPartsField(n *ast.HashIndex) (m ir.Expr, key ir.Expr, elem
 	m = l.asMap(m, n)
 	elem = elemOf(typeOrAny(m))
 	key = l.toStr(l.expr(n.Key), n.Key)
+	l.noteDeepRead(n)
 	return m, key, elem, nil
+}
+
+// noteDeepRead reports the side effect a nested read has in Perl and does not
+// have here.
+//
+// `if ($h{a}{b}{c})` looks like a question and is also an answer: perl creates
+// $h{a} and $h{a}{b} on the way through, so `exists $h{a}` is true afterwards
+// even though nothing was ever assigned. A Go map read creates nothing. The Go
+// behaviour is nearly always the one the author wanted, and it is still a
+// difference a program can see.
+func (l *Lowerer) noteDeepRead(n *ast.HashIndex) {
+	if l.pass != 2 {
+		return
+	}
+	switch n.Base.(type) {
+	case *ast.HashIndex, *ast.Index:
+	default:
+		return
+	}
+	l.approximate(n, "P2G2510", "a nested read",
+		"reading a nested key no longer creates the levels above it",
+		"Reading a deep path in Perl creates every level on the way to it, so a test "+
+			"that only looked at a key leaves that key behind. Go's map read creates "+
+			"nothing at all, so a later `exists` on the same path answers no where the "+
+			"original answered yes.",
+		"Nothing to change unless the program relied on it. Where it did, assign the "+
+			"intermediate levels explicitly, which also says out loud what was happening.",
+		"nil-slices-vs-nil-maps", "comma-ok-idiom")
 }
 
 // asMap makes a value usable as a map.

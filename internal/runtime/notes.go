@@ -8,6 +8,66 @@ package runtime
 // A note is prose, wrapped when it is printed, and is keyed by the primary
 // name of the declaration. Every helper has one; a test enforces that.
 var notes = map[string]string{
+	"permuteArgs": "flag.Parse stops at the first argument that is not an " +
+		"option, and the parser this replaces carried on and sorted the two " +
+		"apart. That difference is silent: `prog input.txt --verbose` leaves " +
+		"--verbose among the file names, the option never takes effect, and " +
+		"nothing is printed on either stream. Reordering the arguments first " +
+		"is what keeps the command line meaning what it used to.",
+
+	"takesNoValue": "Whether an option takes a value decides whether the " +
+		"word after it belongs to it. flag knows, through the IsBoolFlag " +
+		"method its boolean values carry, and asking it is what keeps the " +
+		"reordering in step with the parsing.",
+
+	"flagGiven": "A bool that was never mentioned and one explicitly set to " +
+		"false are the same value, so the zero value cannot answer whether an " +
+		"option was given. Visit walks only the options that were set, which " +
+		"is the whole question.",
+
+	"intOption": "flag.IntVar reads a leading zero as octal and 0x as " +
+		"hexadecimal, so a zero-padded number out of a config file or a " +
+		"crontab would parse as a different number with nothing said about " +
+		"it. This reads base ten and nothing else, and takes the underscore " +
+		"separators a long number is often written with.",
+
+	"floatOption": "flag.Float64Var accepts inf, nan and hexadecimal floats, " +
+		"none of which the original parser would have taken. Rejecting them " +
+		"here keeps a typo an error rather than a very large number.",
+
+	"countOption": "Counting how many times an option was given has no " +
+		"equivalent in flag: a bool records only that it appeared. The " +
+		"function form is called once per occurrence, which is exactly the " +
+		"count.",
+
+	"negatableBool": "One option that can be spelled three ways is three " +
+		"registrations against one variable. flag has no negation and no " +
+		"aliases, but a second name pointing at the same destination is " +
+		"ordinary usage, so this costs nothing but the lines.",
+
+	"stringListOption": "A repeatable option collects its values, and flag " +
+		"has no repeating kind. The function form is called once per " +
+		"occurrence, in command-line order, so appending is the whole " +
+		"implementation.",
+
+	"stringMapOption": "The keyed form of a repeatable option. Splitting on " +
+		"the first equals sign rather than all of them is what lets a value " +
+		"contain one, and a missing separator is an error rather than a key " +
+		"with an empty value.",
+
+	"intMapOption": "stringMapOption for a numeric value. The number is " +
+		"parsed once, here, so every later use of the map is arithmetic " +
+		"rather than a conversion.",
+
+	"optionalString": "An option whose value may be left off has to be " +
+		"registered as a boolean one, and flag will not let a boolean option " +
+		"take the next word. Only the attached form, --tag=x, means the same " +
+		"thing as it did before; --tag x leaves x among the operands.",
+
+	"sortedPairs": "Go randomises map iteration deliberately, so anything " +
+		"printed straight from a map changes order between runs. Sorting the " +
+		"keys is what keeps the output diffable.",
+
 	"at": "Reading past the end of a list is not an error, it is a missing " +
 		"value, so the helper answers with the zero value where a Go index " +
 		"expression would panic. A negative index counts back from the end, " +

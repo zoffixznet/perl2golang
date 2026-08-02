@@ -5,11 +5,14 @@
 package src
 
 import (
+	"flag"
+	"io"
 	"math"
 	"os"
 	"path/filepath"
 	"regexp"
 	"slices"
+	"strings"
 	"testing"
 )
 
@@ -911,4 +914,191 @@ func TestAt(t *testing.T) {
 	if got := at([]float64{1.5}, 0); got != 1.5 {
 		t.Errorf("at of a float list = %v", got)
 	}
+}
+
+// TestOptions covers the option helpers against the behaviour the converted
+// scripts were written for. The expectations come from running the equivalent
+// Getopt::Long calls under perl 5.42.2.
+func TestOptions(t *testing.T) {
+	build := func() (*flag.FlagSet, *optionState) {
+		st := &optionState{output: "-", jobs: 1, color: true}
+		fs := flag.NewFlagSet("prog", flag.ContinueOnError)
+		fs.SetOutput(io.Discard)
+		fs.StringVar(&st.output, "output", st.output, "")
+		fs.StringVar(&st.output, "o", st.output, "")
+		intOption(fs, &st.jobs, "jobs", "")
+		intOption(fs, &st.jobs, "j", "")
+		floatOption(fs, &st.ratio, "ratio", "")
+		countOption(fs, &st.verbose, "verbose", "")
+		countOption(fs, &st.verbose, "v", "")
+		negatableBool(fs, &st.color, "color", "")
+		stringListOption(fs, &st.include, "include", "")
+		stringMapOption(fs, &st.define, "define", "")
+		intMapOption(fs, &st.limit, "limit", "")
+		optionalString(fs, &st.tag, "tag", "")
+		return fs, st
+	}
+
+	tests := []struct {
+		name  string
+		args  []string
+		fail  bool
+		check func(*testing.T, *flag.FlagSet, *optionState)
+	}{
+		{
+			name: "options may follow operands",
+			args: []string{"a.c", "--jobs", "4", "b.c", "--verbose"},
+			check: func(t *testing.T, fs *flag.FlagSet, st *optionState) {
+				if st.jobs != 4 || st.verbose != 1 {
+					t.Errorf("jobs=%d verbose=%d, want 4 and 1", st.jobs, st.verbose)
+				}
+				if got := strings.Join(fs.Args(), ","); got != "a.c,b.c" {
+					t.Errorf("operands = %q, want %q", got, "a.c,b.c")
+				}
+			},
+		},
+		{
+			name: "a double dash ends the options",
+			args: []string{"--output", "x", "--", "-y", "z"},
+			check: func(t *testing.T, fs *flag.FlagSet, st *optionState) {
+				if st.output != "x" {
+					t.Errorf("output = %q, want %q", st.output, "x")
+				}
+				if got := strings.Join(fs.Args(), ","); got != "-y,z" {
+					t.Errorf("operands = %q, want %q", got, "-y,z")
+				}
+			},
+		},
+		{
+			name: "a whole number is read in base ten",
+			args: []string{"--jobs", "017"},
+			check: func(t *testing.T, fs *flag.FlagSet, st *optionState) {
+				if st.jobs != 17 {
+					t.Errorf("jobs = %d, want 17", st.jobs)
+				}
+			},
+		},
+		{
+			name: "underscores separate digits",
+			args: []string{"--jobs", "1_000"},
+			check: func(t *testing.T, fs *flag.FlagSet, st *optionState) {
+				if st.jobs != 1000 {
+					t.Errorf("jobs = %d, want 1000", st.jobs)
+				}
+			},
+		},
+		{name: "hexadecimal is not a whole number", args: []string{"--jobs", "0x1f"}, fail: true},
+		{name: "a fraction is not a whole number", args: []string{"--jobs", "3.9"}, fail: true},
+		{name: "infinity is not a number", args: []string{"--ratio", "inf"}, fail: true},
+		{
+			name: "a counter counts",
+			args: []string{"-v", "-v", "-v"},
+			check: func(t *testing.T, fs *flag.FlagSet, st *optionState) {
+				if st.verbose != 3 {
+					t.Errorf("verbose = %d, want 3", st.verbose)
+				}
+			},
+		},
+		{
+			name: "a negatable option turns off both ways",
+			args: []string{"--no-color"},
+			check: func(t *testing.T, fs *flag.FlagSet, st *optionState) {
+				if st.color {
+					t.Error("color is still on")
+				}
+				if !flagGiven(fs, "color") {
+					t.Error("color does not count as given")
+				}
+			},
+		},
+		{
+			name: "an unmentioned option keeps its default",
+			args: []string{"a.c"},
+			check: func(t *testing.T, fs *flag.FlagSet, st *optionState) {
+				if !st.color {
+					t.Error("color was turned off by nothing")
+				}
+				if flagGiven(fs, "color") {
+					t.Error("color counts as given")
+				}
+			},
+		},
+		{
+			name: "a repeatable option collects every value",
+			args: []string{"--include", "lib", "--include", "t"},
+			check: func(t *testing.T, fs *flag.FlagSet, st *optionState) {
+				if got := strings.Join(st.include, ","); got != "lib,t" {
+					t.Errorf("include = %q, want %q", got, "lib,t")
+				}
+			},
+		},
+		{
+			name: "a pair option splits on the first equals sign",
+			args: []string{"--define", "a=1", "--define", "b=2=3"},
+			check: func(t *testing.T, fs *flag.FlagSet, st *optionState) {
+				if got := strings.Join(sortedPairs(st.define), ","); got != "a=1,b=2=3" {
+					t.Errorf("define = %q, want %q", got, "a=1,b=2=3")
+				}
+			},
+		},
+		{name: "a pair option needs a value", args: []string{"--define", "novalue"}, fail: true},
+		{
+			name: "a numeric pair option numifies its value",
+			args: []string{"--limit", "cpu=90"},
+			check: func(t *testing.T, fs *flag.FlagSet, st *optionState) {
+				if st.limit["cpu"] != 90 {
+					t.Errorf("limit = %v, want cpu 90", st.limit)
+				}
+			},
+		},
+		{
+			name: "an optional value may be left off",
+			args: []string{"--tag"},
+			check: func(t *testing.T, fs *flag.FlagSet, st *optionState) {
+				if st.tag != "" {
+					t.Errorf("tag = %q, want empty", st.tag)
+				}
+			},
+		},
+		{
+			name: "an optional value attaches with an equals sign",
+			args: []string{"--tag=x"},
+			check: func(t *testing.T, fs *flag.FlagSet, st *optionState) {
+				if st.tag != "x" {
+					t.Errorf("tag = %q, want %q", st.tag, "x")
+				}
+			},
+		},
+		{name: "an unknown option fails", args: []string{"--zap"}, fail: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fs, st := build()
+			err := fs.Parse(permuteArgs(fs, tt.args))
+			if tt.fail {
+				if err == nil {
+					t.Fatalf("parse of %v succeeded, and it should not have", tt.args)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("parse of %v: %v", tt.args, err)
+			}
+			tt.check(t, fs, st)
+		})
+	}
+}
+
+// optionState is the set of destinations the option tests write through.
+type optionState struct {
+	output  string
+	jobs    int
+	ratio   float64
+	verbose int
+	color   bool
+	tag     string
+	include []string
+	define  map[string]string
+	limit   map[string]int
 }

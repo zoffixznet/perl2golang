@@ -235,6 +235,21 @@ func (l *Lowerer) exprStatement(e ast.Expr) []ir.Stmt {
 					return l.closedirCall(c)
 				}
 			}
+			// `my ($a, $b) = /re/ or next` assigns and then tests, which
+			// works in Perl because a list assignment in boolean context
+			// reports how many values were on its right.
+			if a, isAssign := n.L.(*ast.Assign); isAssign {
+				if cond, ok := l.assignCond(a); ok {
+					guard := &ir.If{Cond: negated(cond), Then: &ir.Block{Stmts: l.exprStatement(n.R)}}
+					l.setProv(guard, n)
+					l.note(guard, "A list assignment in Perl is also a test: in boolean "+
+						"context it reports how many values were on its right, so a match "+
+						"that found nothing is false. Go separates the two, so the "+
+						"assignment happens and then the result is tested.",
+						"comma-ok-idiom")
+					return []ir.Stmt{guard}
+				}
+			}
 			// The `something() or die "..."` idiom: a guard, not a value.
 			cond := negated(l.cond(n.L))
 			l.countGuardRead(n.L)
@@ -257,6 +272,11 @@ func (l *Lowerer) exprStatement(e ast.Expr) []ir.Stmt {
 		}
 
 	case *ast.Call:
+		// `... or next` puts a loop control word in expression position,
+		// where the parser cannot tell it from a call to a sub of that name.
+		if sts, ok := l.loopCtlCall(n); ok {
+			return sts
+		}
 		return l.callStatement(n)
 
 	case *ast.Subst:
@@ -575,6 +595,69 @@ func (l *Lowerer) packageStmt(n *ast.PackageDecl) []ir.Stmt {
 		"Move the package statement to file scope, which is where a script normally "+
 			"declares a class.",
 		"packages-and-exported-names", "methods-and-receivers")}
+}
+
+// assignCond lowers a list assignment used as a test, yielding the truth of
+// the list it assigned.
+//
+// Only a match has a truth worth reporting: everything else on the right of a
+// list assignment has a length the converter already knows, so testing it
+// would be testing a constant.
+func (l *Lowerer) assignCond(a *ast.Assign) (ir.Expr, bool) {
+	if a.Op != "=" {
+		return nil, false
+	}
+	switch a.LHS.(type) {
+	case *ast.My, *ast.List:
+	default:
+		return nil, false
+	}
+	if _, isMatch := a.RHS.(*ast.Match); !isMatch {
+		return nil, false
+	}
+	depth := l.captureDepth()
+	for _, st := range l.assignStmts(a) {
+		l.emit(st)
+	}
+	if l.captureDepth() <= depth {
+		return nil, false
+	}
+	frame := l.captureStack[len(l.captureStack)-1]
+	out := ir.Bin("!=", ir.NewIdent(frame.Name, ir.SliceOf(ir.TString)),
+		ir.Nil(ir.SliceOf(ir.TString)), ir.TBool)
+	return out, true
+}
+
+// loopCtlCall recognises `next`, `last` and `redo` written where an
+// expression was expected, which is what `EXPR or next` does.
+func (l *Lowerer) loopCtlCall(n *ast.Call) ([]ir.Stmt, bool) {
+	switch n.Name {
+	case "next", "last", "redo":
+	default:
+		return nil, false
+	}
+	if l.findSubExists(n.Name) {
+		return nil, false
+	}
+	ctl := &ast.LoopCtl{Op: n.Name}
+	if len(n.Args) == 1 {
+		label, ok := n.Args[0].(*ast.Call)
+		if !ok || len(label.Args) > 0 {
+			return nil, false
+		}
+		ctl.Label = label.Name
+	} else if len(n.Args) > 0 {
+		return nil, false
+	}
+	ctl.SetSpan(n.Pos(), n.End())
+	return l.loopCtl(ctl), true
+}
+
+// findSubExists reports whether the file declares a sub of that name, which
+// would make the word an ordinary call after all.
+func (l *Lowerer) findSubExists(name string) bool {
+	_, ok := l.findSub(name)
+	return ok
 }
 
 // loopCtl lowers last, next, and redo.

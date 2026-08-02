@@ -85,6 +85,9 @@ type Lowerer struct {
 	// classVars marks the bindings that hold a class name rather than an
 	// object: the $class of a constructor and the $proto it came from.
 	classVars map[*Binding]*Class
+	// optionHash maps a hash an option block fills in to the struct type it
+	// became, keyed by the hash's Perl name.
+	optionHash map[string]*Class
 	// fieldAt remembers which struct field an access resolved to, so that a
 	// write through it can say what the field holds. A field is not a binding
 	// and has nowhere else to record the evidence.
@@ -220,6 +223,7 @@ func Lower(res parser.Result, src []byte, opts Options) *Result {
 		byGoType:   map[string]*Class{},
 		hoisted:    map[*ast.Var]bool{},
 		classVars:  map[*Binding]*Class{},
+		optionHash: map[string]*Class{},
 		fieldAt:    map[ast.Node]*ClassField{},
 		arrowCalls: map[string]bool{},
 		qualCalls:  map[string]bool{},
@@ -243,6 +247,7 @@ func Lower(res parser.Result, src []byte, opts Options) *Result {
 	}
 
 	l.collectClasses(res.Program)
+	l.collectOptions(res.Program)
 	l.markShared()
 	l.hoistSubs()
 
@@ -710,6 +715,14 @@ func (l *Lowerer) resolveTypes() {
 	settle := func(b *Binding) {
 		b.Used = b.Reads
 		b.Reads = 0
+		// A hash an option block fills in is the struct the block declared,
+		// whatever else the file did with it.
+		if b.Sigil == '%' {
+			if c, ok := l.optionHash[b.Perl]; ok {
+				b.Type = c.Value
+				return
+			}
+		}
 		t := joinAll(b.Evidence)
 		if t == nil {
 			t = defaultFor(b.Sigil)

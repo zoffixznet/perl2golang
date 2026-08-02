@@ -236,6 +236,17 @@ func (l *Lowerer) declareSingle(v *ast.Var, n *ast.Assign) []ir.Stmt {
 		value = l.list(n.RHS)
 		l.observe(b, typeOrAny(value))
 	case '%':
+		// A hash an option block fills in is a struct, so its initialiser is
+		// a struct literal rather than a map one.
+		if c := l.classOf(b.Type); c != nil {
+			if h, ok := hashPairs(n.RHS); ok {
+				st := assign(":=", []ir.Expr{ir.NewIdent(b.Go, b.Type)},
+					[]ir.Expr{l.optionLit(c, h)})
+				l.setProv(st, n)
+				l.explainDeclaration(st, b, v)
+				return []ir.Stmt{st}
+			}
+		}
 		value = l.hashInit(n.RHS, elemOf(b.Type))
 		l.observe(b, typeOrAny(value))
 	default:

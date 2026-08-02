@@ -44,7 +44,7 @@ func goName(perl string) string {
 	cur := strings.Builder{}
 	for _, r := range name {
 		switch {
-		case r == '_':
+		case r == '_' || r == '-' || r == '.' || r == ' ':
 			if cur.Len() > 0 {
 				parts = append(parts, cur.String())
 				cur.Reset()

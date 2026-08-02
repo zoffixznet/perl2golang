@@ -413,6 +413,24 @@ const (
 const (
 	// GetoptPermutation: Getopt::Long permutes and flag does not.
 	GetoptPermutation Code = "P2G7505"
+	// GetoptBlock: an option block the converter could not take apart.
+	GetoptBlock Code = "P2G7500"
+	// GetoptSpec: one specification string the converter did not understand.
+	GetoptSpec Code = "P2G7501"
+	// GetoptDestination: an option destination that is not a plain variable.
+	GetoptDestination Code = "P2G7502"
+	// GetoptRepetition: `{n,m}` swallows several words and flag cannot.
+	GetoptRepetition Code = "P2G7503"
+	// GetoptOptionalValue: `:s` no longer takes the word after it.
+	GetoptOptionalValue Code = "P2G7504"
+	// GetoptAliases: an option with several spellings is several registrations.
+	GetoptAliases Code = "P2G7506"
+	// GetoptBundling: `-abc` as three options has no counterpart.
+	GetoptBundling Code = "P2G7507"
+	// GetoptPassThrough: an unknown option is an error rather than an operand.
+	GetoptPassThrough Code = "P2G7508"
+	// GetoptConfigure: a Configure setting with nothing to change.
+	GetoptConfigure Code = "P2G7509"
 	// JSONNumbers: JSON numbers decode as float64 through any.
 	JSONNumbers Code = "P2G7510"
 	// DumperEval: Data::Dumper output is read back with eval.
@@ -1680,6 +1698,76 @@ var catalogue = map[Code]Entry{
 
 	// -- Modules ------------------------------------------------------------
 
+	GetoptBlock: {
+		Severity: report.Refuse,
+		Message:  "this option block is not a shape the converter could take apart",
+		Short:    "the option block was not understood",
+		Advice:   "register the options by hand: one `flag` call per name, on a `FlagSet` built with `ContinueOnError`",
+		Cost:     "the options are not parsed at all and every destination keeps its default",
+		Concepts: []string{"flag-package"},
+	},
+	GetoptSpec: {
+		Severity: report.Warn,
+		Message:  "the option specification `%s` is not a shape the converter reads",
+		Short:    "an option specification was skipped",
+		Advice:   "register that option by hand with the `flag` call that matches its type",
+		Cost:     "the option is not registered, so giving it is an error",
+		Concepts: []string{"flag-package"},
+	},
+	GetoptDestination: {
+		Severity: report.Warn,
+		Message:  "the destination of `%s` is not a variable the registration can write through",
+		Short:    "an option destination was skipped",
+		Advice:   "give the option a plain variable and do the validation after parsing, where a reader will find it",
+		Concepts: []string{"flag-package", "pointers-vs-references"},
+	},
+	GetoptRepetition: {
+		Severity: report.Warn,
+		Message:  "`%s` swallowed several words per occurrence, and `flag` hands a value exactly one",
+		Short:    "a multi-word option became repeatable",
+		Advice:   "callers repeat the option instead: `--pair a --pair b` in place of `--pair a b`",
+		Cost:     "the old call form is now an error rather than a longer list",
+		Concepts: []string{"flag-package"},
+	},
+	GetoptOptionalValue: {
+		Severity: report.Warn,
+		Message:  "`%s` may be written without a value, so `flag` will not let it take the word after it",
+		Short:    "a detached optional value is lost",
+		Advice:   "rewrite the callers to attach it: `--tag=VALUE` behaves the same either way",
+		Cost:     "`--tag VALUE` leaves VALUE among the operands and the tag empty",
+		Concepts: []string{"flag-package"},
+	},
+	GetoptAliases: {
+		Severity:  report.Note,
+		Message:   "an option with several spellings became one registration per name against one variable",
+		Short:     "aliases became separate registrations",
+		Advice:    "nothing to do; `flag` has no aliases but a second name on the same destination works",
+		Converted: "every spelling is registered and they share a destination",
+		Concepts:  []string{"flag-package"},
+	},
+	GetoptBundling: {
+		Severity: report.Warn,
+		Message:  "single-letter options run together, as `-abc`, have no counterpart in `flag`",
+		Short:    "bundled options no longer parse",
+		Advice:   "write the options out separately, or parse with `github.com/spf13/pflag`, which bundles",
+		Cost:     "`-vv` becomes an unknown option rather than a count of two",
+		Concepts: []string{"flag-package", "go-mod-vs-cpan"},
+	},
+	GetoptPassThrough: {
+		Severity: report.Warn,
+		Message:  "an unknown option stops the parse rather than being left among the operands",
+		Short:    "unknown options are no longer passed through",
+		Advice:   "split the argument list before parsing, or use `github.com/spf13/pflag` and its allowlist",
+		Cost:     "a script that forwards arguments to another command stops at the first of them",
+		Concepts: []string{"flag-package"},
+	},
+	GetoptConfigure: {
+		Severity: report.Note,
+		Message:  "the `flag` package has one behaviour and no settings to change",
+		Short:    "a parser setting has nothing to change",
+		Advice:   "check what the setting did and whether the emitted block still does what the callers expect",
+		Concepts: []string{"flag-package", "small-stdlib-philosophy"},
+	},
 	GetoptPermutation: {
 		Severity: report.Warn,
 		Message:  "`Getopt::Long` permutes options and arguments, and the `flag` package stops at the first argument",
