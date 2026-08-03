@@ -1,4 +1,4 @@
-// Command perl2go converts Perl 5 scripts to Go and generates teaching
+// Command perl2golang converts Perl 5 scripts to Go and generates teaching
 // material explaining the Go it produced.
 //
 // Everything this command does lives in [perl2golang/internal/cli], so the
