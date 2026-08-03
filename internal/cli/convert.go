@@ -65,7 +65,7 @@ func (m *streamMode) Set(v string) error {
 
 // IsBoolFlag lets --stdout stand on its own while --stdout=bare still reaches
 // Set. It also means --stdout never eats the following argument, so
-// `perl2go --stdout script.pl` converts script.pl.
+// `perl2golang --stdout script.pl` converts script.pl.
 func (m *streamMode) IsBoolFlag() bool { return true }
 
 // convertFlags is the parsed command line for convert.
@@ -139,7 +139,7 @@ func runConvert(e *env, args []string) int {
 		r.emitDiagnostics(e, f, color)
 	}
 	if err := emitArtifacts(e, runs, stream, worst); err != nil {
-		fmt.Fprintf(e.stderr, "perl2go: writing to standard output: %v\n", err)
+		fmt.Fprintf(e.stderr, "perl2golang: writing to standard output: %v\n", err)
 		return ExitFailed
 	}
 	// The terminal summary is the product of a run that writes files, so it
@@ -166,7 +166,7 @@ func parseConvertFlags(e *env, args []string) (*convertFlags, int) {
 	f := &convertFlags{color: "auto"}
 	fs := flag.NewFlagSet("convert", flag.ContinueOnError)
 	// The help text is written by hand, so the flag package never prints its
-	// own, and a parse error is reported by the caller in perl2go's voice.
+	// own, and a parse error is reported by the caller in perl2golang's voice.
 	fs.SetOutput(io.Discard)
 	fs.StringVar(&f.out, "o", "", "")
 	fs.StringVar(&f.out, "out", "", "")
@@ -206,7 +206,7 @@ func parseConvertFlags(e *env, args []string) (*convertFlags, int) {
 // before the first file name.
 //
 // The standard flag package stops at the first argument that is not a flag,
-// which would make `perl2go report.pl --strict` convert a file called
+// which would make `perl2golang report.pl --strict` convert a file called
 // --strict. Feeding it the arguments in runs, and collecting the positionals
 // in between, gives the behaviour people expect while leaving every flag's
 // syntax exactly as the standard package defines it. Everything after a bare
@@ -250,7 +250,7 @@ func checkConflicts(e *env, f *convertFlags, stream streamMode) int {
 //
 // A snippet and standard input have nowhere obvious to write a directory, so
 // they print to standard output by default, and in the bare form: the whole
-// point of `perl2go -e '...' > snip.go` is that it produces a Go file.
+// point of `perl2golang -e '...' > snip.go` is that it produces a Go file.
 func resolveStream(m streamMode, snippet bool) streamMode {
 	switch m {
 	case streamOff:
@@ -524,7 +524,7 @@ func (r *run) reportFailure(e *env, color bool) {
 		e.diagnose(diag.New(diag.OutputDirNotEmpty, diag.Pos{File: r.in.display},
 			"output directory", dir), r.in.display, nil, color)
 	default:
-		fmt.Fprintf(e.stderr, "perl2go: %s: %v\n", r.in.display, r.err)
+		fmt.Fprintf(e.stderr, "perl2golang: %s: %v\n", r.in.display, r.err)
 	}
 }
 

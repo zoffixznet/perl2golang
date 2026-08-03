@@ -54,7 +54,7 @@ var codeLiteral = regexp.MustCompile(`"(P2G[0-9]{4})"`)
 // TestRaisedCodesAreRegistered fails when a package raises a code the registry
 // does not know. The registry is the only place a code is defined, so a literal
 // that is not in it would reach the reader as a code with no explanation behind
-// it, which `perl2go explain` could not answer for.
+// it, which `perl2golang explain` could not answer for.
 func TestRaisedCodesAreRegistered(t *testing.T) {
 	found := 0
 	for _, dir := range raiserDirs {
@@ -125,7 +125,7 @@ func TestCodeShape(t *testing.T) {
 }
 
 // TestCodesSorted checks that Codes returns a stable, sorted list, which is
-// what `perl2go explain` lists and what a diff of the registry compares.
+// what `perl2golang explain` lists and what a diff of the registry compares.
 func TestCodesSorted(t *testing.T) {
 	got := Codes()
 	if !slices.IsSorted(got) {

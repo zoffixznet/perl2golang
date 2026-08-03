@@ -91,7 +91,7 @@ func (kb *KB) ByTag(tag string) []*Concept {
 }
 
 // Search returns concepts whose id, title, or tags match the query
-// case-insensitively, best match first. Used by `perl2go explain <topic>`.
+// case-insensitively, best match first. Used by `perl2golang explain <topic>`.
 // An empty query matches nothing; use All for that.
 func (kb *KB) Search(q string) []*Concept {
 	needle := strings.ToLower(strings.TrimSpace(q))

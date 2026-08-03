@@ -245,11 +245,11 @@ func verifiedClause(rep *report.Report) string {
 	case v.Built:
 		return "compiled with the Go toolchain"
 	case !v.Parsed:
-		return "the generated Go does not parse, which is a bug in perl2go"
+		return "the generated Go does not parse, which is a bug in perl2golang"
 	case !v.Toolchain:
 		return "parsed only: no Go toolchain was found to compile it"
 	default:
-		return "parsed, but the Go toolchain rejected it, which is a bug in perl2go"
+		return "parsed, but the Go toolchain rejected it, which is a bug in perl2golang"
 	}
 }
 

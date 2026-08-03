@@ -9,4 +9,4 @@ warning[P2G1514]: the statement here did not parse and was replaced by a panic
                 the original Perl text
    = cost: the program compiles, and reaching this statement stops it
    = try: translate the quoted Perl in the stub by hand, then delete the panic
-   = learn: panic-and-recover   (perl2go explain panic-and-recover)
+   = learn: panic-and-recover   (perl2golang explain panic-and-recover)

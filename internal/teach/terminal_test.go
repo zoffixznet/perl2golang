@@ -41,7 +41,7 @@ func TestWrapAt(t *testing.T) {
 	}
 }
 
-// TestTerminalFoldsEveryConcept is the guard on `perl2go explain` and on the
+// TestTerminalFoldsEveryConcept is the guard on `perl2golang explain` and on the
 // session's :explain: whatever the knowledge base gains, none of it arrives at
 // a prompt as a paragraph the window has to wrap.
 func TestTerminalFoldsEveryConcept(t *testing.T) {

@@ -25,7 +25,7 @@ import (
 // schema string.
 
 // resultSchema names the shape of the object writeJSON produces.
-const resultSchema = "perl2go.result/v1"
+const resultSchema = "perl2golang.result/v1"
 
 // jsonResult is the whole object.
 type jsonResult struct {
@@ -84,7 +84,7 @@ func writeJSON(e *env, f *convertFlags, runs []*run) int {
 	res := jsonResult{
 		Schema:      resultSchema,
 		Tool:        toolInfo(),
-		Command:     append([]string{"perl2go"}, e.argv...),
+		Command:     append([]string{"perl2golang"}, e.argv...),
 		Conversions: make([]jsonConversion, 0, len(runs)),
 	}
 
@@ -101,7 +101,7 @@ func writeJSON(e *env, f *convertFlags, runs []*run) int {
 	res.Usable = anyOutput(runs)
 
 	if err := encodeJSON(e, res); err != nil {
-		fmt.Fprintf(e.stderr, "perl2go: writing JSON: %v\n", err)
+		fmt.Fprintf(e.stderr, "perl2golang: writing JSON: %v\n", err)
 		return ExitFailed
 	}
 	return worst
@@ -113,7 +113,7 @@ func usageJSON(e *env, message string) int {
 	res := jsonResult{
 		Schema:      resultSchema,
 		Tool:        toolInfo(),
-		Command:     append([]string{"perl2go"}, e.argv...),
+		Command:     append([]string{"perl2golang"}, e.argv...),
 		Outcome:     "usage",
 		ExitCode:    ExitUsage,
 		Conversions: []jsonConversion{},
@@ -222,7 +222,7 @@ func anyOutput(runs []*run) bool {
 // toolInfo identifies this binary.
 func toolInfo() jsonTool {
 	return jsonTool{
-		Name:     "perl2go",
+		Name:     "perl2golang",
 		Version:  convert.Version,
 		Go:       runtime.Version(),
 		Platform: runtime.GOOS + "/" + runtime.GOARCH,

@@ -9,5 +9,5 @@ warning[P2G4080]: the pattern is built from `$pat` at run time, so it compiles
            error as a value on every call
    = try: hoist the pattern to a package-level `regexp.MustCompile` wherever the
           text turns out to be constant
-   = learn: mustcompile-pattern   (perl2go explain mustcompile-pattern)
-   = learn: errors-are-values   (perl2go explain errors-are-values)
+   = learn: mustcompile-pattern   (perl2golang explain mustcompile-pattern)
+   = learn: errors-are-values   (perl2golang explain errors-are-values)

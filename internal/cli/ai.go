@@ -59,7 +59,7 @@ type aiSession struct {
 func startAI(e *env, f *aiFlags) (*aiSession, int) {
 	if !f.enabled {
 		if f.used() {
-			fmt.Fprintln(e.stderr, "perl2go: the --ai-* flags only take effect with --ai, which was not given")
+			fmt.Fprintln(e.stderr, "perl2golang: the --ai-* flags only take effect with --ai, which was not given")
 		}
 		return nil, ExitOK
 	}
@@ -69,11 +69,11 @@ func startAI(e *env, f *aiFlags) (*aiSession, int) {
 		return nil, e.usagef("%v", err)
 	}
 	if len(jobs) == 0 {
-		fmt.Fprintln(e.stderr, "perl2go: --ai-jobs=none leaves nothing for the model to do, so the conversion is the deterministic one")
+		fmt.Fprintln(e.stderr, "perl2golang: --ai-jobs=none leaves nothing for the model to do, so the conversion is the deterministic one")
 		return nil, ExitOK
 	}
 	for _, job := range jobs.Experimental() {
-		fmt.Fprintf(e.stderr, "perl2go: the %s job asks the model to write prose. A model this size writes "+
+		fmt.Fprintf(e.stderr, "perl2golang: the %s job asks the model to write prose. A model this size writes "+
 			"thinner explanations than the built-in lessons and can name a function that does not exist, "+
 			"so read what it produces before trusting it.\n", job)
 	}
@@ -89,12 +89,12 @@ func startAI(e *env, f *aiFlags) (*aiSession, int) {
 	ctx := context.Background()
 	installed, err := client.Available(ctx)
 	if err != nil {
-		fmt.Fprintf(e.stderr, "perl2go: %s\n", degradeMessage(err, client.Endpoint()))
+		fmt.Fprintf(e.stderr, "perl2golang: %s\n", degradeMessage(err, client.Endpoint()))
 		return nil, ExitOK
 	}
 	if len(installed) == 0 {
-		fmt.Fprintf(e.stderr, "perl2go: the runtime at %s has no models, so the conversion is the deterministic one.\n"+
-			"Run `perl2go ai setup` to see what this machine can run.\n", client.Endpoint())
+		fmt.Fprintf(e.stderr, "perl2golang: the runtime at %s has no models, so the conversion is the deterministic one.\n"+
+			"Run `perl2golang ai setup` to see what this machine can run.\n", client.Endpoint())
 		return nil, ExitOK
 	}
 
@@ -109,12 +109,12 @@ func startAI(e *env, f *aiFlags) (*aiSession, int) {
 			Progress: e.stderr,
 		})
 	} else if !slices.Contains(installed, model) && !slices.Contains(installed, model+":latest") {
-		fmt.Fprintf(e.stderr, "perl2go: the runtime at %s does not have %s, so the conversion is the deterministic one.\n"+
+		fmt.Fprintf(e.stderr, "perl2golang: the runtime at %s does not have %s, so the conversion is the deterministic one.\n"+
 			"It has: %s\n", client.Endpoint(), model, strings.Join(installed, ", "))
 		return nil, ExitOK
 	}
 
-	fmt.Fprintf(e.stderr, "perl2go: ai mode on, using %s at %s for %s\n", model, client.Endpoint(), jobs)
+	fmt.Fprintf(e.stderr, "perl2golang: ai mode on, using %s at %s for %s\n", model, client.Endpoint(), jobs)
 	return &aiSession{client: client, improver: ai.NewImprover(client)}, ExitOK
 }
 
@@ -150,7 +150,7 @@ func degradeMessage(err error, endpoint string) string {
 	var unavailable *ai.UnavailableError
 	if errors.As(err, &unavailable) {
 		return fmt.Sprintf("no inference runtime answered at %s, so the conversion is the deterministic one.\n"+
-			"Start one, or run `perl2go ai setup` to see what this machine can run.", endpoint)
+			"Start one, or run `perl2golang ai setup` to see what this machine can run.", endpoint)
 	}
 	var timeout *ai.TimeoutError
 	if errors.As(err, &timeout) {
@@ -159,7 +159,7 @@ func degradeMessage(err error, endpoint string) string {
 	return fmt.Sprintf("AI mode is not available (%v), so the conversion is the deterministic one.", err)
 }
 
-// runAI is the `perl2go ai` command: what is configured, and what this machine
+// runAI is the `perl2golang ai` command: what is configured, and what this machine
 // could run.
 func runAI(e *env, args []string) int {
 	if len(args) == 0 {
@@ -218,7 +218,7 @@ func aiStatus(e *env, args []string) int {
 	}
 
 	fmt.Fprintln(e.stdout, "\nNothing above was downloaded or changed. Models are shared with the")
-	fmt.Fprintln(e.stdout, "rest of the machine, and perl2go never removes or moves one.")
+	fmt.Fprintln(e.stdout, "rest of the machine, and perl2golang never removes or moves one.")
 	return ExitOK
 }
 
@@ -241,7 +241,7 @@ func aiSetup(e *env, args []string) int {
 
 	hw, err := ai.Probe(ai.DefaultModelStore())
 	if err != nil {
-		fmt.Fprintf(e.stderr, "perl2go: could not inspect this machine: %v\n", err)
+		fmt.Fprintf(e.stderr, "perl2golang: could not inspect this machine: %v\n", err)
 	}
 	for _, line := range hw.Describe() {
 		fmt.Fprintln(e.stdout, line)
@@ -259,7 +259,7 @@ func aiSetup(e *env, args []string) int {
 			fmt.Fprintf(e.stdout, "  %-28s %6d MB\n", m.Name, m.SizeMB)
 		}
 		if model == "" {
-			fmt.Fprintf(e.stdout, "\nNothing to do. `perl2go convert file.pl --ai` will use %s.\n",
+			fmt.Fprintf(e.stdout, "\nNothing to do. `perl2golang convert file.pl --ai` will use %s.\n",
 				ai.PreferredModel(namesOf(installed)))
 			return ExitOK
 		}
@@ -268,7 +268,7 @@ func aiSetup(e *env, args []string) int {
 	if model == "" {
 		rec := ai.Recommend(hw)
 		if len(rec) == 0 {
-			fmt.Fprintln(e.stderr, "perl2go: no model in the catalogue fits this machine, and nothing was downloaded")
+			fmt.Fprintln(e.stderr, "perl2golang: no model in the catalogue fits this machine, and nothing was downloaded")
 			return ExitOK
 		}
 		model = rec[0].Name
@@ -289,11 +289,11 @@ func aiSetup(e *env, args []string) int {
 	}
 	if !yes {
 		fmt.Fprintln(e.stdout, "\nNothing has been downloaded. Run the commands above yourself, or")
-		fmt.Fprintln(e.stdout, "re-run this with --yes to have perl2go run them.")
+		fmt.Fprintln(e.stdout, "re-run this with --yes to have perl2golang run them.")
 		return ExitOK
 	}
 	if err := plan.Execute(context.Background(), e.stderr); err != nil {
-		fmt.Fprintf(e.stderr, "perl2go: %v\n", err)
+		fmt.Fprintf(e.stderr, "perl2golang: %v\n", err)
 		return ExitFailed
 	}
 	return ExitOK
@@ -307,14 +307,14 @@ func namesOf(models []ai.InstalledModel) []string {
 	return out
 }
 
-// aiHelp is `perl2go ai --help`.
+// aiHelp is `perl2golang ai --help`.
 func aiHelp() string {
 	return dedent(`
 	inspect and set up the optional local model.
 
 	usage:
-	  perl2go ai status              what is configured and what is installed
-	  perl2go ai setup [--yes]       what this machine can run, and how to get it
+	  perl2golang ai status              what is configured and what is installed
+	  perl2golang ai setup [--yes]       what this machine can run, and how
 
 	flags:
 	      --ai-endpoint URL   the runtime to talk to (default: $OLLAMA_HOST, or
@@ -322,16 +322,16 @@ func aiHelp() string {
 	      --ai-model TAG      the model to set up
 	      --yes               run the printed commands instead of only printing them
 
-	AI mode is optional in the strongest sense: with no --ai flag perl2go opens no
-	socket at all. When it is on, it talks to a runtime you already have, uses a
-	model you already have where possible, and never removes, moves or copies one.
-	Models are shared with the rest of the machine.
+	AI mode is optional in the strongest sense: with no --ai flag perl2golang
+	opens no socket at all. When it is on, it talks to a runtime you already have,
+	uses a model you already have where possible, and never removes, moves or
+	copies one. Models are shared with the rest of the machine.
 
 	environment:
 	  OLLAMA_HOST      the runtime endpoint, honoured as the runtime's own tools do
 	  OLLAMA_MODELS    the model store, reported by status and never overridden
 
-	See perl2go convert --help for the flags that turn it on during a conversion.
+	See perl2golang convert --help for the flags that turn it on when converting.
 	`)
 }
 
@@ -341,7 +341,7 @@ func aiConvertHelp() string {
 	return dedent(`
 	optional local model (off by default):
 	      --ai             let a local model improve the names in the generated Go.
-	                       Without this flag perl2go makes no network connection.
+	                       Without this flag perl2golang makes no network connection.
 	      --ai-model TAG   which model to use (default: a code model the runtime
 	                       already has)
 	      --ai-endpoint U  the runtime's base URL (default: $OLLAMA_HOST, or

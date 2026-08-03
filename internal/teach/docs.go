@@ -56,6 +56,6 @@ type DocInput struct {
 	Walkthrough []Segment
 	// Exercises are tasks against this specific generated code.
 	Exercises []Exercise
-	// Version is the perl2go version string.
+	// Version is the perl2golang version string.
 	Version string
 }

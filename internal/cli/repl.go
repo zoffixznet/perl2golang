@@ -13,7 +13,7 @@ import (
 // runRepl starts the interactive session.
 //
 // The session writes its whole transcript to stdout, prompts and echoed input
-// included, so that `perl2go repl < session.pl > transcript.txt` produces
+// included, so that `perl2golang repl < session.pl > transcript.txt` produces
 // something a person reads top to bottom and a test diffs. Only a failure that
 // prevents the session starting goes to stderr.
 func runRepl(e *env, args []string) int {
@@ -46,7 +46,7 @@ func runRepl(e *env, args []string) int {
 	}
 	if len(positional) > 0 {
 		return e.usagef("repl takes no arguments, got %q. To convert a file, "+
-			"run `perl2go convert %s`", positional[0], positional[0])
+			"run `perl2golang convert %s`", positional[0], positional[0])
 	}
 	if mode != "clean" && mode != "annotated" {
 		return e.usagef("--mode takes clean or annotated, not %q", mode)

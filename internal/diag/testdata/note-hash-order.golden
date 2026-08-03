@@ -8,5 +8,5 @@ note[P2G5550]: hash iteration order is randomised in both languages, and
    = converted: the emitted code sorts the keys before iterating, so the output
                 is reproducible
    = try: sort the keys before iterating wherever the output order matters
-   = learn: map-iteration-order   (perl2go explain map-iteration-order)
-   = learn: sort-slice   (perl2go explain sort-slice)
+   = learn: map-iteration-order   (perl2golang explain map-iteration-order)
+   = learn: sort-slice   (perl2golang explain sort-slice)

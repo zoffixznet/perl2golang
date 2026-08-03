@@ -234,7 +234,7 @@ func (r *repl) lookup(ids []string) (found []*teach.Concept, unknown []string) {
 func (r *repl) explainCode(code string) {
 	entry, ok := diag.Lookup(diag.Code(code))
 	if !ok {
-		r.p.note("%s is not a diagnostic code perl2go knows", code)
+		r.p.note("%s is not a diagnostic code perl2golang knows", code)
 		return
 	}
 	built := report.Entry{
@@ -247,7 +247,7 @@ func (r *repl) explainCode(code string) {
 		Concepts:     entry.Concepts,
 	}
 	var b strings.Builder
-	_ = diag.Render(&b, built, "perl2go "+code, nil, diag.Options{Color: r.p.color})
+	_ = diag.Render(&b, built, "perl2golang "+code, nil, diag.Options{Color: r.p.color})
 	r.p.body(b.String())
 }
 
@@ -426,7 +426,7 @@ func (r *repl) cmdSave(arg string) {
 		return
 	}
 	r.p.note("wrote %s to %s", plural(strings.Count(text, "\n"), "line"), arg)
-	r.p.note("perl2go convert %s   for the full project, docs and report", arg)
+	r.p.note("perl2golang convert %s   for the full project, docs and report", arg)
 }
 
 func (r *repl) cmdLoad(arg string) {
@@ -469,6 +469,6 @@ func internalEntry() report.Entry {
 		Code:         "P2G0010",
 		Severity:     report.Refuse,
 		SeverityName: report.Refuse.String(),
-		Short:        "perl2go failed while converting that snippet",
+		Short:        "perl2golang failed while converting that snippet",
 	}
 }

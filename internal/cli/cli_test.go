@@ -318,7 +318,7 @@ func TestRun(t *testing.T) {
 			args: func(t *testing.T, dir string) []string { return []string{"--version"} },
 			want: ExitOK,
 			check: func(t *testing.T, dir string, got outcome) {
-				if !strings.HasPrefix(got.stdout, "perl2go ") || strings.Count(got.stdout, "\n") != 1 {
+				if !strings.HasPrefix(got.stdout, "perl2golang ") || strings.Count(got.stdout, "\n") != 1 {
 					t.Errorf("expected one version line, got:\n%q", got.stdout)
 				}
 			},
@@ -446,7 +446,7 @@ func TestJSONOutput(t *testing.T) {
 	if env.Schema != resultSchema {
 		t.Errorf("schema = %q, want %q", env.Schema, resultSchema)
 	}
-	if env.Tool.Name != "perl2go" || env.Tool.Version == "" {
+	if env.Tool.Name != "perl2golang" || env.Tool.Version == "" {
 		t.Errorf("tool = %+v", env.Tool)
 	}
 	if len(env.Conversions) != 1 {
@@ -605,7 +605,7 @@ func TestPanicBecomesAMessageNotAStackTrace(t *testing.T) {
 		t.Errorf("a failed run wrote to stdout: %q", out.String())
 	}
 	got := errs.String()
-	for _, want := range []string{"internal error", "bug in perl2go", "Please report it"} {
+	for _, want := range []string{"internal error", "bug in perl2golang", "Please report it"} {
 		if !strings.Contains(got, want) {
 			t.Errorf("the message should contain %q:\n%s", want, got)
 		}

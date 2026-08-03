@@ -90,4 +90,4 @@ These carry a dynamic value in the generated code instead of a Go type. The prog
 
 [What did not translate](not-translated.md) turns the approximations and refusals above into a work list, with what to do about each. [The lesson index](concepts/index.md) explains the language differences behind them.
 
-Written by perl2go 0.1.0, from your source.
+Written by perl2golang 0.1.0, from your source.

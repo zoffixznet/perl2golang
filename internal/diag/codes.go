@@ -1,4 +1,4 @@
-// Package diag is the registry of everything perl2go can say about one place in
+// Package diag is the registry of everything perl2golang can say about one place in
 // a Perl file, and the renderer that says it.
 //
 // A limitation is a product feature with a name, a code, and an address. Every
@@ -89,7 +89,7 @@ const (
 	OutputDirNotEmpty Code = "P2G0003"
 	// InputNotUTF8: the input is not valid UTF-8.
 	InputNotUTF8 Code = "P2G0004"
-	// InternalPanic: perl2go panicked while converting.
+	// InternalPanic: perl2golang panicked while converting.
 	InternalPanic Code = "P2G0010"
 	// UnknownCode: a diagnostic was raised with a code that is not registered.
 	UnknownCode Code = "P2G0011"
@@ -567,7 +567,7 @@ var catalogue = map[Code]Entry{
 		Severity: report.Refuse,
 		Message:  "`%s` and `%s` cannot both be given",
 		Short:    "conflicting flags",
-		Advice:   "pass one of the two; `perl2go convert --help` says what each one does",
+		Advice:   "pass one of the two; `perl2golang convert --help` says what each one does",
 	},
 	InputUnreadable: {
 		Severity: report.Refuse,
@@ -590,15 +590,15 @@ var catalogue = map[Code]Entry{
 	},
 	InternalPanic: {
 		Severity: report.Refuse,
-		Message:  "perl2go panicked while converting `%s`, which is always a bug in perl2go",
+		Message:  "perl2golang panicked while converting `%s`, which is always a bug in perl2golang",
 		Short:    "internal panic while converting",
 		Advice:   "report this with the input file; nothing was written to disk",
 	},
 	UnknownCode: {
 		Severity: report.Refuse,
-		Message:  "diagnostic code `%s` is not in the registry, which is always a bug in perl2go",
+		Message:  "diagnostic code `%s` is not in the registry, which is always a bug in perl2golang",
 		Short:    "unknown diagnostic code",
-		Advice:   "report this with the input file; `perl2go explain` lists every code that exists",
+		Advice:   "report this with the input file; `perl2golang explain` lists every code that exists",
 	},
 	PerlAssistRunsPerl: {
 		Severity:  report.Warn,
@@ -2096,7 +2096,7 @@ var catalogue = map[Code]Entry{
 
 	OutputDoesNotParse: {
 		Severity:  report.Refuse,
-		Message:   "the generated Go does not parse, which is a bug in perl2go and not in the input",
+		Message:   "the generated Go does not parse, which is a bug in perl2golang and not in the input",
 		Short:     "generated Go does not parse",
 		Advice:    "report this with the input file; nothing was written to disk",
 		Converted: "nothing was written: output that does not parse is worse than no output",
@@ -2121,7 +2121,7 @@ var catalogue = map[Code]Entry{
 	},
 	OutputNotFormatted: {
 		Severity:  report.Refuse,
-		Message:   "the generated Go could not be formatted, which is a bug in perl2go",
+		Message:   "the generated Go could not be formatted, which is a bug in perl2golang",
 		Short:     "generated Go could not be formatted",
 		Advice:    "report this with the input file; `gofmt` rejects what the emitter produced",
 		Converted: "nothing was written to disk",
@@ -2149,7 +2149,7 @@ var catalogue = map[Code]Entry{
 		Severity:  report.Warn,
 		Message:   "no inference runtime answered at `%s`, and the deterministic output was kept",
 		Short:     "no inference runtime answered",
-		Advice:    "start the runtime, or run `perl2go ai status` to see what is configured",
+		Advice:    "start the runtime, or run `perl2golang ai status` to see what is configured",
 		Converted: "the conversion is the deterministic one, unchanged",
 	},
 	AIRewriteRejectedBuild: {
@@ -2170,7 +2170,7 @@ var catalogue = map[Code]Entry{
 		Severity: report.Warn,
 		Message:  "`%s` needs about %s of VRAM and %s is free",
 		Short:    "model does not fit in free VRAM",
-		Advice:   "run `perl2go ai setup`, which lists the models that fit the free VRAM",
+		Advice:   "run `perl2golang ai setup`, which lists the models that fit the free VRAM",
 	},
 	AIPartialImprovement: {
 		Severity:  report.Note,

@@ -23,8 +23,8 @@ import (
 //
 //	stream      := begin-line artifact* end-line
 //	artifact    := file-line content [LF] end-line
-//	marker      := "#=== perl2go/" nonce " "
-//	begin-line  := marker "stream begin (perl2go " version ", " n " artifacts, marker " marker ") ===" LF
+//	marker      := "#=== perl2golang/" nonce " "
+//	begin-line  := marker "stream begin (perl2golang " version ", " n " artifacts, marker " marker ") ===" LF
 //	file-line   := marker "file " path " (" attrs ") ===" LF
 //	end-line    := marker "end " path " ===" LF
 //	final-line  := marker "stream end (" n " artifacts, " bytes " bytes, exit=" n ") ===" LF
@@ -33,7 +33,7 @@ import (
 // Four rules make it unambiguous:
 //
 //  1. The nonce. Before writing anything the framer scans every artifact for a
-//     line beginning "#=== perl2go/" followed by digits and a space, and picks
+//     line beginning "#=== perl2golang/" followed by digits and a space, and picks
 //     the smallest nonce that collides with none of them. Content that quotes
 //     this format therefore cannot forge a frame.
 //  2. The byte count is authoritative. A strict reader reads exactly bytes=
@@ -47,11 +47,11 @@ import (
 // Artifact order is fixed, so diffing two runs of --stdout is a real diff.
 
 // marker is the fixed part of every frame line.
-const marker = "#=== perl2go/"
+const marker = "#=== perl2golang/"
 
 // markerPattern finds an existing frame line in artifact content, which is how
 // the nonce avoids colliding with a file that quotes this format.
-var markerPattern = regexp.MustCompile(`(?m)^#=== perl2go/([0-9]+) `)
+var markerPattern = regexp.MustCompile(`(?m)^#=== perl2golang/([0-9]+) `)
 
 // writeStream writes one conversion's whole bundle in the framed format.
 func writeStream(w io.Writer, res *convert.Result, exit int) error {
@@ -61,7 +61,7 @@ func writeStream(w io.Writer, res *convert.Result, exit int) error {
 	m := marker + strconv.Itoa(nonce) + " "
 
 	var b strings.Builder
-	fmt.Fprintf(&b, "%sstream begin (perl2go %s, %d artifacts, marker %s) ===\n",
+	fmt.Fprintf(&b, "%sstream begin (perl2golang %s, %d artifacts, marker %s) ===\n",
 		m, convert.Version, len(order), strings.TrimSuffix(m, " "))
 
 	total := 0
@@ -91,7 +91,7 @@ func writeStream(w io.Writer, res *convert.Result, exit int) error {
 
 // writeBare writes only the converted Go, with no framing at all.
 //
-// `perl2go -e '...' > snip.go && go run snip.go` is the thirty-second demo of
+// `perl2golang -e '...' > snip.go && go run snip.go` is the thirty-second demo of
 // this whole tool, so the result has to be one Go file that compiles. A
 // snippet that needs support code produces two files in one package, which is
 // merged back into one here: the package clause is written once, the imports

@@ -100,4 +100,4 @@ Lessons this region introduces: [Sorting is a function call, and the default is 
 
 Reading a translation is the easy half. The other half is changing it and finding out what the compiler thinks, which is what [the exercises](exercises.md) are for: each one is small, names code that is actually in this directory, and tells you how to check that you got it right.
 
-Written by perl2go 0.1.0, from your source.
+Written by perl2golang 0.1.0, from your source.

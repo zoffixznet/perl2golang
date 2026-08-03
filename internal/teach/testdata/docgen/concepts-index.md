@@ -43,6 +43,6 @@ Nothing in your file triggered them directly. They are here because the lessons 
 
 ---
 
-To read any of these outside a conversion, or to look up something that is not here, run `perl2go explain <topic>`; `perl2go explain --list` prints every topic the tool knows.
+To read any of these outside a conversion, or to look up something that is not here, run `perl2golang explain <topic>`; `perl2golang explain --list` prints every topic the tool knows.
 
-Written by perl2go 0.1.0, from your source.
+Written by perl2golang 0.1.0, from your source.

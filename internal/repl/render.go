@@ -13,7 +13,7 @@ import (
 //
 // The whole session goes to one stream. A REPL transcript that interleaved two
 // streams would read correctly on a terminal and scramble the moment anybody
-// piped it into a file, and `perl2go repl < session.txt` is a supported way to
+// piped it into a file, and `perl2golang repl < session.txt` is a supported way to
 // demo the tool. Colour is decided once, by the caller, from whether that
 // stream is a terminal.
 type printer struct {

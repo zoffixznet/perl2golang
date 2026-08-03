@@ -94,7 +94,7 @@ type Report struct {
 	Module string `json:"module"`
 	// OutputDir is where the bundle was written, empty in --stdout mode.
 	OutputDir string `json:"output_dir,omitempty"`
-	// Version is the perl2go version that produced this.
+	// Version is the perl2golang version that produced this.
 	Version string `json:"version"`
 
 	Entries  []Entry  `json:"entries"`

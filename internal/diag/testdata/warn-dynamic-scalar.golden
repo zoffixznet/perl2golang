@@ -12,6 +12,6 @@ warning[P2G3001]: the type of `$row` could not be inferred, so it stays a
    = try: give the variable one consistent type, or annotate the sub's
           parameters, and convert again
    = learn: static-types-and-zero-values
-            (perl2go explain static-types-and-zero-values)
+            (perl2golang explain static-types-and-zero-values)
    = learn: type-assertions-and-switches
-            (perl2go explain type-assertions-and-switches)
+            (perl2golang explain type-assertions-and-switches)

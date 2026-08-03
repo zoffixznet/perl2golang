@@ -1,5 +1,5 @@
 // Package ast defines the abstract syntax tree for the subset of Perl 5
-// that perl2go understands. Every node carries source positions so that
+// that perl2golang understands. Every node carries source positions so that
 // diagnostics, provenance comments, and the conversion report can point
 // back at the original code.
 package ast

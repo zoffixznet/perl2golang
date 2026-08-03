@@ -45,7 +45,7 @@ const defaultWidth = 80
 //	   |
 //	   = not converted: the match site is marked and yields no match
 //	   = try: drop the lookahead and test the prefix with `strings.HasPrefix`
-//	   = learn: regexp-is-re2   (perl2go explain regexp-is-re2)
+//	   = learn: regexp-is-re2   (perl2golang explain regexp-is-re2)
 //
 // srcLines is the input file split into lines, with line n at index n-1. It may
 // be nil, in which case the excerpt block is left out and the footers follow the
@@ -179,7 +179,7 @@ func footer(b *strings.Builder, st styler, gutter, width int, label, body string
 func learn(b *strings.Builder, st styler, gutter, width int, id string) {
 	const gap = "   "
 	lead := strings.Repeat(" ", gutter+1) + "= learn: "
-	hint := "(perl2go explain " + id + ")"
+	hint := "(perl2golang explain " + id + ")"
 	b.WriteString(strings.Repeat(" ", gutter+1))
 	b.WriteString("= ")
 	b.WriteString(st.s(sgrBold, "learn:"))

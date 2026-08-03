@@ -30,7 +30,7 @@ type Pos struct {
 // template, so a call passes exactly as many as the template names.
 //
 // An unregistered code produces a [UnknownCode] entry naming it, rather than a
-// panic: a diagnostic about a bug in perl2go is still more useful to the reader
+// panic: a diagnostic about a bug in perl2golang is still more useful to the reader
 // than a crash on the way to reporting one.
 func New(code Code, pos Pos, construct string, args ...any) report.Entry {
 	c, ok := catalogue[code]
@@ -74,7 +74,7 @@ func Lookup(code Code) (Entry, bool) {
 
 // Known reports whether a code is in the registry. Everything that raises a
 // diagnostic answers to this: a code the registry does not know has no message,
-// no advice and no severity, which is a bug in perl2go rather than a fact about
+// no advice and no severity, which is a bug in perl2golang rather than a fact about
 // the input.
 func Known(code Code) bool {
 	_, ok := catalogue[code]
@@ -82,7 +82,7 @@ func Known(code Code) bool {
 }
 
 // Codes returns every registered code in sorted order, which is the order
-// `perl2go explain` lists them in.
+// `perl2golang explain` lists them in.
 func Codes() []Code {
 	return slices.Sorted(maps.Keys(catalogue))
 }

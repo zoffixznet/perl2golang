@@ -58,4 +58,4 @@ Lessons: [One binary drives everything, and gofmt ended the style wars](concepts
 
 When these stop being interesting, the next exercise is the real one: pick the part of the generated code you like least, delete it, and write it the way you would write it now. That is the point at which the translation stops being someone else's code.
 
-Written by perl2go 0.1.0, from your source.
+Written by perl2golang 0.1.0, from your source.

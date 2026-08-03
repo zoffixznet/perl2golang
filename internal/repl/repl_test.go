@@ -206,7 +206,7 @@ func TestMetaCommands(t *testing.T) {
 		{":notes off", []string{"concept line off"}},
 		{":clear", []string{"only cleared on a terminal"}},
 		{":reset", []string{"forgot 3 lines; the session is empty"}},
-		{":q", []string{"perl2go"}},
+		{":q", []string{"perl2golang"}},
 		{":nonsense", []string{"there is no :nonsense command"}},
 		{":gof", []string{"the closest is :go"}},
 	}

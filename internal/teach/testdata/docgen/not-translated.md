@@ -63,4 +63,4 @@ Lessons: [Sorting is a function call, and the default is numeric-aware](concepts
 
 When you have worked through this list, the fastest way to prove it is to write a test for each item you fixed. [The exercises](exercises.md) cover the mechanics.
 
-Written by perl2go 0.1.0, from your source.
+Written by perl2golang 0.1.0, from your source.

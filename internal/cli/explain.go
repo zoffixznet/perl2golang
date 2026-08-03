@@ -14,7 +14,7 @@ import (
 )
 
 // codePattern is the shape of a diagnostic code, which is how explain tells
-// `perl2go explain P2G4004` apart from `perl2go explain regexp-is-re2`.
+// `perl2golang explain P2G4004` apart from `perl2golang explain regexp-is-re2`.
 var codePattern = regexp.MustCompile(`^[Pp]2[Gg][0-9]{4}$`)
 
 // runExplain prints one teaching concept, or what a diagnostic code means.
@@ -40,8 +40,8 @@ func runExplain(e *env, args []string) int {
 	}
 	topic := strings.Join(positional, " ")
 	if topic == "" {
-		return e.usagef("explain needs a topic. Try `perl2go explain --list`, " +
-			"or a diagnostic code such as `perl2go explain P2G4004`")
+		return e.usagef("explain needs a topic. Try `perl2golang explain --list`, " +
+			"or a diagnostic code such as `perl2golang explain P2G4004`")
 	}
 	if codePattern.MatchString(topic) {
 		return e.explainCode(strings.ToUpper(topic))
@@ -64,22 +64,22 @@ func (e *env) explainConcept(kb *teach.KB, topic string) int {
 		for _, c := range hits {
 			fmt.Fprintf(&b, "  %-32s %s\n", c.ID, c.Title)
 		}
-		fmt.Fprintf(&b, "\nprint one with `perl2go explain %s`\n", hits[0].ID)
+		fmt.Fprintf(&b, "\nprint one with `perl2golang explain %s`\n", hits[0].ID)
 		return e.print(b.String())
 	}
-	fmt.Fprintf(e.stderr, "perl2go: no concept matches %q\n", topic)
-	fmt.Fprintf(e.stderr, "`perl2go explain --list` names all %d of them, and a diagnostic "+
+	fmt.Fprintf(e.stderr, "perl2golang: no concept matches %q\n", topic)
+	fmt.Fprintf(e.stderr, "`perl2golang explain --list` names all %d of them, and a diagnostic "+
 		"code such as P2G4004 works here too\n", len(kb.IDs()))
 	return ExitUsage
 }
 
-// explainCode prints one registry entry: what the situation is, what perl2go
+// explainCode prints one registry entry: what the situation is, what perl2golang
 // does about it, what that costs, and what to read next. It is the same text
 // the diagnostic itself carries, so the two can never disagree.
 func (e *env) explainCode(code string) int {
 	entry, ok := diag.Lookup(diag.Code(code))
 	if !ok {
-		fmt.Fprintf(e.stderr, "perl2go: %s is not a diagnostic code perl2go knows\n", code)
+		fmt.Fprintf(e.stderr, "perl2golang: %s is not a diagnostic code perl2golang knows\n", code)
 		fmt.Fprintf(e.stderr, "there are %d codes; every one of them appears in a report "+
 			"before it appears here\n", len(diag.Codes()))
 		return ExitUsage
@@ -105,7 +105,7 @@ func (e *env) explainCode(code string) int {
 // At a terminal that means folded prose, no hashes on the headings and no
 // fences around the code, because a lesson is something to read at the prompt
 // and not something to scroll sideways through. Redirected, it means the
-// Markdown, which is what a pager, an editor or `perl2go explain x > x.md`
+// Markdown, which is what a pager, an editor or `perl2golang explain x > x.md`
 // wants and is byte for byte the file a conversion writes into docs/concepts/.
 func (e *env) lesson(c *teach.Concept) string {
 	if isCharDevice(e.stdout) {
@@ -117,7 +117,7 @@ func (e *env) lesson(c *teach.Concept) string {
 // renderEntry draws one registry entry without a source file behind it.
 func renderEntry(entry report.Entry, code string) string {
 	var b strings.Builder
-	_ = diag.Render(&b, entry, "perl2go "+code, nil, diag.Options{})
+	_ = diag.Render(&b, entry, "perl2golang "+code, nil, diag.Options{})
 	return b.String()
 }
 
@@ -130,9 +130,9 @@ func conceptList(kb *teach.KB) string {
 	for _, c := range concepts {
 		fmt.Fprintf(&b, "  %-34s %s\n", c.ID, c.Title)
 	}
-	fmt.Fprintf(&b, "\nread one with `perl2go explain <id>`\n")
+	fmt.Fprintf(&b, "\nread one with `perl2golang explain <id>`\n")
 	fmt.Fprintf(&b, "%d diagnostic codes are looked up the same way, as in "+
-		"`perl2go explain P2G4004`\n", len(diag.Codes()))
+		"`perl2golang explain P2G4004`\n", len(diag.Codes()))
 	return b.String()
 }
 

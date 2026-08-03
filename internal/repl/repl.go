@@ -118,7 +118,7 @@ func Run(o Options) int {
 // banner is the one line a session opens with. It names the version, because
 // the Go the tool produces changes between them, and it names the two ways out.
 func (r *repl) banner() {
-	r.p.line(fmt.Sprintf("perl2go %s  type Perl, see the Go. :help for commands, :quit to leave.", convert.Version))
+	r.p.line(fmt.Sprintf("perl2golang %s  type Perl, see the Go. :help for commands, :quit to leave.", convert.Version))
 	if fb := r.src.fallback(); fb != "" {
 		r.p.note("%s", fb)
 	}
@@ -358,7 +358,7 @@ func (r *repl) conceptLine(t *turn) {
 func (r *repl) loadFile(path string) int {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		fmt.Fprintf(r.opt.Stderr, "perl2go repl: %v\n", err)
+		fmt.Fprintf(r.opt.Stderr, "perl2golang repl: %v\n", err)
 		return exitFailed
 	}
 	r.replay(string(data))
@@ -409,13 +409,13 @@ func (r *repl) replay(text string) {
 // and never edited by hand.
 func defaultHistoryPath() string {
 	if dir := os.Getenv("XDG_STATE_HOME"); dir != "" {
-		return filepath.Join(dir, "perl2go", "history")
+		return filepath.Join(dir, "perl2golang", "history")
 	}
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return ""
 	}
-	return filepath.Join(home, ".local", "state", "perl2go", "history")
+	return filepath.Join(home, ".local", "state", "perl2golang", "history")
 }
 
 // verb agrees with a count, so no message ever says "1 line are".

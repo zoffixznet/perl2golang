@@ -1,5 +1,5 @@
 // Package token defines the lexical tokens of Perl 5 as understood by the
-// perl2go front end, along with source positions.
+// perl2golang front end, along with source positions.
 package token
 
 import "fmt"

@@ -101,7 +101,7 @@ func Convert(src []byte, opts Options) (result *Result, err error) {
 		if r := recover(); r != nil {
 			result = nil
 			err = fmt.Errorf("internal error while converting %s: %v\n"+
-				"this is a bug in perl2go; please report it with the input that caused it", opts.Path, r)
+				"this is a bug in perl2golang; please report it with the input that caused it", opts.Path, r)
 		}
 	}()
 
@@ -242,7 +242,7 @@ func (r *Result) verify(build bool) {
 				Construct: "generated Go",
 				Short:     "the generated Go did not parse",
 				Message:   "The Go this tool produced is not valid Go: " + err.Error(),
-				Advice: "This is a defect in perl2go rather than a problem with the " +
+				Advice: "This is a defect in perl2golang rather than a problem with the " +
 					"input. Please report it along with the Perl that produced it.",
 			})
 			return
@@ -274,7 +274,7 @@ func (r *Result) verify(build bool) {
 			Construct: "generated Go",
 			Short:     "the generated program does not compile",
 			Message:   "The generated Go was checked with the Go toolchain and did not build: " + firstLines(err.Error(), 8),
-			Advice: "This is a defect in perl2go rather than a problem with the " +
+			Advice: "This is a defect in perl2golang rather than a problem with the " +
 				"input. The output is still written so the error can be seen, and the " +
 				"failing lines are worth reporting.",
 		})

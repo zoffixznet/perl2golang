@@ -223,7 +223,7 @@ func TestAIJobsRejectsNonsense(t *testing.T) {
 	}
 }
 
-// `perl2go ai status` reports and changes nothing, including on a machine with
+// `perl2golang ai status` reports and changes nothing, including on a machine with
 // no runtime at all.
 func TestAIStatus(t *testing.T) {
 	newWatcher(t)
@@ -238,7 +238,7 @@ func TestAIStatus(t *testing.T) {
 	}
 }
 
-// `perl2go ai setup` prints and stops. Downloading gigabytes is never a side
+// `perl2golang ai setup` prints and stops. Downloading gigabytes is never a side
 // effect of running a command that reports.
 func TestAISetupOnlyPrints(t *testing.T) {
 	newWatcher(t)

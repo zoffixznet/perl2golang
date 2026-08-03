@@ -7,5 +7,5 @@ refused[P2G4004]: lookahead `(?!#)` is not available in Go's `regexp` package
    = not converted: the match site is marked and yields no match
    = try: drop the lookahead and test the surrounding text with
           `strings.HasPrefix` or a second match
-   = learn: regexp-is-re2   (perl2go explain regexp-is-re2)
-   = learn: mustcompile-pattern   (perl2go explain mustcompile-pattern)
+   = learn: regexp-is-re2   (perl2golang explain regexp-is-re2)
+   = learn: mustcompile-pattern   (perl2golang explain mustcompile-pattern)

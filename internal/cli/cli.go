@@ -1,4 +1,4 @@
-// Package cli is the perl2go command line.
+// Package cli is the perl2golang command line.
 //
 // [Run] is the whole program: package main hands it the arguments and the
 // three streams and turns what it returns into the process exit status.
@@ -43,7 +43,7 @@ const (
 	ExitUsage = 3
 )
 
-// Run executes one perl2go invocation and returns the exit status.
+// Run executes one perl2golang invocation and returns the exit status.
 //
 // args are the arguments after the program name. stdin is only read when an
 // input path is "-". Nothing is written to stdout except the artifact the
@@ -56,7 +56,7 @@ func Run(args []string, stdin io.Reader, stdout, stderr io.Writer) (code int) {
 		// was wrong, so it never has to parse two formats.
 		jsonMode: hasFlag(args, "json"),
 	}
-	// A panic anywhere below is a defect in perl2go. The user gets a message
+	// A panic anywhere below is a defect in perl2golang. The user gets a message
 	// naming what to report rather than a stack trace, and the status says the
 	// run failed, which is what it did.
 	defer func() {
@@ -83,7 +83,7 @@ type env struct {
 
 // commands is the closed set of first words that name a subcommand. Anything
 // else in first position is a file for convert, which is what makes
-// `perl2go script.pl` shorthand for `perl2go convert script.pl`.
+// `perl2golang script.pl` shorthand for `perl2golang convert script.pl`.
 var commands = []string{"convert", "repl", "explain", "ai", "version", "help"}
 
 // dispatch routes one invocation to its command.
@@ -91,7 +91,7 @@ func dispatch(e *env, args []string) int {
 	name, rest, explicit := splitCommand(args)
 
 	// -h anywhere means help, and which help depends on whether the user
-	// named a command. `perl2go --help` is the tour; `perl2go convert --help`
+	// named a command. `perl2golang --help` is the tour; `perl2golang convert --help`
 	// is the flag list.
 	if hasFlag(rest, "h", "help") {
 		if !explicit {
@@ -135,10 +135,10 @@ func dispatch(e *env, args []string) int {
 
 // splitCommand decides which command an argument list names.
 //
-// Only the first argument counts, so `perl2go convert version.pl` converts a
+// Only the first argument counts, so `perl2golang convert version.pl` converts a
 // file called version.pl rather than looking for a command in the middle of
 // the line. A Perl file whose name collides with a command word is reachable
-// as `perl2go convert explain` or as `./explain`.
+// as `perl2golang convert explain` or as `./explain`.
 func splitCommand(args []string) (name string, rest []string, explicit bool) {
 	if len(args) > 0 && slices.Contains(commands, args[0]) {
 		return args[0], args[1:], true
@@ -208,14 +208,14 @@ func (e *env) usagef(format string, args ...any) int {
 	if e.jsonMode {
 		return usageJSON(e, message)
 	}
-	fmt.Fprintf(e.stderr, "perl2go: %s\n", message)
+	fmt.Fprintf(e.stderr, "perl2golang: %s\n", message)
 	return e.helpHint()
 }
 
 // helpHint closes a usage error by naming the help that would have prevented
 // it.
 func (e *env) helpHint() int {
-	fmt.Fprintln(e.stderr, "run `perl2go --help` for the flags, or `perl2go convert --help` for the full list")
+	fmt.Fprintln(e.stderr, "run `perl2golang --help` for the flags, or `perl2golang convert --help` for the full list")
 	return ExitUsage
 }
 
@@ -230,10 +230,10 @@ func (e *env) diagnose(entry report.Entry, file string, srcLines []string, color
 // line so a report can be reproduced. It deliberately prints no stack trace:
 // the person who ran this did not write it.
 func (e *env) internalError(r any) int {
-	fmt.Fprintf(e.stderr, "perl2go: internal error: %v\n", r)
-	fmt.Fprintf(e.stderr, "This is a bug in perl2go %s, not a problem with the input.\n", convert.Version)
+	fmt.Fprintf(e.stderr, "perl2golang: internal error: %v\n", r)
+	fmt.Fprintf(e.stderr, "This is a bug in perl2golang %s, not a problem with the input.\n", convert.Version)
 	fmt.Fprintf(e.stderr, "Please report it with the input file and this command line:\n")
-	fmt.Fprintf(e.stderr, "  perl2go %s\n", strings.Join(e.argv, " "))
+	fmt.Fprintf(e.stderr, "  perl2golang %s\n", strings.Join(e.argv, " "))
 	return ExitFailed
 }
 
@@ -248,5 +248,5 @@ func versionLine() string {
 			}
 		}
 	}
-	return fmt.Sprintf("perl2go %s (%s)", convert.Version, strings.Join(parts, ", "))
+	return fmt.Sprintf("perl2golang %s (%s)", convert.Version, strings.Join(parts, ", "))
 }

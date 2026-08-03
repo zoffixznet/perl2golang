@@ -1236,7 +1236,7 @@ func (b *bundle) conceptIndex() string {
 	}
 
 	m.rule()
-	m.p("To read any of these outside a conversion, or to look up something that is not here, run `perl2go explain <topic>`; `perl2go explain --list` prints every topic the tool knows.")
+	m.p("To read any of these outside a conversion, or to look up something that is not here, run `perl2golang explain <topic>`; `perl2golang explain --list` prints every topic the tool knows.")
 	m.raw(b.credit())
 	return m.String()
 }
@@ -1393,7 +1393,7 @@ func (b *bundle) fixGuideLinks(text string) string {
 		default:
 			replacement = l.text
 			if _, known := b.kb.Get(id); known {
-				replacement += " (not included in this conversion; run `perl2go explain " + id + "`)"
+				replacement += " (not included in this conversion; run `perl2golang explain " + id + "`)"
 			}
 		}
 		out.WriteString(text[last:l.start])
@@ -1440,7 +1440,7 @@ func (b *bundle) orientationFallback() string {
 			m.bullet("%s: %s", link(c.Title, rel(fileGuide, conceptFile(c.ID))), sentence(firstParagraph(c.Body)))
 			continue
 		}
-		m.bullet("%s: %s Run `perl2go explain %s` to read it.", c.Title, sentence(firstParagraph(c.Body)), c.ID)
+		m.bullet("%s: %s Run `perl2golang explain %s` to read it.", c.Title, sentence(firstParagraph(c.Body)), c.ID)
 	}
 
 	m.rule()
@@ -1468,9 +1468,9 @@ func (b *bundle) conceptLinks(ids []string, from string) string {
 // credit is the provenance line at the foot of every document.
 func (b *bundle) credit() string {
 	if b.in.Version == "" {
-		return "Written by perl2go, from your source."
+		return "Written by perl2golang, from your source."
 	}
-	return "Written by perl2go " + b.in.Version + ", from your source."
+	return "Written by perl2golang " + b.in.Version + ", from your source."
 }
 
 // guideText reads the embedded long-form guide, returning an empty string when

@@ -11,5 +11,5 @@ refused[P2G8001]: `eval STRING` builds Perl source at run time, and Go has no
            evaluator such as github.com/expr-lang/expr and pass the values as
            its environment; if there are only a handful of known expressions,
            replace them with named functions and dispatch on the name
-    = learn: compile-time-mindset   (perl2go explain compile-time-mindset)
-    = learn: panic-and-recover   (perl2go explain panic-and-recover)
+    = learn: compile-time-mindset   (perl2golang explain compile-time-mindset)
+    = learn: panic-and-recover   (perl2golang explain panic-and-recover)

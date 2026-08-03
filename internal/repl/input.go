@@ -49,7 +49,7 @@ func newLineSource(o Options, h *history) lineSource {
 		}
 	}
 	// Input is a file or a pipe. Echoing what was read keeps the transcript
-	// readable: `perl2go repl < session.pl` reads exactly like somebody typed
+	// readable: `perl2golang repl < session.pl` reads exactly like somebody typed
 	// it, which is what makes a session a demo and a test fixture at once.
 	return &plain{in: bufio.NewReader(o.Stdin), out: o.Stdout, echo: true}
 }

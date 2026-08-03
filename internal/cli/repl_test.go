@@ -32,7 +32,7 @@ func TestReplCommand(t *testing.T) {
 			stdin: "my @nums = (1, 2, 3);\n:quit\n",
 			want:  ExitOK,
 			check: []string{
-				"perl2go",
+				"perl2golang",
 				"perl> my @nums = (1, 2, 3);",
 				"nums := []int{1, 2, 3}",
 				"concepts: slices-not-arrays",
@@ -92,7 +92,7 @@ func TestReplUsageErrors(t *testing.T) {
 		{
 			name:  "a file argument points at convert",
 			args:  []string{"repl", "script.pl"},
-			check: "perl2go convert script.pl",
+			check: "perl2golang convert script.pl",
 		},
 		{
 			name:  "an unknown mode is named",
@@ -133,7 +133,7 @@ func TestReplHelp(t *testing.T) {
 		}
 		for _, want := range []string{
 			"type Perl, see the Go it becomes",
-			"perl2go repl [flags]",
+			"perl2golang repl [flags]",
 			"--mode MODE",
 			":explain [WHAT]",
 			"never executed",
@@ -149,7 +149,7 @@ func TestRootHelpNamesTheRepl(t *testing.T) {
 	got := runCLI(t, "", "--help")
 	for _, want := range []string{
 		"repl       type Perl, see the Go it becomes",
-		"perl2go repl                              explore Perl to Go interactively",
+		"perl2golang repl                              explore Perl to Go interactively",
 	} {
 		if !strings.Contains(got.stdout, want) {
 			t.Errorf("root help is missing %q:\n%s", want, got.stdout)
@@ -207,7 +207,7 @@ func TestReplHistoryFileIsHonoured(t *testing.T) {
 	if !strings.Contains(string(data), "my @a = (1, 2);") {
 		t.Errorf("history = %q", data)
 	}
-	if _, err := os.Stat(filepath.Join(state, "perl2go")); !os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join(state, "perl2golang")); !os.IsNotExist(err) {
 		t.Errorf("--history did not stop the default location being written")
 	}
 }
@@ -228,7 +228,7 @@ func TestReplLoadFlag(t *testing.T) {
 
 // TestReplEndToEnd builds the real binary and pipes a whole session into it,
 // which is the only test here that proves the thing works when somebody types
-// `perl2go repl` rather than when a test calls a function.
+// `perl2golang repl` rather than when a test calls a function.
 //
 // scripts/repl-demo.sh runs the same session by hand and prints the
 // transcript, which is how the output is reviewed rather than merely asserted.
@@ -238,7 +238,7 @@ func TestReplEndToEnd(t *testing.T) {
 	}
 	goCmd := requireToolchain(t)
 
-	bin := filepath.Join(t.TempDir(), "perl2go")
+	bin := filepath.Join(t.TempDir(), "perl2golang")
 	if out, err := exec.Command(goCmd, "build", "-o", bin, "perl2golang/cmd/perl2golang").CombinedOutput(); err != nil {
 		t.Fatalf("building the binary: %v\n%s", err, out)
 	}

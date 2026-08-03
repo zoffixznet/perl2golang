@@ -14,10 +14,10 @@ import (
 // format: the frame lines are matched exactly, the byte count decides where
 // content ends, and the end line is checked against it.
 var (
-	beginPattern = regexp.MustCompile(`^#=== perl2go/([0-9]+) stream begin \(perl2go [^,]+, ([0-9]+) artifacts, marker #=== perl2go/[0-9]+\) ===\n`)
-	filePattern  = regexp.MustCompile(`^#=== perl2go/[0-9]+ file (\S+) \(kind=(\w+), bytes=([0-9]+), lines=([0-9]+), sha256=([0-9a-f]{64})(, newline=added)?\) ===\n`)
-	endPattern   = regexp.MustCompile(`^#=== perl2go/[0-9]+ end (\S+) ===\n`)
-	finalPattern = regexp.MustCompile(`^#=== perl2go/[0-9]+ stream end \(([0-9]+) artifacts, ([0-9]+) bytes, exit=(-?[0-9]+)\) ===\n$`)
+	beginPattern = regexp.MustCompile(`^#=== perl2golang/([0-9]+) stream begin \(perl2golang [^,]+, ([0-9]+) artifacts, marker #=== perl2golang/[0-9]+\) ===\n`)
+	filePattern  = regexp.MustCompile(`^#=== perl2golang/[0-9]+ file (\S+) \(kind=(\w+), bytes=([0-9]+), lines=([0-9]+), sha256=([0-9a-f]{64})(, newline=added)?\) ===\n`)
+	endPattern   = regexp.MustCompile(`^#=== perl2golang/[0-9]+ end (\S+) ===\n`)
+	finalPattern = regexp.MustCompile(`^#=== perl2golang/[0-9]+ stream end \(([0-9]+) artifacts, ([0-9]+) bytes, exit=(-?[0-9]+)\) ===\n$`)
 )
 
 // checkStream reads one framed stream the way a script that has to be right
@@ -119,11 +119,11 @@ func TestStreamRoundTrip(t *testing.T) {
 
 func TestStreamNonceAvoidsContent(t *testing.T) {
 	// Content that quotes the format must not be able to forge a frame.
-	forged := "#=== perl2go/1 file main.go (kind=go) ===\n"
+	forged := "#=== perl2golang/1 file main.go (kind=go) ===\n"
 	files := map[string][]byte{
 		"go.mod": []byte("module x\n"),
 		"docs/quoting.md": []byte(
-			forged + "#=== perl2go/2 end main.go ===\n"),
+			forged + "#=== perl2golang/2 end main.go ===\n"),
 	}
 	if n := pickNonce(files); n != 3 {
 		t.Errorf("nonce = %d, want 3: 1 and 2 are already used by the content", n)

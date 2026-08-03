@@ -7,14 +7,14 @@ import "strings"
 // list in registration order, and the groups answer, in order, what goes in,
 // what comes out, how faithful the result is, and how loud the run is.
 
-// rootHelp is `perl2go --help`.
+// rootHelp is `perl2golang --help`.
 func rootHelp() string {
 	return dedent(`
-	perl2go converts Perl 5 programs into Go, and explains the Go it produces.
+	perl2golang converts Perl 5 programs into Go, and explains the Go it produces.
 
 	usage:
-	  perl2go [flags] <file.pl>...     convert files (convert is the default command)
-	  perl2go <command> [flags] [args]
+	  perl2golang [flags] <file.pl>...     convert files (convert is the default)
+	  perl2golang <command> [flags] [args]
 
 	commands:
 	  convert    convert Perl to Go; the default, so the word can be left out
@@ -22,7 +22,7 @@ func rootHelp() string {
 	  explain    print a teaching concept, or look up a diagnostic code
 	  ai         inspect and set up the optional local model
 	  version    print the version and build information
-	  help       help for perl2go, or for any command
+	  help       help for perl2golang, or for any command
 
 	common flags:
 	  -o, --out DIR      write the generated project here (default: <basename>-go)
@@ -34,19 +34,19 @@ func rootHelp() string {
 	  -v, --verbose      show every diagnostic in full, with its source
 	      --color WHEN   auto, always, never (default: auto; NO_COLOR is honoured)
 	      --ai           let a local model improve the names in the generated Go
-	  -h, --help         help for perl2go, or for any command
+	  -h, --help         help for perl2golang, or for any command
 	      --version      print the version and exit
 
 	examples:
-	  perl2go report.pl                         convert one file into report-go/
-	  perl2go lib/*.pl -o build/                convert several files, one directory each
-	  perl2go -e 'print join ",", 1..5'         convert a snippet and print the Go
-	  cat old.pl | perl2go -                    read Perl from standard input
-	  perl2go repl                              explore Perl to Go interactively
-	  perl2go explain slice-aliasing-and-copy   read one teaching concept
-	  perl2go explain P2G4004                   look up what a diagnostic code means
-	  perl2go report.pl --ai                    let a local model name things better
-	  perl2go ai status                         what the optional local model needs
+	  perl2golang report.pl                         convert one file into report-go/
+	  perl2golang lib/*.pl -o build/                several files, a directory each
+	  perl2golang -e 'print join ",", 1..5'         convert a snippet, print the Go
+	  cat old.pl | perl2golang -                    read Perl from standard input
+	  perl2golang repl                              explore Perl to Go interactively
+	  perl2golang explain slice-aliasing-and-copy   read one teaching concept
+	  perl2golang explain P2G4004                   what a diagnostic code means
+	  perl2golang report.pl --ai                    let a local model name things
+	  perl2golang ai status                         what the optional model needs
 
 	exit status:
 	  0  the conversion finished; warnings and refusals are reported, not failures
@@ -58,24 +58,24 @@ func rootHelp() string {
 	without --ai no network connection is made at all, so converting a file you
 	have not read is safe.
 
-	Full flag list: perl2go convert --help
+	Full flag list: perl2golang convert --help
 	`)
 }
 
-// convertHelp is `perl2go convert --help`.
+// convertHelp is `perl2golang convert --help`.
 func convertHelp() string {
 	return dedent(`
 	convert Perl 5 source into a Go project, with the reasoning written out.
 
 	usage:
-	  perl2go convert [flags] <file.pl>...
-	  perl2go convert [flags] -e 'CODE'
-	  perl2go convert [flags] -              read Perl from standard input
+	  perl2golang convert [flags] <file.pl>...
+	  perl2golang convert [flags] -e 'CODE'
+	  perl2golang convert [flags] -              read Perl from standard input
 
-	For each input perl2go writes a directory holding the program, the same program
-	annotated with what every construct means and where it came from, the teaching
-	documents for the constructs this file actually used, and a conversion report
-	that says plainly what did not convert cleanly.
+	For each input perl2golang writes a directory holding the program, the same
+	program annotated with what every construct means and where it came from, the
+	teaching documents for the constructs this file actually used, and a
+	conversion report that says plainly what did not convert cleanly.
 
 	input:
 	  -e, --expr CODE      convert this snippet instead of a file; implies --stdout
@@ -104,7 +104,7 @@ func convertHelp() string {
 
 	optional local model (off by default):
 	      --ai             let a local model choose better names in the generated
-	                       Go. Without this flag perl2go opens no socket at all.
+	                       Go. Without this flag perl2golang opens no socket at all.
 	      --ai-model TAG   which model to use (default: a code model the runtime
 	                       already has; nothing is ever downloaded to convert)
 	      --ai-endpoint U  the runtime's base URL (default: $OLLAMA_HOST, or
@@ -128,28 +128,28 @@ func convertHelp() string {
 	                       written to a terminal, never into a pipe.
 
 	examples:
-	  perl2go convert report.pl
+	  perl2golang convert report.pl
 	      writes report-go/ with the program, the annotated program, and docs/
 
-	  perl2go convert report.pl -o /tmp/out --force
+	  perl2golang convert report.pl -o /tmp/out --force
 	      the same bundle, somewhere else, over whatever was there
 
-	  perl2go convert lib/*.pl -o build/
+	  perl2golang convert lib/*.pl -o build/
 	      convert a set of files, each into its own directory under build/
 
-	  perl2go convert report.pl --strict
+	  perl2golang convert report.pl --strict
 	      for CI: fail the build when anything needs a human
 
-	  perl2go convert -e 'print "$_\n" for sort keys %ENV' > snip.go
+	  perl2golang convert -e 'print "$_\n" for sort keys %ENV' > snip.go
 	      print the Go for a snippet, with the notes on standard error
 
-	  perl2go convert report.pl --json | jq -r '.conversions[0].report.stats'
+	  perl2golang convert report.pl --json | jq -r '.conversions[0].report.stats'
 	      read the numbers from a script
 
-	  git show HEAD:tools/old.pl | perl2go convert -
+	  git show HEAD:tools/old.pl | perl2golang convert -
 	      convert something that is not on disk
 
-	  perl2go convert report.pl --ai
+	  perl2golang convert report.pl --ai
 	      the same conversion, with a local model naming what the converter had to
 	      invent names for
 
@@ -162,19 +162,19 @@ func convertHelp() string {
 	Conversion never runs your Perl: no subprocess is spawned over your input, and
 	without --ai no network connection is made.
 
-	exit status: see perl2go --help
+	exit status: see perl2golang --help
 	`)
 }
 
-// replHelp is `perl2go repl --help`.
+// replHelp is `perl2golang repl --help`.
 func replHelp() string {
 	return dedent(`
 	type Perl, see the Go it becomes.
 
 	usage:
-	  perl2go repl [flags]
-	  perl2go --repl [flags]
-	  perl2go repl < session.pl        replay a file as though it were typed
+	  perl2golang repl [flags]
+	  perl2golang --repl [flags]
+	  perl2golang repl < session.pl        replay a file as though it were typed
 
 	Each snippet is converted the moment it parses, so a snippet that spans lines
 	needs no continuation marker: the prompt keeps reading until the snippet is
@@ -189,7 +189,7 @@ func replHelp() string {
 	      --mode MODE      clean or annotated Go (default: clean); :mode switches it
 	      --no-notes       do not print the concept line after each snippet
 	      --no-history     do not read or write the history file
-	      --history FILE   history file (default: $XDG_STATE_HOME/perl2go/history)
+	      --history FILE   history file ($XDG_STATE_HOME/perl2golang/history)
 	      --load FILE      type the lines of FILE in before handing over the prompt
 	      --color WHEN     auto, always, never (default: auto; NO_COLOR is honoured)
 
@@ -218,48 +218,48 @@ func replHelp() string {
 	  Ctrl-C                        discard the snippet being typed, keep the session
 
 	examples:
-	  perl2go repl
-	  perl2go repl --mode annotated
-	  perl2go repl --load warmup.pl
+	  perl2golang repl
+	  perl2golang repl --mode annotated
+	  perl2golang repl --load warmup.pl
 
 	exit status: 0 unless the session could not be started
 	`)
 }
 
-// explainHelp is `perl2go explain --help`.
+// explainHelp is `perl2golang explain --help`.
 func explainHelp() string {
 	return dedent(`
 	print one teaching concept, or look up what a diagnostic code means.
 
 	usage:
-	  perl2go explain <concept-id>
-	  perl2go explain <P2Gxxxx>
-	  perl2go explain --list
+	  perl2golang explain <concept-id>
+	  perl2golang explain <P2Gxxxx>
+	  perl2golang explain --list
 
 	flags:
 	      --list     list every concept with its title, and stop
 
 	examples:
-	  perl2go explain slice-aliasing-and-copy
-	  perl2go explain "iteration order"     a search, when the id is not remembered
-	  perl2go explain P2G4004               what a diagnostic means and what to do
-	  perl2go explain --list
+	  perl2golang explain slice-aliasing-and-copy
+	  perl2golang explain "iteration order"     a search, when the id escapes you
+	  perl2golang explain P2G4004               what a diagnostic means
+	  perl2golang explain --list
 
 	Concepts are the same documents a conversion writes into docs/concepts/, so
 	anything named in a report can be read here without converting anything.
 	`)
 }
 
-// versionHelp is `perl2go version --help`.
+// versionHelp is `perl2golang version --help`.
 func versionHelp() string {
 	return dedent(`
 	print the version and build information.
 
 	usage:
-	  perl2go version
-	  perl2go --version
+	  perl2golang version
+	  perl2golang --version
 
-	The line names the perl2go version, the commit it was built from when the
+	The line names the perl2golang version, the commit it was built from when the
 	binary carries that information, the Go toolchain that built it, and the
 	platform it was built for.
 	`)

@@ -15,7 +15,7 @@ a question.
 Alongside this document sit short single-concept lessons in `concepts/`, chosen by what
 your script actually does. Where a topic here has a lesson it is named in backticks —
 "see the `slice-aliasing-and-copy` lesson". The ones your code pulled in are links; for
-any other, `perl2go explain <name>` prints it. Those lessons go deep on one thing; this
+any other, `perl2golang explain <name>` prints it. Those lessons go deep on one thing; this
 is the map.
 
 ## Two decisions that explain the rest
