@@ -117,6 +117,41 @@ var notes = map[string]string{
 		"strings.ContainsAny only reports whether any of them appear, so " +
 		"neither answers this without a loop around it.",
 
+	"timeParts": "time.Time answers each of these with its own method, and " +
+		"a Go program calls the one it wants rather than taking nine numbers " +
+		"and indexing. The two offsets are why the list form is worth " +
+		"avoiding: the month is one less than its name and the year is 1900 " +
+		"less than itself.",
+
+	"stdOffset": "A zone's offset changes over the year, so asking a single " +
+		"moment for it says nothing about whether that moment is inside " +
+		"daylight saving. Comparing against the quieter half of the year is " +
+		"what answers it.",
+
+	"timeFrom": "time.Date takes the month as a time.Month and the year as " +
+		"the year, so the two offsets have to be undone here. It also " +
+		"normalises out-of-range values rather than refusing them, which is " +
+		"how you add a month to the 31st and land where you expect.",
+
+	"timeText": "A layout is written as an example timestamp rather than as " +
+		"percent codes, and the example is always the same instant: " +
+		"Mon Jan 2 15:04:05 MST 2006, which is 1 2 3 4 5 6 7 in order. The " +
+		"underscore in _2 asks for space padding rather than zero padding.",
+
+	"formatStamp": "Most percent codes have a layout and should be written " +
+		"as one, because the layout is checked by eye and the code is not. " +
+		"This exists for the few that have no layout at all, the day of the " +
+		"year and the week number among them, and for a format that is only " +
+		"known while the program runs.",
+
+	"stampLayouts": "The mapping from percent codes to layout fragments, " +
+		"kept beside the formatter that reads it.",
+
+	"looksLikeNumber": "strconv.ParseFloat is the whole answer for text, and " +
+		"it returns an error rather than a zero, which is the difference " +
+		"between \"not a number\" and \"the number zero\". A value that is " +
+		"already numeric needs no test at all: its type says so.",
+
 	"dumpValues": "%#v writes Go syntax, with the types spelled out and map " +
 		"keys in sorted order, which is why two dumps of equal maps compare " +
 		"equal. Nothing reads that syntax back, so a dump used as a wire " +

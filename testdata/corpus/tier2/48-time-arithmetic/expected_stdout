@@ -1,0 +1,10 @@
+delta: 90000 seconds
+as h:m:s 25:00:00
+hour bucket: 2023-11-14T22:00:00Z
+day bucket:  2023-11-14T00:00:00Z
+christmas noon: 1703505600 -> 2023-12-25T12:00:00Z
+one month on:  2023-12-14
+45 days after: 2023-12-29
+earliest: 2023-11-14
+latest:   2023-12-25
+start is before end: yes

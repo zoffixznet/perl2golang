@@ -1,0 +1,28 @@
+parts: sec=20 min=13 hour=22 mday=14 mon=10 year=123 wday=2 yday=317
+rebuilt: 2023-11-14T22:13:20Z
+-- formats that map to a layout --
+iso:      2023-11-14T22:13:20Z
+date:     2023-11-14
+clock:    22:13:20
+compact:  20231114-221320
+named:    Tue Nov 14 2023
+long:     Tuesday, 14 November 2023
+12 hour:  10:13 PM
+-- formats with no layout at all --
+day of year: 318
+weekday:     2
+mixed:       day 318 of 2023
+-- moving in whole seconds --
+  +0      2023-11-14 22:13:20
+  +3600   2023-11-14 23:13:20
+  +86400  2023-11-15 22:13:20
+-- what is this value --
+  'hello' reftype=-      number=no
+  '42'    reftype=-      number=yes
+  '3.5e2' reftype=-      number=yes
+  '12abc' reftype=-      number=no
+  ' 7 '   reftype=-      number=yes
+  hash    reftype=HASH
+  array   reftype=ARRAY
+  code    reftype=CODE
+  blessed on a plain reference: no

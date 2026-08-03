@@ -126,6 +126,9 @@ type Lowerer struct {
 	// it because Go embedding is not subtyping.
 	isaFuncs map[*Class]string
 	isaDecls []ir.Decl
+	// classNameFunc names the generated function that maps a value's type
+	// back to the class name the Perl knew it by.
+	classNameFunc string
 	// throwsObject records that some die in the file throws a blessed
 	// object, which is what decides whether $@ holds text or a value.
 	throwsObject bool
@@ -389,6 +392,7 @@ func Lower(res parser.Result, src []byte, opts Options) *Result {
 	// writes them afresh rather than inheriting the discovery pass's copies.
 	l.isaFuncs = nil
 	l.isaDecls = nil
+	l.classNameFunc = ""
 	l.recordLookups = nil
 	l.recordDecls = nil
 	l.recordUsed = nil

@@ -333,8 +333,39 @@ func (l *Lowerer) builtin(n *ast.Call) ir.Expr {
 		return l.uniqCall(n, n.Name == "uniqnum")
 	case "pairs":
 		return l.pairsCall(n)
-	case "floor", "ceil", "fmod", "strftime":
+	case "floor", "ceil", "fmod":
 		return l.posix(n)
+	case "strftime", "POSIX::strftime":
+		return l.strftimeCall(n)
+	case "gmtime", "localtime":
+		return l.timeSplit(n, n.Name == "localtime")
+	case "blessed", "Scalar::Util::blessed":
+		return l.blessedCall(n)
+	case "reftype", "Scalar::Util::reftype":
+		return l.reftypeCall(n)
+	case "looks_like_number", "Scalar::Util::looks_like_number":
+		return l.helperCall(hLooksLikeNumber, ir.TBool,
+			l.assignable(l.argExpr(n, 0), ir.TAny, n))
+	case "setlocale", "POSIX::setlocale":
+		l.inform(n, "P2G7578", "setlocale",
+			"Go's time and number formatting is not locale-sensitive at all: month "+
+				"and day names are always English and a decimal point is always a point. "+
+				"There is no locale to set, and no risk that a program formats "+
+				"differently on someone else's machine. golang.org/x/text is where the "+
+				"locale-aware formatting lives when it is genuinely wanted.",
+			"time-layouts", "small-stdlib-philosophy")
+		return ir.Str(`"C"`)
+	case "tzset", "POSIX::tzset":
+		l.inform(n, "P2G7579", "tzset",
+			"Go reads TZ when it first needs the local zone and caches the result, so "+
+				"there is nothing to reset. time.LoadLocation names a zone explicitly, "+
+				"which is what a program that must not depend on the environment does.",
+			"time-layouts")
+		return ir.BoolLit(true)
+	case "LC_TIME", "LC_ALL", "LC_NUMERIC", "LC_CTYPE", "LC_COLLATE", "LC_MONETARY":
+		if argCount(n) == 0 {
+			return ir.Str(quote(n.Name))
+		}
 	case "basename", "dirname":
 		return l.pathCall(n)
 	case "fileparse":
@@ -579,12 +610,7 @@ func (l *Lowerer) printfCall(n *ast.Call) []ir.Stmt {
 			callArgs = append(callArgs, l.expr(a))
 		}
 	} else {
-		var vals []ir.Expr
-		for _, a := range args[1:] {
-			for _, one := range flatten(a) {
-				vals = append(vals, l.expr(one))
-			}
-		}
+		vals := l.formatValues(args[1:], format, n)
 		goFormat, goArgs := l.perlFormat(format, vals, n)
 		callArgs = append(callArgs, ir.Str(quote(goFormat)))
 		callArgs = append(callArgs, goArgs...)
@@ -613,12 +639,7 @@ func (l *Lowerer) sprintfCall(n *ast.Call) ir.Expr {
 		}
 		return l.helperCall(hSprintf, ir.TString, vals...)
 	}
-	var vals []ir.Expr
-	for _, a := range args[1:] {
-		for _, one := range flatten(a) {
-			vals = append(vals, l.expr(one))
-		}
-	}
+	vals := l.formatValues(args[1:], format, n)
 	goFormat, goArgs := l.perlFormat(format, vals, n)
 	return call("fmt", "fmt", "Sprintf", ir.TString,
 		append([]ir.Expr{ir.Str(quote(goFormat))}, goArgs...)...)
@@ -1105,8 +1126,11 @@ func (l *Lowerer) chompCall(n *ast.Call) []ir.Stmt {
 		return []ir.Stmt{loop}
 	}
 
-	st := assign("=", []ir.Expr{target},
-		[]ir.Expr{call("strings", "strings", "TrimSuffix", ir.TString, target, ir.Str(`"\n"`))})
+	// A target whose type did not resolve is not a string yet, and
+	// strings.TrimSuffix will not take one, so it is read as text first.
+	trimmed := ir.Expr(call("strings", "strings", "TrimSuffix", ir.TString,
+		l.toStr(target, n), ir.Str(`"\n"`)))
+	st := assign("=", []ir.Expr{target}, []ir.Expr{l.assignable(trimmed, typeOrAny(target), n)})
 	l.setProv(st, n)
 	l.note(st, "chomp removes one trailing newline and nothing else, which is exactly "+
 		"strings.TrimSuffix. Note that bufio.Scanner has already removed the newline, "+

@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T04:55:25Z",
+  "recorded": "2026-08-15T05:10:44Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -53,45 +53,45 @@
     },
     {
       "tier": "tier2",
-      "entries": 46,
+      "entries": 48,
       "stages": {
         "compiled": {
-          "pass": 41,
-          "fail": 5,
+          "pass": 44,
+          "fail": 4,
           "skip": 0
         },
         "emitted": {
-          "pass": 46,
+          "pass": 48,
           "fail": 0,
           "skip": 0
         },
         "equivalent": {
-          "pass": 9,
+          "pass": 11,
           "fail": 37,
           "skip": 0
         },
         "translated": {
-          "pass": 42,
-          "fail": 4,
+          "pass": 43,
+          "fail": 5,
           "skip": 0
         },
         "typed": {
-          "pass": 13,
-          "fail": 33,
+          "pass": 14,
+          "fail": 34,
           "skip": 0
         }
       },
       "equivalent_annotated": {
-        "pass": 9,
+        "pass": 11,
         "fail": 37,
         "skip": 0
       },
       "quality": {
-        "todos": 30,
-        "symbols": 966,
-        "symbols_typed": 812,
-        "refusals": 31,
-        "approximations": 285
+        "todos": 13,
+        "symbols": 984,
+        "symbols_typed": 828,
+        "refusals": 13,
+        "approximations": 335
       }
     },
     {
@@ -130,11 +130,11 @@
         "skip": 0
       },
       "quality": {
-        "todos": 99,
+        "todos": 97,
         "symbols": 816,
-        "symbols_typed": 589,
-        "refusals": 103,
-        "approximations": 278
+        "symbols_typed": 591,
+        "refusals": 101,
+        "approximations": 281
       }
     },
     {
@@ -195,13 +195,13 @@
           "skip": 0
         },
         "equivalent": {
-          "pass": 4,
-          "fail": 21,
+          "pass": 5,
+          "fail": 20,
           "skip": 0
         },
         "translated": {
-          "pass": 17,
-          "fail": 8,
+          "pass": 18,
+          "fail": 7,
           "skip": 0
         },
         "typed": {
@@ -211,36 +211,36 @@
         }
       },
       "equivalent_annotated": {
-        "pass": 4,
-        "fail": 21,
+        "pass": 5,
+        "fail": 20,
         "skip": 0
       },
       "quality": {
-        "todos": 16,
+        "todos": 15,
         "symbols": 924,
-        "symbols_typed": 835,
-        "refusals": 16,
-        "approximations": 168
+        "symbols_typed": 836,
+        "refusals": 15,
+        "approximations": 171
       }
     }
   ],
   "total": {
     "tier": "TOTAL",
-    "entries": 175,
+    "entries": 177,
     "stages": {
       "compiled": {
-        "pass": 153,
-        "fail": 22,
+        "pass": 156,
+        "fail": 21,
         "skip": 0
       },
       "emitted": {
-        "pass": 175,
+        "pass": 177,
         "fail": 0,
         "skip": 0
       },
       "equivalent": {
-        "pass": 33,
-        "fail": 107,
+        "pass": 36,
+        "fail": 106,
         "skip": 0
       },
       "honest": {
@@ -249,35 +249,35 @@
         "skip": 1
       },
       "translated": {
-        "pass": 133,
+        "pass": 135,
         "fail": 42,
         "skip": 0
       },
       "typed": {
-        "pass": 63,
-        "fail": 112,
+        "pass": 64,
+        "fail": 113,
         "skip": 0
       }
     },
     "equivalent_annotated": {
-      "pass": 33,
-      "fail": 107,
+      "pass": 36,
+      "fail": 106,
       "skip": 0
     },
     "quality": {
-      "todos": 182,
-      "symbols": 3267,
-      "symbols_typed": 2720,
-      "refusals": 188,
-      "approximations": 852
+      "todos": 162,
+      "symbols": 3285,
+      "symbols_typed": 2739,
+      "refusals": 167,
+      "approximations": 908
     }
   },
   "quality": {
-    "todos": 182,
-    "symbols": 3267,
-    "symbols_typed": 2720,
-    "refusals": 188,
-    "approximations": 852
+    "todos": 162,
+    "symbols": 3285,
+    "symbols_typed": 2739,
+    "refusals": 167,
+    "approximations": 908
   },
   "entries": [
     {
@@ -2358,8 +2358,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 7, byte 249: got \"0 chars\\ndb-primary         -\u003e 10...\", wanted \"39 chars\\ndb-primary         -\u003e 1...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -2372,8 +2371,7 @@
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 7, byte 249: got \"0 chars\\ndb-primary         -\u003e 10...\", wanted \"39 chars\\ndb-primary         -\u003e 1...\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
@@ -2844,22 +2842,21 @@
       "kind": "convert",
       "stages": {
         "compiled": {
-          "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:180:30: cannot use text (variable of interface type any) as string value in argument to strings.TrimSuffix: need type assertion"
+          "outcome": "pass"
         },
         "emitted": {
           "outcome": "pass"
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "the generated program did not compile"
+          "reason": "exit status 255, wanted 1; stdout differs: line 2, byte 11: got \"ok: alpha\\nfetch(3)\\n  missing: [E...\", wanted \"commit 1\\n  ok: alpha\\nfetch(3)\\n  ...\"; stderr differs: unexpected \"interface conversion: *runtime.TypeAssertionError is not main.AnyMyAp...\""
         },
         "honest": {
           "outcome": "n/a"
         },
         "translated": {
           "outcome": "fail",
-          "reason": "4 untranslated constructs"
+          "reason": "1 untranslated construct"
         },
         "typed": {
           "outcome": "fail",
@@ -2868,14 +2865,14 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "the generated program did not compile"
+        "reason": "exit status 255, wanted 1; stdout differs: line 2, byte 11: got \"ok: alpha\\nfetch(3)\\n  missing: [E...\", wanted \"commit 1\\n  ok: alpha\\nfetch(3)\\n  ...\"; stderr differs: unexpected \"interface conversion: *runtime.TypeAssertionError is not main.AnyMyAp...\""
       },
       "quality": {
-        "todos": 3,
+        "todos": 1,
         "symbols": 27,
         "symbols_typed": 19,
-        "refusals": 4,
-        "approximations": 22
+        "refusals": 1,
+        "approximations": 25
       }
     },
     {
@@ -2891,7 +2888,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: line 7, byte 233: got \"5 sum=0.00 min=0.00 max=0.00\\nsum...\", wanted \"20 sum=10.17 min=0.09 max=0.91\\ns...\""
+          "reason": "stdout differs: line 7, byte 233: got \"5 sum=0.00 min=0.42 max=0.61\\nsum...\", wanted \"20 sum=10.17 min=0.09 max=0.91\\ns...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -2906,14 +2903,14 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: line 7, byte 233: got \"5 sum=0.00 min=0.00 max=0.00\\nsum...\", wanted \"20 sum=10.17 min=0.09 max=0.91\\ns...\""
+        "reason": "stdout differs: line 7, byte 233: got \"5 sum=0.00 min=0.42 max=0.61\\nsum...\", wanted \"20 sum=10.17 min=0.09 max=0.91\\ns...\""
       },
       "quality": {
         "todos": 0,
         "symbols": 30,
         "symbols_typed": 24,
         "refusals": 0,
-        "approximations": 10
+        "approximations": 11
       }
     },
     {
@@ -2929,30 +2926,30 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: line 3, byte 140: got \"no\\nfloat string    -        -   ...\", wanted \"yes\\nfloat string    -        -  ...\"; stderr differs: unexpected \"TODO P2G3599: the POSIX::tzset function is not implemented ...\""
+          "reason": "stdout differs: line 14, byte 623: got \"SCALAR   SCALAR   Widget   no\\nGa...\", wanted \"Widget   HASH     Widget   no\\nGa...\"; stderr differs: unexpected \"TODO P2G7001: bless has no Go equivalent\""
         },
         "honest": {
           "outcome": "n/a"
         },
         "translated": {
           "outcome": "fail",
-          "reason": "18 untranslated constructs"
+          "reason": "1 untranslated construct"
         },
         "typed": {
           "outcome": "fail",
-          "reason": "5 variables left dynamic out of 24"
+          "reason": "4 variables left dynamic out of 24"
         }
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: line 3, byte 140: got \"no\\nfloat string    -        -   ...\", wanted \"yes\\nfloat string    -        -  ...\"; stderr differs: unexpected \"TODO P2G3599: the POSIX::tzset function is not implemented ...\""
+        "reason": "stdout differs: line 14, byte 623: got \"SCALAR   SCALAR   Widget   no\\nGa...\", wanted \"Widget   HASH     Widget   no\\nGa...\"; stderr differs: unexpected \"TODO P2G7001: bless has no Go equivalent\""
       },
       "quality": {
-        "todos": 18,
+        "todos": 1,
         "symbols": 24,
-        "symbols_typed": 19,
-        "refusals": 18,
-        "approximations": 7
+        "symbols_typed": 20,
+        "refusals": 1,
+        "approximations": 18
       }
     },
     {
@@ -3394,6 +3391,80 @@
       }
     },
     {
+      "tier": "tier2",
+      "name": "47-time-formatting",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "pass"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "pass"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 7,
+        "symbols_typed": 7,
+        "refusals": 0,
+        "approximations": 15
+      }
+    },
+    {
+      "tier": "tier2",
+      "name": "48-time-arithmetic",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "stdout differs: line 5, byte 123: got \"0 -\u003e 1970-01-01T00:00:00Z\\none mo...\", wanted \"1703505600 -\u003e 2023-12-25T12:00:0...\"; stderr differs: unexpected \"TODO P2G3599: the timegm function is not implemented\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "fail",
+          "reason": "2 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "3 variables left dynamic out of 11"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "stdout differs: line 5, byte 123: got \"0 -\u003e 1970-01-01T00:00:00Z\\none mo...\", wanted \"1703505600 -\u003e 2023-12-25T12:00:0...\"; stderr differs: unexpected \"TODO P2G3599: the timegm function is not implemented\""
+      },
+      "quality": {
+        "todos": 2,
+        "symbols": 11,
+        "symbols_typed": 8,
+        "refusals": 2,
+        "approximations": 20
+      }
+    },
+    {
       "tier": "tier3",
       "name": "01-inventory-manager",
       "kind": "convert",
@@ -3659,7 +3730,7 @@
         "symbols": 35,
         "symbols_typed": 26,
         "refusals": 0,
-        "approximations": 9
+        "approximations": 10
       }
     },
     {
@@ -3852,7 +3923,7 @@
         "symbols": 14,
         "symbols_typed": 14,
         "refusals": 1,
-        "approximations": 4
+        "approximations": 5
       }
     },
     {
@@ -3986,30 +4057,30 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "exit status 2, wanted 0; stdout differs: line 1, byte 13: got \" (epoch 1717243200)\\n\", wanted \"2024-06-01T12:00:00Z (epoch 1717...\"; stderr differs: unexpected \"TODO P2G3599: the gmtime function is not implemented ...\""
+          "reason": "stdout differs: line 10, byte 288: got \"legacy\\nstyle inner delete: legac...\", wanted \"modern\\nstyle inner delete: (none...\"; stderr differs: unexpected \"replica count below 3 in staging ...\""
         },
         "honest": {
           "outcome": "n/a"
         },
         "translated": {
           "outcome": "fail",
-          "reason": "5 untranslated constructs"
+          "reason": "3 untranslated constructs"
         },
         "typed": {
           "outcome": "fail",
-          "reason": "11 variables left dynamic out of 18"
+          "reason": "9 variables left dynamic out of 18"
         }
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "exit status 2, wanted 0; stdout differs: line 1, byte 13: got \" (epoch 1717243200)\\n\", wanted \"2024-06-01T12:00:00Z (epoch 1717...\"; stderr differs: unexpected \"TODO P2G3599: the gmtime function is not implemented ...\""
+        "reason": "stdout differs: line 10, byte 288: got \"legacy\\nstyle inner delete: legac...\", wanted \"modern\\nstyle inner delete: (none...\"; stderr differs: unexpected \"replica count below 3 in staging ...\""
       },
       "quality": {
-        "todos": 5,
+        "todos": 3,
         "symbols": 18,
-        "symbols_typed": 7,
-        "refusals": 5,
-        "approximations": 4
+        "symbols_typed": 9,
+        "refusals": 3,
+        "approximations": 5
       }
     },
     {
@@ -4180,7 +4251,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: line 2, byte 28: got \"known; did you mean stage 2 0 (d...\", wanted \"ambiguous prefix of 'status'\\ncom...\"; stderr differs: unexpected \"TODO P2G3599: the abbrev function is not implemented\""
+          "reason": "stdout differs: line 2, byte 28: got \"known; did you mean stage (d=2 s...\", wanted \"ambiguous prefix of 'status'\\ncom...\"; stderr differs: unexpected \"TODO P2G3599: the abbrev function is not implemented\""
         },
         "honest": {
           "outcome": "n/a"
@@ -4196,7 +4267,7 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: line 2, byte 28: got \"known; did you mean stage 2 0 (d...\", wanted \"ambiguous prefix of 'status'\\ncom...\"; stderr differs: unexpected \"TODO P2G3599: the abbrev function is not implemented\""
+        "reason": "stdout differs: line 2, byte 28: got \"known; did you mean stage (d=2 s...\", wanted \"ambiguous prefix of 'status'\\ncom...\"; stderr differs: unexpected \"TODO P2G3599: the abbrev function is not implemented\""
       },
       "quality": {
         "todos": 2,
@@ -6008,7 +6079,7 @@
         "symbols": 58,
         "symbols_typed": 56,
         "refusals": 0,
-        "approximations": 19
+        "approximations": 20
       }
     },
     {
@@ -6046,7 +6117,7 @@
         "symbols": 36,
         "symbols_typed": 35,
         "refusals": 0,
-        "approximations": 6
+        "approximations": 7
       }
     },
     {
@@ -6106,12 +6177,11 @@
           "outcome": "n/a"
         },
         "translated": {
-          "outcome": "fail",
-          "reason": "1 untranslated construct"
+          "outcome": "pass"
         },
         "typed": {
           "outcome": "fail",
-          "reason": "4 variables left dynamic out of 44"
+          "reason": "3 variables left dynamic out of 44"
         }
       },
       "equivalent_annotated": {
@@ -6119,10 +6189,10 @@
         "reason": "exit status 2, wanted 75; stdout differs: 374 byte(s) missing after line 1, expected \"[nightly-backup] stale lock (pid...\"; stderr differs: unexpected \"panic: interface conversion: interface {} is int, not time.Time ...\""
       },
       "quality": {
-        "todos": 1,
+        "todos": 0,
         "symbols": 44,
-        "symbols_typed": 40,
-        "refusals": 1,
+        "symbols_typed": 41,
+        "refusals": 0,
         "approximations": 8
       }
     },
@@ -6138,8 +6208,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 3, byte 49: got \"malformed line: mmalformedline  ...\", wanted \"             malformed line: mma...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -6152,15 +6221,14 @@
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 3, byte 49: got \"malformed line: mmalformedline  ...\", wanted \"             malformed line: mma...\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
         "symbols": 41,
         "symbols_typed": 41,
         "refusals": 0,
-        "approximations": 2
+        "approximations": 3
       }
     },
     {

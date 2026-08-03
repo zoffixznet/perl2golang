@@ -131,6 +131,11 @@ func (l *Lowerer) scalar(e ast.Expr) ir.Expr {
 		if x, ok := l.multiResultCall(n, false); ok {
 			return x
 		}
+		// A time split read for one value is the readable stamp, not the
+		// length of the list it would have given.
+		if n.Name == "gmtime" || n.Name == "localtime" {
+			return l.timeStamp(n, n.Name == "localtime")
+		}
 		// splice in scalar context is the last element it removed, not how
 		// many, which is the one list operator that does not answer with a
 		// count.

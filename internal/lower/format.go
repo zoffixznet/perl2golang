@@ -164,3 +164,86 @@ func (l *Lowerer) stringsJoin(list ir.Expr, sep ir.Expr) ir.Expr {
 	}
 	return l.helperCall(hJoinList, ir.TString, list, sep)
 }
+
+// formatValues lowers the arguments of printf or sprintf into one value per
+// verb.
+//
+// Perl flattens every argument into a single list before matching it against
+// the format, so `printf "%s %s\n", @pair` fills both verbs from the array.
+// Go passes arguments one at a time, so a list argument has to be taken apart
+// here: written out where its length is known, and indexed out of a named
+// list where it is not.
+func (l *Lowerer) formatValues(args []ast.Expr, format string, at ast.Node) []ir.Expr {
+	var vals []ir.Expr
+	spread := false
+	for _, a := range args {
+		for _, one := range flatten(a) {
+			x := l.expr(one)
+			if x == nil {
+				continue
+			}
+			if t := typeOrAny(x); t.Kind == ir.Slice && flattensInList(one) {
+				if lit, ok := x.(*ir.CompositeLit); ok {
+					vals = append(vals, lit.Elems...)
+					continue
+				}
+				spread = true
+			}
+			vals = append(vals, x)
+		}
+	}
+	if !spread {
+		return vals
+	}
+	// One of the arguments is a list whose length is only known while the
+	// program runs, so everything is gathered into one list and read back by
+	// position, which is what Perl was doing invisibly.
+	parts := make([]ir.Expr, len(vals))
+	for i, v := range vals {
+		if t := typeOrAny(v); t.Kind == ir.Slice {
+			parts[i] = l.assignable(v, ir.SliceOf(ir.TAny), at)
+			continue
+		}
+		parts[i] = l.assignable(v, ir.TAny, at)
+	}
+	flat := l.listValue(parts, ir.TAny)
+	name := l.tmp("values")
+	decl := assign(":=", []ir.Expr{ir.NewIdent(name, ir.SliceOf(ir.TAny))}, []ir.Expr{flat})
+	l.setProv(decl, at)
+	l.note(decl, "Perl flattens every argument into one list before matching it "+
+		"against the format, so an array fills as many verbs as it has elements. Go "+
+		"passes arguments one at a time, so the list is built here and read back by "+
+		"position.",
+		"context-is-gone", "variadic-and-no-defaults")
+	l.emit(decl)
+
+	out := make([]ir.Expr, 0, countVerbs(format))
+	for i := 0; i < countVerbs(format); i++ {
+		out = append(out, l.helperCall(hAt, ir.TAny, ir.NewIdent(name, ir.SliceOf(ir.TAny)),
+			ir.IntLit(itoa(i))))
+	}
+	return out
+}
+
+// countVerbs counts the conversions a format string will consume a value for.
+func countVerbs(format string) int {
+	count := 0
+	for i := 0; i < len(format); {
+		if format[i] != '%' {
+			i++
+			continue
+		}
+		spec, _, end := scanSpec(format, i)
+		if end < 0 {
+			i++
+			continue
+		}
+		if verb := spec[len(spec)-1]; verb != '%' {
+			count++
+			// A star takes its width from an argument of its own.
+			count += strings.Count(spec, "*")
+		}
+		i = end
+	}
+	return count
+}

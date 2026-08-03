@@ -63,6 +63,13 @@ const (
 
 	hDumpValues = "dumpValues" // a structure rendered as Go source
 
+	// Time and value inspection.
+	hTimeParts       = "timeParts"       // a moment as the nine numbers
+	hTimeFrom        = "timeFrom"        // the nine numbers back as a moment
+	hTimeText        = "timeText"        // a moment as a readable stamp
+	hFormatStamp     = "formatStamp"     // a percent-coded time format
+	hLooksLikeNumber = "looksLikeNumber" // would this read as a number
+
 	// Paths.
 	hSplitPath     = "splitPath"     // volume, directory and final component
 	hPathParts     = "pathParts"     // a path broken into its components

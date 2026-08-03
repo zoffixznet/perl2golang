@@ -2,7 +2,7 @@
 id: time-layouts
 title: Date formats are an example date, not strftime codes
 tags: [trap, time, formatting, stdlib]
-perl_triggers: [localtime, gmtime, time, strftime, posix-strftime, mktime, timelocal, sleep, datetime, time-hires, epoch-seconds]
+perl_triggers: [localtime, gmtime, time, strftime, posix-strftime, mktime, timelocal, timegm, setlocale, tzset, sleep, datetime, time-hires, epoch-seconds]
 severity: trap
 prerequisites: [explicit-conversions-no-coercion, errors-are-values]
 ---
@@ -107,6 +107,25 @@ The parse error is worth reading twice. It names the layout, the input, and the 
 | RFC 3339 Z form | `Z07:00` | none |
 
 `15` is the only unambiguous hour: it is 3pm in 24-hour form, so it can mean nothing else. `03` is the same hour in 12-hour form, which is why the AM/PM marker matters when you use it.
+
+## The codes that have no layout at all
+
+Most of `strftime` maps across one code at a time: `%Y` is `2006`, `%m` is `01`, `%d` is `02`, `%H` is `15`, `%M` is `04`, `%S` is `05`, `%y` is `06`, `%b` is `Jan`, `%B` is `January`, `%a` is `Mon`, `%A` is `Monday`, `%I` is `03`, `%p` is `PM`, `%Z` is `MST`, `%z` is `-0700`. The compound ones are just longer layouts: `%F` is `2006-01-02`, `%T` is `15:04:05`, `%R` is `15:04`.
+
+A handful have no layout, because they are not a way of writing part of the date but a *derived number*. Those become method calls:
+
+| code | Go |
+|---|---|
+| `%j` day of the year | `t.YearDay()`, formatted `%03d` |
+| `%w` weekday number | `int(t.Weekday())` |
+| `%u` weekday, Monday as 1 | `int(t.Weekday())` with Sunday remapped to 7 |
+| `%U` / `%W` week number | arithmetic on `t.YearDay()` and `t.Weekday()` |
+| `%V` ISO week | `_, week := t.ISOWeek()` |
+| `%s` epoch seconds | `t.Unix()` |
+
+A second trap comes with the layout system, and it is the reason a mechanical translation of a format can go wrong: **literal text in a layout is only literal if it does not spell a field.** `t.Format("Day 2 of the month")` replaces the `2` with the day of the month, which is what you wanted, and would also replace a `15` or a `2006` anywhere in the surrounding words, which is not. You cannot see which characters are live by looking. `2006-01-02T15:04:05Z` is safe because a bare `Z` is only a field when digits follow it, and a bare `T` is never one. When a format is genuinely mixed, formatting the parts with `fmt.Sprintf` around a `Format` call is clearer than a clever layout.
+
+The third thing to know before porting: **Go's time formatting is not locale-aware and has no setting to make it so.** `%A` and `%B` are always English. That is a guarantee rather than a gap, because it means a program formats identically on every machine and `setlocale` has nothing to do; `golang.org/x/text/message` is where localised formatting lives when it is genuinely wanted.
 
 ## The mismatch
 

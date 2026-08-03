@@ -512,6 +512,16 @@ const (
 	AbsPathMissing Code = "P2G7568"
 	// DumperFormat: a structure dump comes out as Go syntax, not Perl syntax.
 	DumperFormat Code = "P2G7569"
+	// TimeSplit: gmtime and localtime give nine numbers Go has no use for.
+	TimeSplit Code = "P2G7575"
+	// StrftimeLayout: a percent-coded format became a Go layout.
+	StrftimeLayout Code = "P2G7576"
+	// BlessedLookup: the class name is looked up in a generated table.
+	BlessedLookup Code = "P2G7577"
+	// LocaleIgnored: Go's formatting is not locale-sensitive.
+	LocaleIgnored Code = "P2G7578"
+	// TimezoneCached: Go reads TZ once and caches the zone.
+	TimezoneCached Code = "P2G7579"
 	// Base64Wrapping: base64 line wrapping differs.
 	Base64Wrapping Code = "P2G7570"
 	// YAMLDependency: YAML needs a third-party package.
@@ -2088,6 +2098,41 @@ var catalogue = map[Code]Entry{
 		Short:    "a missing path resolves to the empty string",
 		Advice:   "compare the result against \"\", or call `os.Stat` first and handle the error",
 		Concepts: []string{"nil-vs-undef", "filepath-and-paths"},
+	},
+	TimeSplit: {
+		Severity: report.Warn,
+		Message:  "`%s` gives nine numbers, and a Go moment answers each part with a method",
+		Short:    "the nine-number split has no counterpart",
+		Advice:   "keep the time.Time and call t.Year(), t.Month() and t.Day() where the list was indexed",
+		Concepts: []string{"time-layouts"},
+	},
+	StrftimeLayout: {
+		Severity: report.Warn,
+		Message:  "a percent-coded time format became a Go layout, which is an example timestamp",
+		Short:    "the format became a layout",
+		Advice:   "Go's time package writes month and day names in English and has no locale setting",
+		Concepts: []string{"time-layouts"},
+	},
+	BlessedLookup: {
+		Severity: report.Warn,
+		Message:  "`blessed` became a lookup from a value's Go type to the class name it was known by",
+		Short:    "the class name is looked up",
+		Advice:   "a type switch asks the same question and hands back the typed value with the answer",
+		Concepts: []string{"type-assertions-and-switches", "methods-and-receivers"},
+	},
+	LocaleIgnored: {
+		Severity: report.Note,
+		Message:  "time and number formatting here is not locale-sensitive, so there is no locale to set",
+		Short:    "there is no locale to set",
+		Advice:   "golang.org/x/text is where locale-aware formatting lives",
+		Concepts: []string{"time-layouts", "small-stdlib-philosophy"},
+	},
+	TimezoneCached: {
+		Severity: report.Note,
+		Message:  "the local zone is read once and cached, so there is nothing to reset",
+		Short:    "the zone is read once and cached",
+		Advice:   "`time.LoadLocation` names a zone explicitly and does not depend on the environment",
+		Concepts: []string{"time-layouts"},
 	},
 	Base64Wrapping: {
 		Severity:  report.Note,
