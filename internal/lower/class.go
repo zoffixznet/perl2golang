@@ -537,7 +537,13 @@ func (l *Lowerer) classDecl(c *Class) ir.Decl {
 		})
 	}
 	for _, f := range c.Fields {
-		d.Fields = append(d.Fields, ir.Field{Name: f.Go, Type: f.Type})
+		field := ir.Field{Name: f.Go, Type: f.Type}
+		// A record came from data with its own names, and a struct tag is
+		// where Go writes down what a field is called outside the program.
+		if c.Record && f.Perl != "" && f.Perl != f.Go {
+			field.Tag = `json:"` + f.Perl + `"`
+		}
+		d.Fields = append(d.Fields, field)
 	}
 	d.Doc = []string{c.Go + " is one " + lastPart(c.Perl) + " and everything it knows about itself."}
 	if c.Options {
@@ -546,7 +552,11 @@ func (l *Lowerer) classDecl(c *Class) ir.Decl {
 	if c.Record {
 		d.Doc = []string{c.Go + " is one record, with a field for each piece of it."}
 		if l.pass == 2 {
-			ir.Annotate(d, "The data this holds arrived with its field names written into "+
+			ir.Annotate(d, "The struct tags say what each field is called outside the "+
+				"program, which is what an encoder reads: without them a field would be "+
+				"written under its Go name. A tag is a string on the field rather than a "+
+				"declaration of its own, and only a package that looks for one sees it.\n\n"+
+				"The data this holds arrived with its field names written into "+
 				"it and its values of different kinds. A map would need one value type for "+
 				"all of them, which could only be `any`, and every read would cost a lookup "+
 				"and a conversion. A struct gives each field its own type and turns a "+

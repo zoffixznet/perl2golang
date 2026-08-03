@@ -103,6 +103,15 @@ func (l *Lowerer) useStmt(n *ast.Use) []ir.Stmt {
 			"filepath-and-paths", "errors-are-values")
 		return nil
 
+	case "Digest::MD5", "Digest::SHA", "Digest", "MIME::Base64":
+		l.inform(n, "P2G7591", "use "+n.Module,
+			"crypto/md5, crypto/sha256 and encoding/base64 are in the standard "+
+				"library. A hash is an io.Writer, so feeding it a file is io.Copy and "+
+				"there is no separate call for that. The base64 encoder writes one "+
+				"unbroken line where a mail encoder wraps at 76 characters.",
+			"io-reader-writer")
+		return nil
+
 	case "FindBin":
 		l.inform(n, "P2G7589", "use FindBin",
 			"FindBin works out where the script is so that `use lib` can find the "+

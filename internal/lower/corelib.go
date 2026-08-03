@@ -19,6 +19,9 @@ import (
 // coreClassCall lowers `Module->method(...)` for the core modules the
 // converter knows, and reports whether it recognised one.
 func (l *Lowerer) coreClassCall(n *ast.MethodCall, module, method string) (ir.Expr, bool) {
+	if x, ok := l.formatConstructor(n, module, method); ok {
+		return x, true
+	}
 	switch module {
 	case "File::Spec", "File::Spec::Unix", "File::Spec::Functions":
 		return l.fileSpecCall(n, method, n.Args)

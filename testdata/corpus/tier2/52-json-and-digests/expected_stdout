@@ -1,0 +1,23 @@
+-- compact --
+length: 104
+starts with a brace: yes
+keys are sorted: yes
+-- round trip --
+name: reporter
+version: 3
+cpu: 4
+first tag: nightly
+re-encodes to the same text: yes
+-- checksums --
+md5 of empty:  d41d8cd98f00b204e9800998ecf8427e
+md5 of abc:    900150983cd24fb0d6963f7d28e17f72
+md5 of a.b.c:  900150983cd24fb0d6963f7d28e17f72
+same as joined: yes
+base64 digest: kAFQmDzST7DWlj99KOF/cg
+accumulated:   900150983cd24fb0d6963f7d28e17f72
+-- base64 --
+encoded: aGVsbG8sIHdvcmxk
+ends in a newline: yes
+decoded: hello, world
+round trip holds: yes
+long input wraps into 4 lines of at most 76

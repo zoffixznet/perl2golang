@@ -1,0 +1,25 @@
+-- what came back --
+id is 7:            yes
+id prints as:       7
+ratio prints as:    0.5
+big prints as:      9007199254740993
+ok is true:         yes
+off is false:       no
+nothing is undef:   yes
+absent key:         absent
+nested depth:       2
+nested list count:  3
+-- what goes back out --
+angle brackets kept: yes
+id still a number:   yes
+-- booleans out --
+flags: {"off":false,"on":true}
+-- pretty --
+{
+   "a" : 1,
+   "b" : [
+      2,
+      3
+   ]
+}
+pretty ends with a newline: yes

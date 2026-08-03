@@ -536,6 +536,12 @@ const (
 	FindMapped Code = "P2G7588"
 	// FindBinMapped: FindBin has no counterpart, because there is no path.
 	FindBinMapped Code = "P2G7589"
+	// JSONSetting: an encoder setting has no counterpart or is already true.
+	JSONSetting Code = "P2G7511"
+	// JSONSpacing: the rendered JSON differs in spacing and escaping.
+	JSONSpacing Code = "P2G7512"
+	// DigestMapped: the digest modules map to the standard library.
+	DigestMapped Code = "P2G7591"
 	// Base64Wrapping: base64 line wrapping differs.
 	Base64Wrapping Code = "P2G7570"
 	// YAMLDependency: YAML needs a third-party package.
@@ -2196,6 +2202,27 @@ var catalogue = map[Code]Entry{
 		Short:    "there is no module search path",
 		Advice:   "`os.Executable` names the built binary where a program genuinely needs its own location",
 		Concepts: []string{"go-mod-vs-cpan", "packages-and-exported-names"},
+	},
+	JSONSetting: {
+		Severity: report.Warn,
+		Message:  "the encoder setting `%s` is either already true here or has no counterpart",
+		Short:    "the encoder setting does nothing",
+		Advice:   "map keys are written in sorted order without asking, so canonical output is the default",
+		Concepts: []string{"encoding-json", "map-iteration-order"},
+	},
+	JSONSpacing: {
+		Severity: report.Warn,
+		Message:  "the rendered JSON differs in spacing and in what is escaped",
+		Short:    "the rendering differs byte for byte",
+		Advice:   "encode both sides with the same library where two programs must agree on the exact text",
+		Concepts: []string{"encoding-json"},
+	},
+	DigestMapped: {
+		Severity: report.Note,
+		Message:  "the digest and base64 modules map to `crypto/md5`, `crypto/sha256` and `encoding/base64`",
+		Short:    "the digest modules are in the library",
+		Advice:   "a hash is an io.Writer, so hashing a file is io.Copy into it",
+		Concepts: []string{"io-reader-writer"},
 	},
 	Base64Wrapping: {
 		Severity:  report.Note,

@@ -812,6 +812,9 @@ func (l *Lowerer) methodCall(n *ast.MethodCall) ir.Expr {
 	if recv == nil {
 		return ir.Nil(ir.TAny)
 	}
+	if x, ok := l.formatMethod(n, recv, method); ok {
+		return x
+	}
 	c := l.classOf(typeOrAny(recv))
 	if c == nil {
 		return l.unknownInvocant(n, method, recv)

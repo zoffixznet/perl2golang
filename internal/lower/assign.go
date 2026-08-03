@@ -587,6 +587,21 @@ func (l *Lowerer) listAssign(targets []ast.Expr, rhs ast.Expr, n *ast.Assign, de
 			}
 			return out
 		}
+		if declare && anyHoisted(binds) {
+			// One of these lives at package level because a sub reads it, so
+			// the group cannot be declared in one statement: the hoisted ones
+			// are assigned and the rest are declared.
+			var out []ir.Stmt
+			for i, b := range binds {
+				st := l.bindDecl(true, b, values[i])
+				l.setProv(st, n)
+				out = append(out, st)
+			}
+			for _, b := range binds {
+				out = append(out, l.discardIfUnused(b)...)
+			}
+			return out
+		}
 		op := "="
 		if declare {
 			op = ":="
@@ -755,11 +770,28 @@ func (l *Lowerer) listAssignByIndex(targets []ast.Expr, rhs ast.Expr, n *ast.Ass
 // narrower than the binding thinks it is, and every later use asserts a type
 // the variable does not have, which does not compile.
 func (l *Lowerer) bindDecl(declare bool, b *Binding, value ir.Expr) ir.Stmt {
+	// A binding that was moved to package level because a sub reads it is
+	// already declared: this line sets its starting value.
+	if b.Kind == KindGlobal {
+		declare = false
+	}
 	coerced := l.assignable(value, b.Type, nil)
 	if declare && b.Type != nil && b.Type.Kind == ir.Any && typeOrAny(coerced).Kind != ir.Any {
 		return &ir.DeclStmt{Names: []string{b.Go}, Type: b.Type, Values: []ir.Expr{coerced}}
 	}
 	return assign(declOp(declare), []ir.Expr{ir.NewIdent(b.Go, b.Type)}, []ir.Expr{coerced})
+}
+
+// anyHoisted reports whether one of these bindings was moved to package
+// level because a sub reads it. Declaring it again here would shadow the one
+// the subs can see, and the subs would read an empty variable for ever.
+func anyHoisted(binds []*Binding) bool {
+	for _, b := range binds {
+		if b != nil && b.Kind == KindGlobal {
+			return true
+		}
+	}
+	return false
 }
 
 func declOp(declare bool) string {

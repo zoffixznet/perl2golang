@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T05:38:07Z",
+  "recorded": "2026-08-15T05:57:31Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -53,45 +53,45 @@
     },
     {
       "tier": "tier2",
-      "entries": 51,
+      "entries": 53,
       "stages": {
         "compiled": {
-          "pass": 47,
+          "pass": 49,
           "fail": 4,
           "skip": 0
         },
         "emitted": {
-          "pass": 51,
+          "pass": 53,
           "fail": 0,
           "skip": 0
         },
         "equivalent": {
-          "pass": 14,
-          "fail": 37,
+          "pass": 15,
+          "fail": 38,
           "skip": 0
         },
         "translated": {
-          "pass": 46,
+          "pass": 48,
           "fail": 5,
           "skip": 0
         },
         "typed": {
           "pass": 15,
-          "fail": 36,
+          "fail": 38,
           "skip": 0
         }
       },
       "equivalent_annotated": {
-        "pass": 14,
-        "fail": 37,
+        "pass": 15,
+        "fail": 38,
         "skip": 0
       },
       "quality": {
         "todos": 17,
-        "symbols": 1021,
-        "symbols_typed": 868,
+        "symbols": 1035,
+        "symbols_typed": 880,
         "refusals": 17,
-        "approximations": 356
+        "approximations": 372
       }
     },
     {
@@ -114,8 +114,8 @@
           "skip": 0
         },
         "translated": {
-          "pass": 17,
-          "fail": 14,
+          "pass": 18,
+          "fail": 13,
           "skip": 0
         },
         "typed": {
@@ -130,11 +130,11 @@
         "skip": 0
       },
       "quality": {
-        "todos": 82,
+        "todos": 65,
         "symbols": 822,
-        "symbols_typed": 613,
-        "refusals": 86,
-        "approximations": 296
+        "symbols_typed": 618,
+        "refusals": 69,
+        "approximations": 303
       }
     },
     {
@@ -195,52 +195,52 @@
           "skip": 0
         },
         "equivalent": {
-          "pass": 5,
-          "fail": 20,
+          "pass": 7,
+          "fail": 18,
           "skip": 0
         },
         "translated": {
-          "pass": 21,
-          "fail": 4,
+          "pass": 22,
+          "fail": 3,
           "skip": 0
         },
         "typed": {
-          "pass": 5,
-          "fail": 20,
+          "pass": 6,
+          "fail": 19,
           "skip": 0
         }
       },
       "equivalent_annotated": {
-        "pass": 5,
-        "fail": 20,
+        "pass": 7,
+        "fail": 18,
         "skip": 0
       },
       "quality": {
-        "todos": 12,
-        "symbols": 924,
-        "symbols_typed": 836,
-        "refusals": 12,
+        "todos": 6,
+        "symbols": 925,
+        "symbols_typed": 838,
+        "refusals": 6,
         "approximations": 172
       }
     }
   ],
   "total": {
     "tier": "TOTAL",
-    "entries": 181,
+    "entries": 183,
     "stages": {
       "compiled": {
-        "pass": 160,
+        "pass": 162,
         "fail": 21,
         "skip": 0
       },
       "emitted": {
-        "pass": 181,
+        "pass": 183,
         "fail": 0,
         "skip": 0
       },
       "equivalent": {
-        "pass": 43,
-        "fail": 103,
+        "pass": 46,
+        "fail": 102,
         "skip": 0
       },
       "honest": {
@@ -249,35 +249,35 @@
         "skip": 1
       },
       "translated": {
-        "pass": 145,
-        "fail": 36,
+        "pass": 149,
+        "fail": 34,
         "skip": 0
       },
       "typed": {
-        "pass": 66,
-        "fail": 115,
+        "pass": 67,
+        "fail": 116,
         "skip": 0
       }
     },
     "equivalent_annotated": {
-      "pass": 43,
-      "fail": 103,
+      "pass": 46,
+      "fail": 102,
       "skip": 0
     },
     "quality": {
-      "todos": 146,
-      "symbols": 3338,
-      "symbols_typed": 2811,
-      "refusals": 151,
-      "approximations": 951
+      "todos": 123,
+      "symbols": 3353,
+      "symbols_typed": 2830,
+      "refusals": 128,
+      "approximations": 974
     }
   },
   "quality": {
-    "todos": 146,
-    "symbols": 3338,
-    "symbols_typed": 2811,
-    "refusals": 151,
-    "approximations": 951
+    "todos": 123,
+    "symbols": 3353,
+    "symbols_typed": 2830,
+    "refusals": 128,
+    "approximations": 974
   },
   "entries": [
     {
@@ -3599,6 +3599,80 @@
       }
     },
     {
+      "tier": "tier2",
+      "name": "52-json-and-digests",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "pass"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "1 variable left dynamic out of 8"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "pass"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 8,
+        "symbols_typed": 7,
+        "refusals": 0,
+        "approximations": 8
+      }
+    },
+    {
+      "tier": "tier2",
+      "name": "53-json-into-shapes",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "stdout differs: line 5, byte 112: got \".00719925474099e+15\\nok is true: ...\", wanted \"007199254740993\\nok is true:     ...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "1 variable left dynamic out of 6"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "stdout differs: line 5, byte 112: got \".00719925474099e+15\\nok is true: ...\", wanted \"007199254740993\\nok is true:     ...\""
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 6,
+        "symbols_typed": 5,
+        "refusals": 0,
+        "approximations": 8
+      }
+    },
+    {
       "tier": "tier3",
       "name": "01-inventory-manager",
       "kind": "convert",
@@ -3763,30 +3837,29 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "exit status 2, wanted 0; stdout differs: 1002 byte(s) missing after line 1, expected \"NAME   TIER    ORDERS     SPEND ...\"; stderr differs: unexpected \"TODO P2G7001: the class of this object did not resolve ...\""
+          "reason": "exit status 2, wanted 0; stdout differs: 1002 byte(s) missing after line 1, expected \"NAME   TIER    ORDERS     SPEND ...\"; stderr differs: unexpected \"panic: interface conversion: interface {} is []interface {}, not map[...\""
         },
         "honest": {
           "outcome": "n/a"
         },
         "translated": {
-          "outcome": "fail",
-          "reason": "10 untranslated constructs"
+          "outcome": "pass"
         },
         "typed": {
           "outcome": "fail",
-          "reason": "9 variables left dynamic out of 23"
+          "reason": "7 variables left dynamic out of 23"
         }
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "exit status 2, wanted 0; stdout differs: 1002 byte(s) missing after line 1, expected \"NAME   TIER    ORDERS     SPEND ...\"; stderr differs: unexpected \"TODO P2G7001: the class of this object did not resolve ...\""
+        "reason": "exit status 2, wanted 0; stdout differs: 1002 byte(s) missing after line 1, expected \"NAME   TIER    ORDERS     SPEND ...\"; stderr differs: unexpected \"panic: interface conversion: interface {} is []interface {}, not map[...\""
       },
       "quality": {
-        "todos": 10,
+        "todos": 0,
         "symbols": 23,
-        "symbols_typed": 14,
-        "refusals": 10,
-        "approximations": 4
+        "symbols_typed": 16,
+        "refusals": 0,
+        "approximations": 10
       }
     },
     {
@@ -3796,7 +3869,7 @@
       "stages": {
         "compiled": {
           "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:196:35: cannot use i (variable of type int) as string value in map index"
+          "reason": "the generated Go does not compile: ./main.go:190:35: cannot use i (variable of type int) as string value in map index"
         },
         "emitted": {
           "outcome": "pass"
@@ -3810,11 +3883,11 @@
         },
         "translated": {
           "outcome": "fail",
-          "reason": "13 untranslated constructs"
+          "reason": "6 untranslated constructs"
         },
         "typed": {
           "outcome": "fail",
-          "reason": "11 variables left dynamic out of 25"
+          "reason": "8 variables left dynamic out of 25"
         }
       },
       "equivalent_annotated": {
@@ -3822,11 +3895,11 @@
         "reason": "the generated program did not compile"
       },
       "quality": {
-        "todos": 12,
+        "todos": 5,
         "symbols": 25,
-        "symbols_typed": 14,
-        "refusals": 13,
-        "approximations": 15
+        "symbols_typed": 17,
+        "refusals": 6,
+        "approximations": 16
       }
     },
     {
@@ -6495,11 +6568,11 @@
         },
         "translated": {
           "outcome": "fail",
-          "reason": "5 untranslated constructs"
+          "reason": "3 untranslated constructs"
         },
         "typed": {
           "outcome": "fail",
-          "reason": "4 variables left dynamic out of 20"
+          "reason": "4 variables left dynamic out of 21"
         }
       },
       "equivalent_annotated": {
@@ -6507,10 +6580,10 @@
         "reason": "exit status 255, wanted 1; stdout differs: line 1, byte 42: got \"otation detected (header changed...\", wanted \"esuming at byte 234\\nnew matches ...\"; stderr differs: unexpected \"TODO P2G3599: the read function is not implemented ...\""
       },
       "quality": {
-        "todos": 5,
-        "symbols": 20,
-        "symbols_typed": 16,
-        "refusals": 5,
+        "todos": 3,
+        "symbols": 21,
+        "symbols_typed": 17,
+        "refusals": 3,
         "approximations": 4
       }
     },
@@ -6865,8 +6938,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 1, byte 14: got \"0 k=6\\nkmers: 168 total, 1 distin...\", wanted \"162 k=6\\nkmers: 126 total, 21 dis...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -6880,8 +6952,7 @@
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 1, byte 14: got \"0 k=6\\nkmers: 168 total, 1 distin...\", wanted \"162 k=6\\nkmers: 126 total, 21 dis...\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
@@ -6980,30 +7051,26 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "exit status 255, wanted 1; stdout differs: 179 byte(s) missing after line 1, expected \"manifest: 5 entries, disk: 5 fil...\"; stderr differs: unexpected \"opendir : open : no such file or directory\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
         },
         "translated": {
-          "outcome": "fail",
-          "reason": "4 untranslated constructs"
+          "outcome": "pass"
         },
         "typed": {
-          "outcome": "fail",
-          "reason": "1 variable left dynamic out of 33"
+          "outcome": "pass"
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "exit status 255, wanted 1; stdout differs: 179 byte(s) missing after line 1, expected \"manifest: 5 entries, disk: 5 fil...\"; stderr differs: unexpected \"opendir : open : no such file or directory\""
+        "outcome": "pass"
       },
       "quality": {
-        "todos": 4,
+        "todos": 0,
         "symbols": 33,
-        "symbols_typed": 32,
-        "refusals": 4,
+        "symbols_typed": 33,
+        "refusals": 0,
         "approximations": 13
       }
     },

@@ -65,6 +65,16 @@ const (
 
 	hDumpValues = "dumpValues" // a structure rendered as Go source
 
+	// Data formats.
+	hJSONCodec    = "jsonCodec"    // the type a configured encoder becomes
+	hNewJSONCodec = "newJSONCodec" // and its constructor
+	hDigest       = "digest"       // the type an accumulating checksum becomes
+	hNewDigest    = "newDigest"    // and its constructor
+	hHashHex      = "hashHex"      // the checksum of one string, in hex
+	hHashBase64   = "hashBase64"   // the same, in base64
+	hToBase64     = "toBase64"     // text as wrapped base64
+	hFromBase64   = "fromBase64"   // and back again
+
 	// Time and value inspection.
 	hTimeParts       = "timeParts"       // a moment as the nine numbers
 	hTimeFrom        = "timeFrom"        // the nine numbers back as a moment

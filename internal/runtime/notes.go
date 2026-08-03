@@ -134,6 +134,39 @@ var notes = map[string]string{
 		"wants: data it needs is embedded with go:embed or passed in, because " +
 		"a binary is meant to be copied somewhere else and still work.",
 
+	"jsonCodec": "json.Marshal and json.Unmarshal are functions, and the " +
+		"common case needs no object at all. Two of the settings a Perl " +
+		"encoder is asked for are already true here: map keys come out " +
+		"sorted, so output is stable without asking, and every number " +
+		"arrives as a float64 whatever it looked like in the text.",
+
+	"newJSONCodec": "The codec exists only because the settings were chosen " +
+		"once and used in several places. A single call site is better " +
+		"written as json.Marshal directly.",
+
+	"digest": "hash.Hash is the same idea with better names: a hash is an " +
+		"io.Writer, so io.Copy from a file into it is the whole of hashing a " +
+		"file, and there is no separate call for that case.",
+
+	"newDigest": "crypto/md5 is in the standard library and MD5 is not " +
+		"suitable for anything security-related. crypto/sha256 is the same " +
+		"shape and is what new code should use.",
+
+	"hashHex": "md5.Sum takes and returns a fixed-size array rather than a " +
+		"slice, which is why the [:] is needed to hand it to the encoder.",
+
+	"hashBase64": "The padding is trimmed because the encoders that produce " +
+		"these checksums leave it off, and a padded string will not compare " +
+		"equal to an unpadded one.",
+
+	"toBase64": "encoding/base64 emits one unbroken line, where a mail " +
+		"encoder wraps at 76 characters and ends with a line break. The " +
+		"difference is invisible until something compares two encodings.",
+
+	"fromBase64": "The decoder rejects the line breaks an encoder added, so " +
+		"they have to come out first. Decoding without padding accepts both " +
+		"the padded and the unpadded spelling.",
+
 	"makeTree": "os.MkdirAll creates every missing level and reports only an " +
 		"error, because that is all a caller usually needs. Which levels were " +
 		"new is a separate question, and answering it means looking before " +

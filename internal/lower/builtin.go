@@ -368,6 +368,16 @@ func (l *Lowerer) builtin(n *ast.Call) ir.Expr {
 		}
 	case "basename", "dirname":
 		return l.pathCall(n)
+	case "md5_hex", "md5_base64", "encode_base64", "decode_base64",
+		"encode_json", "decode_json", "to_json", "from_json",
+		"Digest::MD5::md5_hex", "Digest::MD5::md5_base64",
+		"MIME::Base64::encode_base64", "MIME::Base64::decode_base64",
+		"JSON::PP::encode_json", "JSON::PP::decode_json",
+		"JSON::PP::true", "JSON::PP::false", "JSON::PP::null",
+		"JSON::true", "JSON::false", "JSON::null":
+		if x, ok := l.formatFunction(n); ok {
+			return x
+		}
 	case "find", "finddepth", "File::Find::find", "File::Find::finddepth":
 		if x, ok := l.findCall(n); ok {
 			return x
