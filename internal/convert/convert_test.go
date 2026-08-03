@@ -8,6 +8,7 @@ import (
 	"go/token"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -61,11 +62,17 @@ print "greeted $count people\n";
 // clean variant: it is an ordinary Go program, and nothing a reader would take
 // as the tool's own voice hints at where it came from.
 //
-// String literals are exempt, because they are the developer's own text and a
-// script is perfectly entitled to print the word Perl. Comments and identifiers
-// are not exempt: those are what the tool wrote.
+// String literals are exempt from that ban, because they are the developer's
+// own text and a script is perfectly entitled to print the word Perl. Comments
+// and identifiers are not exempt: those are what the tool wrote.
+//
+// The tool's own name is held to a stricter standard, and both the old spelling
+// and the current one are named here so that renaming the tool again cannot
+// quietly leak it into the output: it must appear nowhere in the clean program,
+// string literals included, unless the script itself already said it.
 func TestCleanOutputSaysNothingAboutPerl(t *testing.T) {
 	banned := []string{"perl", "convert", "translat", "generated", "transpil"}
+	toolNames := []string{"perl2go", "perl2golang"}
 
 	for _, tier := range []string{"tier1", "tier2"} {
 		for _, path := range corpusFiles(t, tier, 0) {
@@ -78,6 +85,7 @@ func TestCleanOutputSaysNothingAboutPerl(t *testing.T) {
 				continue // covered by TestGeneratedGoParses
 			}
 			perl := string(src)
+			lowerPerl := strings.ToLower(perl)
 			for name, out := range res.Clean {
 				for _, text := range commentsAndNames(t, name, out) {
 					for _, line := range strings.Split(text, "\n") {
@@ -94,6 +102,23 @@ func TestCleanOutputSaysNothingAboutPerl(t *testing.T) {
 								t.Errorf("%s: clean %s mentions %q in %q", path, name, word, line)
 							}
 						}
+					}
+				}
+				// Everything the file holds, including the strings it prints,
+				// because a stub message or a module line is exactly where the
+				// tool's name would turn up if it ever did.
+				for _, text := range everyWord(t, name, out) {
+					lower := strings.ToLower(text)
+					for _, tool := range toolNames {
+						if !strings.Contains(lower, tool) {
+							continue
+						}
+						// The one honest reason for it to be there is that the
+						// script said it first, as data of the developer's own.
+						if strings.Contains(lowerPerl, tool) {
+							continue
+						}
+						t.Errorf("%s: clean %s names the tool (%q) in %q", path, name, tool, text)
 					}
 				}
 			}
@@ -137,6 +162,31 @@ func commentsAndNames(t *testing.T, name string, src []byte) []string {
 		if id, ok := n.(*ast.Ident); ok {
 			out = append(out, id.Name)
 		}
+		return true
+	})
+	return out
+}
+
+// everyWord returns every comment, every identifier and every string literal in
+// a Go source file: everything the file says, whoever chose the words.
+func everyWord(t *testing.T, name string, src []byte) []string {
+	t.Helper()
+	out := commentsAndNames(t, name, src)
+	fset := token.NewFileSet()
+	f, err := goparser.ParseFile(fset, name, src, goparser.ParseComments)
+	if err != nil {
+		return out
+	}
+	ast.Inspect(f, func(n ast.Node) bool {
+		lit, ok := n.(*ast.BasicLit)
+		if !ok || lit.Kind != token.STRING {
+			return true
+		}
+		text, err := strconv.Unquote(lit.Value)
+		if err != nil {
+			text = lit.Value
+		}
+		out = append(out, text)
 		return true
 	})
 	return out
