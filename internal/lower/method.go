@@ -130,7 +130,7 @@ func (l *Lowerer) inheritedCtorDecl(s *Sub) *ir.FuncDecl {
 		Body: &ir.Block{Stmts: []ir.Stmt{
 			&ir.Return{Results: []ir.Expr{ir.Un("&", lit, c.Ptr)}},
 		}},
-		Doc: []string{s.Go + " builds a " + c.Go + " on top of " + parent.Class.Go + "'s constructor."},
+		Doc: []string{s.Go + " builds " + article(c.Go) + " " + c.Go + " on top of " + parent.Class.Go + "'s constructor."},
 	}
 	s.Results = fn.Results
 	if l.pass == 2 {
@@ -412,7 +412,7 @@ func (l *Lowerer) methodDoc(s *Sub) []string {
 	}
 	switch s.Kind {
 	case SubCtor:
-		return []string{s.Go + " builds a " + s.Class.Go + "."}
+		return []string{s.Go + " builds " + article(s.Class.Go) + " " + s.Class.Go + "."}
 	case SubClass:
 		return []string{s.Go + " is a class method of " + s.Class.Perl + ": it belongs to the " +
 			"type rather than to any one value, so it is a plain function here."}
@@ -1996,4 +1996,17 @@ func classAliasTarget(a *ast.Assign) (string, bool) {
 		return "", false
 	}
 	return name, true
+}
+
+// article picks "a" or "an" for a name, by the sound its first letter starts
+// with rather than by the letter alone, which is close enough for a type name.
+func article(name string) string {
+	if name == "" {
+		return "a"
+	}
+	switch name[0] {
+	case 'A', 'E', 'I', 'O', 'U', 'a', 'e', 'i', 'o', 'u':
+		return "an"
+	}
+	return "a"
 }
