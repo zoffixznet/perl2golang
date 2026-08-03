@@ -286,10 +286,17 @@ These are real and current, not oversights:
   no readline dependency to install, because there is no dependency at all.
 - **Coverage is aimed at ordinary script-shaped Perl:** scalars, arrays, hashes,
   subroutines, references, control flow, regular expressions, string and list
-  builtins, file reading and writing, and the common CPAN modules whose work the
-  Go standard library does. Object-oriented Perl (`bless`, `@ISA`, method
-  dispatch), `eval`, `local`, `tie`, `format`, typeglobs and source filters are
-  reported rather than converted.
+  builtins, file reading and writing, command-line options, classes, and the
+  common CPAN modules whose work the Go standard library does. A package that
+  blesses a hash reference becomes a struct with methods on a pointer receiver,
+  `@ISA` becomes embedding, and a module in a `.pm` file beside the script is
+  converted with it. `tie`, `format`, typeglobs, source filters, `AUTOLOAD`,
+  `DESTROY` and operator overloading are reported rather than converted.
+- **Embedding is not inheritance**, and the one place that shows is a base
+  class calling a method its subclasses override: Go resolves that call against
+  the base and the override is never reached. Every such call site is reported
+  by name, and the lesson beside it gives the interface-and-composition shape
+  that does work.
 - **Go's regular expressions are RE2**, which has no backreferences and no
   lookaround. A pattern using either is refused by name rather than translated
   into something that matches different text. The refusal names the feature, the
