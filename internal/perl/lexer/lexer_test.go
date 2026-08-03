@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"perl2go/internal/perl/token"
+	"perl2golang/internal/perl/token"
 )
 
 // stream renders the significant tokens of src as "Kind" or "Kind(text)"

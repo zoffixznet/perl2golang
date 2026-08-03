@@ -1,6 +1,6 @@
 package lower
 
-import "perl2go/internal/ir"
+import "perl2golang/internal/ir"
 
 // This file holds the type lattice.
 //

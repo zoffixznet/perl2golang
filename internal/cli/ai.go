@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"perl2go/internal/ai"
-	"perl2go/internal/convert"
+	"perl2golang/internal/ai"
+	"perl2golang/internal/convert"
 )
 
 // Everything to do with the optional local model lives here, and nothing in

@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"perl2go/internal/report"
+	"perl2golang/internal/report"
 )
 
 func TestNewFillsTheEntry(t *testing.T) {

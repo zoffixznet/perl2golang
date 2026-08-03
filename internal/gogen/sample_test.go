@@ -1,7 +1,7 @@
 package gogen
 
 import (
-	"perl2go/internal/ir"
+	"perl2golang/internal/ir"
 )
 
 // prov builds a provenance record for a test node.

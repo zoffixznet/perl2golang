@@ -9,9 +9,9 @@ import (
 	"strings"
 	"testing"
 
-	"perl2go/internal/convert"
-	"perl2go/internal/gogen"
-	"perl2go/internal/report"
+	"perl2golang/internal/convert"
+	"perl2golang/internal/gogen"
+	"perl2golang/internal/report"
 )
 
 // The rules a refusal has to obey, and why each one is a rule.

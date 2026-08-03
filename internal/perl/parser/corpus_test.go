@@ -6,8 +6,8 @@ import (
 	"sort"
 	"testing"
 
-	"perl2go/internal/perl/ast"
-	"perl2go/internal/perl/parser"
+	"perl2golang/internal/perl/ast"
+	"perl2golang/internal/perl/parser"
 )
 
 func corpusRoot(t *testing.T) string {

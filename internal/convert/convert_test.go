@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"perl2go/internal/convert"
+	"perl2golang/internal/convert"
 )
 
 // TestConvertSmoke runs a small script through the whole pipeline and checks

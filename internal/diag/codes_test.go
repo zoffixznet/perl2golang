@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"perl2go/internal/report"
+	"perl2golang/internal/report"
 )
 
 // kbDir is the teaching knowledge base, read as files rather than through the

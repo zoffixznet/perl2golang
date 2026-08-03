@@ -12,7 +12,7 @@ import (
 	"strconv"
 	"strings"
 
-	"perl2go/internal/convert"
+	"perl2golang/internal/convert"
 )
 
 // The --stdout stream format.

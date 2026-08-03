@@ -5,8 +5,8 @@ import (
 	"io"
 	"strings"
 
-	"perl2go/internal/report"
-	"perl2go/internal/teach"
+	"perl2golang/internal/report"
+	"perl2golang/internal/teach"
 )
 
 // printer writes the session transcript.

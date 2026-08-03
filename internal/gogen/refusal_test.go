@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"perl2go/internal/ir"
+	"perl2golang/internal/ir"
 )
 
 // stubTodo is the annotation a refusal leaves behind once its stand-in is in

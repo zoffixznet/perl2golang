@@ -1,6 +1,6 @@
 package lower
 
-import "perl2go/internal/ir"
+import "perl2golang/internal/ir"
 
 // Small constructors for the IR shapes this package builds constantly. They
 // exist so that the type an expression carries is never forgotten: an IR node

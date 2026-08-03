@@ -1,6 +1,6 @@
 package convert
 
-import "perl2go/internal/ir"
+import "perl2golang/internal/ir"
 
 // walkIR visits a node and everything under it, calling fn for each annotated
 // node in source order.

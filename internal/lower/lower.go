@@ -20,11 +20,11 @@ import (
 	"sort"
 	"strings"
 
-	"perl2go/internal/ir"
-	"perl2go/internal/perl/ast"
-	"perl2go/internal/perl/parser"
-	"perl2go/internal/perl/token"
-	"perl2go/internal/report"
+	"perl2golang/internal/ir"
+	"perl2golang/internal/perl/ast"
+	"perl2golang/internal/perl/parser"
+	"perl2golang/internal/perl/token"
+	"perl2golang/internal/report"
 )
 
 // Options configure a lowering run.

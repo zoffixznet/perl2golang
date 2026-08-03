@@ -8,7 +8,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"perl2go/internal/report"
+	"perl2golang/internal/report"
 )
 
 // Options control how a diagnostic is drawn.

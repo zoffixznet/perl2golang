@@ -1,6 +1,6 @@
 package gogen
 
-import "perl2go/internal/ir"
+import "perl2golang/internal/ir"
 
 // Annotations attached to an expression have nowhere good to go. A line
 // comment would swallow the rest of the statement, so the alternative is a

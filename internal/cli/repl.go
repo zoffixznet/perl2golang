@@ -6,8 +6,8 @@ import (
 	"io"
 	"os"
 
-	"perl2go/internal/diag"
-	"perl2go/internal/repl"
+	"perl2golang/internal/diag"
+	"perl2golang/internal/repl"
 )
 
 // runRepl starts the interactive session.

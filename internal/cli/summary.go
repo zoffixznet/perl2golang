@@ -6,8 +6,8 @@ import (
 	"sort"
 	"strings"
 
-	"perl2go/internal/convert"
-	"perl2go/internal/report"
+	"perl2golang/internal/convert"
+	"perl2golang/internal/report"
 )
 
 // The terminal summary. Six to twelve lines, for the person who runs this

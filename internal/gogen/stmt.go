@@ -3,7 +3,7 @@ package gogen
 import (
 	"strings"
 
-	"perl2go/internal/ir"
+	"perl2golang/internal/ir"
 )
 
 // stmt writes one statement, preceded by its annotations. Every statement goes

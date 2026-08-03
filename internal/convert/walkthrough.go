@@ -3,10 +3,10 @@ package convert
 import (
 	"strings"
 
-	"perl2go/internal/gogen"
-	"perl2go/internal/ir"
-	"perl2go/internal/lower"
-	"perl2go/internal/teach"
+	"perl2golang/internal/gogen"
+	"perl2golang/internal/ir"
+	"perl2golang/internal/lower"
+	"perl2golang/internal/teach"
 )
 
 // walkthrough turns the lowered program into the ordered tour that the

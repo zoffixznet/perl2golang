@@ -3,8 +3,8 @@ package parser
 import (
 	"strings"
 
-	"perl2go/internal/perl/ast"
-	"perl2go/internal/perl/token"
+	"perl2golang/internal/perl/ast"
+	"perl2golang/internal/perl/token"
 )
 
 // Operator precedence levels, high binds tight. Comma is handled

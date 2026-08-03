@@ -3,9 +3,9 @@ package lower
 import (
 	"sort"
 
-	"perl2go/internal/ir"
-	"perl2go/internal/perl/ast"
-	"perl2go/internal/perl/token"
+	"perl2golang/internal/ir"
+	"perl2golang/internal/perl/ast"
+	"perl2golang/internal/perl/token"
 )
 
 // declare creates (pass 1) or recovers (pass 2) the binding for a declaration

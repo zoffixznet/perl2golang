@@ -19,9 +19,9 @@ import (
 	"slices"
 	"strings"
 
-	"perl2go/internal/convert"
-	"perl2go/internal/diag"
-	"perl2go/internal/report"
+	"perl2golang/internal/convert"
+	"perl2golang/internal/diag"
+	"perl2golang/internal/report"
 )
 
 // Exit statuses. These four are the complete set, they are documented in the

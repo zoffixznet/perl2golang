@@ -8,7 +8,7 @@ import (
 	"strings"
 	"unicode"
 
-	"perl2go/internal/report"
+	"perl2golang/internal/report"
 )
 
 // Pos is a place in an input file. Lines and columns are 1-based, and the

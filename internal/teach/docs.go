@@ -1,6 +1,6 @@
 package teach
 
-import "perl2go/internal/report"
+import "perl2golang/internal/report"
 
 // This file defines the contract between the converter and the document
 // generator. The converter hands over everything it learned while translating

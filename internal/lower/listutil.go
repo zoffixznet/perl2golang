@@ -1,8 +1,8 @@
 package lower
 
 import (
-	"perl2go/internal/ir"
-	"perl2go/internal/perl/ast"
+	"perl2golang/internal/ir"
+	"perl2golang/internal/perl/ast"
 )
 
 // This file lowers the List::Util functions that take a block.

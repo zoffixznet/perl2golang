@@ -10,8 +10,8 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"perl2go/internal/convert"
-	"perl2go/internal/report"
+	"perl2golang/internal/convert"
+	"perl2golang/internal/report"
 )
 
 // The --json envelope.

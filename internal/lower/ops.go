@@ -3,8 +3,8 @@ package lower
 import (
 	"strconv"
 
-	"perl2go/internal/ir"
-	"perl2go/internal/perl/ast"
+	"perl2golang/internal/ir"
+	"perl2golang/internal/perl/ast"
 )
 
 // binop lowers a binary operator.

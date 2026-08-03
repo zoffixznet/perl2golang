@@ -36,7 +36,7 @@ func TestEndToEnd(t *testing.T) {
 	goCmd := requireToolchain(t)
 
 	bin := filepath.Join(t.TempDir(), "perl2go")
-	if out, err := exec.Command(goCmd, "build", "-o", bin, "perl2go/cmd/perl2go").CombinedOutput(); err != nil {
+	if out, err := exec.Command(goCmd, "build", "-o", bin, "perl2golang/cmd/perl2golang").CombinedOutput(); err != nil {
 		t.Fatalf("building the binary: %v\n%s", err, out)
 	}
 
@@ -130,11 +130,11 @@ func TestNoNetworkPackages(t *testing.T) {
 		"net/smtp": true, "crypto/tls": true,
 	}
 	for _, pkg := range []string{
-		"perl2go/internal/convert",
-		"perl2go/internal/lower",
-		"perl2go/internal/gogen",
-		"perl2go/internal/teach",
-		"perl2go/internal/report",
+		"perl2golang/internal/convert",
+		"perl2golang/internal/lower",
+		"perl2golang/internal/gogen",
+		"perl2golang/internal/teach",
+		"perl2golang/internal/report",
 	} {
 		out, err := exec.Command(goCmd, "list", "-deps", pkg).Output()
 		if err != nil {

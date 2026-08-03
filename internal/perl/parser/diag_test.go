@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"perl2go/internal/perl/parser"
+	"perl2golang/internal/perl/parser"
 )
 
 // TestDiagFile is a debugging aid: point PERL2GO_PARSE at a Perl file and run

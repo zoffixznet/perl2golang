@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"perl2go/internal/report"
+	"perl2golang/internal/report"
 )
 
 // makeReport builds a report the way the converter would, so the classifier is

@@ -6,8 +6,8 @@ import (
 	"maps"
 	"slices"
 
-	"perl2go/internal/gogen"
-	"perl2go/internal/report"
+	"perl2golang/internal/gogen"
+	"perl2golang/internal/report"
 )
 
 // This file defines the seam an optional improvement pass plugs into.

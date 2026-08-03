@@ -5,10 +5,10 @@ import (
 	"slices"
 	"strings"
 
-	"perl2go/internal/convert"
-	"perl2go/internal/perl/parser"
-	"perl2go/internal/report"
-	"perl2go/internal/teach"
+	"perl2golang/internal/convert"
+	"perl2golang/internal/perl/parser"
+	"perl2golang/internal/report"
+	"perl2golang/internal/teach"
 )
 
 // session is the accumulated program the REPL is building.

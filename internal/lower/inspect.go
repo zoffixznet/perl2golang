@@ -3,8 +3,8 @@ package lower
 import (
 	"strings"
 
-	"perl2go/internal/ir"
-	"perl2go/internal/perl/ast"
+	"perl2golang/internal/ir"
+	"perl2golang/internal/perl/ast"
 )
 
 // This file holds the builtins that ask a value what it is at run time. Perl

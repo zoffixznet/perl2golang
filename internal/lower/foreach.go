@@ -1,8 +1,8 @@
 package lower
 
 import (
-	"perl2go/internal/ir"
-	"perl2go/internal/perl/ast"
+	"perl2golang/internal/ir"
+	"perl2golang/internal/perl/ast"
 )
 
 // foreachStmt lowers `foreach`, which is the loop Perl developers write most

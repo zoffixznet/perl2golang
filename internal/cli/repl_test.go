@@ -239,7 +239,7 @@ func TestReplEndToEnd(t *testing.T) {
 	goCmd := requireToolchain(t)
 
 	bin := filepath.Join(t.TempDir(), "perl2go")
-	if out, err := exec.Command(goCmd, "build", "-o", bin, "perl2go/cmd/perl2go").CombinedOutput(); err != nil {
+	if out, err := exec.Command(goCmd, "build", "-o", bin, "perl2golang/cmd/perl2golang").CombinedOutput(); err != nil {
 		t.Fatalf("building the binary: %v\n%s", err, out)
 	}
 

@@ -4,8 +4,8 @@ import (
 	"sort"
 	"strings"
 
-	"perl2go/internal/ir"
-	"perl2go/internal/perl/ast"
+	"perl2golang/internal/ir"
+	"perl2golang/internal/perl/ast"
 )
 
 // This file lowers what a Perl package's subroutines become: methods on a

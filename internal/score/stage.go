@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"perl2go/internal/report"
+	"perl2golang/internal/report"
 )
 
 // Stage is one rung of the conversion ladder. An entry reaches a stage or it

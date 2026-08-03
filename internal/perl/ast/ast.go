@@ -4,7 +4,7 @@
 // back at the original code.
 package ast
 
-import "perl2go/internal/perl/token"
+import "perl2golang/internal/perl/token"
 
 // Node is the interface implemented by all AST nodes.
 type Node interface {

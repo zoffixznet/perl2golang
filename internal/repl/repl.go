@@ -16,9 +16,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"perl2go/internal/convert"
-	"perl2go/internal/report"
-	"perl2go/internal/teach"
+	"perl2golang/internal/convert"
+	"perl2golang/internal/report"
+	"perl2golang/internal/teach"
 )
 
 // Options configure one session.

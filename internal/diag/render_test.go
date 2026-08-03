@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"perl2go/internal/report"
+	"perl2golang/internal/report"
 )
 
 var update = flag.Bool("update", false, "rewrite the golden files from the current rendering")

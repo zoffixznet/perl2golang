@@ -8,9 +8,9 @@ import (
 	"strings"
 	"sync"
 
-	"perl2go/internal/convert"
-	"perl2go/internal/diag"
-	"perl2go/internal/report"
+	"perl2golang/internal/convert"
+	"perl2golang/internal/diag"
+	"perl2golang/internal/report"
 )
 
 // Improver is what the converter's optional post-pass seam is filled with when

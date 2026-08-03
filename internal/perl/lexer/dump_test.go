@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"perl2go/internal/perl/lexer"
+	"perl2golang/internal/perl/lexer"
 )
 
 func fmtSscan(s string, n *int) (int, error) { return fmt.Sscan(s, n) }

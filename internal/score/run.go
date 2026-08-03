@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	"perl2go/internal/convert"
+	"perl2golang/internal/convert"
 )
 
 // Default limits. A corpus program is meant to finish in well under a second,

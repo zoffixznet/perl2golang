@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"perl2go/internal/ir"
-	"perl2go/internal/perl/parser"
+	"perl2golang/internal/ir"
+	"perl2golang/internal/perl/parser"
 )
 
 func TestGoName(t *testing.T) {

@@ -9,9 +9,9 @@ import (
 	"fmt"
 	"strings"
 
-	"perl2go/internal/perl/ast"
-	"perl2go/internal/perl/lexer"
-	"perl2go/internal/perl/token"
+	"perl2golang/internal/perl/ast"
+	"perl2golang/internal/perl/lexer"
+	"perl2golang/internal/perl/token"
 )
 
 // Diag is a parse diagnostic with a position.

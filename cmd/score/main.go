@@ -20,7 +20,7 @@ import (
 	"syscall"
 	"time"
 
-	"perl2go/internal/score"
+	"perl2golang/internal/score"
 )
 
 func main() {

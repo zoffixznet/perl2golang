@@ -5,7 +5,7 @@ import (
 	"go/format"
 	"strings"
 
-	"perl2go/internal/ir"
+	"perl2golang/internal/ir"
 )
 
 // Mode selects which of the two renderings of one IR tree to produce.

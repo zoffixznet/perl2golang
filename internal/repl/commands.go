@@ -8,9 +8,9 @@ import (
 	"sort"
 	"strings"
 
-	"perl2go/internal/diag"
-	"perl2go/internal/report"
-	"perl2go/internal/teach"
+	"perl2golang/internal/diag"
+	"perl2golang/internal/report"
+	"perl2golang/internal/teach"
 )
 
 // meta is one command available at the prompt.

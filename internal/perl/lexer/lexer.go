@@ -14,7 +14,7 @@ import (
 	"sort"
 	"strings"
 
-	"perl2go/internal/perl/token"
+	"perl2golang/internal/perl/token"
 )
 
 // Diag is a lexical diagnostic with a source position.

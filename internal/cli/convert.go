@@ -12,10 +12,10 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"perl2go/internal/convert"
-	"perl2go/internal/diag"
-	"perl2go/internal/project"
-	"perl2go/internal/report"
+	"perl2golang/internal/convert"
+	"perl2golang/internal/diag"
+	"perl2golang/internal/project"
+	"perl2golang/internal/report"
 )
 
 // streamMode is what --stdout was set to, after the input kind has had its say.

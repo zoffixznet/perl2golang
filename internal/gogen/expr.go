@@ -3,7 +3,7 @@ package gogen
 import (
 	"strings"
 
-	"perl2go/internal/ir"
+	"perl2golang/internal/ir"
 )
 
 // Go's binary operator precedence, from the language specification. A higher

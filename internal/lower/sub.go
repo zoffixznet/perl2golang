@@ -3,8 +3,8 @@ package lower
 import (
 	"strings"
 
-	"perl2go/internal/ir"
-	"perl2go/internal/perl/ast"
+	"perl2golang/internal/ir"
+	"perl2golang/internal/perl/ast"
 )
 
 // hoistSubs registers every subroutine before anything is lowered.

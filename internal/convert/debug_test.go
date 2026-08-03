@@ -6,11 +6,11 @@ import (
 	"strings"
 	"testing"
 
-	"perl2go/internal/convert"
-	"perl2go/internal/gogen"
-	"perl2go/internal/lower"
-	"perl2go/internal/perl/parser"
-	"perl2go/internal/project"
+	"perl2golang/internal/convert"
+	"perl2golang/internal/gogen"
+	"perl2golang/internal/lower"
+	"perl2golang/internal/perl/parser"
+	"perl2golang/internal/project"
 )
 
 // TestDebugEmit prints the raw emitted text for one input, formatted or not, so

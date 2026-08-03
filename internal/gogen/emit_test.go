@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"perl2go/internal/ir"
+	"perl2golang/internal/ir"
 )
 
 // block is a shorthand for a statement list in the test trees.

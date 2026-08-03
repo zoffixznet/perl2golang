@@ -15,15 +15,15 @@ import (
 	"path/filepath"
 	"strings"
 
-	"perl2go/internal/perl/ast"
+	"perl2golang/internal/perl/ast"
 
-	"perl2go/internal/gogen"
-	"perl2go/internal/ir"
-	"perl2go/internal/lower"
-	"perl2go/internal/perl/parser"
-	"perl2go/internal/report"
-	"perl2go/internal/runtime"
-	"perl2go/internal/teach"
+	"perl2golang/internal/gogen"
+	"perl2golang/internal/ir"
+	"perl2golang/internal/lower"
+	"perl2golang/internal/perl/parser"
+	"perl2golang/internal/report"
+	"perl2golang/internal/runtime"
+	"perl2golang/internal/teach"
 )
 
 // Version is the tool's version, stamped into generated documents.

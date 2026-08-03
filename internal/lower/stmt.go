@@ -4,8 +4,8 @@ import (
 	"strconv"
 	"strings"
 
-	"perl2go/internal/ir"
-	"perl2go/internal/perl/ast"
+	"perl2golang/internal/ir"
+	"perl2golang/internal/perl/ast"
 )
 
 // stmts lowers a statement list, flushing whatever setup each statement needed.

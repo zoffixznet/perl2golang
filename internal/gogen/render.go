@@ -4,7 +4,7 @@ import (
 	"go/format"
 	"strings"
 
-	"perl2go/internal/ir"
+	"perl2golang/internal/ir"
 )
 
 // RenderStmt renders a single statement on its own, formatted where possible.

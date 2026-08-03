@@ -38,7 +38,7 @@
 // The last two digits carry no meaning; gaps are left on purpose.
 package diag
 
-import "perl2go/internal/report"
+import "perl2golang/internal/report"
 
 // Code is a stable diagnostic code. It always matches /^P2G[0-9]{4}$/.
 type Code string

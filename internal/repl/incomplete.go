@@ -3,8 +3,8 @@ package repl
 import (
 	"strings"
 
-	"perl2go/internal/perl/lexer"
-	"perl2go/internal/perl/token"
+	"perl2golang/internal/perl/lexer"
+	"perl2golang/internal/perl/token"
 )
 
 // pending describes a snippet that is not finished yet: something is open and

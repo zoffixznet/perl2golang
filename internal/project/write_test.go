@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"perl2go/internal/project"
+	"perl2golang/internal/project"
 )
 
 func TestWriteCreatesTheWholeTree(t *testing.T) {

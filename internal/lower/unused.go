@@ -1,6 +1,6 @@
 package lower
 
-import "perl2go/internal/ir"
+import "perl2golang/internal/ir"
 
 // Go refuses to compile a function that declares a local and never reads it.
 // Perl has no such rule, so a script quite reasonably declares a variable for

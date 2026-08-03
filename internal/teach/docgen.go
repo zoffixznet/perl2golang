@@ -10,7 +10,7 @@ import (
 	"slices"
 	"strings"
 
-	"perl2go/internal/report"
+	"perl2golang/internal/report"
 )
 
 // The document generator. It turns one DocInput into the Markdown bundle that

@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"perl2go/internal/convert"
-	"perl2go/internal/report"
+	"perl2golang/internal/convert"
+	"perl2golang/internal/report"
 )
 
 // artifact builds one artefact the way the converter offers them.

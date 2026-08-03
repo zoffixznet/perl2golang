@@ -4,8 +4,8 @@ import (
 	"strconv"
 	"strings"
 
-	"perl2go/internal/perl/ast"
-	"perl2go/internal/perl/token"
+	"perl2golang/internal/perl/ast"
+	"perl2golang/internal/perl/token"
 )
 
 // interpString builds a StrLit or InterpLit from a double-quotish body.

@@ -4,8 +4,8 @@ import (
 	"strconv"
 	"strings"
 
-	"perl2go/internal/ir"
-	"perl2go/internal/perl/ast"
+	"perl2golang/internal/ir"
+	"perl2golang/internal/perl/ast"
 )
 
 // This file translates Perl's regular expressions into Go's.

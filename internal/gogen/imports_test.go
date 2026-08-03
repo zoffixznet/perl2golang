@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"perl2go/internal/ir"
+	"perl2golang/internal/ir"
 )
 
 // TestImportsRender covers the import block in every shape it takes, including
