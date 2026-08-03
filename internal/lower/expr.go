@@ -472,6 +472,9 @@ func (l *Lowerer) anonArray(n *ast.AnonArray) ir.Expr {
 
 // anonHash lowers { k => v, ... }.
 func (l *Lowerer) anonHash(n *ast.AnonHash) ir.Expr {
+	if c := l.recordFor(n, l.recordHint()); c != nil {
+		return l.recordLit(c, n)
+	}
 	keys, vals, t := l.pairs(n.Elems)
 	out := composite(ir.MapOf(t), keys, vals)
 	l.note(out, "Perl's { ... } builds a hash reference. A Go map is already a "+

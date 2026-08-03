@@ -302,6 +302,11 @@ func (l *Lowerer) declareSingle(v *ast.Var, n *ast.Assign) []ir.Stmt {
 		}
 	}
 
+	// The name the value is about to be stored under is the best name for a
+	// struct synthesised from it.
+	l.hints = append(l.hints, v.Name)
+	defer func() { l.hints = l.hints[:len(l.hints)-1] }()
+
 	var value ir.Expr
 	switch v.Sigil {
 	case '@':
@@ -1014,6 +1019,25 @@ func (l *Lowerer) autovivifyTarget(e ast.Expr) {
 }
 
 // compoundAssign lowers +=, .=, //= and the rest.
+// observeElemOfTarget records what a container learns from a value written
+// into one of its elements by a compound assignment.
+//
+// `$h{k} ||= { ... }` fills the hash exactly as a plain assignment would, and
+// without this the hash would learn nothing from the only line that ever puts
+// anything in it.
+func (l *Lowerer) observeElemOfTarget(lhs ast.Expr, t *ir.Type) {
+	switch n := lhs.(type) {
+	case *ast.HashIndex:
+		if b := l.hashBindingOf(n); b != nil {
+			l.observeElem(b, t)
+		}
+	case *ast.Index:
+		if v, ok := n.Base.(*ast.Var); ok && !n.Arrow && v.Sigil == '$' {
+			l.observeElem(l.lookup('@', v.Name, v), t)
+		}
+	}
+}
+
 func (l *Lowerer) compoundAssign(n *ast.Assign) []ir.Stmt {
 	if sts, ok := l.ternaryAssign(n); ok {
 		return sts
@@ -1031,7 +1055,9 @@ func (l *Lowerer) compoundAssign(n *ast.Assign) []ir.Stmt {
 
 	switch op {
 	case "||", "//":
-		value := l.assignable(l.scalar(n.RHS), t, n.RHS)
+		raw := l.scalar(n.RHS)
+		l.observeElemOfTarget(n.LHS, typeOrAny(raw))
+		value := l.assignable(raw, t, n.RHS)
 		guard := &ir.If{
 			Cond: negated(l.toBool(target, n.LHS)),
 			Then: &ir.Block{Stmts: []ir.Stmt{assign("=", []ir.Expr{target}, []ir.Expr{value})}},
@@ -1044,7 +1070,9 @@ func (l *Lowerer) compoundAssign(n *ast.Assign) []ir.Stmt {
 		return []ir.Stmt{guard}
 
 	case "&&":
-		value := l.assignable(l.scalar(n.RHS), t, n.RHS)
+		raw := l.scalar(n.RHS)
+		l.observeElemOfTarget(n.LHS, typeOrAny(raw))
+		value := l.assignable(raw, t, n.RHS)
 		guard := &ir.If{
 			Cond: l.toBool(target, n.LHS),
 			Then: &ir.Block{Stmts: []ir.Stmt{assign("=", []ir.Expr{target}, []ir.Expr{value})}},

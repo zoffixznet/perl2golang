@@ -49,6 +49,10 @@ type Class struct {
 	// Options marks a struct synthesised from an option block rather than
 	// from a package, which is documented differently and has no methods.
 	Options bool
+	// Record marks a struct synthesised from a hash used as a record rather
+	// than from a package. It has no methods either, and it is documented as
+	// what it is: the shape the data was already in.
+	Record bool
 	// Interface marks a type that is an interface rather than a struct: the
 	// thing several classes kept in one collection have in common.
 	Interface bool
@@ -538,6 +542,18 @@ func (l *Lowerer) classDecl(c *Class) ir.Decl {
 	d.Doc = []string{c.Go + " is one " + lastPart(c.Perl) + " and everything it knows about itself."}
 	if c.Options {
 		d.Doc = []string{c.Go + " holds the command line options this program takes."}
+	}
+	if c.Record {
+		d.Doc = []string{c.Go + " is one record, with a field for each piece of it."}
+		if l.pass == 2 {
+			ir.Annotate(d, "The data this holds arrived with its field names written into "+
+				"it and its values of different kinds. A map would need one value type for "+
+				"all of them, which could only be `any`, and every read would cost a lookup "+
+				"and a conversion. A struct gives each field its own type and turns a "+
+				"mistyped name into a compile error.",
+				"structs-and-embedding", "collections-hold-one-type")
+			return d
+		}
 	}
 	if len(c.Doc) > 0 {
 		d.Doc = append([]string{c.Go + " is defined as follows."}, c.Doc...)

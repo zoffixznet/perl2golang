@@ -661,6 +661,9 @@ func (l *Lowerer) lengthCall(n *ast.Call) ir.Expr {
 func (l *Lowerer) keysCall(n *ast.Call, wantValues bool) ir.Expr {
 	m := l.argExpr(n, 0)
 	t := typeOrAny(m)
+	if c := l.classOf(t); c != nil && c.Record {
+		return l.recordFields(n, c, m, wantValues)
+	}
 	if t.Kind != ir.Map {
 		return composite(ir.SliceOf(ir.TString), nil, nil)
 	}

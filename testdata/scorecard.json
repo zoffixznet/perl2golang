@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T04:12:53Z",
+  "recorded": "2026-08-15T04:55:25Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -53,45 +53,45 @@
     },
     {
       "tier": "tier2",
-      "entries": 44,
+      "entries": 46,
       "stages": {
         "compiled": {
-          "pass": 39,
+          "pass": 41,
           "fail": 5,
           "skip": 0
         },
         "emitted": {
-          "pass": 44,
+          "pass": 46,
           "fail": 0,
           "skip": 0
         },
         "equivalent": {
-          "pass": 8,
-          "fail": 36,
+          "pass": 9,
+          "fail": 37,
           "skip": 0
         },
         "translated": {
-          "pass": 40,
+          "pass": 42,
           "fail": 4,
           "skip": 0
         },
         "typed": {
-          "pass": 11,
+          "pass": 13,
           "fail": 33,
           "skip": 0
         }
       },
       "equivalent_annotated": {
-        "pass": 8,
-        "fail": 36,
+        "pass": 9,
+        "fail": 37,
         "skip": 0
       },
       "quality": {
         "todos": 30,
-        "symbols": 943,
-        "symbols_typed": 769,
+        "symbols": 966,
+        "symbols_typed": 812,
         "refusals": 31,
-        "approximations": 282
+        "approximations": 285
       }
     },
     {
@@ -109,8 +109,8 @@
           "skip": 0
         },
         "equivalent": {
-          "pass": 1,
-          "fail": 30,
+          "pass": 2,
+          "fail": 29,
           "skip": 0
         },
         "translated": {
@@ -125,16 +125,16 @@
         }
       },
       "equivalent_annotated": {
-        "pass": 1,
-        "fail": 30,
+        "pass": 2,
+        "fail": 29,
         "skip": 0
       },
       "quality": {
         "todos": 99,
         "symbols": 816,
-        "symbols_typed": 575,
+        "symbols_typed": 589,
         "refusals": 103,
-        "approximations": 288
+        "approximations": 278
       }
     },
     {
@@ -195,8 +195,8 @@
           "skip": 0
         },
         "equivalent": {
-          "pass": 3,
-          "fail": 22,
+          "pass": 4,
+          "fail": 21,
           "skip": 0
         },
         "translated": {
@@ -205,42 +205,42 @@
           "skip": 0
         },
         "typed": {
-          "pass": 3,
-          "fail": 22,
+          "pass": 5,
+          "fail": 20,
           "skip": 0
         }
       },
       "equivalent_annotated": {
-        "pass": 3,
-        "fail": 22,
+        "pass": 4,
+        "fail": 21,
         "skip": 0
       },
       "quality": {
         "todos": 16,
         "symbols": 924,
-        "symbols_typed": 801,
+        "symbols_typed": 835,
         "refusals": 16,
-        "approximations": 193
+        "approximations": 168
       }
     }
   ],
   "total": {
     "tier": "TOTAL",
-    "entries": 173,
+    "entries": 175,
     "stages": {
       "compiled": {
-        "pass": 151,
+        "pass": 153,
         "fail": 22,
         "skip": 0
       },
       "emitted": {
-        "pass": 173,
+        "pass": 175,
         "fail": 0,
         "skip": 0
       },
       "equivalent": {
-        "pass": 30,
-        "fail": 108,
+        "pass": 33,
+        "fail": 107,
         "skip": 0
       },
       "honest": {
@@ -249,35 +249,35 @@
         "skip": 1
       },
       "translated": {
-        "pass": 131,
+        "pass": 133,
         "fail": 42,
         "skip": 0
       },
       "typed": {
-        "pass": 59,
-        "fail": 114,
+        "pass": 63,
+        "fail": 112,
         "skip": 0
       }
     },
     "equivalent_annotated": {
-      "pass": 30,
-      "fail": 108,
+      "pass": 33,
+      "fail": 107,
       "skip": 0
     },
     "quality": {
       "todos": 182,
-      "symbols": 3244,
-      "symbols_typed": 2629,
+      "symbols": 3267,
+      "symbols_typed": 2720,
       "refusals": 188,
-      "approximations": 884
+      "approximations": 852
     }
   },
   "quality": {
     "todos": 182,
-    "symbols": 3244,
-    "symbols_typed": 2629,
+    "symbols": 3267,
+    "symbols_typed": 2720,
     "refusals": 188,
-    "approximations": 884
+    "approximations": 852
   },
   "entries": [
     {
@@ -1756,7 +1756,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "exit status 2, wanted 0; stdout differs: line 8, byte 131: got \"context\\n\", wanted \"scalar context\\nvoid context\\nroot...\"; stderr differs: unexpected \"panic: interface conversion: interface {} is []map[string]interface {...\""
+          "reason": "exit status 2, wanted 0; stdout differs: line 8, byte 131: got \"context\\n\", wanted \"scalar context\\nvoid context\\nroot...\"; stderr differs: unexpected \"panic: interface conversion: interface {} is map[string]interface {},...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -1766,19 +1766,19 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "5 variables left dynamic out of 17"
+          "reason": "3 variables left dynamic out of 17"
         }
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "exit status 2, wanted 0; stdout differs: line 8, byte 131: got \"context\\n\", wanted \"scalar context\\nvoid context\\nroot...\"; stderr differs: unexpected \"panic: interface conversion: interface {} is []map[string]interface {...\""
+        "reason": "exit status 2, wanted 0; stdout differs: line 8, byte 131: got \"context\\n\", wanted \"scalar context\\nvoid context\\nroot...\"; stderr differs: unexpected \"panic: interface conversion: interface {} is map[string]interface {},...\""
       },
       "quality": {
         "todos": 0,
         "symbols": 17,
-        "symbols_typed": 12,
+        "symbols_typed": 14,
         "refusals": 0,
-        "approximations": 8
+        "approximations": 7
       }
     },
     {
@@ -1794,7 +1794,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "exit status 2, wanted 0; stdout differs: 254 byte(s) missing after line 11, expected \"nested: 40 and 30\\nmixed:  logic\\n...\"; stderr differs: unexpected \"panic: interface conversion: interface {} is []int, not []interface {...\""
+          "reason": "exit status 2, wanted 0; stdout differs: 89 byte(s) missing after line 21, expected \"registry: 3 words, 2 colours, sq...\"; stderr differs: unexpected \"panic: interface conversion: interface {} is func(interface {}) float...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -1804,17 +1804,17 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "5 variables left dynamic out of 16"
+          "reason": "4 variables left dynamic out of 16"
         }
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "exit status 2, wanted 0; stdout differs: 254 byte(s) missing after line 11, expected \"nested: 40 and 30\\nmixed:  logic\\n...\"; stderr differs: unexpected \"panic: interface conversion: interface {} is []int, not []interface {...\""
+        "reason": "exit status 2, wanted 0; stdout differs: 89 byte(s) missing after line 21, expected \"registry: 3 words, 2 colours, sq...\"; stderr differs: unexpected \"panic: interface conversion: interface {} is func(interface {}) float...\""
       },
       "quality": {
         "todos": 0,
         "symbols": 16,
-        "symbols_typed": 11,
+        "symbols_typed": 12,
         "refusals": 0,
         "approximations": 2
       }
@@ -2087,7 +2087,7 @@
       "stages": {
         "compiled": {
           "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:107:38: too many arguments in call to opFor(\"mul\")"
+          "reason": "the generated Go does not compile: ./main.go:120:38: too many arguments in call to opFor(\"mul\")"
         },
         "emitted": {
           "outcome": "pass"
@@ -2104,7 +2104,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "22 variables left dynamic out of 34"
+          "reason": "21 variables left dynamic out of 34"
         }
       },
       "equivalent_annotated": {
@@ -2114,7 +2114,7 @@
       "quality": {
         "todos": 0,
         "symbols": 34,
-        "symbols_typed": 12,
+        "symbols_typed": 13,
         "refusals": 0,
         "approximations": 12
       }
@@ -2142,7 +2142,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "13 variables left dynamic out of 32"
+          "reason": "5 variables left dynamic out of 32"
         }
       },
       "equivalent_annotated": {
@@ -2152,9 +2152,9 @@
       "quality": {
         "todos": 0,
         "symbols": 32,
-        "symbols_typed": 19,
+        "symbols_typed": 27,
         "refusals": 0,
-        "approximations": 1
+        "approximations": 0
       }
     },
     {
@@ -2359,7 +2359,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: line 2, byte 63: got \"[localhost]\\n  3  ::1          [l...\", wanted \"localhost\\n  3  ::1          loca...\""
+          "reason": "stdout differs: line 7, byte 249: got \"0 chars\\ndb-primary         -\u003e 10...\", wanted \"39 chars\\ndb-primary         -\u003e 1...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -2368,20 +2368,19 @@
           "outcome": "pass"
         },
         "typed": {
-          "outcome": "fail",
-          "reason": "4 variables left dynamic out of 22"
+          "outcome": "pass"
         }
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: line 2, byte 63: got \"[localhost]\\n  3  ::1          [l...\", wanted \"localhost\\n  3  ::1          loca...\""
+        "reason": "stdout differs: line 7, byte 249: got \"0 chars\\ndb-primary         -\u003e 10...\", wanted \"39 chars\\ndb-primary         -\u003e 1...\""
       },
       "quality": {
         "todos": 0,
         "symbols": 22,
-        "symbols_typed": 18,
+        "symbols_typed": 22,
         "refusals": 0,
-        "approximations": 3
+        "approximations": 1
       }
     },
     {
@@ -2579,7 +2578,7 @@
       "stages": {
         "compiled": {
           "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:143:14: too many arguments in call to cmp"
+          "reason": "the generated Go does not compile: ./main.go:149:14: too many arguments in call to cmp"
         },
         "emitted": {
           "outcome": "pass"
@@ -2777,7 +2776,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: line 15, byte 495: got \"0\\npackage       18    20 skipped...\", wanted \"2\\npackage       18    20 skipped...\""
+          "reason": "stdout differs: line 29, byte 741: got \"[] [] [] [net::timeout ui::rende...\", wanted \"net::timeout ui::render\\n\""
         },
         "honest": {
           "outcome": "n/a"
@@ -2786,18 +2785,17 @@
           "outcome": "pass"
         },
         "typed": {
-          "outcome": "fail",
-          "reason": "6 variables left dynamic out of 17"
+          "outcome": "pass"
         }
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: line 15, byte 495: got \"0\\npackage       18    20 skipped...\", wanted \"2\\npackage       18    20 skipped...\""
+        "reason": "stdout differs: line 29, byte 741: got \"[] [] [] [net::timeout ui::rende...\", wanted \"net::timeout ui::render\\n\""
       },
       "quality": {
         "todos": 0,
         "symbols": 17,
-        "symbols_typed": 11,
+        "symbols_typed": 17,
         "refusals": 0,
         "approximations": 1
       }
@@ -2847,7 +2845,7 @@
       "stages": {
         "compiled": {
           "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:167:30: cannot use text (variable of interface type any) as string value in argument to strings.TrimSuffix: need type assertion"
+          "reason": "the generated Go does not compile: ./main.go:180:30: cannot use text (variable of interface type any) as string value in argument to strings.TrimSuffix: need type assertion"
         },
         "emitted": {
           "outcome": "pass"
@@ -2970,7 +2968,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: line 27, byte 1264: got \"map[string]interface {}{\\\"enabled...\", wanted \"$VAR1 = {\\n  'enabled' =\u003e 1,\\n  'l...\""
+          "reason": "stdout differs: line 27, byte 1264: got \"\u0026main.Config{Enabled:1, Limits:(...\", wanted \"$VAR1 = {\\n  'enabled' =\u003e 1,\\n  'l...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -2980,17 +2978,17 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "3 variables left dynamic out of 18"
+          "reason": "1 variable left dynamic out of 18"
         }
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: line 27, byte 1264: got \"map[string]interface {}{\\\"enabled...\", wanted \"$VAR1 = {\\n  'enabled' =\u003e 1,\\n  'l...\""
+        "reason": "stdout differs: line 27, byte 1264: got \"\u0026main.Config{Enabled:1, Limits:(...\", wanted \"$VAR1 = {\\n  'enabled' =\u003e 1,\\n  'l...\""
       },
       "quality": {
         "todos": 0,
         "symbols": 18,
-        "symbols_typed": 15,
+        "symbols_typed": 17,
         "refusals": 0,
         "approximations": 18
       }
@@ -3244,7 +3242,7 @@
         "symbols": 28,
         "symbols_typed": 28,
         "refusals": 0,
-        "approximations": 5
+        "approximations": 4
       }
     },
     {
@@ -3319,6 +3317,80 @@
         "symbols_typed": 6,
         "refusals": 7,
         "approximations": 4
+      }
+    },
+    {
+      "tier": "tier2",
+      "name": "45-record-structs",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "pass"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "3 variables left dynamic out of 18"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "pass"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 18,
+        "symbols_typed": 15,
+        "refusals": 0,
+        "approximations": 1
+      }
+    },
+    {
+      "tier": "tier2",
+      "name": "46-record-tables",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "stdout differs: line 1, byte 26: got \"[primary eu-west]\\n-- asked as a ...\", wanted \"primary,eu-west\\n-- asked as a co...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "1 variable left dynamic out of 5"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "stdout differs: line 1, byte 26: got \"[primary eu-west]\\n-- asked as a ...\", wanted \"primary,eu-west\\n-- asked as a co...\""
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 5,
+        "symbols_typed": 4,
+        "refusals": 0,
+        "approximations": 7
       }
     },
     {
@@ -3497,7 +3569,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "14 variables left dynamic out of 23"
+          "reason": "9 variables left dynamic out of 23"
         }
       },
       "equivalent_annotated": {
@@ -3507,9 +3579,9 @@
       "quality": {
         "todos": 10,
         "symbols": 23,
-        "symbols_typed": 9,
+        "symbols_typed": 14,
         "refusals": 10,
-        "approximations": 5
+        "approximations": 4
       }
     },
     {
@@ -3519,7 +3591,7 @@
       "stages": {
         "compiled": {
           "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:183:35: cannot use i (variable of type int) as string value in map index"
+          "reason": "the generated Go does not compile: ./main.go:197:35: cannot use i (variable of type int) as string value in map index"
         },
         "emitted": {
           "outcome": "pass"
@@ -3537,7 +3609,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "11 variables left dynamic out of 25"
+          "reason": "12 variables left dynamic out of 25"
         }
       },
       "equivalent_annotated": {
@@ -3547,9 +3619,9 @@
       "quality": {
         "todos": 14,
         "symbols": 25,
-        "symbols_typed": 14,
+        "symbols_typed": 13,
         "refusals": 15,
-        "approximations": 16
+        "approximations": 14
       }
     },
     {
@@ -3642,7 +3714,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "exit status 255, wanted 0; stdout differs: 469 byte(s) missing after line 1, expected \"INVOICE INV-2024-0117 (2024-06-0...\"; stderr differs: unexpected \"interface conversion: interface {} is []interface {}, not map[string]...\""
+          "reason": "exit status 255, wanted 0; stdout differs: 469 byte(s) missing after line 1, expected \"INVOICE INV-2024-0117 (2024-06-0...\"; stderr differs: unexpected \"interface conversion: interface {} is *main.Stack, not map[string]int...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -3652,17 +3724,17 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "19 variables left dynamic out of 37"
+          "reason": "17 variables left dynamic out of 37"
         }
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "exit status 255, wanted 0; stdout differs: 469 byte(s) missing after line 1, expected \"INVOICE INV-2024-0117 (2024-06-0...\"; stderr differs: unexpected \"interface conversion: interface {} is []interface {}, not map[string]...\""
+        "reason": "exit status 255, wanted 0; stdout differs: 469 byte(s) missing after line 1, expected \"INVOICE INV-2024-0117 (2024-06-0...\"; stderr differs: unexpected \"interface conversion: interface {} is *main.Stack, not map[string]int...\""
       },
       "quality": {
         "todos": 0,
         "symbols": 37,
-        "symbols_typed": 18,
+        "symbols_typed": 20,
         "refusals": 0,
         "approximations": 11
       }
@@ -3730,7 +3802,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "17 variables left dynamic out of 33"
+          "reason": "15 variables left dynamic out of 33"
         }
       },
       "equivalent_annotated": {
@@ -3740,7 +3812,7 @@
       "quality": {
         "todos": 7,
         "symbols": 33,
-        "symbols_typed": 16,
+        "symbols_typed": 18,
         "refusals": 7,
         "approximations": 8
       }
@@ -4025,7 +4097,7 @@
       "stages": {
         "compiled": {
           "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:194:29: undefined: item10"
+          "reason": "the generated Go does not compile: ./main.go:200:29: undefined: item10"
         },
         "emitted": {
           "outcome": "pass"
@@ -4042,7 +4114,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "3 variables left dynamic out of 44"
+          "reason": "2 variables left dynamic out of 44"
         }
       },
       "equivalent_annotated": {
@@ -4052,9 +4124,9 @@
       "quality": {
         "todos": 0,
         "symbols": 44,
-        "symbols_typed": 41,
+        "symbols_typed": 42,
         "refusals": 0,
-        "approximations": 18
+        "approximations": 12
       }
     },
     {
@@ -4119,7 +4191,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "7 variables left dynamic out of 31"
+          "reason": "5 variables left dynamic out of 31"
         }
       },
       "equivalent_annotated": {
@@ -4129,7 +4201,7 @@
       "quality": {
         "todos": 2,
         "symbols": 31,
-        "symbols_typed": 24,
+        "symbols_typed": 26,
         "refusals": 2,
         "approximations": 7
       }
@@ -4147,7 +4219,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: line 2, byte 31: got \"REJECTED coin: \\n[idle]     REJEC...\", wanted \"credit now 100\\n[idle]     -\u003e col...\""
+          "reason": "exit status 255, wanted 0; stdout differs: 948 byte(s) missing after line 1, expected \"--- audit trail ---\\n[idle]     c...\"; stderr differs: unexpected \"interface conversion: interface {} is *main.Fsm, not map[string]inter...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -4157,17 +4229,17 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "5 variables left dynamic out of 22"
+          "reason": "6 variables left dynamic out of 22"
         }
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: line 2, byte 31: got \"REJECTED coin: \\n[idle]     REJEC...\", wanted \"credit now 100\\n[idle]     -\u003e col...\""
+        "reason": "exit status 255, wanted 0; stdout differs: 948 byte(s) missing after line 1, expected \"--- audit trail ---\\n[idle]     c...\"; stderr differs: unexpected \"interface conversion: interface {} is *main.Fsm, not map[string]inter...\""
       },
       "quality": {
         "todos": 0,
         "symbols": 22,
-        "symbols_typed": 17,
+        "symbols_typed": 16,
         "refusals": 0,
         "approximations": 13
       }
@@ -4179,7 +4251,7 @@
       "stages": {
         "compiled": {
           "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:69:33: self(toNum(k) - 1.0) (no value) used as value"
+          "reason": "the generated Go does not compile: ./main.go:69:29: self(toNum(k) - 1.0) (no value) used as value"
         },
         "emitted": {
           "outcome": "pass"
@@ -4413,8 +4485,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "exit status 2, wanted 0; stdout differs: line 1, byte 51: got \"[quick]]\\nbackup     120s   2.0 m...\", wanted \"quick]\\nbackup     120s   2.0 min...\"; stderr differs: unexpected \"panic: interface conversion: interface {} is map[string]string, not m...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -4424,19 +4495,18 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "5 variables left dynamic out of 10"
+          "reason": "1 variable left dynamic out of 10"
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "exit status 2, wanted 0; stdout differs: line 1, byte 51: got \"[quick]]\\nbackup     120s   2.0 m...\", wanted \"quick]\\nbackup     120s   2.0 min...\"; stderr differs: unexpected \"panic: interface conversion: interface {} is map[string]string, not m...\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
         "symbols": 10,
-        "symbols_typed": 5,
+        "symbols_typed": 9,
         "refusals": 0,
-        "approximations": 4
+        "approximations": 3
       }
     },
     {
@@ -5964,7 +6034,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "2 variables left dynamic out of 36"
+          "reason": "1 variable left dynamic out of 36"
         }
       },
       "equivalent_annotated": {
@@ -5974,9 +6044,9 @@
       "quality": {
         "todos": 0,
         "symbols": 36,
-        "symbols_typed": 34,
+        "symbols_typed": 35,
         "refusals": 0,
-        "approximations": 7
+        "approximations": 6
       }
     },
     {
@@ -6002,7 +6072,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "7 variables left dynamic out of 47"
+          "reason": "5 variables left dynamic out of 47"
         }
       },
       "equivalent_annotated": {
@@ -6012,9 +6082,9 @@
       "quality": {
         "todos": 0,
         "symbols": 47,
-        "symbols_typed": 40,
+        "symbols_typed": 42,
         "refusals": 0,
-        "approximations": 9
+        "approximations": 7
       }
     },
     {
@@ -6041,7 +6111,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "5 variables left dynamic out of 44"
+          "reason": "4 variables left dynamic out of 44"
         }
       },
       "equivalent_annotated": {
@@ -6051,9 +6121,9 @@
       "quality": {
         "todos": 1,
         "symbols": 44,
-        "symbols_typed": 39,
+        "symbols_typed": 40,
         "refusals": 1,
-        "approximations": 9
+        "approximations": 8
       }
     },
     {
@@ -6078,8 +6148,7 @@
           "outcome": "pass"
         },
         "typed": {
-          "outcome": "fail",
-          "reason": "5 variables left dynamic out of 41"
+          "outcome": "pass"
         }
       },
       "equivalent_annotated": {
@@ -6089,9 +6158,9 @@
       "quality": {
         "todos": 0,
         "symbols": 41,
-        "symbols_typed": 36,
+        "symbols_typed": 41,
         "refusals": 0,
-        "approximations": 5
+        "approximations": 2
       }
     },
     {
@@ -6155,7 +6224,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "5 variables left dynamic out of 23"
+          "reason": "1 variable left dynamic out of 23"
         }
       },
       "equivalent_annotated": {
@@ -6164,9 +6233,9 @@
       "quality": {
         "todos": 0,
         "symbols": 23,
-        "symbols_typed": 18,
+        "symbols_typed": 22,
         "refusals": 0,
-        "approximations": 9
+        "approximations": 3
       }
     },
     {
@@ -6181,8 +6250,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "exit status 2, wanted 0; stdout differs: 697 byte(s) missing after line 1, expected \"4 traces, 3 distinct\\n\\n2x java.la...\"; stderr differs: unexpected \"panic: interface conversion: interface {} is []interface {}, not map[...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -6192,19 +6260,18 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "8 variables left dynamic out of 21"
+          "reason": "1 variable left dynamic out of 21"
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "exit status 2, wanted 0; stdout differs: 697 byte(s) missing after line 1, expected \"4 traces, 3 distinct\\n\\n2x java.la...\"; stderr differs: unexpected \"panic: interface conversion: interface {} is []interface {}, not map[...\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
         "symbols": 21,
-        "symbols_typed": 13,
+        "symbols_typed": 20,
         "refusals": 0,
-        "approximations": 6
+        "approximations": 4
       }
     },
     {
@@ -6495,8 +6562,7 @@
           "outcome": "pass"
         },
         "typed": {
-          "outcome": "fail",
-          "reason": "1 variable left dynamic out of 28"
+          "outcome": "pass"
         }
       },
       "equivalent_annotated": {
@@ -6505,9 +6571,9 @@
       "quality": {
         "todos": 0,
         "symbols": 28,
-        "symbols_typed": 27,
+        "symbols_typed": 28,
         "refusals": 0,
-        "approximations": 7
+        "approximations": 2
       }
     },
     {
@@ -6533,7 +6599,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "5 variables left dynamic out of 44"
+          "reason": "3 variables left dynamic out of 44"
         }
       },
       "equivalent_annotated": {
@@ -6543,7 +6609,7 @@
       "quality": {
         "todos": 0,
         "symbols": 44,
-        "symbols_typed": 39,
+        "symbols_typed": 41,
         "refusals": 0,
         "approximations": 7
       }
@@ -6561,7 +6627,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "exit status 255, wanted 1; stdout differs: 308 byte(s) missing after line 1, expected \"\u003eorf1 len=10\\nMADEGFKDL*\\n\u003eorf2_re...\"; stderr differs: unexpected \"interface conversion: interface {} is map[string]string, not map[stri...\""
+          "reason": "exit status 255, wanted 1; stdout differs: 308 byte(s) missing after line 1, expected \"\u003eorf1 len=10\\nMADEGFKDL*\\n\u003eorf2_re...\"; stderr differs: unexpected \"interface conversion: interface {} is *main.Tables, not map[string]in...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -6572,17 +6638,17 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "8 variables left dynamic out of 56"
+          "reason": "4 variables left dynamic out of 56"
         }
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "exit status 255, wanted 1; stdout differs: 308 byte(s) missing after line 1, expected \"\u003eorf1 len=10\\nMADEGFKDL*\\n\u003eorf2_re...\"; stderr differs: unexpected \"interface conversion: interface {} is map[string]string, not map[stri...\""
+        "reason": "exit status 255, wanted 1; stdout differs: 308 byte(s) missing after line 1, expected \"\u003eorf1 len=10\\nMADEGFKDL*\\n\u003eorf2_re...\"; stderr differs: unexpected \"interface conversion: interface {} is *main.Tables, not map[string]in...\""
       },
       "quality": {
         "todos": 1,
         "symbols": 56,
-        "symbols_typed": 48,
+        "symbols_typed": 52,
         "refusals": 1,
         "approximations": 12
       }
@@ -6633,7 +6699,7 @@
       "stages": {
         "compiled": {
           "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:141:20: multiple-value handlers[base](lines[i]) (value of type (string, string)) in single-value context"
+          "reason": "the generated Go does not compile: ./main.go:149:20: multiple-value handlers[base](lines[i]) (value of type (string, string)) in single-value context"
         },
         "emitted": {
           "outcome": "pass"
@@ -6650,7 +6716,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "12 variables left dynamic out of 39"
+          "reason": "9 variables left dynamic out of 39"
         }
       },
       "equivalent_annotated": {
@@ -6660,9 +6726,9 @@
       "quality": {
         "todos": 0,
         "symbols": 39,
-        "symbols_typed": 27,
+        "symbols_typed": 30,
         "refusals": 0,
-        "approximations": 6
+        "approximations": 5
       }
     },
     {
@@ -6727,7 +6793,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "2 variables left dynamic out of 33"
+          "reason": "1 variable left dynamic out of 33"
         }
       },
       "equivalent_annotated": {
@@ -6737,9 +6803,9 @@
       "quality": {
         "todos": 4,
         "symbols": 33,
-        "symbols_typed": 31,
+        "symbols_typed": 32,
         "refusals": 4,
-        "approximations": 16
+        "approximations": 13
       }
     },
     {
@@ -6839,7 +6905,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "9 variables left dynamic out of 44"
+          "reason": "6 variables left dynamic out of 44"
         }
       },
       "equivalent_annotated": {
@@ -6849,9 +6915,9 @@
       "quality": {
         "todos": 0,
         "symbols": 44,
-        "symbols_typed": 35,
+        "symbols_typed": 38,
         "refusals": 0,
-        "approximations": 10
+        "approximations": 9
       }
     }
   ]

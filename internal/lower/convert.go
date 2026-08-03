@@ -247,6 +247,21 @@ func (l *Lowerer) assignable(x ir.Expr, want *ir.Type, n ast.Node) ir.Expr {
 	case ir.Bool:
 		return l.toBool(x, n)
 	case ir.Any:
+		// A collection literal stored where anything can go is read back by
+		// asserting it to the collection of anything, because that is the
+		// only shape the reader can name. Writing the literal with its own
+		// element type would make that assertion fail at run time, and a
+		// literal has no other owner to be aliased from, so it is simply
+		// written as the wider type.
+		if lit, ok := x.(*ir.CompositeLit); ok && lit.LitType != nil &&
+			(lit.LitType.Kind == ir.Slice || lit.LitType.Kind == ir.Map) &&
+			lit.LitType.Elem != nil && lit.LitType.Elem.Kind != ir.Any {
+			wider := ir.SliceOf(ir.TAny)
+			if lit.LitType.Kind == ir.Map {
+				wider = ir.MapOf(ir.TAny)
+			}
+			return l.assignable(x, wider, n)
+		}
 		return x
 	case ir.Func, ir.Named, ir.Pointer:
 		return l.assertTo(x, want)

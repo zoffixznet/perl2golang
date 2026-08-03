@@ -204,6 +204,10 @@ const (
 	ContextDependentReturn Code = "P2G3050"
 	// MixedArray: an array holds elements of more than one type.
 	MixedArray Code = "P2G3060"
+	// HashIsRecord: a hash with fixed keys and mixed values became a struct.
+	HashIsRecord Code = "P2G3070"
+	// RecordFieldList: keys or values of a record was written out.
+	RecordFieldList Code = "P2G3071"
 )
 
 // IR lowering and control-flow restructuring.
@@ -983,6 +987,21 @@ var catalogue = map[Code]Entry{
 		Advice:   "split it into one variable per element type, and both will type cleanly",
 		Cost:     "each read needs a type assertion, and the compiler cannot tell the two kinds apart",
 		Concepts: []string{"slices-not-arrays", "type-assertions-and-switches"},
+	},
+	HashIsRecord: {
+		Severity:  report.Note,
+		Message:   "a hash whose keys are written out and whose values differ in kind became a struct",
+		Short:     "a hash used as a record became a struct",
+		Advice:    "read the fields by name: `job.Secs` is an int where `$job->{secs}` was whatever the hash held",
+		Converted: "the keys became fields and each one kept its own type",
+		Concepts:  []string{"structs-and-embedding", "collections-hold-one-type"},
+	},
+	RecordFieldList: {
+		Severity: report.Warn,
+		Message:  "`%s` of a record was written out, because a struct has no keys to ask for",
+		Short:    "the field list is written out",
+		Advice:   "a field added to the record has to be added to that list too",
+		Concepts: []string{"structs-and-embedding", "compile-time-mindset"},
 	},
 
 	// -- IR lowering --------------------------------------------------------

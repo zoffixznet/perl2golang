@@ -1,0 +1,16 @@
+north     12     53.6 ok=1 notes=[]
+south     31     87.8 ok=1 notes=[hot]
+inner     -4     24.8 ok=0 notes=[frozen]
+-- coldest first --
+  inner  -4
+  north  12
+  south  31
+-- latest --
+  inner    -4 ok=0
+  north    12 ok=1
+  south    31 ok=1
+site ridge has 3 readings, tallest at peak (3)
+first: north 12 1
+  station  = south
+  celsius  = 31
+  ok       = 1

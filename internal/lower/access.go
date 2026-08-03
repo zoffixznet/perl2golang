@@ -168,6 +168,23 @@ func (l *Lowerer) hashPartsField(n *ast.HashIndex) (m ir.Expr, key ir.Expr, elem
 			}
 			return nil, nil, ir.TAny, nil
 		}
+		// A struct field cannot be reached by a computed name, so the type
+		// gets a reader that switches over the names it has. That is what a
+		// Go program writes instead of reaching for reflection.
+		if c.Record {
+			fn := l.recordFieldByName(c)
+			out := ir.CallOf(ir.NewIdent(fn, nil), ir.TAny, m, l.toStr(l.expr(n.Key), n.Key))
+			l.approximate(n, "P2G7048", "a computed key on a record",
+				"the field name is worked out at run time",
+				"The record's field names are written into the program, and this read "+
+					"names one of them with a value. Go has no way to reach a field by a "+
+					"computed name, so the type carries a reader that switches over the "+
+					"names it has.",
+				"Reading a field by name loses its type: what comes back is `any`, "+
+					"because the fields do not all hold the same kind of thing.",
+				"structs-and-embedding", "compile-time-mindset")
+			return out, nil, ir.TAny, nil
+		}
 		if l.pass == 2 {
 			l.approximate(n, "P2G7048", "a computed key on an object",
 				"the field name is worked out at run time",
@@ -283,6 +300,14 @@ func (l *Lowerer) sliceExpr(n *ast.Slice) ir.Expr {
 	}
 	if container == nil {
 		return ir.Nil(ir.TAny)
+	}
+	// A slice of a struct's fields is not a lookup at all: each name picks a
+	// field, and the fields have different types, so what comes back is a
+	// list of values rather than a slice of one element type.
+	if n.Hash {
+		if x, ok := l.fieldSlice(n, container); ok {
+			return x
+		}
 	}
 	if n.Hash {
 		container = l.asMap(container, n)

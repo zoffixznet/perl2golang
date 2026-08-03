@@ -132,6 +132,19 @@ type Lowerer struct {
 	// promoteWanted names the accessors a call reached through a value whose
 	// class did not resolve, gathered fresh on every discovery round.
 	promoteWanted map[string]bool
+	// records holds the struct synthesised for each set of literal hash keys
+	// the file uses as a record, so two literals of one shape share a type.
+	records map[string]*Class
+	// recordLookups and recordDecls hold the by-name field reader declared
+	// for a record whose field name is worked out while the program runs.
+	recordLookups map[*Class]string
+	recordDecls   []ir.Decl
+	// recordUsed marks the record types a literal was actually built for, so
+	// that a shape considered and rejected leaves no dead type behind.
+	recordUsed map[*Class]bool
+	// hints is the stack of names in scope for a synthesised type, innermost
+	// last: the variable a literal is being stored in, mostly.
+	hints []string
 	// fieldAt remembers which struct field an access resolved to, so that a
 	// write through it can say what the field holds. A field is not a binding
 	// and has nowhere else to record the evidence.
@@ -376,6 +389,9 @@ func Lower(res parser.Result, src []byte, opts Options) *Result {
 	// writes them afresh rather than inheriting the discovery pass's copies.
 	l.isaFuncs = nil
 	l.isaDecls = nil
+	l.recordLookups = nil
+	l.recordDecls = nil
+	l.recordUsed = nil
 	out := l.run()
 
 	l.finishReport()
@@ -472,9 +488,15 @@ func (l *Lowerer) run() *Result {
 		file.Decls = append(file.Decls, l.interfaceDecl(c))
 	}
 	file.Decls = append(file.Decls, l.isaDecls...)
+	file.Decls = append(file.Decls, l.recordDecls...)
 	for _, name := range l.classOrd {
 		c := l.classes[name]
 		if !c.IsType {
+			continue
+		}
+		if c.Record && !l.recordUsed[c] {
+			// The shape was considered and something else was chosen for it,
+			// so there is no value of this type and nothing to declare.
 			continue
 		}
 		file.Decls = append(file.Decls, l.classDecl(c))
@@ -856,7 +878,10 @@ func (l *Lowerer) resolveTypes() {
 				t = ir.SliceOf(t)
 			}
 		case '%':
-			if t.Kind != ir.Map {
+			// A hash whose keys are all written out and whose values differ
+			// in kind is a record, and the struct synthesised for it is what
+			// the variable holds. Everything else is a map.
+			if t.Kind != ir.Map && l.classOf(t) == nil {
 				t = ir.MapOf(t)
 			}
 		}

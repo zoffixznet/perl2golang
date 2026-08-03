@@ -2,7 +2,7 @@
 id: collections-hold-one-type
 title: A slice holds one type, and []int is not []any
 tags: [trap, types, slices, maps, generics]
-perl_triggers: [mixed-array, array-of-any, hash-of-mixed, list-of-lists, arg-list]
+perl_triggers: [mixed-array, array-of-any, hash-of-mixed, list-of-lists, arg-list, hashref-record, record-shape, hash-as-record, anon-hash]
 severity: trap
 prerequisites: [slices-not-arrays, type-assertions-and-switches]
 ---
@@ -94,6 +94,57 @@ func main() {
 ```
 
 Two things in the run are worth pausing on. `narrow[int]` turned `"two"` into `0`, not into an error: a failed assertion in the comma-ok form yields the zero value, so a genuinely mixed collection loses its odd elements quietly. And the explicit `[int]` is needed because the element type appears only in the result, where Go has nothing to infer it from.
+
+## When a hash is not a collection at all
+
+The commonest `map[string]any` in a converted Perl program is not a map that wanted a better element type. It is a **record** that should never have been a map. Perl has one syntax for both, and the difference is which half of the pair is data:
+
+```perl
+my $job    = { name => 'reindex', secs => 45, tags => [] };   # a record
+my %colour = ( red => 1, green => 2, blue => 3 );             # a table
+```
+
+`$job` has three keys, all written into the program, and they will never be any other three. Nothing iterates them; every use names one. And the values are a string, a number and a list, which is exactly why a map of them has to be `map[string]any`. `%colour` is the opposite: the keys are data, the program looks them up with a variable, and every value is the same kind of thing. A map is right for it and `map[string]int` types cleanly.
+
+The test worth applying to every hash in a script you are porting: **are the keys written down, and do the values differ in kind?** Both yes means a struct. Either no means a map.
+
+```go
+type Job struct {
+	Name string
+	Secs int
+	Tags []string
+}
+
+func describe() (string, int) {
+	job := &Job{Name: "reindex", Secs: 45}
+	job.Tags = append(job.Tags, "nightly")
+	// No assertion, no lookup, and a typo in a field name is a build error.
+	return job.Name, job.Secs + 30
+}
+```
+
+What you gain is not only speed. `m["sesc"]` is a valid expression that returns nil; `job.Sesc` does not compile. The type is documentation that cannot go stale, and `job.Secs + 30` needs no conversion where `m["secs"].(int) + 30` did.
+
+What you give up is worth knowing before you commit to it. A struct has no keys to enumerate, so `keys %$job` becomes a list you write out and keep in step by hand. `delete` has no counterpart at all: a field that can be absent is a pointer, or a zero value with a separate flag, decided when the type is declared. And a field cannot be reached by a name computed at run time — the honest replacement is a `switch` over the names, which is faster than reflection and says out loud which names are allowed:
+
+```go
+type Task struct {
+	Name string
+	Secs int
+}
+
+func fieldOf(t *Task, name string) any {
+	switch name {
+	case "name":
+		return t.Name
+	case "secs":
+		return t.Secs
+	}
+	return nil
+}
+```
+
+If you find yourself writing that switch for most of the fields, the data was a map after all.
 
 ## The mismatch
 

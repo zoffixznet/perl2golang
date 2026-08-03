@@ -1,0 +1,13 @@
+db-01:5432 healthy=1 tags=primary,eu-west
+-- asked as a collection --
+fields: healthy host port tags
+count: 4
+has port: yes, has region: no
+after delete: host port tags
+-- a reference asked the same --
+fields: name retries seconds
+  name     = reindex
+  retries  = 1
+  seconds  = 45
+values sorted as text: 1 45 reindex
+copy: rebuild original: reindex
