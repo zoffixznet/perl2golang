@@ -1102,3 +1102,97 @@ type optionState struct {
 	define  map[string]string
 	limit   map[string]int
 }
+
+func TestSplitPathAndParts(t *testing.T) {
+	tests := []struct {
+		in    string
+		split []string
+		parts []string
+	}{
+		{"var/log/app.log", []string{"", "var/log/", "app.log"}, []string{"var", "log", "app.log"}},
+		{"/var/log/app.log", []string{"", "/var/log/", "app.log"}, []string{"", "var", "log", "app.log"}},
+		{"app.log", []string{"", "", "app.log"}, []string{"app.log"}},
+		{"var/log/", []string{"", "var/log/", ""}, []string{"var", "log", ""}},
+		{"", []string{"", "", ""}, []string{""}},
+	}
+	for _, tt := range tests {
+		if got := splitPath(tt.in); !slices.Equal(got, tt.split) {
+			t.Errorf("splitPath(%q) = %q, want %q", tt.in, got, tt.split)
+		}
+		if got := pathParts(tt.in); !slices.Equal(got, tt.parts) {
+			t.Errorf("pathParts(%q) = %q, want %q", tt.in, got, tt.parts)
+		}
+	}
+}
+
+func TestRelAndAbsPaths(t *testing.T) {
+	if got := relPath("/var/log/app.log", "/var"); got != "log/app.log" {
+		t.Errorf("relPath = %q, want %q", got, "log/app.log")
+	}
+	// One absolute and one relative path have no relation to compute, and
+	// the target is handed back rather than an empty string.
+	if got := relPath("/var/log", "var"); got != "/var/log" {
+		t.Errorf("relPath across roots = %q, want the target back", got)
+	}
+	if got := absFrom("log/app.log", "/var"); got != "/var/log/app.log" {
+		t.Errorf("absFrom = %q, want %q", got, "/var/log/app.log")
+	}
+	if got := absFrom("/etc/hosts", "/var"); got != "/etc/hosts" {
+		t.Errorf("absFrom of an absolute path = %q, want it unchanged", got)
+	}
+	wd := workingDir()
+	if wd == "" || !filepath.IsAbs(wd) {
+		t.Errorf("workingDir() = %q, want an absolute path", wd)
+	}
+	if got := absFrom("x", ""); got != filepath.Join(wd, "x") {
+		t.Errorf("absFrom with no base = %q, want it resolved against %q", got, wd)
+	}
+
+	dir := t.TempDir()
+	real, err := filepath.EvalSymlinks(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := absPath(dir); got != real {
+		t.Errorf("absPath(%q) = %q, want %q", dir, got, real)
+	}
+	if got := absPath(filepath.Join(dir, "nope")); got != "" {
+		t.Errorf("absPath of a missing path = %q, want the empty string", got)
+	}
+}
+
+func TestParseFilename(t *testing.T) {
+	re := func(s string) *regexp.Regexp { return regexp.MustCompile(s) }
+	tests := []struct {
+		path     string
+		suffixes []*regexp.Regexp
+		want     []string
+	}{
+		{"files/reports/2023-q4.csv", []*regexp.Regexp{re(`\.[^.]*`)}, []string{"2023-q4", "files/reports/", ".csv"}},
+		{"archive.tar.gz", []*regexp.Regexp{re(`\.[^.]*`)}, []string{"archive.tar", "./", ".gz"}},
+		{"plain", []*regexp.Regexp{re(`\.[^.]*`)}, []string{"plain", "./", ""}},
+		{"a/b/c.log.1", []*regexp.Regexp{re(`\.[^.]*`)}, []string{"c.log", "a/b/", ".1"}},
+		{"a/b/c.log.1", nil, []string{"c.log.1", "a/b/", ""}},
+		// Every suffix is tried against what the ones before it left, so
+		// two of them can come off one name and the tail is both.
+		{"access.log.1", []*regexp.Regexp{re(`\.1`), re(`\.log`)}, []string{"access", "./", ".log.1"}},
+	}
+	for _, tt := range tests {
+		if got := parseFilename(tt.path, tt.suffixes...); !slices.Equal(got, tt.want) {
+			t.Errorf("parseFilename(%q) = %q, want %q", tt.path, got, tt.want)
+		}
+	}
+}
+
+func TestDumpValues(t *testing.T) {
+	// Map keys come out sorted, which is what makes two dumps of equal
+	// maps compare equal.
+	a := map[string]int{"b": 2, "a": 1}
+	b := map[string]int{"a": 1, "b": 2}
+	if dumpValues(a) != dumpValues(b) {
+		t.Errorf("equal maps dumped differently:\n%s\n%s", dumpValues(a), dumpValues(b))
+	}
+	if got := dumpValues(1, "two"); got != "1\n\"two\"\n" {
+		t.Errorf("dumpValues(1, \"two\") = %q", got)
+	}
+}

@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T02:32:34Z",
+  "recorded": "2026-08-15T03:44:31Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -53,45 +53,45 @@
     },
     {
       "tier": "tier2",
-      "entries": 42,
+      "entries": 44,
       "stages": {
         "compiled": {
-          "pass": 37,
+          "pass": 39,
           "fail": 5,
           "skip": 0
         },
         "emitted": {
-          "pass": 42,
+          "pass": 44,
           "fail": 0,
           "skip": 0
         },
         "equivalent": {
-          "pass": 7,
-          "fail": 35,
+          "pass": 8,
+          "fail": 36,
           "skip": 0
         },
         "translated": {
-          "pass": 38,
+          "pass": 40,
           "fail": 4,
           "skip": 0
         },
         "typed": {
-          "pass": 10,
-          "fail": 32,
+          "pass": 11,
+          "fail": 33,
           "skip": 0
         }
       },
       "equivalent_annotated": {
-        "pass": 7,
-        "fail": 35,
+        "pass": 8,
+        "fail": 36,
         "skip": 0
       },
       "quality": {
-        "todos": 49,
-        "symbols": 921,
-        "symbols_typed": 749,
-        "refusals": 50,
-        "approximations": 263
+        "todos": 37,
+        "symbols": 943,
+        "symbols_typed": 774,
+        "refusals": 38,
+        "approximations": 275
       }
     },
     {
@@ -130,11 +130,11 @@
         "skip": 0
       },
       "quality": {
-        "todos": 135,
+        "todos": 116,
         "symbols": 789,
-        "symbols_typed": 547,
-        "refusals": 139,
-        "approximations": 256
+        "symbols_typed": 558,
+        "refusals": 120,
+        "approximations": 255
       }
     },
     {
@@ -226,21 +226,21 @@
   ],
   "total": {
     "tier": "TOTAL",
-    "entries": 169,
+    "entries": 171,
     "stages": {
       "compiled": {
-        "pass": 147,
+        "pass": 149,
         "fail": 22,
         "skip": 0
       },
       "emitted": {
-        "pass": 169,
+        "pass": 171,
         "fail": 0,
         "skip": 0
       },
       "equivalent": {
-        "pass": 29,
-        "fail": 105,
+        "pass": 30,
+        "fail": 106,
         "skip": 0
       },
       "honest": {
@@ -249,35 +249,35 @@
         "skip": 1
       },
       "translated": {
-        "pass": 126,
+        "pass": 128,
         "fail": 43,
         "skip": 0
       },
       "typed": {
-        "pass": 58,
-        "fail": 111,
+        "pass": 59,
+        "fail": 112,
         "skip": 0
       }
     },
     "equivalent_annotated": {
-      "pass": 29,
-      "fail": 105,
+      "pass": 30,
+      "fail": 106,
       "skip": 0
     },
     "quality": {
-      "todos": 237,
-      "symbols": 3195,
-      "symbols_typed": 2581,
-      "refusals": 243,
-      "approximations": 833
+      "todos": 206,
+      "symbols": 3217,
+      "symbols_typed": 2617,
+      "refusals": 212,
+      "approximations": 844
     }
   },
   "quality": {
-    "todos": 237,
-    "symbols": 3195,
-    "symbols_typed": 2581,
-    "refusals": 243,
-    "approximations": 833
+    "todos": 206,
+    "symbols": 3217,
+    "symbols_typed": 2617,
+    "refusals": 212,
+    "approximations": 844
   },
   "entries": [
     {
@@ -2970,30 +2970,29 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: line 7, byte 470: got \"/slash      \\n-- fileparse with s...\", wanted \"            \\n-- fileparse with s...\"; stderr differs: unexpected \"TODO P2G3599: the fileparse function is not implemented ...\""
+          "reason": "stdout differs: line 27, byte 1264: got \"map[string]interface {}{\\\"enabled...\", wanted \"$VAR1 = {\\n  'enabled' =\u003e 1,\\n  'l...\""
         },
         "honest": {
           "outcome": "n/a"
         },
         "translated": {
-          "outcome": "fail",
-          "reason": "19 untranslated constructs"
+          "outcome": "pass"
         },
         "typed": {
           "outcome": "fail",
-          "reason": "12 variables left dynamic out of 18"
+          "reason": "3 variables left dynamic out of 18"
         }
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: line 7, byte 470: got \"/slash      \\n-- fileparse with s...\", wanted \"            \\n-- fileparse with s...\"; stderr differs: unexpected \"TODO P2G3599: the fileparse function is not implemented ...\""
+        "reason": "stdout differs: line 27, byte 1264: got \"map[string]interface {}{\\\"enabled...\", wanted \"$VAR1 = {\\n  'enabled' =\u003e 1,\\n  'l...\""
       },
       "quality": {
-        "todos": 19,
+        "todos": 0,
         "symbols": 18,
-        "symbols_typed": 6,
-        "refusals": 19,
-        "approximations": 10
+        "symbols_typed": 15,
+        "refusals": 0,
+        "approximations": 18
       }
     },
     {
@@ -3249,6 +3248,80 @@
       }
     },
     {
+      "tier": "tier2",
+      "name": "43-portable-paths",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "pass"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "pass"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 10,
+        "symbols_typed": 10,
+        "refusals": 0,
+        "approximations": 0
+      }
+    },
+    {
+      "tier": "tier2",
+      "name": "44-temp-trees",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "exit status 255, wanted 0; stdout differs: line 1, byte 21: got \"no\\ndirectories created: 1\\nthe de...\", wanted \"yes\\ndirectories created: 3\\nthe d...\"; stderr differs: unexpected \"TODO P2G3599: the tempdir function is not implemented ...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "fail",
+          "reason": "7 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "6 variables left dynamic out of 12"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "exit status 255, wanted 0; stdout differs: line 1, byte 21: got \"no\\ndirectories created: 1\\nthe de...\", wanted \"yes\\ndirectories created: 3\\nthe d...\"; stderr differs: unexpected \"TODO P2G3599: the tempdir function is not implemented ...\""
+      },
+      "quality": {
+        "todos": 7,
+        "symbols": 12,
+        "symbols_typed": 6,
+        "refusals": 7,
+        "approximations": 4
+      }
+    },
+    {
       "tier": "tier3",
       "name": "01-inventory-manager",
       "kind": "convert",
@@ -3446,7 +3519,7 @@
       "stages": {
         "compiled": {
           "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:184:35: cannot use i (variable of type int) as string value in map index"
+          "reason": "the generated Go does not compile: ./main.go:183:35: cannot use i (variable of type int) as string value in map index"
         },
         "emitted": {
           "outcome": "pass"
@@ -3460,11 +3533,11 @@
         },
         "translated": {
           "outcome": "fail",
-          "reason": "17 untranslated constructs"
+          "reason": "15 untranslated constructs"
         },
         "typed": {
           "outcome": "fail",
-          "reason": "12 variables left dynamic out of 25"
+          "reason": "11 variables left dynamic out of 25"
         }
       },
       "equivalent_annotated": {
@@ -3472,10 +3545,10 @@
         "reason": "the generated program did not compile"
       },
       "quality": {
-        "todos": 16,
+        "todos": 14,
         "symbols": 25,
-        "symbols_typed": 13,
-        "refusals": 17,
+        "symbols_typed": 14,
+        "refusals": 15,
         "approximations": 16
       }
     },
@@ -3723,30 +3796,30 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "exit status 255, wanted 0; stdout differs: 903 byte(s) missing after line 1, expected \"scanned 5 dirs, 7 files, 221 byt...\"; stderr differs: unexpected \"TODO P2G7041: this class was not declared in this file ...\""
+          "reason": "exit status 2, wanted 0; stdout differs: line 1, byte 8: got \"0 dirs, 0 files, 0 bytes\\n\\nTREE (...\", wanted \"5 dirs, 7 files, 221 bytes\\n\\nTREE...\"; stderr differs: unexpected \"TODO P2G3599: the find function is not implemented ...\""
         },
         "honest": {
           "outcome": "n/a"
         },
         "translated": {
           "outcome": "fail",
-          "reason": "8 untranslated constructs"
+          "reason": "2 untranslated constructs"
         },
         "typed": {
           "outcome": "fail",
-          "reason": "13 variables left dynamic out of 22"
+          "reason": "9 variables left dynamic out of 22"
         }
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "exit status 255, wanted 0; stdout differs: 903 byte(s) missing after line 1, expected \"scanned 5 dirs, 7 files, 221 byt...\"; stderr differs: unexpected \"TODO P2G7041: this class was not declared in this file ...\""
+        "reason": "exit status 2, wanted 0; stdout differs: line 1, byte 8: got \"0 dirs, 0 files, 0 bytes\\n\\nTREE (...\", wanted \"5 dirs, 7 files, 221 bytes\\n\\nTREE...\"; stderr differs: unexpected \"TODO P2G3599: the find function is not implemented ...\""
       },
       "quality": {
-        "todos": 8,
+        "todos": 2,
         "symbols": 22,
-        "symbols_typed": 9,
-        "refusals": 8,
-        "approximations": 5
+        "symbols_typed": 13,
+        "refusals": 2,
+        "approximations": 4
       }
     },
     {
@@ -3769,11 +3842,11 @@
         },
         "translated": {
           "outcome": "fail",
-          "reason": "18 untranslated constructs"
+          "reason": "9 untranslated constructs"
         },
         "typed": {
           "outcome": "fail",
-          "reason": "17 variables left dynamic out of 26"
+          "reason": "12 variables left dynamic out of 26"
         }
       },
       "equivalent_annotated": {
@@ -3781,10 +3854,10 @@
         "reason": "exit status 255, wanted 0; stdout differs: line 1, byte 18: got \"0 directories\\nsecond make_path c...\", wanted \"7 directories\\nsecond make_path c...\"; stderr differs: unexpected \"TODO P2G3599: the tempdir function is not implemented ...\""
       },
       "quality": {
-        "todos": 18,
+        "todos": 9,
         "symbols": 26,
-        "symbols_typed": 9,
-        "refusals": 18,
+        "symbols_typed": 14,
+        "refusals": 9,
         "approximations": 3
       }
     },
@@ -3795,7 +3868,7 @@
       "stages": {
         "compiled": {
           "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:38:34: cannot use lines[i2] (variable of interface type any) as string value in argument to strings.TrimSuffix: need type assertion"
+          "reason": "the generated Go does not compile: ./main.go:37:34: cannot use lines[i2] (variable of interface type any) as string value in argument to strings.TrimSuffix: need type assertion"
         },
         "emitted": {
           "outcome": "pass"
@@ -3809,11 +3882,11 @@
         },
         "translated": {
           "outcome": "fail",
-          "reason": "16 untranslated constructs"
+          "reason": "14 untranslated constructs"
         },
         "typed": {
           "outcome": "fail",
-          "reason": "11 variables left dynamic out of 18"
+          "reason": "10 variables left dynamic out of 18"
         }
       },
       "equivalent_annotated": {
@@ -3821,10 +3894,10 @@
         "reason": "the generated program did not compile"
       },
       "quality": {
-        "todos": 15,
+        "todos": 13,
         "symbols": 18,
-        "symbols_typed": 7,
-        "refusals": 16,
+        "symbols_typed": 8,
+        "refusals": 14,
         "approximations": 1
       }
     },

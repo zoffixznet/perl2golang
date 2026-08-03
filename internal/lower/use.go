@@ -83,6 +83,26 @@ func (l *Lowerer) useStmt(n *ast.Use) []ir.Stmt {
 			"type-assertions-and-switches")
 		return nil
 
+	case "File::Spec", "File::Spec::Unix", "File::Spec::Functions":
+		l.inform(n, "P2G7566", "use "+n.Module,
+			"File::Spec exists because a path separator is not the same everywhere, "+
+				"and it names a class only so each system can subclass it. path/filepath "+
+				"is the same idea without the object: catfile and catdir are both "+
+				"filepath.Join, canonpath is filepath.Clean, and the separator comes from "+
+				"the system the program was built for.",
+			"filepath-and-paths")
+		return nil
+
+	case "Cwd":
+		l.inform(n, "P2G7567", "use Cwd",
+			"getcwd is os.Getwd, which returns an error as well, because the "+
+				"directory a process is in can be deleted while it runs. abs_path is "+
+				"filepath.Abs followed by filepath.EvalSymlinks: the first is textual and "+
+				"succeeds for a path that is not there, the second is what consults the "+
+				"disk.",
+			"filepath-and-paths", "errors-are-values")
+		return nil
+
 	case "File::Basename":
 		l.inform(n, "P2G7564", "use File::Basename",
 			"basename and dirname are filepath.Base and filepath.Dir. The filepath "+

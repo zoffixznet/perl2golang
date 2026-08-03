@@ -494,6 +494,14 @@ const (
 	BasenameMapped Code = "P2G7564"
 	// TimeModuleMapped: the Time:: modules map to the time package.
 	TimeModuleMapped Code = "P2G7565"
+	// FileSpecMapped: File::Spec's class methods map to path/filepath.
+	FileSpecMapped Code = "P2G7566"
+	// CwdMapped: Cwd maps to os.Getwd and filepath.Abs.
+	CwdMapped Code = "P2G7567"
+	// AbsPathMissing: abs_path of a missing path has no undef to return.
+	AbsPathMissing Code = "P2G7568"
+	// DumperFormat: a structure dump comes out as Go syntax, not Perl syntax.
+	DumperFormat Code = "P2G7569"
 	// Base64Wrapping: base64 line wrapping differs.
 	Base64Wrapping Code = "P2G7570"
 	// YAMLDependency: YAML needs a third-party package.
@@ -2003,6 +2011,34 @@ var catalogue = map[Code]Entry{
 		Short:    "the Time modules map to time",
 		Advice:   "write `2 * time.Second` rather than a bare `2`, which the compiler insists on",
 		Concepts: []string{"explicit-conversions-no-coercion"},
+	},
+	FileSpecMapped: {
+		Severity: report.Note,
+		Message:  "`File::Spec`'s class methods are plain functions in `path/filepath`",
+		Short:    "File::Spec maps to path/filepath",
+		Advice:   "`catfile` and `catdir` are both `filepath.Join`, which cleans the result as it builds it",
+		Concepts: []string{"filepath-and-paths"},
+	},
+	CwdMapped: {
+		Severity: report.Note,
+		Message:  "`getcwd` is `os.Getwd` and `abs_path` is `filepath.Abs` followed by `filepath.EvalSymlinks`",
+		Short:    "Cwd maps to os and path/filepath",
+		Advice:   "handle the error os.Getwd returns: the directory a process is in can be deleted while it runs",
+		Concepts: []string{"filepath-and-paths", "errors-are-values"},
+	},
+	DumperFormat: {
+		Severity: report.Warn,
+		Message:  "a structure dump comes out as Go syntax from `%#v`, not as source that can be read back",
+		Short:    "the dump is Go syntax, not Perl syntax",
+		Advice:   "use `encoding/json` where something else has to parse the result",
+		Concepts: []string{"fmt-and-verbs", "encoding-json"},
+	},
+	AbsPathMissing: {
+		Severity: report.Warn,
+		Message:  "`abs_path` of a path that is not there returns undef, and a Go string has no undef",
+		Short:    "a missing path resolves to the empty string",
+		Advice:   "compare the result against \"\", or call `os.Stat` first and handle the error",
+		Concepts: []string{"nil-vs-undef", "filepath-and-paths"},
 	},
 	Base64Wrapping: {
 		Severity:  report.Note,

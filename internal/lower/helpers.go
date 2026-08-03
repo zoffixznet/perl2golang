@@ -61,6 +61,17 @@ const (
 	hStrList       = "strList"      // []T -> []string, for a dynamic list of keys
 	hFloatList     = "floatList"    // []T -> []float64, when the elements have to carry fractions
 
+	hDumpValues = "dumpValues" // a structure rendered as Go source
+
+	// Paths.
+	hSplitPath     = "splitPath"     // volume, directory and final component
+	hPathParts     = "pathParts"     // a path broken into its components
+	hRelPath       = "relPath"       // one path expressed relative to another
+	hAbsPath       = "absPath"       // absolute, with symlinks followed
+	hAbsFrom       = "absFrom"       // absolute, resolved against a base
+	hWorkingDir    = "workingDir"    // the process's current directory
+	hParseFilename = "parseFilename" // name, directory and matching suffix
+
 	// The stand-ins for a refusal. They keep a partly converted program
 	// runnable: the expression form yields the zero value of the type the
 	// position wants and the statement form yields nothing at all, and both

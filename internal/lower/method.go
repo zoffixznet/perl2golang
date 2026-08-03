@@ -690,6 +690,23 @@ func (l *Lowerer) classNamed(e ast.Expr) (*Class, bool) {
 	return nil, false
 }
 
+// barewordInvocant reads a class name written as a bare word before the
+// arrow. The parser hands one on as a file handle or as a call with no
+// arguments, because nothing at that point says which it is.
+func barewordInvocant(e ast.Expr) (string, bool) {
+	switch n := e.(type) {
+	case *ast.FileHandle:
+		return n.Name, true
+	case *ast.Call:
+		if len(n.Args) == 0 && !n.Paren {
+			return n.Name, true
+		}
+	case *ast.StrLit:
+		return n.Value, true
+	}
+	return "", false
+}
+
 // methodCall lowers $obj->method(...) and Class->method(...).
 func (l *Lowerer) methodCall(n *ast.MethodCall) ir.Expr {
 	if n.Dynamic != nil {
@@ -719,6 +736,12 @@ func (l *Lowerer) methodCall(n *ast.MethodCall) ir.Expr {
 	// Class->method: the invocant is a name, not an object.
 	if c, ok := l.classNamed(n.Invocant); ok {
 		return l.classDispatch(n, c, method)
+	}
+
+	if name, ok := barewordInvocant(n.Invocant); ok {
+		if x, done := l.coreClassCall(n, name, method); done {
+			return x
+		}
 	}
 
 	if bw, ok := n.Invocant.(*ast.FileHandle); ok {

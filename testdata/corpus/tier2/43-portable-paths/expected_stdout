@@ -1,0 +1,22 @@
+-- assembling --
+catfile:  var/log/app.log
+catdir:   var/log
+catfile(@parts): etc/nginx/nginx.conf
+-- taking apart --
+splitpath: dirs=var/log/ file=app.log
+splitdir:  var|log|app.log
+canonpath: var/log/app.log
+absolute?  yes no
+curdir=. updir=..
+-- relative and absolute --
+cwd is absolute: yes
+rel2abs is absolute: yes
+and back again:      files/notes.txt
+rel2abs with a base: data/notes.txt
+abs2rel up a level:  ../notes.txt
+-- names and suffixes --
+reports/2023-q4.csv    base=2023-q4.csv    dir=reports    stripped=2023-q4
+archive.tar.gz         base=archive.tar.gz dir=.          stripped=archive.tar
+notes                  base=notes          dir=.          stripped=notes
+logs/                  base=logs           dir=.          stripped=logs
+fileparse: name=access dir=logs/ suffix=.log.1

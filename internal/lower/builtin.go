@@ -1,6 +1,7 @@
 package lower
 
 import (
+	"strconv"
 	"strings"
 
 	"perl2golang/internal/ir"
@@ -336,6 +337,19 @@ func (l *Lowerer) builtin(n *ast.Call) ir.Expr {
 		return l.posix(n)
 	case "basename", "dirname":
 		return l.pathCall(n)
+	case "fileparse":
+		return l.fileparseCall(n, l.argStr(n, 0), false)
+	case "Dumper":
+		return l.dumperCall(n)
+	case "getcwd", "cwd", "fastcwd", "fastgetcwd", "abs_path", "realpath", "fast_abs_path":
+		return l.cwdCall(n)
+	case "catfile", "catdir", "canonpath", "file_name_is_absolute", "splitpath",
+		"splitdir", "rel2abs", "abs2rel", "curdir", "updir", "rootdir", "tmpdir", "devnull":
+		// File::Spec::Functions exports the class methods as plain
+		// functions under the same names.
+		if x, ok := l.fileSpecCall(n, n.Name, n.Args); ok {
+			return x
+		}
 	}
 	return nil
 }
@@ -1337,8 +1351,42 @@ func (l *Lowerer) pathCall(n *ast.Call) ir.Expr {
 	if n.Name == "dirname" {
 		fn = "Dir"
 	}
-	out := call("path/filepath", "filepath", fn, ir.TString, l.argStr(n, 0))
+	// basename takes a list of suffixes to strip, and filepath.Base has no
+	// room for them: dropping them would compile and quietly keep the
+	// extension. The name is the first of the three parts of the split.
+	if fn == "Base" && argCount(n) > 1 {
+		// Clean first, because basename ignores trailing separators and the
+		// split that follows would keep them.
+		clean := call("path/filepath", "filepath", "Clean", ir.TString, l.argStr(n, 0))
+		out := index(l.fileparseCall(n, clean, true), ir.IntLit("0"), ir.TString)
+		l.note(out, "filepath.Base has no notion of a suffix to strip, so the name "+
+			"and the extension are separated first and only the name is kept. The "+
+			"suffixes are quoted because basename takes them literally, where the "+
+			"three-way split takes them as patterns.",
+			"filepath-and-paths")
+		return out
+	}
+	arg := l.argStr(n, 0)
+	// dirname drops trailing separators before it looks for the parent, so
+	// `dirname("logs/")` is "." and not "logs". filepath.Dir does not, and
+	// filepath.Clean is what puts the two back in step. A literal that
+	// plainly has no trailing separator needs neither.
+	if fn == "Dir" && !endsWithoutSeparator(arg) {
+		arg = call("path/filepath", "filepath", "Clean", ir.TString, arg)
+	}
+	out := call("path/filepath", "filepath", fn, ir.TString, arg)
 	l.note(out, "path/filepath works on the running system's separator; the path "+
 		"package is the same functions for slash-separated paths such as URLs.")
 	return out
+}
+
+// endsWithoutSeparator reports whether an expression is written out in the
+// source and plainly does not end in a path separator.
+func endsWithoutSeparator(x ir.Expr) bool {
+	lit, ok := x.(*ir.Lit)
+	if !ok || lit.Kind != ir.LitString {
+		return false
+	}
+	s, err := strconv.Unquote(lit.Value)
+	return err == nil && s != "" && !strings.HasSuffix(s, "/") && !strings.HasSuffix(s, `\`)
 }

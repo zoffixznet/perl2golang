@@ -117,6 +117,45 @@ var notes = map[string]string{
 		"strings.ContainsAny only reports whether any of them appear, so " +
 		"neither answers this without a loop around it.",
 
+	"dumpValues": "%#v writes Go syntax, with the types spelled out and map " +
+		"keys in sorted order, which is why two dumps of equal maps compare " +
+		"equal. Nothing reads that syntax back, so a dump used as a wire " +
+		"format wants encoding/json instead.",
+
+	"splitPath": "filepath.Split returns the directory and the final " +
+		"component and stops there, because a volume is a Windows idea that " +
+		"filepath.VolumeName answers separately. Keeping all three in one " +
+		"result is what makes the three-way split portable.",
+
+	"pathParts": "strings.Split on the separator keeps the empty components " +
+		"that filepath.Clean would remove, which is what makes a leading " +
+		"separator visible as an empty first element rather than vanishing.",
+
+	"relPath": "filepath.Rel reports an error rather than an empty string " +
+		"when no relative path exists, which happens when the two paths sit " +
+		"on different roots or only one of them is absolute. Falling back to " +
+		"the target keeps a printable answer in that case.",
+
+	"absPath": "filepath.Abs is purely textual and succeeds for a path that " +
+		"is not there; filepath.EvalSymlinks touches the disk and is what " +
+		"makes a missing path detectable. Doing both, in that order, is what " +
+		"resolves a relative path through symlinks.",
+
+	"workingDir": "os.Getwd returns an error, because the directory a " +
+		"process is in can be removed while it runs. Collapsing that to \"\" " +
+		"loses the reason, so anything that must act on it should call " +
+		"os.Getwd directly.",
+
+	"absFrom": "filepath.Abs joins a relative path onto the working " +
+		"directory and cleans the result, and it never touches the disk, so " +
+		"it answers for a path that is not there. Following symbolic links " +
+		"is a separate step, and a separate decision.",
+
+	"parseFilename": "filepath.Ext takes everything after the last dot and " +
+		"has no notion of a list of acceptable suffixes, so \"access.log.1\" " +
+		"gives \".1\". Matching a pattern against the end of the name is how " +
+		"you say which extension you meant.",
+
 	"dirNames": "Reading a directory hands back entries rather than names, " +
 		"and it never includes \".\" or \"..\", so a filter written for those " +
 		"two silently does nothing. The order is sorted, which the system call " +

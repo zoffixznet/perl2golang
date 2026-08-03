@@ -1,0 +1,10 @@
+root is a directory: yes
+directories created: 3
+the deepest one exists: yes
+created on a second pass: 0
+objects: one.o three.o two.o
+the temporary file has a .log suffix: yes
+and it is inside the root: yes
+entries removed: 6
+the build tree is gone: yes
+the root survives: yes
