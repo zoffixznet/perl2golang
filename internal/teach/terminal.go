@@ -88,9 +88,16 @@ func (c *Concept) Terminal() string {
 			write(marker + WrapAt(rest, terminalWidth-2-len(marker)))
 			continue
 		}
-		if strings.HasPrefix(line, ">") || strings.HasPrefix(line, "|") {
+		if strings.HasPrefix(line, ">") {
 			flush()
 			write(line)
+			continue
+		}
+		// A table's columns only line up if the row is left alone, so it is
+		// indented like a code block rather than folded like prose.
+		if strings.HasPrefix(line, "|") {
+			flush()
+			write("  " + line)
 			continue
 		}
 		para = append(para, strings.TrimSpace(line))

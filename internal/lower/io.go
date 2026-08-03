@@ -423,6 +423,43 @@ func (l *Lowerer) handleBinding(e ast.Expr) *Binding {
 // whole handle.
 func (l *Lowerer) readlineExpr(n *ast.Readline) ir.Expr {
 	src := l.readSource(n)
+
+	// What a read stops at is whatever $/ was last set to. Perl carries that
+	// in a global the read consults; here it is known already and becomes part
+	// of the call, which is how Go says it.
+	switch l.seps.rec {
+	case sepSlurp:
+		out := l.helperCall(hReadAll, ir.TString, src)
+		l.note(out, "With $/ set to undef a read takes the whole handle in one piece. "+
+			"Go asks for that directly with io.ReadAll, and there is no mode left set "+
+			"afterwards for the next read to trip over.",
+			"io-reader-writer")
+		l.approximate(n, "P2G6012", "<> with $/ undefined",
+			"the whole handle is read into memory at once",
+			"With $/ undefined a read consumes everything the handle has. The "+
+				"generated code does the same with io.ReadAll, so the entire input is in "+
+				"memory at once.",
+			"For an input that may not fit in memory, read a line at a time with "+
+				"bufio.Scanner and keep only what you need.",
+			"io-reader-writer", "bufio-scanner-limit")
+		return out
+	case sepPara, sepCustom:
+		sep := l.seps.text
+		out := l.helperCall(hReadRecords, ir.SliceOf(ir.TString), src, ir.Str(quote(sep)))
+		if l.seps.rec == sepPara {
+			l.note(out, "Paragraph mode reads up to a run of blank lines. Go has no "+
+				"reading mode, so the input is read and split, which says the same thing "+
+				"in one place rather than in a global set somewhere earlier.",
+				"io-reader-writer")
+		} else {
+			l.note(out, "$/ set to text makes a read stop there rather than at a newline. "+
+				"Go names the separator at the point of use, so it appears in this call "+
+				"and nowhere else.",
+				"io-reader-writer")
+		}
+		return out
+	}
+
 	out := l.helperCall(hReadLines, ir.SliceOf(ir.TString), src)
 	l.note(out, "In list context <$fh> reads the whole handle into a list of lines. "+
 		"Go has os.ReadFile for a whole file and bufio.Scanner for a line at a time; "+

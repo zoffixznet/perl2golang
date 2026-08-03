@@ -257,6 +257,7 @@ func (l *Lowerer) blockValue(block []ast.Stmt) ([]ir.Stmt, ir.Expr) {
 	}
 
 	savedPre := l.pre
+	savedSeps := l.seps
 	l.pre = nil
 	stmts := l.stmts(lead)
 	var value ir.Expr
@@ -265,6 +266,9 @@ func (l *Lowerer) blockValue(block []ast.Stmt) ([]ir.Stmt, ir.Expr) {
 	}
 	stmts = append(stmts, l.takePre()...)
 	l.pre = savedPre
+	// A separator localised inside the block goes back to what it was on the
+	// way out, exactly as `local` does.
+	l.seps = savedSeps
 	return stmts, value
 }
 

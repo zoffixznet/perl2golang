@@ -201,6 +201,21 @@ var notes = map[string]string{
 		"changes only the first match, so the first match is expanded by hand " +
 		"and the rest of the string is copied through untouched.",
 
+	"readAll": "Reading a whole handle in one piece is one call here, and it " +
+		"leaves nothing set behind it. The mode this replaces was a global, so " +
+		"forgetting to put it back changed how a later read behaved somewhere " +
+		"else in the program.",
+
+	"readRecords": "Splitting a whole input on a separator is the same work a " +
+		"record-separated read did, said in one place rather than by a global " +
+		"the read consulted. Each record keeps the separator that ended it, " +
+		"which is what the original did too.",
+
+	"paragraphs": "Paragraph mode is not simply splitting on a blank line: " +
+		"leading blank lines are skipped, a run of them counts once, and each " +
+		"paragraph keeps a single trailing blank line. Splitting on \"\\n\\n\" " +
+		"alone gets all three of those wrong.",
+
 	"readLines": "Reading a handle in list context yields every line at once, " +
 		"newlines included. bufio.Scanner strips the newline and reads one line " +
 		"at a time, so neither half of that matches without help. Prefer the " +

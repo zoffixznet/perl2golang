@@ -1,0 +1,10 @@
+default: 2 line(s), first is sep = ::
+slurped: 24 bytes, 2 newline(s)
+paragraphs: 3
+  [0] first paragraph line one | first paragraph line two
+  [1] second paragraph
+  [2] third paragraph
+literal sep: alpha / beta / gamma / delta
+
+configured sep (::): 4 record(s)
+restored: 8 line(s)

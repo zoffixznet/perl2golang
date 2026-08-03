@@ -38,6 +38,8 @@ const (
 	hSortedKeys    = "sortedKeys"
 	hReplaceFirst  = "replaceFirst" // s/// without the /g modifier
 	hReadLines     = "readLines"    // reading a whole handle as a list of lines
+	hReadAll       = "readAll"      // reading a whole handle as one string
+	hReadRecords   = "readRecords"  // reading a whole handle split on a separator
 	hRefKind       = "refKind"      // Perl ref(), answered from the runtime type
 	hIsDir         = "isDir"        // -d
 	hIsFile        = "isFile"       // -f

@@ -1,0 +1,12 @@
+config: retries=3,timeout=60
+n=5 bucket=tiny
+n=50 bucket=medium
+n=500 bucket=huge
+evens: 2 4 6 8 10
+firsts: alpha beta gamma
+counts: alpha=3 beta=2 gamma=1
+still here
+512 B
+2.0 KB
+1024.0 KB
+inner was 42

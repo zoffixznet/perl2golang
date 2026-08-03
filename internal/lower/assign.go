@@ -715,6 +715,12 @@ func (l *Lowerer) assignToVar(v *ast.Var, n *ast.Assign) []ir.Stmt {
 				"the program does not own, there is no equivalent at all.",
 			"implicit-interfaces", "methods-and-receivers")}
 	}
+	// A separator variable has no Go variable behind it: what it says is
+	// written into the calls it governs, so setting it changes what the
+	// converter emits from here on rather than producing a statement.
+	if sts, ok := l.separatorAssign(v, n.RHS, n, false); ok {
+		return sts
+	}
 	// One of Perl's own variables is not an ordinary name and does not get an
 	// ordinary binding: whatever it maps onto is the assignment target.
 	if target := l.specialVar(v); target != nil {

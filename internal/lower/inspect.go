@@ -190,6 +190,13 @@ func (l *Lowerer) localStmts(targets []ast.Expr, value ast.Expr, n ast.Node) []i
 		return out
 	}
 
+	// The separator variables have no Go variable behind them at all: what
+	// they say is written into the calls they govern, so localising one is a
+	// change of state in the converter rather than code in the program.
+	if sts, ok := l.separatorAssign(targets[0], value, n, true); ok {
+		return sts
+	}
+
 	target := l.expr(targets[0])
 	if !assignableTarget(target) {
 		return []ir.Stmt{l.todoStmt(n, "P2G2001", "local",

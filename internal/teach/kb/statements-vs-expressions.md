@@ -1,0 +1,113 @@
+---
+id: statements-vs-expressions
+title: Go separates statements from expressions, and Perl does not
+tags: [control-flow, expressions, idiom]
+perl_triggers: [do BLOCK, "do { }", if as expression, statement modifier, block value]
+severity: info
+prerequisites: [static-types-and-zero-values, var-vs-short-declaration]
+---
+
+In Perl almost everything is an expression. A block has a value, `if` has a value, an assignment has a value, and `do { ... }` exists precisely so you can put a block where a term belongs. Go draws the line the other way round and keeps it hard: `if`, `for` and `switch` are statements, they produce nothing, and there is no `do` block to borrow a value from. This is not a missing feature. It is the reason a Go function reads top to bottom with no work hidden inside a condition, and once you stop looking for the expression form the replacement is shorter than you expect.
+
+## The Perl you know
+
+```perl
+# a block as a term: run some setup, hand back the last value
+my $text = do {
+    open my $fh, '<', $file or die "open $file: $!\n";
+    local $/;
+    <$fh>;
+};
+
+# a conditional as a term
+my $bucket = do {
+    if    ($n < 10)  { 'tiny' }
+    elsif ($n < 100) { 'medium' }
+    else             { 'huge' }
+};
+```
+
+Both of these are one statement in Perl. The block is evaluated, and its value is whatever its last evaluated statement produced, which is why neither has a `return` in it.
+
+## The Go you write
+
+There are exactly two shapes, and between them they cover every `do` block you will meet.
+
+**Setup, then the value.** The statements come out of the block and stand where the block was; the final expression is what gets assigned. Nothing wraps them.
+
+**A conditional value.** Declare the variable first, then assign it on every path. The declaration states the type once, and the compiler makes sure every path produces one.
+
+Compiled and run as shown:
+
+```go
+package main
+
+import (
+	"fmt"
+	"io"
+	"strings"
+)
+
+func main() {
+	threshold := 42
+
+	// A conditional value: declared once, assigned on every path.
+	var bucket string
+	switch {
+	case threshold < 10:
+		bucket = "tiny"
+	case threshold < 100:
+		bucket = "medium"
+	default:
+		bucket = "huge"
+	}
+	fmt.Println(bucket)
+
+	// Setup, then the value the setup produced.
+	b, err := io.ReadAll(strings.NewReader("one\ntwo\n"))
+	if err != nil {
+		fmt.Println("read failed:", err)
+		return
+	}
+	text := string(b)
+	fmt.Printf("%d bytes, %d lines\n", len(text), strings.Count(text, "\n"))
+}
+```
+
+```
+medium
+8 bytes, 2 lines
+```
+
+A `switch` with no subject and boolean cases is the Go spelling of an `if`/`elsif` chain, and it is what a Go developer reaches for once there are three arms. Two arms stay an `if`/`else`.
+
+Reaching for the expression form directly does not compile, and the error is a parse error rather than a type error, which tells you how deep the rule goes:
+
+```go-invalid
+package main
+
+import "fmt"
+
+func main() {
+	x := if true { 1 } else { 2 }
+	fmt.Println(x)
+}
+```
+
+```
+./sample.go:6:7: syntax error: unexpected keyword if, expected expression
+```
+
+## The mismatch
+
+Perl's `do` block and Go's statements differ in three ways worth holding on to.
+
+**Scope.** Perl's block is a scope, so a `my` inside it disappears at the closing brace. When the statements are lifted out, those variables live on in the surrounding function. That is usually what you want, and where it is not, Go has a bare `{ ... }` block that scopes exactly the same way.
+
+**The value of a conditional with no `else`.** Perl hands back `undef` on the path that matched nothing. Go has no `undef`, so the declared variable holds its zero value on that path, and the empty string is not distinguishable from an empty string that was assigned. If the difference matters, declare a pointer and let `nil` mean absent, as `nil-vs-undef` describes.
+
+**The wrapper you are tempted to write.** Go does have an expression that runs a block: an immediately-called function literal, `func() string { ... }()`. It works, it is legal, and it is almost always the wrong choice in converted code, because it puts a function boundary in the middle of a line for no reason and stops `return` inside it meaning what a reader expects. Use it only where the block genuinely must not run yet, for instance behind a `sync.Once` or as the argument to `defer`.
+
+One habit follows from all of this. In Perl, a value's setup often hides inside the expression that consumes it; in Go, the setup gets its own lines and the value gets a name. The name is not clutter. It is the thing the next reader searches for.
+
+Further reading: https://go.dev/ref/spec#Statements

@@ -59,9 +59,16 @@ func (l *Lowerer) toStr(x ir.Expr, n ast.Node) ir.Expr {
 			"which prints as true or false.")
 		return out
 	case t.Kind == ir.Slice:
-		out := l.helperCall(hJoinList, ir.TString, x, ir.Str(`" "`))
-		l.note(out, "Interpolating an array into a string joins its elements with a "+
-			"space. Go has no interpolation, so the join is written out.")
+		sep := l.seps.listSep()
+		out := l.helperCall(hJoinList, ir.TString, x, ir.Str(quote(sep)))
+		if sep == " " {
+			l.note(out, "Interpolating an array into a string joins its elements with a "+
+				"space. Go has no interpolation, so the join is written out.")
+		} else {
+			l.note(out, "Interpolating an array into a string joins its elements with "+
+				"whatever $\" holds. Go has neither interpolation nor a global anyone can "+
+				"reach in and change, so the separator appears in the call.")
+		}
 		return out
 	}
 	return l.helperCall(hToText, ir.TString, x)

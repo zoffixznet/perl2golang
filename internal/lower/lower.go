@@ -190,6 +190,10 @@ type Lowerer struct {
 	// errVar names the error variable in scope, so $! resolves to the error
 	// the failing call actually returned.
 	errVar string
+	// seps holds what Perl's separator variables were last set to. Go has no
+	// global of that kind, so their effect is folded into the calls they
+	// govern while the file is being converted rather than while it runs.
+	seps separators
 	// curStmt is the statement being lowered, used to place a diagnostic
 	// whose own node has no usable position.
 	curStmt ast.Node
@@ -264,6 +268,7 @@ func Lower(res parser.Result, src []byte, opts Options) *Result {
 		arrowCalls:  map[string]bool{},
 		qualCalls:   map[string]bool{},
 		curPkg:      "main",
+		seps:        defaultSeparators(),
 		decls:       map[ast.Node]*Binding{},
 		globalSeen:  map[string]*Binding{},
 		helpers:     map[string]bool{},
@@ -313,6 +318,7 @@ func Lower(res parser.Result, src []byte, opts Options) *Result {
 		l.pass = 1
 		l.scope = newScope(nil)
 		l.curPkg = "main"
+		l.seps = defaultSeparators()
 		// A round sees every return the file has, so what the previous round
 		// concluded is stale rather than extra evidence. Keeping it would
 		// leave a signature promising the type a variable had before the
@@ -331,6 +337,7 @@ func Lower(res parser.Result, src []byte, opts Options) *Result {
 	// Pass 2 builds the real tree.
 	l.pass = 2
 	l.scope = newScope(nil)
+	l.seps = defaultSeparators()
 	l.tmpSeq = 0
 	l.tmpNames = newNameSet()
 	for _, b := range l.decls {

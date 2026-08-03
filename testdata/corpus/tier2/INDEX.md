@@ -1,6 +1,6 @@
 # Tier 2 corpus - script-shaped Perl programs
 
-35 entries. Each is a self-contained, realistic Perl script of the kind a
+38 entries. Each is a self-contained, realistic Perl script of the kind a
 sysadmin or data wrangler actually writes, not a snippet.
 
 ## Layout of an entry
@@ -82,6 +82,9 @@ Two entries exit non-zero on purpose: **27** (65) and **32** (1). The other 33 e
 | 33 | `33-list-util-toolbox` | Load-average table processed with the List::Util toolbox | `sum`/`sum0` (undef vs 0), `max`/`min`/`maxstr`/`minstr`, `first`, `reduce` (numeric, string and **hashref accumulator**), `any`/`all`/`none`, `uniq` vs `uniqnum`, `pairs` |
 | 34 | `34-scalar-util-and-posix` | Type interrogation over 15 values plus fixed-timestamp date formatting | `blessed`, **`reftype` vs `ref`**, `looks_like_number` edge cases, inline `package`/`@ISA`, `floor`/`ceil`/`int`, banker's rounding, `fmod` vs `%`, `strftime` on a pinned UTC epoch |
 | 35 | `35-paths-and-dumper` | Path helpers and structure dumping, kept location-independent | `basename`/`dirname`/`fileparse` with a suffix regex, `File::Spec` cat/split, `getcwd`/`abs_path`/`abs2rel`, `Data::Dumper` with `Sortkeys`/`Indent`/`Terse`, `local` on package globals, Dumper-as-deep-compare |
+| 36 | `36-class-with-accessors` | The shape most scripts write a class in: constructor, hand-written accessors, chained mutators | `bless` on a hashref, named constructor arguments, accessors, method chaining, a class held in another class, a file-scope `my` every instance shares |
+| 37 | `37-getopt-options-hash` | An option block naming every option and its type, with the leftovers in `@ARGV` | `GetOptions` into a hash of defaults, `=i` `=s` `=f` `!` `+` `=s@` `=s%`, aliases, `or die` usage message |
+| 38 | `38-do-block-values` | `do BLOCK` as a term, in every shape a script uses it | setup-then-value, `if`/`elsif`/`else` as a term, a block whose value is a list, `EXPR or do {}`, `EXPR and do {}`, `return do {}`, nested blocks |
 
 ## Coverage map
 
@@ -96,5 +99,7 @@ Two entries exit non-zero on purpose: **27** (65) and **32** (1). The other 33 e
 - **Text-processing shapes** - 06, 28, 29, 30 (and the filter in 23)
 - **Error handling** - 31, 32; `die` as an assertion in 30
 - **Standard modules** - 33 (List::Util), 34 (Scalar::Util, POSIX),
-  35 (File::Basename, File::Spec, Cwd, Data::Dumper), 26 (Getopt::Long),
-  32 (Scalar::Util)
+  35 (File::Basename, File::Spec, Cwd, Data::Dumper), 26 and 37
+  (Getopt::Long), 32 (Scalar::Util)
+- **Object shapes** - 36
+- **Blocks as terms** - 38; the slurp form of it in 21

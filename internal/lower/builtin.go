@@ -274,6 +274,19 @@ func (l *Lowerer) builtin(n *ast.Call) ir.Expr {
 			"methods-and-receivers", "structs-and-embedding")
 	case "eval":
 		return l.evalCall(n)
+	case "do":
+		if n.Block != nil {
+			return l.doBlock(n)
+		}
+		return l.todoExpr(n, "P2G3541", "do FILE",
+			"running another file for its value is not implemented",
+			"`do FILE` reads a Perl file, compiles it, and evaluates it, all while "+
+				"the program runs. Go has no compiler at run time, so a second file "+
+				"can only take part by being compiled into the program.",
+			"Move the file's contents into this program, or, if it holds "+
+				"configuration rather than code, read it with encoding/json or a "+
+				"similar decoder.",
+			"packages-and-exported-names")
 	case "local":
 		// A bare `local X` in an expression position has already been handled
 		// as a statement; reaching here means it is being read for a value,
@@ -403,11 +416,21 @@ func (l *Lowerer) printCall(n *ast.Call, newline bool) []ir.Stmt {
 		args = []ast.Expr{&ast.Var{Sigil: '$', Name: "_"}}
 	}
 
+	// `$,` goes between print's arguments and `$\` goes after the last of
+	// them. Perl keeps both in globals that print consults; Go has no such
+	// state, so what they say is written into this call.
+	ofs, ors := l.seps.ofs, l.seps.ors
+	if newline {
+		// say appends a newline of its own and pays no attention to `$\`.
+		ors = ""
+	}
+
 	// One interpolated string is the overwhelmingly common case, and it maps
-	// straight onto Printf, which is what a Go developer writes.
-	if len(args) == 1 {
+	// straight onto Printf, which is what a Go developer writes. With one
+	// argument there is nothing for `$,` to go between.
+	if len(args) == 1 && ofs == "" {
 		if il, ok := args[0].(*ast.InterpLit); ok {
-			if st, done := l.printfFromInterp(il, dest, newline, n); done {
+			if st, done := l.printfFromInterp(il, dest, newline, ors, n); done {
 				return st
 			}
 		}
@@ -422,10 +445,16 @@ func (l *Lowerer) printCall(n *ast.Call, newline bool) []ir.Stmt {
 		if t := typeOrAny(x); t.Kind == ir.Float || t.Kind == ir.Bool || t.Kind == ir.Slice || t.Kind == ir.Any {
 			x = l.toStr(x, a)
 		}
+		if ofs != "" && len(parts) > 0 {
+			parts = append(parts, ir.Str(quote(ofs)))
+		}
 		parts = append(parts, x)
 	}
 	if newline {
 		parts = append(parts, ir.Str(`"\n"`))
+	}
+	if ors != "" {
+		parts = append(parts, ir.Str(quote(ors)))
 	}
 
 	fn := "Print"
@@ -446,7 +475,7 @@ func (l *Lowerer) printCall(n *ast.Call, newline bool) []ir.Stmt {
 
 // printfFromInterp turns `print "text $x\n"` into fmt.Printf, which keeps the
 // generated line looking like the original and reads better than concatenation.
-func (l *Lowerer) printfFromInterp(il *ast.InterpLit, dest ir.Expr, newline bool, at ast.Node) ([]ir.Stmt, bool) {
+func (l *Lowerer) printfFromInterp(il *ast.InterpLit, dest ir.Expr, newline bool, trailer string, at ast.Node) ([]ir.Stmt, bool) {
 	var pieces []interpPiece
 	for _, p := range il.Parts {
 		if s, ok := p.(*ast.StrLit); ok {
@@ -463,6 +492,9 @@ func (l *Lowerer) printfFromInterp(il *ast.InterpLit, dest ir.Expr, newline bool
 	if newline {
 		format += "\n"
 	}
+	// `$\` is written after everything print wrote, so it joins the format
+	// rather than becoming a global the call has to consult.
+	format += trailer
 
 	fn := "Printf"
 	var callArgs []ir.Expr

@@ -208,6 +208,11 @@ const (
 	GotoLabel Code = "P2G3520"
 	// ForPostList: a C-style for header carries several post expressions.
 	ForPostList Code = "P2G3530"
+	// DoBlockNoValue: a `do BLOCK` used as an expression ends in a statement
+	// that produces no value.
+	DoBlockNoValue Code = "P2G3540"
+	// DoFile: `do FILE` compiles and runs another Perl file at run time.
+	DoFile Code = "P2G3541"
 	// ConstructNoRule: a construct has no lowering rule in the converter.
 	ConstructNoRule Code = "P2G3599"
 )
@@ -326,6 +331,12 @@ const (
 	OutputFormatVars Code = "P2G6016"
 	// LastSystemError: `$!` holds the error of the last failed system call.
 	LastSystemError Code = "P2G6017"
+	// SeparatorNotStatic: a separator variable is set to a value the
+	// converter cannot read while converting.
+	SeparatorNotStatic Code = "P2G6018"
+	// SeparatorFolded: a separator variable's value was written into the
+	// calls it governs instead of into a variable.
+	SeparatorFolded Code = "P2G6019"
 	// AutoflushNoOp: `$| = 1` has nothing to disable in the emitted code.
 	AutoflushNoOp Code = "P2G6020"
 	// FileTest: a `-f` style file test became os.Stat.
@@ -955,6 +966,22 @@ var catalogue = map[Code]Entry{
 		Cost:      "a `next` in the body skips the moved expressions, where Perl ran them",
 		Converted: "the extra post expressions were moved to the end of the loop body",
 	},
+	DoBlockNoValue: {
+		Severity:  report.Refuse,
+		Message:   "a `do BLOCK` used as an expression ends in a statement that has no value to hand back",
+		Short:     "the block hands nothing back",
+		Advice:    "assign the value to a variable inside the block and read that variable afterwards",
+		Converted: "the block's statements converted and stand above the stub; only its value is missing",
+		Concepts:  []string{"statements-vs-expressions"},
+	},
+	DoFile: {
+		Severity:  report.Refuse,
+		Message:   "`do FILE` compiles and evaluates another Perl file while the program runs",
+		Short:     "running another file has no Go equivalent",
+		Advice:    "compile the second file into the program, or read it as data if it holds configuration",
+		Converted: "the call is not converted; the stub names the file it would have run",
+		Concepts:  []string{"packages-and-exported-names"},
+	},
 	ConstructNoRule: {
 		Severity:  report.Refuse,
 		Message:   "the converter has no rule for this construct, and a guessed one would look right and run differently",
@@ -1462,6 +1489,24 @@ var catalogue = map[Code]Entry{
 		Advice:    "pass the separator to the call that needs it; `strings.Join` and `bufio.Writer` take one",
 		Converted: "the variable is not converted; the expression panics with the original Perl text",
 		Concepts:  []string{"io-reader-writer"},
+	},
+	SeparatorNotStatic: {
+		Severity:  report.Warn,
+		Message:   "`%s` is set to a value known only while the program runs, and it has to be known while converting",
+		Short:     "separator value is not known here",
+		Advice:    "pass the separator to the calls that use it; `strings.Join` and a read with a separator both take one",
+		Cost:      "the default separator stays in force in the generated code",
+		Converted: "the assignment produced no code and the separator was left alone",
+		Concepts:  []string{"small-stdlib-philosophy"},
+	},
+	SeparatorFolded: {
+		Severity:  report.Note,
+		Message:   "`%s` is a global other operations read, and its value went into the calls it governs",
+		Short:     "separator folded into its calls",
+		Advice:    "pass the separator as an argument where a called sub was meant to see the change",
+		Cost:      "the change reaches the calls in this block, not a sub called from inside it",
+		Converted: "the separator's effect is written into the reads and writes it applies to",
+		Concepts:  []string{"small-stdlib-philosophy", "io-reader-writer"},
 	},
 	LastSystemError: {
 		Severity:  report.Refuse,

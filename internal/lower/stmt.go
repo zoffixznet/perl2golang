@@ -30,11 +30,18 @@ func (l *Lowerer) stmts(list []ast.Stmt) []ir.Stmt {
 }
 
 // block lowers a statement list in its own lexical scope.
+//
+// Perl's separator variables are restored here too. `local $/` puts the old
+// value back when the block ends, and since what the separators say is folded
+// into the calls inside the block, the restore is a matter of the converter
+// forgetting it on the way out.
 func (l *Lowerer) block(list []ast.Stmt) *ir.Block {
 	saved := l.scope
+	savedSeps := l.seps
 	l.scope = newScope(saved)
 	b := l.markUnused(&ir.Block{Stmts: l.stmts(list)})
 	l.scope = saved
+	l.seps = savedSeps
 	return b
 }
 
@@ -277,6 +284,11 @@ func (l *Lowerer) exprStatement(e ast.Expr) []ir.Stmt {
 		if sts, ok := l.loopCtlCall(n); ok {
 			return sts
 		}
+		// `EXPR or do { ... }` runs the block for its effect, so there is no
+		// value to carry out of it and the statements stand as they are.
+		if n.Name == "do" && n.Block != nil {
+			return l.doBlockStmts(n)
+		}
 		return l.callStatement(n)
 
 	case *ast.Subst:
@@ -303,6 +315,12 @@ func (l *Lowerer) exprStatement(e ast.Expr) []ir.Stmt {
 
 // declarationOnly lowers `my $x;` and `my ($a, $b);` with no initialiser.
 func (l *Lowerer) declarationOnly(n *ast.My) []ir.Stmt {
+	// `local X;` with no value on the right is a localisation to undef, not a
+	// declaration. It is the shape `local $/;` takes, which is how a Perl
+	// program says "read everything".
+	if n.Keyword == "local" {
+		return l.localStmts(localTargets(n), nil, n)
+	}
 	var out []ir.Stmt
 	for _, v := range declaredVars(n) {
 		b := l.declare(v, KindLocal)

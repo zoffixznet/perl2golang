@@ -114,6 +114,93 @@ func main() {
 "no trailing newline"
 ```
 
+## Where a read stops
+
+`$/` decides where `<$fh>` stops, and it is a global: set it in one place and
+every read anywhere in the program behaves differently until something sets it
+back. Go has no such switch, so each of its four settings becomes a different
+call, named where the reading happens.
+
+| Perl | What it means | Go |
+|---|---|---|
+| `$/` unset (a newline) | one line at a time | `bufio.Scanner` with the default split |
+| `local $/;` (undef) | the whole handle at once | `io.ReadAll(r)`, or `os.ReadFile(path)` |
+| `local $/ = '';` | one paragraph at a time | a `bufio.SplitFunc` of your own |
+| `local $/ = '::';` | stop at that text | `strings.Split` over what was read |
+
+Compiled and run as shown:
+
+```go
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"io"
+	"strings"
+)
+
+// paragraphs is a bufio.SplitFunc that ends a token at a blank line.
+func paragraphs(data []byte, atEOF bool) (advance int, token []byte, err error) {
+	if i := strings.Index(string(data), "\n\n"); i >= 0 {
+		return i + 2, data[:i], nil
+	}
+	if atEOF && len(data) > 0 {
+		return len(data), data, nil
+	}
+	return 0, nil, nil
+}
+
+func main() {
+	const text = "one\ntwo\n\nthree\n\nfour\n"
+
+	// The default: one line at a time.
+	sc := bufio.NewScanner(strings.NewReader(text))
+	lines := 0
+	for sc.Scan() {
+		lines++
+	}
+	fmt.Println("lines:", lines)
+
+	// Slurp: one call, everything, nothing left set behind it.
+	all, err := io.ReadAll(strings.NewReader(text))
+	if err != nil {
+		fmt.Println("read failed:", err)
+		return
+	}
+	fmt.Println("bytes:", len(all))
+
+	// Paragraph mode: a split function, named where it is used.
+	sc = bufio.NewScanner(strings.NewReader(text))
+	sc.Split(paragraphs)
+	for sc.Scan() {
+		fmt.Printf("para %q\n", sc.Text())
+	}
+
+	// A separator of your own, when it is more than one byte.
+	for _, rec := range strings.Split("alpha::beta::gamma", "::") {
+		fmt.Printf("[%s]", rec)
+	}
+	fmt.Println()
+}
+```
+
+```
+lines: 6
+bytes: 21
+para "one\ntwo"
+para "three"
+para "four\n"
+[alpha][beta][gamma]
+```
+
+Two differences to watch. Perl keeps the separator on the end of each record,
+so `chomp` under `local $/ = '::'` removes `::` and not the newline; `Scan`
+and `strings.Split` both drop it. And Perl's paragraph mode skips leading
+blank lines and collapses a run of them into one, which a plain split on
+`"\n\n"` does not, so a faithful `SplitFunc` has a little more work to do
+than the one above.
+
 ## The mismatch
 
 The habits to port carefully. `chomp` disappears — `sc.Text()` never includes the line terminator and strips a trailing `\r` too, so Windows input needs no special handling; conversely `bufio.Reader.ReadString('\n')` *keeps* the delimiter and leaves the `\r` alone. `sc.Text()` allocates a fresh string per line while `sc.Bytes()` returns a slice into the scanner's own buffer that is invalid after the next `Scan` — a genuine aliasing bug if you append it to a slice you keep (`slice-aliasing-and-copy`); use `Text()` unless you have measured a reason not to. There is no `$.` line counter and no `$/` to reassign: count lines yourself, and change the record separator by supplying a `bufio.SplitFunc` (`ScanLines`, `ScanWords`, `ScanRunes`, `ScanBytes`, or your own). Slurping a whole file is `os.ReadFile(path)` in one call, and it returns `[]byte` — the honest form of `do { local $/; <$fh> }`, appropriate for the same "I know this is small" reasons. Reading standard input is `bufio.NewScanner(os.Stdin)`; there is no `<>` magic that opens the files named in `@ARGV`, so that idiom becomes an explicit loop over `os.Args[1:]` with `os.Open` per file. Finally, always pair the loop with `sc.Err()`: `Scan` returns false for both "clean end of input" and "something went wrong", and only `Err()` tells the two apart — it returns nil at a normal EOF, so the check costs three lines and buys you the failure mode Perl's `while (<$fh>)` never had to warn you about.
