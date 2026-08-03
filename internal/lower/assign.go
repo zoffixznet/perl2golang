@@ -862,10 +862,15 @@ func (l *Lowerer) assignToIndex(lhs *ast.Index, n *ast.Assign) []ir.Stmt {
 	if base == nil {
 		return nil
 	}
-	value := l.assignable(l.scalar(n.RHS), elem, n.RHS)
+	raw := l.scalar(n.RHS)
+	value := l.assignable(raw, elem, n.RHS)
 	if b := l.arrayBindingOf(lhs); b != nil {
 		b.Writes++
-		l.observeElem(b, typeOrAny(value))
+		l.observeElem(b, typeOrAny(raw))
+	} else if f, wrap, ok := l.fieldPlace(lhs.Base); ok {
+		l.observeField(f, wrap(ir.SliceOf(typeOrAny(raw))))
+	} else if b, wrap, ok := l.bindingPlace(lhs.Base, false); ok {
+		l.observe(b, wrap(ir.SliceOf(typeOrAny(raw))))
 	}
 	st := assign("=", []ir.Expr{index(base, idx, elem)}, []ir.Expr{value})
 	l.setProv(st, n)
@@ -916,19 +921,31 @@ func (l *Lowerer) assignToHash(lhs *ast.HashIndex, n *ast.Assign) []ir.Stmt {
 		l.setProv(st, n)
 		return append(out, st)
 	}
-	value := l.assignable(l.scalar(n.RHS), elem, n.RHS)
+	// The right side is lowered once. Lowering it twice would run whatever
+	// setup it needed twice as well, and its own type, before the coercion
+	// into the element type, is what the container learns from.
+	raw := l.scalar(n.RHS)
+	value := l.assignable(raw, elem, n.RHS)
 	if key == nil {
 		st := assign("=", []ir.Expr{m}, []ir.Expr{value})
 		l.setProv(st, n)
 		return append(out, st)
 	}
-	if b := l.hashBindingOf(lhs); b != nil {
-		b.Writes++
-		l.observeElem(b, typeOrAny(l.scalar(n.RHS)))
-	} else if f, wrap, ok := l.fieldPlace(lhs.Base); ok {
-		// The container is a struct field rather than a variable, however
-		// many levels of map and slice lie between the two.
-		l.observeField(f, wrap(ir.MapOf(typeOrAny(l.scalar(n.RHS)))))
+	switch b, wrap, ok := l.bindingPlace(lhs.Base, false); {
+	case l.hashBindingOf(lhs) != nil:
+		hb := l.hashBindingOf(lhs)
+		hb.Writes++
+		l.observeElem(hb, typeOrAny(raw))
+	default:
+		if f, fwrap, isField := l.fieldPlace(lhs.Base); isField {
+			// The container is a struct field rather than a variable, however
+			// many levels of map and slice lie between the two.
+			l.observeField(f, fwrap(ir.MapOf(typeOrAny(raw))))
+		} else if ok {
+			// A variable, with however many levels of map and slice between
+			// it and the element being written.
+			l.observe(b, wrap(ir.MapOf(typeOrAny(raw))))
+		}
 	}
 	st := assign("=", []ir.Expr{index(m, key, elem)}, []ir.Expr{value})
 	l.setProv(st, n)

@@ -309,6 +309,10 @@ const (
 	SpliceForm Code = "P2G5581"
 	// SortNamedComparator: `sort` names a sub that reads `$a` and `$b`.
 	SortNamedComparator Code = "P2G5590"
+	// SortRefComparator: `sort $cmp LIST` holds the comparator in a variable.
+	SortRefComparator Code = "P2G5592"
+	// SortRefUnresolved: `sort $cmp LIST` where the comparator did not resolve.
+	SortRefUnresolved Code = "P2G5593"
 	// SortBlockNoOrder: a `sort` block does not end in an ordering.
 	SortBlockNoOrder Code = "P2G5591"
 	// MapBlockNoValue: a `map` block does not end in an expression.
@@ -1425,6 +1429,23 @@ var catalogue = map[Code]Entry{
 		Short:     "named sort comparator reads globals",
 		Advice:    "make the comparator `func(a, b T) int` and pass it to `slices.SortFunc`",
 		Converted: "the sort is not converted; the call site panics with the original Perl text",
+		Concepts:  []string{"sort-slice"},
+	},
+	SortRefComparator: {
+		Severity:  report.Warn,
+		Message:   "a comparator held in a variable reads `$a` and `$b`, and a Go comparator takes them as arguments",
+		Short:     "the comparator is called through a wrapper",
+		Advice:    "rewrite the comparators as `func(a, b T) int` so each can be passed directly",
+		Cost:      "the two package variables stay, and the wrapper fills them in before each call",
+		Converted: "`slices.SortFunc` is given a wrapper that sets the two variables and calls the comparator",
+		Concepts:  []string{"sort-slice"},
+	},
+	SortRefUnresolved: {
+		Severity:  report.Refuse,
+		Message:   "the comparator this `sort` reads out of a variable did not resolve to something callable",
+		Short:     "the comparator did not resolve",
+		Advice:    "give every comparator the shape `func(a, b T) int` and pass one directly to `slices.SortFunc`",
+		Converted: "the list is copied and left in the order it already had",
 		Concepts:  []string{"sort-slice"},
 	},
 	SortBlockNoOrder: {

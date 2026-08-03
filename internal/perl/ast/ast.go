@@ -291,6 +291,8 @@ type Call struct {
 	Block []Stmt
 	// SortSub is a comparator sub name for `sort bynum @list`.
 	SortSub string
+	// SortRef is the scalar holding a comparator for `sort $cmp @list`.
+	SortRef *Var
 }
 
 // MethodCall is $obj->method(@args) or Class->method(@args).

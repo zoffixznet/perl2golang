@@ -65,6 +65,78 @@ func main() {
 true false
 ```
 
+## What the element type has to be
+
+The rule that makes `m[k] = append(m[k], v)` work is worth stating on its own,
+because it is half of a pair and the other half is a runtime panic. Reading a
+missing key gives the zero value of the element type. For a slice, that is nil,
+and `append` to a nil slice returns a new one, so the accumulation works with
+no check. For a map, the zero value is also nil, and writing to a nil map
+panics. Hash-of-arrays needs nothing; hash-of-hashes needs the inner map made
+first.
+
+The other thing Go asks that Perl does not is the element type itself, and it
+has to be one type for the whole map. `map[string][]string` and
+`map[string]map[string]int` are both perfectly ordinary; what is not ordinary,
+though it is where a mechanical translation lands, is `map[string]any`, which
+buys nothing and costs an assertion at every read.
+
+Compiled and run as shown:
+
+```go
+package main
+
+import (
+	"fmt"
+	"maps"
+	"slices"
+)
+
+func main() {
+	// A hash of arrays: one element type, decided here and checked everywhere.
+	byOwner := map[string][]string{}
+	for _, row := range [][2]string{{"ann", "disk"}, {"bob", "net"}, {"ann", "cpu"}} {
+		byOwner[row[0]] = append(byOwner[row[0]], row[1])
+	}
+	for _, k := range slices.Sorted(maps.Keys(byOwner)) {
+		fmt.Printf("%s: %v\n", k, byOwner[k])
+	}
+
+	// A hash of hashes needs the inner map made before anything goes in it.
+	counts := map[string]map[string]int{}
+	for _, pair := range [][2]string{{"web", "200"}, {"web", "404"}, {"web", "200"}} {
+		if _, ok := counts[pair[0]]; !ok {
+			counts[pair[0]] = map[string]int{}
+		}
+		counts[pair[0]][pair[1]]++
+	}
+	fmt.Println(counts["web"]["200"], counts["web"]["404"])
+
+	// The asymmetry in one line: append to a missing slice is fine,
+	// writing to a missing map is not.
+	var missing map[string]int
+	fmt.Println(len(missing), missing["anything"])
+}
+```
+
+```
+ann: [disk cpu]
+bob: [net]
+2 1
+0 0
+```
+
+Reading from a nil map is legal and gives the zero value, which is why the last
+line prints two zeros rather than crashing. Only writing panics. That
+asymmetry is worth memorising, because the failure arrives in production rather
+than at the first test.
+
+A note for anything hand-written after a conversion: what the element type
+should be is decided by what goes in, and the strongest evidence is usually the
+`push`. A hash whose values are only ever appended to holds lists of whatever
+was appended, and saying so at the declaration removes every assertion below
+it.
+
 ## The mismatch
 
 Why `m[k] = append(m[k], v)` works when `m[a][b] = v` panics (`nil-vs-undef`): the slice version *reads* `m[k]` (safe, yields nil), appends (nil-tolerant), and *assigns the result back to the top-level key* — every step is legal; the nested-map version tries to write through an inner nil map with no reassignment, which is the forbidden step. Corollary: the outer map itself must still be non-nil (`make` it — `nil-slices-vs-nil-maps`). Hash slices for *assignment* (`@h{qw(a b)} = (1,2)`) likewise become explicit loops or repeated assignments; there is no bulk syntax, and Go culture does not miss it. For nested structures, ask what the Perl was *for*: a two-level hash used as a set or counter keyed by two values is better as `map[hostPort]bool` — one allocation level, one lookup, comparable struct keys natively supported (any key type is fine if `==` works on it: strings, ints, arrays, pointer types, structs of comparable fields — but not slices, maps, or functions), and it replaces the old `$h{"$a$;$b"}` join-the-key hack exactly. Keep genuine nesting when the inner map is manipulated as a unit (handed out, iterated, deleted wholesale). One more absence: `values %h` for collecting slice contents has `maps.Values` (Go 1.23+, returns an iterator — `slices.Collect(maps.Values(m))` for a slice), again in random order.

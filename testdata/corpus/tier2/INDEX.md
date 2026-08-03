@@ -1,6 +1,6 @@
 # Tier 2 corpus - script-shaped Perl programs
 
-41 entries. Each is a self-contained, realistic Perl script of the kind a
+42 entries. Each is a self-contained, realistic Perl script of the kind a
 sysadmin or data wrangler actually writes, not a snippet.
 
 ## Layout of an entry
@@ -88,6 +88,7 @@ Two entries exit non-zero on purpose: **27** (65) and **32** (1). The other 33 e
 | 39 | `39-numeric-accumulators` | Totals built out of text fields, and every compound arithmetic operator | `+=` over split fields, `/=`, `*=`, `-=`, `%=`, `**=`, `.=` on text, `++` on a hash element |
 | 40 | `40-flattened-arguments` | Argument lists that flatten arrays into `@_`, in every mixture | one array, single values, a value in front of an array, two arrays, interleaved, a fixed parameter plus a tail, an empty array |
 | 41 | `41-list-surgery` | A work queue edited with splice, hash slices and each | `splice` remove/insert/replace/truncate, negative offset and length, splice through a hashref, `@h{qw(...)} = (...)`, `each`, lvalue `substr`, a ternary as an assignment target |
+| 42 | `42-nested-structures` | Hash of arrays, hash of hashes, arrays of records, and a comparator taken out of a hash | autovivified `push @{ $h{$k} }`, `$h{$a}{$b} = $v`, per-key totals, records returned from a sub, `sort $cmp @list`, `(my $copy = $orig) =~ s///`, `scalar @{ $ref }` |
 
 ## Coverage map
 
@@ -108,3 +109,4 @@ Two entries exit non-zero on purpose: **27** (65) and **32** (1). The other 33 e
 - **Blocks as terms** - 38; the slurp form of it in 21
 - **Arithmetic and argument typing** - 39, 40
 - **List and string surgery** - 41; the whole of `splice` in tier1 12
+- **Nested data and its types** - 42; also 06, 07, 08

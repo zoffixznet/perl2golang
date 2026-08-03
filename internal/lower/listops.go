@@ -14,6 +14,9 @@ func (l *Lowerer) sortCall(n *ast.Call) ir.Expr {
 	if n.SortSub != "" {
 		return l.sortByName(n)
 	}
+	if n.SortRef != nil {
+		return l.sortByRef(n)
+	}
 
 	// `sort keys %h` is common enough, and idiomatic enough in Go, to deserve
 	// its own shape.
@@ -136,6 +139,89 @@ func (l *Lowerer) sortByName(n *ast.Call) ir.Expr {
 		"why it could not simply be called; in Go they are its parameters, so it is "+
 		"a function value like any other.",
 		"sort-slice", "closures-and-loop-capture")
+	l.emit(st)
+	return target
+}
+
+// sortByRef lowers `sort $comparator @list`, where the comparator is held in a
+// variable rather than named.
+//
+// The comparator reads its two values out of the package globals $a and $b,
+// which is why it takes no arguments and why it cannot simply be handed to
+// slices.SortFunc. The generated code keeps those two variables and sets them
+// before each call, which is exactly what perl does; a Go comparator would
+// take its two values as parameters and need no globals at all.
+func (l *Lowerer) sortByRef(n *ast.Call) ir.Expr {
+	src := l.list(argList(n))
+	t := typeOrAny(src)
+	elem := elemOf(t)
+
+	cmp := l.expr(n.SortRef)
+	if cmp == nil {
+		return src
+	}
+	// A comparator whose own value did not resolve cannot be called for an
+	// ordering. The list is still produced, so the program runs and the rest
+	// of it can be read, and the report says the order was not applied.
+	if ct := typeOrAny(cmp); ct.Kind != ir.Func || len(ct.Results) == 0 {
+		out := call("slices", "slices", "Clone", t, src)
+		l.setProv(out, n)
+		todo := l.refuse(n, "P2G5593", "sort with a comparator held in a variable",
+			"the comparator's own type did not resolve",
+			"Perl's sort can take a comparator out of a variable, and that "+
+				"comparator reads its two values from the globals $a and $b. What this "+
+				"variable holds did not resolve to something the generated code can "+
+				"call for an ordering, so the list is copied and left in the order it "+
+				"was already in.",
+			"Give the comparators one shape, `func(a, b T) int`, and pass one of them "+
+				"directly to slices.SortFunc.",
+			"sort-slice")
+		ir.MetaOf(out).Todo = &todo
+		return out
+	}
+	left := l.lookup('$', "a", n.SortRef)
+	right := l.lookup('$', "b", n.SortRef)
+	l.observe(left, elem)
+	l.observe(right, elem)
+
+	name := l.tmp("sorted")
+	clone := assign(":=", []ir.Expr{ir.NewIdent(name, t)},
+		[]ir.Expr{call("slices", "slices", "Clone", t, src)})
+	l.setProv(clone, n)
+	l.emit(clone)
+	target := ir.NewIdent(name, t)
+
+	// The wrapper's parameters are the list's element type, so the call
+	// matches the slice being sorted; the two globals may be wider than that,
+	// so the values are converted on the way into them.
+	xn, yn := l.tmp("x"), l.tmp("y")
+	body := &ir.Block{Stmts: []ir.Stmt{
+		assign("=", []ir.Expr{l.identFor(left), l.identFor(right)},
+			[]ir.Expr{
+				l.assignable(ir.NewIdent(xn, elem), left.Type, nil),
+				l.assignable(ir.NewIdent(yn, elem), right.Type, nil),
+			}),
+		&ir.Return{Results: []ir.Expr{l.toInt(ir.CallOf(cmp, ir.TInt), n)}},
+	}}
+	fn := funcLit([]ir.Param{{Name: xn, Type: elem}, {Name: yn, Type: elem}},
+		[]*ir.Type{ir.TInt}, body)
+	st := exprStmt(call("slices", "slices", "SortFunc", ir.TVoid, target, fn))
+	l.setProv(st, n)
+	l.note(st, "A comparator held in a variable reads its two values out of the "+
+		"globals $a and $b rather than taking them as arguments, so it cannot be "+
+		"handed to slices.SortFunc directly. The wrapper sets those two variables "+
+		"and calls it, which is what perl was doing. A Go comparator takes its "+
+		"values as parameters and needs no globals at all.",
+		"sort-slice", "closures-and-loop-capture")
+	l.approximate(n, "P2G5592", "sort with a comparator held in a variable",
+		"the comparator is called through a wrapper that sets $a and $b",
+		"Perl's sort puts the two values being compared into the package globals "+
+			"$a and $b, so a comparator stored in a variable reads them from there. Go "+
+			"passes them as arguments, so the generated code keeps the two variables "+
+			"and fills them in before each call.",
+		"Rewrite the comparators as `func(a, b T) int`, which removes the globals "+
+			"and lets each one be passed directly.",
+		"sort-slice")
 	l.emit(st)
 	return target
 }

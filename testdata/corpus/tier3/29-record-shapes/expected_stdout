@@ -1,0 +1,5 @@
+reindex     45s   0.8 min retries=1 failed=0 tags=[quick]
+backup     120s   2.0 min retries=3 failed=1 tags=[nightly]
+vacuum     600s  10.0 min retries=0 failed=0 tags=[nightly]
+plan: owner=ops jobs=3 window=01:00-04:00
+first job's name: backup

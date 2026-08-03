@@ -867,7 +867,55 @@ func (l *Lowerer) substTarget(n *ast.Subst) ir.Expr {
 		}
 		return l.assignTarget(&ast.Var{Sigil: '$', Name: "_"})
 	}
+	// `(my $copy = $original) =~ s/.../.../` is how Perl edits a copy without
+	// touching the original: the parenthesised assignment yields the new
+	// variable, and the substitution runs on that. The assignment is a
+	// statement of its own here and the substitution then names the copy.
+	if a, ok := boundAssign(n.Bound); ok {
+		for _, st := range l.assignStmts(a) {
+			l.emit(st)
+		}
+		if v, single := soleDeclaredVar(a); single {
+			return l.assignTarget(v)
+		}
+		return l.assignTarget(a.LHS)
+	}
 	return l.assignTarget(n.Bound)
+}
+
+// boundAssign reads the assignment out of the parentheses a copy-then-edit is
+// always written with.
+func boundAssign(e ast.Expr) (*ast.Assign, bool) {
+	for {
+		switch n := e.(type) {
+		case *ast.Assign:
+			if n.Op != "=" {
+				return nil, false
+			}
+			return n, true
+		case *ast.List:
+			if len(n.Elems) != 1 {
+				return nil, false
+			}
+			e = n.Elems[0]
+		default:
+			return nil, false
+		}
+	}
+}
+
+// soleDeclaredVar returns the one variable a `my` on the left of an assignment
+// introduces, when there is exactly one.
+func soleDeclaredVar(a *ast.Assign) (*ast.Var, bool) {
+	my, ok := a.LHS.(*ast.My)
+	if !ok {
+		return nil, false
+	}
+	vars := declaredVars(my)
+	if len(vars) != 1 {
+		return nil, false
+	}
+	return vars[0], true
 }
 
 // replacement builds the Go replacement template.

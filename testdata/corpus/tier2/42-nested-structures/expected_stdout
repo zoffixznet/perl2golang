@@ -1,0 +1,12 @@
+ann: disk,cpu (total 52)
+bob: net,disk (total 168)
+  ann/cpu = 12
+  ann/disk = 40
+  bob/disk = 77
+  bob/net = 91
+records: 4, first owner ann
+by kind: ann/cpu ann/disk bob/disk bob/net
+by owner: ann/cpu ann/disk bob/disk bob/net
+raw=[  91%  ] pct=[91]
+large has 5
+small has 2

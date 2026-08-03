@@ -96,7 +96,35 @@ func join(a, b *ir.Type) *ir.Type {
 		return ir.PointerTo(elem)
 	}
 
+	// Two function types whose parameters agree and where only one of them has
+	// a result are the same function seen at two moments, not two functions.
+	// A sub's result is discovered from the returns in its body, so an earlier
+	// round of inference can see it as returning nothing and a later one as
+	// returning something, and calling that a conflict throws away everything
+	// the later round worked out.
+	if a.Kind == ir.Func && b.Kind == ir.Func && sameParams(a, b) {
+		switch {
+		case len(a.Results) == 0 && len(b.Results) > 0:
+			return b
+		case len(b.Results) == 0 && len(a.Results) > 0:
+			return a
+		}
+	}
+
 	return unresolved
+}
+
+// sameParams reports whether two function types take the same arguments.
+func sameParams(a, b *ir.Type) bool {
+	if len(a.Params) != len(b.Params) || a.Variadic != b.Variadic {
+		return false
+	}
+	for i := range a.Params {
+		if !a.Params[i].Equal(b.Params[i]) {
+			return false
+		}
+	}
+	return true
 }
 
 // joinAll folds join over a list of observations.

@@ -1388,10 +1388,74 @@ func (l *Lowerer) containerOf(e ast.Expr) container {
 	if f, wrap, ok := l.fieldPlace(e); ok {
 		return container{field: f, wrap: wrap}
 	}
-	// The binding is looked up from the expression as written. A dereference
-	// has no binding of its own, and treating `@{ $h{k} }` as naming %h would
-	// say that the hash holds what the list holds rather than lists of it.
+	// A push target has been through an explicit dereference, so a scalar at
+	// the root of it really does hold the container.
+	if b, wrap, ok := l.bindingPlace(e, true); ok {
+		return container{bind: b, wrap: wrap}
+	}
 	return container{bind: l.bindingOfTarget(e)}
+}
+
+// bindingPlace is fieldPlace for an ordinary variable: it resolves an
+// expression to the variable behind it, together with the levels of container
+// between that variable and the element the expression names.
+//
+// It is what tells `push @{ $by_uid{$id} }, $name` that %by_uid holds lists of
+// names rather than names. Without it, a dereference has no binding of its own
+// and every nested structure in the file settles as a map of anything, which
+// is the single largest source of `any` in ordinary Perl.
+// The scalar argument says whether a bare `$x` at the root counts as the
+// container. An explicit `@{ $x }` proves that it does; a `$x->{k}` does not,
+// because Perl's arrow reaches into an object just as readily as into a plain
+// hash reference, and calling an object a map of whatever was assigned to one
+// of its fields is how a class loses its type.
+func (l *Lowerer) bindingPlace(e ast.Expr, deref bool) (*Binding, func(*ir.Type) *ir.Type, bool) {
+	return l.bindingPlaceAt(e, deref, true)
+}
+
+// bindingPlaceAt carries whether the expression is the dereference itself,
+// which is what tells a bare `@$ref` from a `@{ $rec->{field} }`.
+func (l *Lowerer) bindingPlaceAt(e ast.Expr, deref, direct bool) (*Binding, func(*ir.Type) *ir.Type, bool) {
+	e = stripDeref(e)
+	same := func(t *ir.Type) *ir.Type { return t }
+	switch n := e.(type) {
+	case *ast.Var:
+		switch n.Sigil {
+		case '@', '%':
+			return l.lookup(n.Sigil, n.Name, n), same, true
+		case '$':
+			// A scalar named directly under a dereference holds the container,
+			// so what goes into the container is what the scalar holds. A
+			// scalar reached through `->{...}` is a different matter: it may
+			// be an object or a record of mixed fields, and what goes into one
+			// field says nothing reliable about the rest.
+			if !deref || !direct {
+				return nil, nil, false
+			}
+			if b, ok := l.scope.lookup(varKey('$', n.Name)); ok {
+				return b, same, true
+			}
+		}
+	case *ast.HashIndex:
+		if b := l.hashBindingOf(n); b != nil {
+			return b, ir.MapOf, true
+		}
+		b, outer, ok := l.bindingPlaceAt(n.Base, deref, false)
+		if !ok {
+			return nil, nil, false
+		}
+		return b, func(t *ir.Type) *ir.Type { return outer(ir.MapOf(t)) }, true
+	case *ast.Index:
+		if b := l.arrayBindingOf(n); b != nil {
+			return b, ir.SliceOf, true
+		}
+		b, outer, ok := l.bindingPlaceAt(n.Base, deref, false)
+		if !ok {
+			return nil, nil, false
+		}
+		return b, func(t *ir.Type) *ir.Type { return outer(ir.SliceOf(t)) }, true
+	}
+	return nil, nil, false
 }
 
 // fieldPlace resolves an expression to the struct field behind it, together
@@ -1442,16 +1506,19 @@ func (l *Lowerer) fieldOf(e ast.Expr) *ClassField {
 
 // observeIn records the type of what goes into a container.
 func (l *Lowerer) observeIn(c container, t *ir.Type, hash bool) {
-	if c.field != nil {
-		if hash {
-			t = ir.MapOf(t)
-		} else {
-			t = ir.SliceOf(t)
-		}
-		l.observeField(c.field, c.wrap(t))
-		return
+	if hash {
+		t = ir.MapOf(t)
+	} else {
+		t = ir.SliceOf(t)
 	}
-	l.observeElem(c.bind, t)
+	switch {
+	case c.field != nil:
+		l.observeField(c.field, c.wrap(t))
+	case c.wrap != nil:
+		l.observe(c.bind, c.wrap(t))
+	default:
+		l.observe(c.bind, t)
+	}
 }
 
 // refuseSpecialMethod turns down the two methods perl calls on a program's

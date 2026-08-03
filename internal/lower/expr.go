@@ -174,6 +174,21 @@ func (l *Lowerer) scalar(e ast.Expr) ir.Expr {
 			l.evalForEffect(el)
 		}
 		return l.scalar(n.Elems[len(n.Elems)-1])
+	case *ast.Deref:
+		// `scalar @{ $ref }` asks the list behind the reference how long it
+		// is, exactly as a named array would be asked.
+		if n.Sigil == '@' {
+			x := l.expr(e)
+			if typeOrAny(x).Kind == ir.Slice {
+				out := lenOf(x)
+				l.note(out, "A list in scalar context is its element count in Perl, and "+
+					"a dereferenced array reference is no different. Go asks for that "+
+					"with the built-in len.",
+					"context-is-gone")
+				return out
+			}
+			return x
+		}
 	}
 	x := l.expr(e)
 	if x != nil && x.Type() != nil && x.Type().Kind == ir.Slice {

@@ -43,6 +43,7 @@ intent and making documented semantic decisions.
 | 26 | `26-class-inheritance` | Two levels of `@ISA`, `SUPER::` extending a method, and a template method that does not convert | `@ISA`, `SUPER::`, template method calling an overridden step, per-class defaults | 4 | Embedding covers the inheritance but not the base class calling back into the subclass |
 | 27 | `27-getopt-bundling` | The three option forms `flag` has no answer for | `-vvq` bundling, an unknown option left in `@ARGV`, `:s` with an optional value | 4 | Each is a parser behaviour rather than a spelling, so none of them has a flag equivalent |
 | 28 | `28-record-separators` | Every mode of `$/`, including one only known while the program runs | default line reads, `local $/` slurp through a sub, paragraph mode, a literal separator, a separator read out of a config file | 3 | The first four fold into the call that reads; the fifth cannot, and has to degrade honestly |
+| 29 | `29-record-shapes` | Hash references used as records, which is what a struct is for | literal-keyed records, fields added after construction, a record nested in a record, one field read through a variable key | 4 | The records should become structs; they come out as maps of anything, and the computed key is the case that rules a struct out |
 
 ## Notes for harness authors
 

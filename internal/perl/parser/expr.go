@@ -1242,6 +1242,16 @@ func (p *parser) parseSortMapGrep() ast.Expr {
 		n.SortSub = p.cur().Text
 		p.next()
 		n.Args = p.parseListOpArgs(stop)
+	case name == "sort" && p.kind() == token.ScalarVar &&
+		p.peekAt(1).Kind != token.Comma && p.peekAt(1).Kind != token.LParen &&
+		startsTermKind(p.peekAt(1).Kind):
+		// `sort $comparator LIST`: with no comma after it, the scalar holds
+		// the comparator rather than being the first thing sorted.
+		n.SortRef = &ast.Var{Sigil: '$', Name: strings.TrimPrefix(p.cur().Text, "$")}
+		start := p.cur().Pos
+		p.next()
+		setSpan(n.SortRef, start, p.prevEnd())
+		n.Args = p.parseListOpArgs(stop)
 	default:
 		if name == "sort" {
 			n.Args = p.parseListOpArgs(stop)
