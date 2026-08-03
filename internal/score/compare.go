@@ -108,7 +108,7 @@ func describeBytes(want, got []byte) string {
 // volatile matches the parts of a captured output that say where a run
 // happened rather than what it did: the temporary directory this harness makes
 // for an entry, and a pointer address a program printed.
-var volatile = regexp.MustCompile(`perl2go-score-[A-Za-z0-9_-]*|0x[0-9a-fA-F]{4,}`)
+var volatile = regexp.MustCompile(`perl2golang-score-[A-Za-z0-9_-]*|0x[0-9a-fA-F]{4,}`)
 
 // steady rewrites those parts to a fixed marker.
 //
@@ -122,7 +122,7 @@ func steady(reason string) string {
 		if strings.HasPrefix(m, "0x") {
 			return "0xADDR"
 		}
-		return "perl2go-score-TMP"
+		return "perl2golang-score-TMP"
 	})
 }
 

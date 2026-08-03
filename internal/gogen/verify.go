@@ -94,7 +94,7 @@ func Build(files map[string][]byte) error {
 		return nil
 	}
 
-	dir, err := os.MkdirTemp("", "perl2go-verify-")
+	dir, err := os.MkdirTemp("", "perl2golang-verify-")
 	if err != nil {
 		return fmt.Errorf("gogen: creating build directory: %w", err)
 	}
@@ -118,7 +118,7 @@ func Build(files map[string][]byte) error {
 		}
 	}
 	if !haveGoMod {
-		mod := "module perl2goverify\n\ngo " + goDirective() + "\n"
+		mod := "module perl2golang-verify\n\ngo " + goDirective() + "\n"
 		if err := os.WriteFile(filepath.Join(dir, "go.mod"), []byte(mod), 0o644); err != nil {
 			return fmt.Errorf("gogen: writing go.mod: %w", err)
 		}

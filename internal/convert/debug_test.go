@@ -14,11 +14,11 @@ import (
 )
 
 // TestDebugEmit prints the raw emitted text for one input, formatted or not, so
-// a failure to parse can be read. Set PERL2GO_DEBUG to the input path.
+// a failure to parse can be read. Set PERL2GOLANG_DEBUG to the input path.
 func TestDebugEmit(t *testing.T) {
-	path := os.Getenv("PERL2GO_DEBUG")
+	path := os.Getenv("PERL2GOLANG_DEBUG")
 	if path == "" {
-		t.Skip("set PERL2GO_DEBUG to an input.pl path")
+		t.Skip("set PERL2GOLANG_DEBUG to an input.pl path")
 	}
 	src, err := os.ReadFile(path)
 	if err != nil {
@@ -35,11 +35,11 @@ func TestDebugEmit(t *testing.T) {
 }
 
 // TestDebugCompile reports how many corpus entries in a tier produce Go that
-// the real toolchain accepts, and why the rest do not. Set PERL2GO_TIER.
+// the real toolchain accepts, and why the rest do not. Set PERL2GOLANG_TIER.
 func TestDebugCompile(t *testing.T) {
-	tier := os.Getenv("PERL2GO_TIER")
+	tier := os.Getenv("PERL2GOLANG_TIER")
 	if tier == "" {
-		t.Skip("set PERL2GO_TIER to a corpus tier")
+		t.Skip("set PERL2GOLANG_TIER to a corpus tier")
 	}
 	paths := corpusFiles(t, tier, 0)
 	built := 0
@@ -64,11 +64,11 @@ func TestDebugCompile(t *testing.T) {
 }
 
 // TestDebugBundle writes a complete conversion bundle somewhere it can be read.
-// Set PERL2GO_DEBUG to the input path and PERL2GO_OUT to the target directory.
+// Set PERL2GOLANG_DEBUG to the input path and PERL2GOLANG_OUT to the target directory.
 func TestDebugBundle(t *testing.T) {
-	path, out := os.Getenv("PERL2GO_DEBUG"), os.Getenv("PERL2GO_OUT")
+	path, out := os.Getenv("PERL2GOLANG_DEBUG"), os.Getenv("PERL2GOLANG_OUT")
 	if path == "" || out == "" {
-		t.Skip("set PERL2GO_DEBUG and PERL2GO_OUT")
+		t.Skip("set PERL2GOLANG_DEBUG and PERL2GOLANG_OUT")
 	}
 	src, err := os.ReadFile(path)
 	if err != nil {

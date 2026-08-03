@@ -19,7 +19,7 @@ notes and checked by replaying the program under `2>&1`.
 - `refuse-file` — decline the whole file; diagnostic explains why.
 - `refuse-statement` — convert the rest; replace the construct with a stub
   that panics if reached; diagnostic per site.
-- `todo` — emit compilable Go plus a `// TODO(perl2go)` at the site and a
+- `todo` — emit compilable Go plus a `// TODO:` comment at the site and a
   report entry; behaviour knowingly diverges until a human acts.
 - `shim` — emit/use a runtime helper reproducing Perl semantics exactly;
   report entry notes the shim.

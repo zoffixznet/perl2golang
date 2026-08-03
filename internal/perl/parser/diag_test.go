@@ -7,12 +7,12 @@ import (
 	"perl2golang/internal/perl/parser"
 )
 
-// TestDiagFile is a debugging aid: point PERL2GO_PARSE at a Perl file and run
+// TestDiagFile is a debugging aid: point PERL2GOLANG_PARSE at a Perl file and run
 // this test with -v to see every diagnostic the parser produces for it.
 func TestDiagFile(t *testing.T) {
-	path := os.Getenv("PERL2GO_PARSE")
+	path := os.Getenv("PERL2GOLANG_PARSE")
 	if path == "" {
-		t.Skip("set PERL2GO_PARSE to a Perl file to list its parse diagnostics")
+		t.Skip("set PERL2GOLANG_PARSE to a Perl file to list its parse diagnostics")
 	}
 	src, err := os.ReadFile(path)
 	if err != nil {

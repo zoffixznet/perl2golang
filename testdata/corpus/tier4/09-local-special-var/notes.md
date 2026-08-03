@@ -23,7 +23,7 @@ anyone locals `$"`.
 - Category: **todo**.
 - Minimum honest behaviour: convert `render`/`show` with the DEFAULT separator
   semantics, but flag every `local` of a punctuation variable with a diagnostic
-  and insert a `// TODO(perl2go)` at the local site AND at each affected
+  and insert a `// TODO:` comment at the local site AND at each affected
   builtin use, stating that the converted code hard-codes the defaults.
 - Better behaviour (optional): a runtime shim struct
   (`perlrt.ListSep`, `perlrt.OFS`, `perlrt.ORS`) consulted by generated

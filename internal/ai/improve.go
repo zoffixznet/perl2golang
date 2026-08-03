@@ -185,7 +185,7 @@ func (c *Client) ReviewCode(ctx context.Context, req CodeRequest) (CodeResult, e
 // compileGate type-checks the candidate against the real module through an
 // overlay, leaving the working tree alone.
 func (c *Client) compileGate(ctx context.Context, path, candidate string) error {
-	dir, err := os.MkdirTemp("", "perl2go-candidate-")
+	dir, err := os.MkdirTemp("", "perl2golang-candidate-")
 	if err != nil {
 		return nil // not the model's fault; the cheaper checks still stand
 	}

@@ -33,7 +33,7 @@ func VerifyBuild(ctx context.Context, moduleDir string, replace map[string]strin
 		return nil
 	}
 
-	dir, err := os.MkdirTemp("", "perl2go-overlay-")
+	dir, err := os.MkdirTemp("", "perl2golang-overlay-")
 	if err != nil {
 		return err
 	}
@@ -109,7 +109,7 @@ func VerifyPackage(ctx context.Context, files map[string][]byte) error {
 		return nil
 	}
 
-	dir, err := os.MkdirTemp("", "perl2go-gate-")
+	dir, err := os.MkdirTemp("", "perl2golang-gate-")
 	if err != nil {
 		return nil
 	}
@@ -133,7 +133,7 @@ func VerifyPackage(ctx context.Context, files map[string][]byte) error {
 		}
 	}
 	if !haveGoMod {
-		mod := "module perl2gogate\n\ngo " + goDirective() + "\n"
+		mod := "module perl2golang-gate\n\ngo " + goDirective() + "\n"
 		if err := os.WriteFile(filepath.Join(dir, "go.mod"), []byte(mod), 0o600); err != nil {
 			return nil
 		}

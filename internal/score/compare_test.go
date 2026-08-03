@@ -168,11 +168,11 @@ func TestReasonsDoNotChangeBetweenRuns(t *testing.T) {
 	}
 	first := Compare(
 		perlOut("REGION\n", ""),
-		perlOut("&{0x16e01d0fa1e0} rows written to /tmp/perl2go-score-tier2-3080812345/out\n", ""),
+		perlOut("&{0x16e01d0fa1e0} rows written to /tmp/perl2golang-score-tier2-3080812345/out\n", ""),
 		CompareOptions{})
 	second := Compare(
 		perlOut("REGION\n", ""),
-		perlOut("&{0xc74dfeb4180} rows written to /tmp/perl2go-score-tier2-99/out\n", ""),
+		perlOut("&{0xc74dfeb4180} rows written to /tmp/perl2golang-score-tier2-99/out\n", ""),
 		CompareOptions{})
 	if first.Reason != second.Reason {
 		t.Errorf("two runs of the same fault read differently:\n %q\n %q", first.Reason, second.Reason)
@@ -187,8 +187,8 @@ func TestReasonsDoNotChangeBetweenRuns(t *testing.T) {
 		return "panic: runtime error: index out of range [-1]\n\ngoroutine 1 [running]:\nmain.main()\n\t" +
 			dir + "/main.go:13 +0x1d\n"
 	}
-	a := Compare(perlOut("a\n", ""), perlOut("a\n", trace("/tmp/perl2go-score-tier1-1")), CompareOptions{})
-	b := Compare(perlOut("a\n", ""), perlOut("a\n", trace("/tmp/perl2go-score-tier1-22222222")), CompareOptions{})
+	a := Compare(perlOut("a\n", ""), perlOut("a\n", trace("/tmp/perl2golang-score-tier1-1")), CompareOptions{})
+	b := Compare(perlOut("a\n", ""), perlOut("a\n", trace("/tmp/perl2golang-score-tier1-22222222")), CompareOptions{})
 	if a.Reason != b.Reason {
 		t.Errorf("two runs of the same crash read differently:\n %q\n %q", a.Reason, b.Reason)
 	}

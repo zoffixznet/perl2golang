@@ -323,7 +323,7 @@ func (r *runner) compile(ctx context.Context, e Entry, conv *convert.Result, cla
 		return skip("no Go toolchain on PATH"), nil
 	}
 
-	dir, err := os.MkdirTemp("", "perl2go-score-"+e.Tier+"-")
+	dir, err := os.MkdirTemp("", "perl2golang-score-"+e.Tier+"-")
 	if err != nil {
 		return fail("could not make a build directory: " + err.Error()), nil
 	}

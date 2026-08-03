@@ -18,7 +18,7 @@ would require shipping a Perl interpreter inside the Go binary.
 - Convert the rest of the file normally.
 - Replace each `eval EXPR` site with a stub that panics at runtime, carrying the
   original Perl expression text in the panic message, e.g.
-  `panic("perl2go: unconverted 'eval EXPR' at input.pl:11: eval $code")`.
+  `panic("unconverted 'eval EXPR' at input.pl:11: eval $code")`.
 - Emit one conversion-report entry per site (lines 11 and 18).
 - It must NOT try to pattern-match the string being built and "helpfully" inline
   it: that is guessing, and it breaks the moment the string changes shape.

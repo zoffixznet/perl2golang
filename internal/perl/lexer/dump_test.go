@@ -10,12 +10,12 @@ import (
 
 func fmtSscan(s string, n *int) (int, error) { return fmt.Sscan(s, n) }
 
-// TestDump is a debugging aid: point PERL2GO_DUMP at a Perl file and run this
+// TestDump is a debugging aid: point PERL2GOLANG_DUMP at a Perl file and run this
 // test with -v to see the token stream and any lexical diagnostics.
 func TestDump(t *testing.T) {
-	path := os.Getenv("PERL2GO_DUMP")
+	path := os.Getenv("PERL2GOLANG_DUMP")
 	if path == "" {
-		t.Skip("set PERL2GO_DUMP to a Perl file to dump its tokens")
+		t.Skip("set PERL2GOLANG_DUMP to a Perl file to dump its tokens")
 	}
 	src, err := os.ReadFile(path)
 	if err != nil {
@@ -26,13 +26,13 @@ func TestDump(t *testing.T) {
 		t.Logf("diag %s", d)
 	}
 	from, to := 0, len(toks)
-	if s := os.Getenv("PERL2GO_DUMP_FROM"); s != "" {
+	if s := os.Getenv("PERL2GOLANG_DUMP_FROM"); s != "" {
 		var n int
 		if _, err := fmtSscan(s, &n); err == nil && n < len(toks) {
 			from = n
 		}
 	}
-	if s := os.Getenv("PERL2GO_DUMP_TO"); s != "" {
+	if s := os.Getenv("PERL2GOLANG_DUMP_TO"); s != "" {
 		var n int
 		if _, err := fmtSscan(s, &n); err == nil && n <= len(toks) {
 			to = n
