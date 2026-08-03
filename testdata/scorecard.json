@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-14T20:50:49Z",
+  "recorded": "2026-08-14T23:01:11Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -2536,7 +2536,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: line 1, byte 9: got \"/tmp/perl2golang-score-TMP/clean.bin...\", wanted \"input.pl\\ninputs:  files/site-a.l...\""
+          "reason": "stdout differs: line 1, byte 9: got \"/tmp/perl2golang-score-TMP/clean...\", wanted \"input.pl\\ninputs:  files/site-a.l...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -2551,7 +2551,7 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: line 1, byte 9: got \"/tmp/perl2golang-score-TMP/annotated...\", wanted \"input.pl\\ninputs:  files/site-a.l...\""
+        "reason": "stdout differs: line 1, byte 9: got \"/tmp/perl2golang-score-TMP/annot...\", wanted \"input.pl\\ninputs:  files/site-a.l...\""
       },
       "quality": {
         "todos": 0,
@@ -2651,7 +2651,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: line 1, byte 9: got \"/tmp/perl2golang-score-TMP/clean.bin...\", wanted \"input.pl\\nmode:    avg\\nstrict:  1...\""
+          "reason": "stdout differs: line 1, byte 9: got \"/tmp/perl2golang-score-TMP/clean...\", wanted \"input.pl\\nmode:    avg\\nstrict:  1...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -2666,7 +2666,7 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: line 1, byte 9: got \"/tmp/perl2golang-score-TMP/annotated...\", wanted \"input.pl\\nmode:    avg\\nstrict:  1...\""
+        "reason": "stdout differs: line 1, byte 9: got \"/tmp/perl2golang-score-TMP/annot...\", wanted \"input.pl\\nmode:    avg\\nstrict:  1...\""
       },
       "quality": {
         "todos": 0,
