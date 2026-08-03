@@ -201,6 +201,13 @@ var notes = map[string]string{
 		"changes only the first match, so the first match is expanded by hand " +
 		"and the rest of the string is copied through untouched.",
 
+	"splice": "One call that removes, inserts and replaces has no Go " +
+		"equivalent: slices.Delete, slices.Insert and slices.Replace each do " +
+		"one of those jobs and none of them hands back what it took out. The " +
+		"pointer is not decoration either. A slice header is a value, so a " +
+		"function given []T can change the elements but cannot make the " +
+		"caller's slice shorter.",
+
 	"floatList": "A slice holds one element type, so a list of whole " +
 		"numbers used where fractions are needed is a new slice rather than " +
 		"a reinterpretation of the old one. The copy is the visible price of " +

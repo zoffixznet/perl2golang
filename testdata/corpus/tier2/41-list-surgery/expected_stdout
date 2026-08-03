@@ -1,0 +1,14 @@
+batch: job1 job2 job3
+left:  job4 job5 job6 job7 job8 job9
+after unshift-by-splice: urgent job4 job5 job6 job7 job8 job9
+after replace:           urgent job4 merged-a merged-b merged-c job7 job8 job9
+capped at 5:          urgent job4 merged-a merged-b merged-c
+tail: merged-b merged-c / left urgent job4 merged-a
+middle: job4 / left urgent merged-a
+fast: 1 4 5
+slow: 6 7 8 2 3
+host=localhost port=8080 retries=3 timeout=30 user=admin
+pairs: host/localhost port/8080 retries/3 timeout/30 user/admin
+FATAL 2024-01-01 disk full
+FATAL 2024-01-01 disk gone
+wins=3 losses=2

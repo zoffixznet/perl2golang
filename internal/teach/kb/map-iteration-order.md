@@ -87,6 +87,78 @@ func main() {
 
 The spec's exact contract: entries deleted during iteration will not be produced later; entries *added* during iteration may or may not be — so mutate-while-ranging is fine for deletion, hazardous for insertion. (Go 1.21+ also has `maps.DeleteFunc(m, f)` for exactly this pattern; `clear(m)` empties a map outright.)
 
+## What happened to each
+
+`each` is the other half of Perl's hash iteration, and it works differently
+from `keys`: it hands back one pair per call, and it does so by keeping a
+cursor *inside the hash itself*. That is why abandoning an `each` loop halfway
+leaves the next one starting from the middle, why two `each` loops over the
+same hash interfere, and why `keys %h` in the middle of one resets it. None of
+that is documentation trivia; it is a class of bug that only shows up when the
+data gets big enough for the early `last` to trigger.
+
+Go has no equivalent and needs none. `for k, v := range m` gives both halves in
+the loop header, keeps no state anywhere, and starts at the beginning every
+single time.
+
+Compiled and run as shown:
+
+```go
+package main
+
+import (
+	"fmt"
+	"maps"
+	"slices"
+)
+
+func main() {
+	stock := map[string]int{"apples": 10, "pears": 4, "plums": 0}
+
+	// Both halves of the pair come out of the loop header, and nothing is
+	// remembered anywhere, so this loop always starts at the beginning.
+	total := 0
+	for _, v := range stock {
+		total += v
+	}
+	fmt.Println("total:", total)
+
+	// Two loops over the same map are independent. Abandoning the first
+	// leaves nothing behind for the second to resume from.
+	visited := 0
+	for range stock {
+		visited++
+		break
+	}
+	for range stock {
+		visited++
+	}
+	fmt.Println("visited:", visited)
+
+	// When the order is part of the output, say so.
+	for _, k := range slices.Sorted(maps.Keys(stock)) {
+		fmt.Printf("[%s=%d]", k, stock[k])
+	}
+	fmt.Println()
+}
+```
+
+```
+total: 14
+visited: 4
+[apples=10][pears=4][plums=0]
+```
+
+`visited` is 4 because the second loop saw all three entries with nothing
+carried over from the first. The Perl equivalent written with `each` would have
+printed 3, and finding out why costs an afternoon.
+
+One translation note. A `while (my ($k, $v) = each %h)` loop becomes a `range`
+directly, and the only behaviour that goes missing is the resumption, which
+almost no program wanted. A bare `each %h` outside a loop is a different
+matter: it is a call that advances a cursor, and there is nothing in Go it can
+become.
+
 ## The mismatch
 
 The Go runtime randomises order specifically so nobody can ship code that accidentally depends on it — it is a deliberate compatibility-protection device, the same reasoning as Perl 5.18's hash randomisation but applied per iteration rather than per process. Practical audit list for ported code: any test asserting on the serialised form of a ranged map (fix: sort keys, or rely on `encoding/json`, which sorts map keys itself — `encoding-json`); any pair of loops assumed to align; any "first key" grab (`(keys %h)[0]`) — meaningless in Go, and its randomness will faithfully expose that it was meaningless in Perl too. When insertion order itself must be preserved, a map cannot do it: keep a companion `[]string` of keys in insertion order, the honest equivalent of `Tie::IxHash`.

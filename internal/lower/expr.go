@@ -131,6 +131,30 @@ func (l *Lowerer) scalar(e ast.Expr) ir.Expr {
 		if x, ok := l.multiResultCall(n, false); ok {
 			return x
 		}
+		// splice in scalar context is the last element it removed, not how
+		// many, which is the one list operator that does not answer with a
+		// count.
+		if n.Name == "splice" {
+			removed := l.expr(e)
+			rt := typeOrAny(removed)
+			if rt.Kind != ir.Slice {
+				return removed
+			}
+			// The call has to run once, so it is named before the last element
+			// is read out of it.
+			name := l.tmp("removed")
+			decl := assign(":=", []ir.Expr{ir.NewIdent(name, rt)}, []ir.Expr{removed})
+			l.setProv(decl, n)
+			l.emit(decl)
+			removed = ir.NewIdent(name, rt)
+			out := l.helperCall(hAt, elemOf(rt), removed,
+				ir.Bin("-", lenOf(removed), ir.IntLit("1"), ir.TInt))
+			l.note(out, "splice in scalar context is the last element it removed, "+
+				"where every other list operator would answer with a count. Go has no "+
+				"context at all, so the choice is made here and written out.",
+				"context-is-gone")
+			return out
+		}
 		if isListBuiltin(n.Name) {
 			x := l.expr(e)
 			if typeOrAny(x).Kind == ir.Slice {

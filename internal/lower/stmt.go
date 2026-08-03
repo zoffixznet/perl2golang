@@ -492,6 +492,9 @@ func (l *Lowerer) whileStmt(n *ast.While) []ir.Stmt {
 	if st, ok := l.readLoop(n); ok {
 		return st
 	}
+	if st, ok := l.eachLoop(n); ok {
+		return st
+	}
 
 	depth := l.captureDepth()
 	defer l.restoreCaptures(depth)

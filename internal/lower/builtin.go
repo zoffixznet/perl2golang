@@ -76,6 +76,16 @@ func (l *Lowerer) statementFormOK(n *ast.Call) ([]ir.Stmt, bool) {
 	case "print", "say", "printf", "push", "unshift", "chomp", "die", "warn",
 		"exit", "delete", "close", "open", "return", "opendir", "closedir", "local":
 		return l.statementOnly(n), true
+	case "splice":
+		// The value is thrown away, so the call stands on its own line and
+		// nothing names what it removed.
+		x := l.spliceCall(n)
+		if c, ok := x.(*ir.Call); ok {
+			st := exprStmt(c)
+			l.setProv(st, n)
+			return []ir.Stmt{st}, true
+		}
+		return nil, false
 	}
 	return nil, false
 }
@@ -862,35 +872,122 @@ func valueName(front bool) string {
 	return "last"
 }
 
+// spliceCall lowers splice in all four of its calling forms.
+//
+// splice is the one Perl builtin that removes, inserts and replaces in a single
+// call, and hands back what it removed on the way. Go has three separate
+// functions for the three jobs and none of them returns the removed part, so
+// the whole operation goes through one helper. The list is passed by pointer
+// because splice changes its length, and a Go function given a slice cannot do
+// that to its caller's.
 func (l *Lowerer) spliceCall(n *ast.Call) ir.Expr {
 	args := flatten(argList(n))
-	if len(args) == 3 {
-		target := l.assignTarget(args[0])
-		if target != nil {
-			t := typeOrAny(target)
-			off := l.toInt(l.expr(args[1]), args[1])
-			count := l.toInt(l.expr(args[2]), args[2])
-			out := call("slices", "slices", "Delete", t, target,
-				off, ir.Bin("+", off, count, ir.TInt))
-			l.emit(assign("=", []ir.Expr{target}, []ir.Expr{out}))
-			l.approximate(n, "P2G5580", "splice",
-				"splice becomes a delete and returns nothing",
-				"splice removes a run of elements and returns what it removed. "+
-					"slices.Delete removes the run but returns the shortened slice, not the "+
-					"removed part.",
-				"If the removed elements are needed, copy them out with slices.Clone "+
-					"before deleting.",
-				"slice-aliasing-and-copy")
-			return target
-		}
+	if len(args) == 0 {
+		return l.spliceRefused(n)
 	}
+	target := l.assignTarget(args[0])
+	if target == nil || !assignableTarget(target) {
+		return l.spliceRefused(n)
+	}
+	t := typeOrAny(target)
+	if t.Kind != ir.Slice {
+		return l.spliceRefused(n)
+	}
+	elem := elemOf(t)
+
+	offset := ir.Expr(ir.IntLit("0"))
+	if len(args) > 1 {
+		offset = l.toInt(l.expr(args[1]), args[1])
+	}
+	// A missing length means "to the end", and any count at least as large as
+	// the list says that however the offset works out, because the helper
+	// stops at the end rather than running past it.
+	count := ir.Expr(lenOf(target))
+	if len(args) > 2 {
+		count = l.toInt(l.expr(args[2]), args[2])
+	}
+	repl := ir.Expr(ir.Nil(t))
+	if len(args) > 3 {
+		parts, _ := l.listParts(args[3:])
+		// What goes in is as much evidence about what the list holds as what
+		// was there already, so a replacement of a different type widens the
+		// list rather than being forced into its current element type.
+		if v, ok := args[0].(*ast.Var); ok && v.Sigil == '@' {
+			b := l.lookup('@', v.Name, v)
+			for _, p := range parts {
+				l.observeElem(b, typeOrAny(p))
+			}
+		}
+		for i, p := range parts {
+			parts[i] = l.assignable(p, elem, nil)
+		}
+		repl = l.listValue(parts, elem)
+		repl = l.assignable(repl, t, nil)
+	}
+
+	// Go has no address for a map entry, because the map may move it. A
+	// splice through one goes via a variable, which is what a Go developer
+	// writes for the same reason.
+	var writeBack ir.Stmt
+	if ix, isIndex := target.(*ir.Index); isIndex && typeOrAny(ix.X).Kind == ir.Map {
+		name := l.tmp("entry")
+		held := ir.NewIdent(name, t)
+		decl := assign(":=", []ir.Expr{held}, []ir.Expr{target})
+		l.setProv(decl, n)
+		l.note(decl, "A map entry has no address in Go: the map is free to move its "+
+			"contents, so nothing may point into one. The list is taken out into a "+
+			"variable, changed there, and put back.",
+			"pointers-vs-references", "maps-of-slices")
+		l.emit(decl)
+		writeBack = assign("=", []ir.Expr{target}, []ir.Expr{held})
+		target = held
+	}
+
+	out := l.helperCall(hSplice, t, ir.Un("&", target, ir.PointerTo(t)), offset, count, repl)
+	l.setProv(out, n)
+	l.note(out, "splice does four things at once: it takes a run out of the list, "+
+		"puts something else in its place, shortens or lengthens the list, and "+
+		"returns what it took. Go splits those across slices.Delete, slices.Insert "+
+		"and slices.Replace, none of which returns the removed part, so the whole "+
+		"operation is one helper here. It takes a pointer because changing the "+
+		"length of the caller's list is the one thing a function given a slice "+
+		"cannot do.",
+		"slice-surgery", "slices-not-arrays", "pointers-vs-references")
+	l.approximate(n, "P2G5580", "splice",
+		"the removed elements are a copy",
+		"splice hands back the elements it removed. The generated code copies them "+
+			"into a list of their own before the original is rebuilt, so the two are "+
+			"independent afterwards.",
+		"Where the removed part is not used, the call stands on its own and the "+
+			"copy costs nothing worth measuring.",
+		"slice-surgery", "slice-aliasing-and-copy")
+	if writeBack == nil {
+		return out
+	}
+	// The changed list has to go back into the map, and the removed part has
+	// to be named first so that both happen in the right order.
+	name := l.tmp("removed")
+	removed := ir.NewIdent(name, t)
+	decl := assign(":=", []ir.Expr{removed}, []ir.Expr{out})
+	l.setProv(decl, n)
+	l.emit(decl)
+	l.setProv(writeBack, n)
+	l.emit(writeBack)
+	return removed
+}
+
+// spliceRefused reports the shapes of splice that have no target to work on,
+// which is what a splice through something the converter could not resolve to
+// a list comes to.
+func (l *Lowerer) spliceRefused(n *ast.Call) ir.Expr {
 	return l.todoExpr(n, "P2G5581", "splice",
 		"this form of splice is not implemented",
-		"splice can insert, remove and replace in one call, with up to four "+
-			"arguments and a meaningful return value in both contexts.",
-		"Use slices.Delete, slices.Insert or slices.Replace, which each do one of "+
-			"those jobs and are clearer at the call site.",
-		"slices-not-arrays")
+		"splice works on a list, and the first argument here did not resolve to "+
+			"one the generated code can change in place.",
+		"Use slices.Delete, slices.Insert or slices.Replace on a slice variable, "+
+			"which each do one of the jobs splice does and are clearer at the call "+
+			"site.",
+		"slice-surgery", "slices-not-arrays")
 }
 
 // ---------------------------------------------------------------------------

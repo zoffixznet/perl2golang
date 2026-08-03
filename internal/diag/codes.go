@@ -192,6 +192,8 @@ const (
 	// CollectionNarrowed: a collection of values of no fixed type was copied
 	// into one with a single element type, asserting each value.
 	CollectionNarrowed Code = "P2G3022"
+	// SubstrAsTarget: `substr(...) = ...` edits a string in place.
+	SubstrAsTarget Code = "P2G2545"
 	// UndefBecameZeroValue: undef became a zero value plus an ok boolean.
 	UndefBecameZeroValue Code = "P2G3025"
 	// NilDereference: a pointer that can be nil is dereferenced.
@@ -897,6 +899,15 @@ var catalogue = map[Code]Entry{
 		Cost:     "a product that Perl prints as 1.84467440737096e+19 comes out negative",
 		Concepts: []string{"explicit-conversions-no-coercion"},
 	},
+	SubstrAsTarget: {
+		Severity:  report.Warn,
+		Message:   "`substr` on the left of an assignment edits a string in place, and a Go string cannot be edited",
+		Short:     "the string is rebuilt, not edited",
+		Advice:    "use a `[]byte` or a `strings.Builder` where a string is edited repeatedly",
+		Cost:      "the whole string is copied on every write, where Perl edited the window",
+		Converted: "the window is replaced and the result assigned back over the variable",
+		Concepts:  []string{"strings-are-bytes"},
+	},
 	CollectionWidened: {
 		Severity:  report.Warn,
 		Message:   "a collection of one element type has no conversion to one that holds anything",
@@ -1383,29 +1394,30 @@ var catalogue = map[Code]Entry{
 		Concepts:  []string{"slices-not-arrays"},
 	},
 	EachIterator: {
-		Severity:  report.Refuse,
+		Severity:  report.Warn,
 		Message:   "`each` walks a hash through an iterator kept on the hash, and Go keeps no such state",
 		Short:     "each keeps hidden iterator state",
-		Advice:    "range over the map with `for k, v := range m`, which keeps no state between loops",
-		Converted: "the call is not converted; the call site panics with the original Perl text",
-		Concepts:  []string{"map-iteration-order"},
+		Advice:    "sort the keys and range over those where the visiting order matters",
+		Cost:      "a loop that resumed where an earlier one stopped now starts at the beginning",
+		Converted: "the pair-at-a-time loop became `for k, v := range m`",
+		Concepts:  []string{"map-iteration-order", "range-is-not-foreach"},
 	},
 	SpliceReturn: {
 		Severity:  report.Warn,
-		Message:   "`splice` returns what it removed, and `slices.Delete` returns the shortened slice",
-		Short:     "splice became a delete that returns nothing",
-		Advice:    "copy the run out with `slices.Clone` before deleting, where the removed part is used",
-		Cost:      "the removed elements are dropped rather than handed back",
-		Converted: "the emitted code calls `slices.Delete` and keeps the shortened slice",
-		Concepts:  []string{"slice-aliasing-and-copy"},
+		Message:   "`splice` removes, inserts and reports in one call, and Go has a separate function for each",
+		Short:     "the removed elements are a copy",
+		Advice:    "where the removed part is unused the call stands alone and the copy costs nothing",
+		Cost:      "the removed run is copied out before the list is rebuilt around it",
+		Converted: "one helper does the whole operation and hands back what it removed",
+		Concepts:  []string{"slice-surgery", "slice-aliasing-and-copy"},
 	},
 	SpliceForm: {
 		Severity:  report.Refuse,
-		Message:   "this `splice` inserts, removes or replaces in one call, and each of those is its own Go call",
-		Short:     "this splice form has no single Go call",
-		Advice:    "use `slices.Delete`, `slices.Insert` or `slices.Replace`, whichever this call is doing",
-		Converted: "the call is not converted; the call site panics with the original Perl text",
-		Concepts:  []string{"slices-not-arrays"},
+		Message:   "this `splice` works on something that did not resolve to a list the generated code can change",
+		Short:     "this splice has no list to work on",
+		Advice:    "use `slices.Delete`, `slices.Insert` or `slices.Replace` on a slice variable",
+		Converted: "the call is not converted; the call site yields the zero value and names the gap",
+		Concepts:  []string{"slice-surgery", "slices-not-arrays"},
 	},
 	SortNamedComparator: {
 		Severity:  report.Refuse,

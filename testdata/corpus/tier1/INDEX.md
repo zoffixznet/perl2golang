@@ -1,6 +1,6 @@
 # Tier 1 corpus -- fundamentals
 
-37 self-contained Perl programs covering the core of the language: scalars,
+38 self-contained Perl programs covering the core of the language: scalars,
 numbers, comparison, booleans, arrays, hashes, control flow, sorting, strings,
 and output. Every entry runs clean under `use strict; use warnings;` with no
 output on stderr (except the two entries marked below, which write to stderr on
@@ -68,6 +68,7 @@ sensitive formatting, or unsorted hash iteration order.
 | 35 | `35-die-exit-status` | Uncaught `die "msg\n"` -- message to stderr with no location suffix, **exit status 255** (**writes to stderr**) |
 | 36 | `36-parentheses-and-grouping` | Parentheses as grouping vs as a list, precedence with and without them, the floored-division identity, an array as an operand of `+`, `*`, `==` and `.`, the comma operator in scalar context |
 | 37 | `37-list-slice-in-scalar-context` | `(LIST)[i]` on a literal, on `split` and on `sort`, negative indices, the picked value used in arithmetic and concatenation, and `[0, -1]` making it a list again |
+| 38 | `38-lvalue-and-redo` | The places Perl lets you assign that Go has no name for: through a conditional, through `substr` in three shapes, through a hash slice and an array slice, plus `redo`, which has no Go counterpart at all |
 
 ## Entries with non-zero exit status
 

@@ -1,0 +1,12 @@
+--- a conditional as an assignment target ---
+even=12 odd=9
+a=a! b=b
+--- substr as an assignment target ---
+2024-07-19 ready
+appended: abcdef
+--- a slice as an assignment target ---
+alpha=1 beta=2 gamma=3
+order: first x third
+--- redo re-runs the body without re-reading the list ---
+a after 3
+b after 4

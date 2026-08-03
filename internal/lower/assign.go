@@ -15,6 +15,10 @@ func (l *Lowerer) assignStmts(n *ast.Assign) []ir.Stmt {
 		return l.compoundAssign(n)
 	}
 
+	if sts, ok := l.ternaryAssign(n); ok {
+		return sts
+	}
+
 	switch lhs := n.LHS.(type) {
 	case *ast.My:
 		return l.declareAssign(lhs, n)
@@ -42,6 +46,11 @@ func (l *Lowerer) assignStmts(n *ast.Assign) []ir.Stmt {
 		if lhs.Name == "local" {
 			return l.localStmts(flatten(argList(lhs)), n.RHS, n)
 		}
+		if lhs.Name == "substr" {
+			if sts, ok := l.substrAssign(lhs, n); ok {
+				return sts
+			}
+		}
 		// `pos($s) = N` moves the cursor a global match starts from, which is
 		// an assignment to the variable holding that position.
 		if lhs.Name == "pos" {
@@ -59,6 +68,50 @@ func (l *Lowerer) assignStmts(n *ast.Assign) []ir.Stmt {
 		"The converter does not recognise the shape of the left side of this "+
 			"assignment.",
 		"Translate the assignment by hand.")}
+}
+
+// substrAssign lowers `substr($s, OFFSET, LENGTH) = VALUE`.
+//
+// Perl's substr is an lvalue: writing through it edits the string in place. Go
+// strings are immutable, so the window is replaced and the whole string is
+// assigned back, which is the same result written as what it is.
+func (l *Lowerer) substrAssign(lhs *ast.Call, n *ast.Assign) ([]ir.Stmt, bool) {
+	args := flatten(argList(lhs))
+	if len(args) < 2 || len(args) > 3 {
+		return nil, false
+	}
+	target := l.assignTarget(args[0])
+	if target == nil || !assignableTarget(target) || typeOrAny(target).Kind != ir.String {
+		return nil, false
+	}
+	offset := l.toInt(l.expr(args[1]), args[1])
+	// A missing length means "to the end of the string", and any length at
+	// least as long as the string says that, because the window is clipped
+	// rather than reported as an error.
+	length := ir.Expr(lenOf(target))
+	if len(args) == 3 {
+		length = l.toInt(l.expr(args[2]), args[2])
+	}
+	value := l.toStr(l.scalar(n.RHS), n.RHS)
+
+	st := assign("=", []ir.Expr{target},
+		[]ir.Expr{l.helperCall(hSubstrReplace, ir.TString, target, offset, length, value)})
+	l.setProv(st, n)
+	l.note(st, "substr on the left of an assignment edits the string where it "+
+		"stands. A Go string cannot be edited at all: it is immutable, so the "+
+		"replacement builds a new string and the variable is assigned the result. "+
+		"The window rules are the forgiving ones substr uses, not the ones slicing "+
+		"a string would apply.",
+		"strings-are-bytes", "explicit-conversions-no-coercion")
+	l.approximate(n, "P2G2545", "substr as an assignment target",
+		"the whole string is rebuilt rather than edited in place",
+		"Perl's substr can be written through, editing the string where it sits. Go "+
+			"strings are immutable, so the generated code builds a new string with the "+
+			"window replaced and assigns it back.",
+		"Where a string is edited repeatedly, a []byte or a strings.Builder avoids "+
+			"rebuilding it on every change.",
+		"strings-are-bytes")
+	return []ir.Stmt{st}, true
 }
 
 // assignToSlice lowers `@a[i, j] = LIST` and `@h{k1, k2} = LIST`.
@@ -135,7 +188,7 @@ func (l *Lowerer) sliceElements(n *ast.Slice) []ir.Expr {
 
 	var out []ir.Expr
 	for _, ie := range n.Idx {
-		for _, one := range flatten(ie) {
+		for _, one := range flattenWords(ie) {
 			if n.Hash {
 				out = append(out, index(container, l.toStr(l.expr(one), one), elem))
 				continue
@@ -146,6 +199,25 @@ func (l *Lowerer) sliceElements(n *ast.Slice) []ir.Expr {
 				continue
 			}
 			out = append(out, index(container, l.toInt(l.expr(one), one), elem))
+		}
+	}
+	return out
+}
+
+// flattenWords is flatten with a qw() list taken apart into its words, which
+// is what a slice written `@h{qw(user pass)}` needs: the words are the keys,
+// not one value.
+func flattenWords(e ast.Expr) []ast.Expr {
+	var out []ast.Expr
+	for _, part := range flatten(e) {
+		qw, ok := part.(*ast.QwLit)
+		if !ok {
+			out = append(out, part)
+			continue
+		}
+		for _, w := range qw.Words {
+			lit := &ast.StrLit{Value: w}
+			out = append(out, lit)
 		}
 	}
 	return out
@@ -926,6 +998,9 @@ func (l *Lowerer) autovivifyTarget(e ast.Expr) {
 
 // compoundAssign lowers +=, .=, //= and the rest.
 func (l *Lowerer) compoundAssign(n *ast.Assign) []ir.Stmt {
+	if sts, ok := l.ternaryAssign(n); ok {
+		return sts
+	}
 	op := n.Op[:len(n.Op)-1]
 	l.autovivifyTarget(n.LHS)
 	target := l.assignTarget(n.LHS)
@@ -1202,4 +1277,54 @@ func samePlace(a, b ast.Expr) bool {
 		return ok && x.Text == y.Text
 	}
 	return false
+}
+
+// ternaryAssign lowers an assignment whose left side is a conditional.
+//
+// Perl's ternary is an lvalue: `($odd ? $a : $b) += $n` picks a variable and
+// then assigns through it. Go's conditional is an expression that produces a
+// value and can never name a place, so the choice moves outwards and becomes an
+// `if` around two assignments. That is what the line means, and it is shorter
+// to read than the original.
+func (l *Lowerer) ternaryAssign(n *ast.Assign) ([]ir.Stmt, bool) {
+	t, ok := unwrapTernary(n.LHS)
+	if !ok {
+		return nil, false
+	}
+	cond := l.cond(t.Cond)
+	setup := l.takePre()
+
+	then := l.stmts([]ast.Stmt{&ast.ExprStmt{X: &ast.Assign{Op: n.Op, LHS: t.A, RHS: n.RHS}}})
+	other := l.stmts([]ast.Stmt{&ast.ExprStmt{X: &ast.Assign{Op: n.Op, LHS: t.B, RHS: n.RHS}}})
+	if len(then) == 0 || len(other) == 0 {
+		return nil, false
+	}
+
+	out := &ir.If{Cond: cond, Then: &ir.Block{Stmts: then}, Else: &ir.Block{Stmts: other}}
+	l.setProv(out, n)
+	l.note(out, "Perl's ?: can stand on the left of an assignment, because it picks "+
+		"a variable rather than producing a value. Go's conditional never names a "+
+		"place, so the choice moves out into an if and each branch does its own "+
+		"assignment.",
+		"statements-vs-expressions")
+	l.concept("statements-vs-expressions")
+	return append(setup, out), true
+}
+
+// unwrapTernary looks through the parentheses a conditional assignment target
+// is always written with.
+func unwrapTernary(e ast.Expr) (*ast.Ternary, bool) {
+	for {
+		switch n := e.(type) {
+		case *ast.Ternary:
+			return n, true
+		case *ast.List:
+			if len(n.Elems) != 1 {
+				return nil, false
+			}
+			e = n.Elems[0]
+		default:
+			return nil, false
+		}
+	}
 }

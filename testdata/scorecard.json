@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T01:53:06Z",
+  "recorded": "2026-08-15T02:07:59Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -10,88 +10,88 @@
   "tiers": [
     {
       "tier": "tier1",
-      "entries": 37,
+      "entries": 38,
       "stages": {
         "compiled": {
-          "pass": 37,
+          "pass": 38,
           "fail": 0,
           "skip": 0
         },
         "emitted": {
-          "pass": 37,
+          "pass": 38,
           "fail": 0,
           "skip": 0
         },
         "equivalent": {
-          "pass": 14,
-          "fail": 23,
-          "skip": 0
-        },
-        "translated": {
-          "pass": 31,
-          "fail": 6,
-          "skip": 0
-        },
-        "typed": {
-          "pass": 23,
-          "fail": 14,
-          "skip": 0
-        }
-      },
-      "equivalent_annotated": {
-        "pass": 14,
-        "fail": 23,
-        "skip": 0
-      },
-      "quality": {
-        "todos": 13,
-        "symbols": 396,
-        "symbols_typed": 364,
-        "refusals": 13,
-        "approximations": 51
-      }
-    },
-    {
-      "tier": "tier2",
-      "entries": 40,
-      "stages": {
-        "compiled": {
-          "pass": 35,
-          "fail": 5,
-          "skip": 0
-        },
-        "emitted": {
-          "pass": 40,
-          "fail": 0,
-          "skip": 0
-        },
-        "equivalent": {
-          "pass": 5,
-          "fail": 35,
+          "pass": 17,
+          "fail": 21,
           "skip": 0
         },
         "translated": {
           "pass": 36,
+          "fail": 2,
+          "skip": 0
+        },
+        "typed": {
+          "pass": 23,
+          "fail": 15,
+          "skip": 0
+        }
+      },
+      "equivalent_annotated": {
+        "pass": 17,
+        "fail": 21,
+        "skip": 0
+      },
+      "quality": {
+        "todos": 2,
+        "symbols": 409,
+        "symbols_typed": 377,
+        "refusals": 2,
+        "approximations": 66
+      }
+    },
+    {
+      "tier": "tier2",
+      "entries": 41,
+      "stages": {
+        "compiled": {
+          "pass": 36,
+          "fail": 5,
+          "skip": 0
+        },
+        "emitted": {
+          "pass": 41,
+          "fail": 0,
+          "skip": 0
+        },
+        "equivalent": {
+          "pass": 6,
+          "fail": 35,
+          "skip": 0
+        },
+        "translated": {
+          "pass": 37,
           "fail": 4,
           "skip": 0
         },
         "typed": {
           "pass": 6,
-          "fail": 34,
+          "fail": 35,
           "skip": 0
         }
       },
       "equivalent_annotated": {
-        "pass": 5,
+        "pass": 6,
         "fail": 35,
         "skip": 0
       },
       "quality": {
         "todos": 49,
-        "symbols": 878,
-        "symbols_typed": 683,
+        "symbols": 893,
+        "symbols_typed": 696,
         "refusals": 50,
-        "approximations": 260
+        "approximations": 270
       }
     },
     {
@@ -114,8 +114,8 @@
           "skip": 0
         },
         "translated": {
-          "pass": 11,
-          "fail": 17,
+          "pass": 12,
+          "fail": 16,
           "skip": 0
         },
         "typed": {
@@ -130,11 +130,11 @@
         "skip": 0
       },
       "quality": {
-        "todos": 137,
+        "todos": 135,
         "symbols": 779,
         "symbols_typed": 531,
-        "refusals": 141,
-        "approximations": 260
+        "refusals": 139,
+        "approximations": 261
       }
     },
     {
@@ -200,8 +200,8 @@
           "skip": 0
         },
         "translated": {
-          "pass": 16,
-          "fail": 9,
+          "pass": 17,
+          "fail": 8,
           "skip": 0
         },
         "typed": {
@@ -216,31 +216,31 @@
         "skip": 0
       },
       "quality": {
-        "todos": 20,
+        "todos": 16,
         "symbols": 924,
         "symbols_typed": 766,
-        "refusals": 20,
-        "approximations": 200
+        "refusals": 16,
+        "approximations": 204
       }
     }
   ],
   "total": {
     "tier": "TOTAL",
-    "entries": 165,
+    "entries": 167,
     "stages": {
       "compiled": {
-        "pass": 142,
+        "pass": 144,
         "fail": 23,
         "skip": 0
       },
       "emitted": {
-        "pass": 165,
+        "pass": 167,
         "fail": 0,
         "skip": 0
       },
       "equivalent": {
-        "pass": 23,
-        "fail": 107,
+        "pass": 27,
+        "fail": 105,
         "skip": 0
       },
       "honest": {
@@ -249,35 +249,35 @@
         "skip": 1
       },
       "translated": {
-        "pass": 116,
-        "fail": 49,
+        "pass": 124,
+        "fail": 43,
         "skip": 0
       },
       "typed": {
         "pass": 52,
-        "fail": 113,
+        "fail": 115,
         "skip": 0
       }
     },
     "equivalent_annotated": {
-      "pass": 23,
-      "fail": 107,
+      "pass": 27,
+      "fail": 105,
       "skip": 0
     },
     "quality": {
-      "todos": 254,
-      "symbols": 3129,
-      "symbols_typed": 2450,
-      "refusals": 260,
-      "approximations": 826
+      "todos": 237,
+      "symbols": 3157,
+      "symbols_typed": 2476,
+      "refusals": 243,
+      "approximations": 856
     }
   },
   "quality": {
-    "todos": 254,
-    "symbols": 3129,
-    "symbols_typed": 2450,
-    "refusals": 260,
-    "approximations": 826
+    "todos": 237,
+    "symbols": 3157,
+    "symbols_typed": 2476,
+    "refusals": 243,
+    "approximations": 856
   },
   "entries": [
     {
@@ -701,15 +701,13 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "exit status 2, wanted 0; stdout differs: line 2, byte 50: got \"a b f g\\nremaining:        a b f ...\", wanted \"c d e\\nremaining:        a b f g\\n...\"; stderr differs: unexpected \"TODO P2G5581: this form of splice is not implemented ...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
         },
         "translated": {
-          "outcome": "fail",
-          "reason": "7 untranslated constructs"
+          "outcome": "pass"
         },
         "typed": {
           "outcome": "fail",
@@ -717,15 +715,14 @@
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "exit status 2, wanted 0; stdout differs: line 2, byte 50: got \"a b f g\\nremaining:        a b f ...\", wanted \"c d e\\nremaining:        a b f g\\n...\"; stderr differs: unexpected \"TODO P2G5581: this form of splice is not implemented ...\""
+        "outcome": "pass"
       },
       "quality": {
-        "todos": 7,
+        "todos": 0,
         "symbols": 8,
         "symbols_typed": 6,
-        "refusals": 7,
-        "approximations": 7
+        "refusals": 0,
+        "approximations": 13
       }
     },
     {
@@ -851,14 +848,13 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: line 3, byte 93: got \"ort\\nsub host port=\\nafter delete ...\", wanted \"ass,port,user\\nsub host=localhost...\"; stderr differs: unexpected \"TODO P2G2530: the two sides of this slice assignment are different le...\""
+          "reason": "stdout differs: line 6, byte 160: got \"debug,host,name,pass,port,user\\n-...\", wanted \"host,name,port,user\\n--- hash in ...\""
         },
         "honest": {
           "outcome": "n/a"
         },
         "translated": {
-          "outcome": "fail",
-          "reason": "1 untranslated construct"
+          "outcome": "pass"
         },
         "typed": {
           "outcome": "fail",
@@ -867,13 +863,13 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: line 3, byte 93: got \"ort\\nsub host port=\\nafter delete ...\", wanted \"ass,port,user\\nsub host=localhost...\"; stderr differs: unexpected \"TODO P2G2530: the two sides of this slice assignment are different le...\""
+        "reason": "stdout differs: line 6, byte 160: got \"debug,host,name,pass,port,user\\n-...\", wanted \"host,name,port,user\\n--- hash in ...\""
       },
       "quality": {
-        "todos": 1,
+        "todos": 0,
         "symbols": 18,
         "symbols_typed": 10,
-        "refusals": 1,
+        "refusals": 0,
         "approximations": 1
       }
     },
@@ -924,30 +920,27 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 2, byte 36: got \"--- keys in scalar context is th...\", wanted \"apples   10\\nfigs     12\\nkiwis   ...\"; stderr differs: unexpected \"TODO P2G5570: each keeps hidden iterator state\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
         },
         "translated": {
-          "outcome": "fail",
-          "reason": "1 untranslated construct"
+          "outcome": "pass"
         },
         "typed": {
           "outcome": "fail",
-          "reason": "4 variables left dynamic out of 14"
+          "reason": "3 variables left dynamic out of 14"
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 2, byte 36: got \"--- keys in scalar context is th...\", wanted \"apples   10\\nfigs     12\\nkiwis   ...\"; stderr differs: unexpected \"TODO P2G5570: each keeps hidden iterator state\""
+        "outcome": "pass"
       },
       "quality": {
-        "todos": 1,
+        "todos": 0,
         "symbols": 14,
-        "symbols_typed": 10,
-        "refusals": 1,
+        "symbols_typed": 11,
+        "refusals": 0,
         "approximations": 1
       }
     },
@@ -963,15 +956,13 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 20, byte 245: got \"0 odds=0\\n\", wanted \"12 odds=9\\n\"; stderr differs: unexpected \"TODO P2G2540: this compound assignment is not implemented\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
         },
         "translated": {
-          "outcome": "fail",
-          "reason": "1 untranslated construct"
+          "outcome": "pass"
         },
         "typed": {
           "outcome": "fail",
@@ -979,15 +970,14 @@
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 20, byte 245: got \"0 odds=0\\n\", wanted \"12 odds=9\\n\"; stderr differs: unexpected \"TODO P2G2540: this compound assignment is not implemented\""
+        "outcome": "pass"
       },
       "quality": {
-        "todos": 1,
+        "todos": 0,
         "symbols": 11,
         "symbols_typed": 10,
-        "refusals": 1,
-        "approximations": 1
+        "refusals": 0,
+        "approximations": 2
       }
     },
     {
@@ -1256,14 +1246,13 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: line 9, byte 225: got \"The lazy brown fox' with 'lazy' ...\", wanted \"quick' with 'lazy' -\u003e The lazy b...\"; stderr differs: unexpected \"TODO P2G2540: this assignment target is not implemented\""
+          "reason": "stdout differs: line 9, byte 225: got \"The lazy brown fox' with 'lazy' ...\", wanted \"quick' with 'lazy' -\u003e The lazy b...\""
         },
         "honest": {
           "outcome": "n/a"
         },
         "translated": {
-          "outcome": "fail",
-          "reason": "2 untranslated constructs"
+          "outcome": "pass"
         },
         "typed": {
           "outcome": "pass"
@@ -1271,14 +1260,14 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: line 9, byte 225: got \"The lazy brown fox' with 'lazy' ...\", wanted \"quick' with 'lazy' -\u003e The lazy b...\"; stderr differs: unexpected \"TODO P2G2540: this assignment target is not implemented\""
+        "reason": "stdout differs: line 9, byte 225: got \"The lazy brown fox' with 'lazy' ...\", wanted \"quick' with 'lazy' -\u003e The lazy b...\""
       },
       "quality": {
-        "todos": 2,
+        "todos": 0,
         "symbols": 10,
         "symbols_typed": 10,
-        "refusals": 2,
-        "approximations": 0
+        "refusals": 0,
+        "approximations": 2
       }
     },
     {
@@ -1639,6 +1628,45 @@
         "symbols_typed": 10,
         "refusals": 0,
         "approximations": 0
+      }
+    },
+    {
+      "tier": "tier1",
+      "name": "38-lvalue-and-redo",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "stdout differs: line 11, byte 292: got \"1\\nb after 2\\n\", wanted \"3\\nb after 4\\n\"; stderr differs: unexpected \"TODO P2G3510: redo has no Go equivalent\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "fail",
+          "reason": "1 untranslated construct"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "1 variable left dynamic out of 13"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "stdout differs: line 11, byte 292: got \"1\\nb after 2\\n\", wanted \"3\\nb after 4\\n\"; stderr differs: unexpected \"TODO P2G3510: redo has no Go equivalent\""
+      },
+      "quality": {
+        "todos": 1,
+        "symbols": 13,
+        "symbols_typed": 12,
+        "refusals": 1,
+        "approximations": 6
       }
     },
     {
@@ -3155,6 +3183,42 @@
       }
     },
     {
+      "tier": "tier2",
+      "name": "41-list-surgery",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "pass"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "2 variables left dynamic out of 15"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "pass"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 15,
+        "symbols_typed": 13,
+        "refusals": 0,
+        "approximations": 10
+      }
+    },
+    {
       "tier": "tier3",
       "name": "01-inventory-manager",
       "kind": "convert",
@@ -3404,8 +3468,7 @@
           "outcome": "n/a"
         },
         "translated": {
-          "outcome": "fail",
-          "reason": "1 untranslated construct"
+          "outcome": "pass"
         },
         "typed": {
           "outcome": "fail",
@@ -3417,11 +3480,11 @@
         "reason": "exit status 255, wanted 0; stdout differs: 483 byte(s) missing after line 1, expected \"TOP 4 PATHS (of 9)\\nPATH         ...\"; stderr differs: unexpected \"open --top: open --top: no such file or directory\""
       },
       "quality": {
-        "todos": 1,
+        "todos": 0,
         "symbols": 35,
         "symbols_typed": 26,
-        "refusals": 1,
-        "approximations": 8
+        "refusals": 0,
+        "approximations": 9
       }
     },
     {
@@ -4027,7 +4090,7 @@
         },
         "translated": {
           "outcome": "fail",
-          "reason": "2 untranslated constructs"
+          "reason": "1 untranslated construct"
         },
         "typed": {
           "outcome": "fail",
@@ -4039,10 +4102,10 @@
         "reason": "the generated program did not compile"
       },
       "quality": {
-        "todos": 1,
+        "todos": 0,
         "symbols": 41,
         "symbols_typed": 29,
-        "refusals": 2,
+        "refusals": 1,
         "approximations": 15
       }
     },
@@ -5719,8 +5782,7 @@
           "outcome": "n/a"
         },
         "translated": {
-          "outcome": "fail",
-          "reason": "1 untranslated construct"
+          "outcome": "pass"
         },
         "typed": {
           "outcome": "fail",
@@ -5732,11 +5794,11 @@
         "reason": "exit status 0, wanted 1; stdout differs: line 1, byte 11: got \"0 (skipped 0 unparseable)\\nstates...\", wanted \"15 (skipped 1 unparseable)\\nstate...\""
       },
       "quality": {
-        "todos": 1,
+        "todos": 0,
         "symbols": 47,
         "symbols_typed": 40,
-        "refusals": 1,
-        "approximations": 8
+        "refusals": 0,
+        "approximations": 9
       }
     },
     {
@@ -5836,7 +5898,7 @@
         },
         "translated": {
           "outcome": "fail",
-          "reason": "3 untranslated constructs"
+          "reason": "2 untranslated constructs"
         },
         "typed": {
           "outcome": "fail",
@@ -5848,11 +5910,11 @@
         "reason": "exit status 0, wanted 1; stdout differs: line 1, byte 7: got \"0/0 lines, 1 transferred\\n\\nby sta...\", wanted \"27/28 lines, 202,709 transferred...\""
       },
       "quality": {
-        "todos": 3,
+        "todos": 2,
         "symbols": 39,
         "symbols_typed": 29,
-        "refusals": 3,
-        "approximations": 13
+        "refusals": 2,
+        "approximations": 14
       }
     },
     {
@@ -6292,7 +6354,7 @@
         },
         "translated": {
           "outcome": "fail",
-          "reason": "2 untranslated constructs"
+          "reason": "1 untranslated construct"
         },
         "typed": {
           "outcome": "fail",
@@ -6304,11 +6366,11 @@
         "reason": "exit status 255, wanted 1; stdout differs: 308 byte(s) missing after line 1, expected \"\u003eorf1 len=10\\nMADEGFKDL*\\n\u003eorf2_re...\"; stderr differs: unexpected \"interface conversion: interface {} is map[string]string, not map[stri...\""
       },
       "quality": {
-        "todos": 2,
+        "todos": 1,
         "symbols": 56,
         "symbols_typed": 48,
-        "refusals": 2,
-        "approximations": 11
+        "refusals": 1,
+        "approximations": 12
       }
     },
     {
@@ -6331,7 +6393,7 @@
         },
         "translated": {
           "outcome": "fail",
-          "reason": "2 untranslated constructs"
+          "reason": "1 untranslated construct"
         },
         "typed": {
           "outcome": "fail",
@@ -6343,11 +6405,11 @@
         "reason": "stdout differs: line 1, byte 14: got \"0 k=6\\nkmers: 168 total, 1 distin...\", wanted \"162 k=6\\nkmers: 126 total, 21 dis...\"; stderr differs: unexpected \"TODO P2G4520: tr with modifiers is not implemented\""
       },
       "quality": {
-        "todos": 2,
+        "todos": 1,
         "symbols": 28,
         "symbols_typed": 27,
-        "refusals": 2,
-        "approximations": 3
+        "refusals": 1,
+        "approximations": 4
       }
     },
     {

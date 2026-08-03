@@ -25,6 +25,7 @@ const (
 	hChop          = "chop"          // Perl chop()
 	hStrInc        = "strInc"        // Perl's magic string increment
 	hRepeatList    = "repeatList"    // the list form of the x operator
+	hSplice        = "splice"        // remove, insert or replace a run of elements
 	hReverseStr    = "reverseStr"    // reverse() in scalar context
 	hUcFirst       = "ucFirst"
 	hLcFirst       = "lcFirst"

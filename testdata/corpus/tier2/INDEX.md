@@ -1,6 +1,6 @@
 # Tier 2 corpus - script-shaped Perl programs
 
-40 entries. Each is a self-contained, realistic Perl script of the kind a
+41 entries. Each is a self-contained, realistic Perl script of the kind a
 sysadmin or data wrangler actually writes, not a snippet.
 
 ## Layout of an entry
@@ -87,6 +87,7 @@ Two entries exit non-zero on purpose: **27** (65) and **32** (1). The other 33 e
 | 38 | `38-do-block-values` | `do BLOCK` as a term, in every shape a script uses it | setup-then-value, `if`/`elsif`/`else` as a term, a block whose value is a list, `EXPR or do {}`, `EXPR and do {}`, `return do {}`, nested blocks |
 | 39 | `39-numeric-accumulators` | Totals built out of text fields, and every compound arithmetic operator | `+=` over split fields, `/=`, `*=`, `-=`, `%=`, `**=`, `.=` on text, `++` on a hash element |
 | 40 | `40-flattened-arguments` | Argument lists that flatten arrays into `@_`, in every mixture | one array, single values, a value in front of an array, two arrays, interleaved, a fixed parameter plus a tail, an empty array |
+| 41 | `41-list-surgery` | A work queue edited with splice, hash slices and each | `splice` remove/insert/replace/truncate, negative offset and length, splice through a hashref, `@h{qw(...)} = (...)`, `each`, lvalue `substr`, a ternary as an assignment target |
 
 ## Coverage map
 
@@ -106,3 +107,4 @@ Two entries exit non-zero on purpose: **27** (65) and **32** (1). The other 33 e
 - **Object shapes** - 36
 - **Blocks as terms** - 38; the slurp form of it in 21
 - **Arithmetic and argument typing** - 39, 40
+- **List and string surgery** - 41; the whole of `splice` in tier1 12
