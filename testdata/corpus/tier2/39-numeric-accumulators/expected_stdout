@@ -1,0 +1,6 @@
+rows=3 bytes=1792 load=4.25
+avg=597.33
+scaled=3584 trimmed=1536 wrapped=792 squared=81
+report=disk0;disk1;disk2;
+hits=5 distinct=3
+alpha=3 beta=1 gamma=1

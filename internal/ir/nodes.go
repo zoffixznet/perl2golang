@@ -366,6 +366,10 @@ type Call struct {
 	Args []Expr
 	// Ellipsis emits the trailing ... on the final argument.
 	Ellipsis bool
+	// TypeArgs spells out a generic function's type parameters, for the cases
+	// where the arguments do not pin them down. A helper whose element type
+	// appears only in its result is the one that needs them.
+	TypeArgs []*Type
 }
 
 // Selector is x.Sel.

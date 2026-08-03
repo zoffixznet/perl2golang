@@ -152,7 +152,15 @@ func (e *Emitter) render(x ir.Expr, noLit bool) string {
 			}
 			args = append(args, s)
 		}
-		return e.operand(x.Fun, precPrimary, noLit) + "(" + strings.Join(args, ", ") + ")"
+		fun := e.operand(x.Fun, precPrimary, noLit)
+		if len(x.TypeArgs) > 0 {
+			names := make([]string, 0, len(x.TypeArgs))
+			for _, t := range x.TypeArgs {
+				names = append(names, e.typ(t))
+			}
+			fun += "[" + strings.Join(names, ", ") + "]"
+		}
+		return fun + "(" + strings.Join(args, ", ") + ")"
 
 	case *ir.Selector:
 		if x.Import != "" {

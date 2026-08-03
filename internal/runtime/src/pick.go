@@ -43,3 +43,14 @@ func strList[T any](xs []T) []string {
 	}
 	return out
 }
+
+// floatList reads every element of xs as a floating-point number, so a list
+// whose elements are whole numbers, or of no fixed type at all, can be used
+// where fractions are needed.
+func floatList[T any](xs []T) []float64 {
+	out := make([]float64, len(xs))
+	for i, x := range xs {
+		out[i] = toNum(x)
+	}
+	return out
+}

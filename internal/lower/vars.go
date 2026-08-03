@@ -89,6 +89,33 @@ func (l *Lowerer) lookup(sigil rune, name string, at ast.Node) *Binding {
 	return b
 }
 
+// special returns the package-level variable standing in for one of Perl's own
+// variables, creating it the first time the program asks for it.
+//
+// It is deliberately not `lookup`. Perl's own variables have names no ordinary
+// variable can have, and the Go name they are given, `args` for @ARGV, is a
+// perfectly ordinary one a script may well use for something else. Going
+// through `lookup` under that Go name let a program's own `my @args` capture
+// @ARGV's binding and produce `args := args`, which does not compile. Keying on
+// the Perl spelling keeps the two apart, and the name set still hands out a
+// free Go identifier, so the collision resolves in the generated names instead.
+func (l *Lowerer) special(key string, sigil rune, goBase string, at ast.Node) *Binding {
+	if b, ok := l.globalSeen[key]; ok {
+		return b
+	}
+	b := &Binding{
+		Perl:  key,
+		Sigil: sigil,
+		Kind:  KindGlobal,
+		Line:  posLine(at),
+		Type:  defaultFor(sigil),
+	}
+	b.Go = l.names.take(goBase)
+	l.globalSeen[key] = b
+	l.globals = append(l.globals, b)
+	return b
+}
+
 // lineCounter returns the variable standing in for $., creating it the first
 // time the program asks for it.
 //
@@ -269,8 +296,7 @@ func (l *Lowerer) specialVar(v *ast.Var) ir.Expr {
 		if len(l.topicStack) > 0 {
 			return l.topicStack[len(l.topicStack)-1]
 		}
-		b := l.lookup('$', "_topic", v)
-		b.Perl = "$_"
+		b := l.special("$_", '$', "topic", v)
 		if b.Type == nil || b.Type.Kind == ir.Any {
 			b.Type = ir.TString
 		}
@@ -280,8 +306,7 @@ func (l *Lowerer) specialVar(v *ast.Var) ir.Expr {
 		// @ARGV is an ordinary array in Perl: scripts shift it, sort it and
 		// assign to it. os.Args[1:] is an expression rather than a variable,
 		// so the arguments get a real variable of their own.
-		b := l.lookup('@', "args", v)
-		b.Perl = "@ARGV"
+		b := l.special("@ARGV", '@', "args", v)
 		b.Type = ir.SliceOf(ir.TString)
 		if b.Init == nil {
 			b.Init = slicing(ir.Pkg("os", "os", "Args", ir.SliceOf(ir.TString)),
@@ -301,10 +326,7 @@ func (l *Lowerer) specialVar(v *ast.Var) ir.Expr {
 		return call("os", "os", "Getpid", ir.TInt)
 
 	case "$@":
-		b := l.lookup('$', "_err", v)
-		b.Perl = "$@"
-		b.Type = ir.TString
-		return l.ident(b)
+		return l.ident(l.errText(v))
 
 	case "$!":
 		// Inside a failure branch, $! is the error the call actually returned.

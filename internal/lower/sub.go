@@ -652,7 +652,16 @@ func (l *Lowerer) multiResultCall(c *ast.Call, wantList bool) (ir.Expr, bool) {
 
 	if wantList {
 		t := joinAll(s.Results)
-		return composite(ir.SliceOf(t), nil, names), true
+		if t == nil {
+			t = ir.TAny
+		}
+		// The results are a list here, and a Go slice holds one type, so each
+		// of them is converted into the one type that covers all of them.
+		elems := make([]ir.Expr, len(names))
+		for i, name := range names {
+			elems[i] = l.assignable(name, t, c)
+		}
+		return composite(ir.SliceOf(t), nil, elems), true
 	}
 	return names[len(names)-1], true
 }
@@ -664,7 +673,8 @@ func (l *Lowerer) callSub(s *Sub, n *ast.Call) ir.Expr {
 
 	// Fixed parameters take their values in order; anything left over goes to
 	// the variadic tail.
-	var out []ir.Expr
+	var out, tail []ir.Expr
+	tailHasList := false
 	for i, a := range args {
 		if i < len(s.Params) {
 			p := s.Params[i]
@@ -677,11 +687,12 @@ func (l *Lowerer) callSub(s *Sub, n *ast.Call) ir.Expr {
 			// receives is the array's elements, not the array.
 			if at := typeOrAny(a); at.Kind == ir.Slice {
 				l.observeElem(s.VarArgs, elemOf(at))
-				out = append(out, l.assignable(a, ir.SliceOf(elemOf(s.VarArgs.Type)), nil))
+				tail = append(tail, l.assignable(a, ir.SliceOf(elemOf(s.VarArgs.Type)), nil))
+				tailHasList = true
 				continue
 			}
 			l.observeElem(s.VarArgs, typeOrAny(a))
-			out = append(out, l.assignable(a, elemOf(s.VarArgs.Type), nil))
+			tail = append(tail, l.assignable(a, elemOf(s.VarArgs.Type), nil))
 			continue
 		}
 		// The sub named its parameters and takes no variadic tail, so Perl
@@ -714,6 +725,24 @@ func (l *Lowerer) callSub(s *Sub, n *ast.Call) ir.Expr {
 		}
 	}
 
+	// The variadic tail. Perl flattens an array into the argument list, so a
+	// call that mixes single values with arrays hands the sub one flat list.
+	// Go spreads exactly one slice and will not mix that with other arguments,
+	// so the flattening is written out: the list is built first and spread as
+	// a whole.
+	ellipsis := false
+	switch {
+	case len(tail) == 0:
+	case len(tail) == 1 && tailHasList:
+		out = append(out, tail[0])
+		ellipsis = true
+	case !tailHasList:
+		out = append(out, tail...)
+	default:
+		out = append(out, l.flattenTail(tail, elemOf(s.VarArgs.Type), n))
+		ellipsis = true
+	}
+
 	// A class method reached by its plain name is being called on the class
 	// it was written in.
 	if s.ClassParam != nil && s.Class != nil {
@@ -725,6 +754,7 @@ func (l *Lowerer) callSub(s *Sub, n *ast.Call) ir.Expr {
 		ret = s.Results[0]
 	}
 	c := ir.CallOf(ir.NewIdent(s.Go, nil), ret, out...)
+	c.Ellipsis = ellipsis
 	if len(s.Results) == 0 {
 		// Nothing in the file reads this sub's value, so the Go function
 		// returns nothing and the call cannot stand in an expression. It runs
@@ -744,17 +774,56 @@ func (l *Lowerer) callSub(s *Sub, n *ast.Call) ir.Expr {
 		return ir.Nil(ir.TAny)
 	}
 
-	// Passing a slice where the sub takes a variadic tail needs the ... form.
-	if s.VarArgs != nil && len(args) == len(s.Params)+1 {
-		if last := args[len(args)-1]; typeOrAny(last).Kind == ir.Slice {
-			c.Ellipsis = true
-			l.note(c, "Perl flattens an array into the argument list automatically. Go "+
-				"needs the ... suffix to say that a slice is being spread rather than "+
-				"passed as one value.",
-				"variadic-and-no-defaults")
-		}
+	if ellipsis {
+		l.note(c, "Perl flattens an array into the argument list automatically. Go "+
+			"needs the ... suffix to say that a slice is being spread rather than "+
+			"passed as one value.",
+			"variadic-and-no-defaults")
 	}
 	return c
+}
+
+// flattenTail builds the one slice a variadic call can spread out of a mixture
+// of single values and arrays.
+//
+// Perl does this in the call itself: every array in the argument list is
+// flattened into @_ and the sub sees one list. Go spreads a single slice and
+// nothing else, so the same list is built on the line above and spread whole.
+func (l *Lowerer) flattenTail(parts []ir.Expr, elem *ir.Type, at ast.Node) ir.Expr {
+	t := ir.SliceOf(elem)
+	name := l.tmp("argList")
+	target := ir.NewIdent(name, t)
+
+	// Leading single values start the slice, so the common shape, one scalar
+	// followed by an array, is two lines rather than three.
+	var lead []ir.Expr
+	i := 0
+	for ; i < len(parts) && typeOrAny(parts[i]).Kind != ir.Slice; i++ {
+		lead = append(lead, l.assignable(parts[i], elem, nil))
+	}
+	decl := assign(":=", []ir.Expr{target}, []ir.Expr{composite(t, nil, lead)})
+	l.setProv(decl, at)
+	l.note(decl, "Perl flattens every array in an argument list into one list before "+
+		"the sub sees it. Go spreads one slice and nothing else, so the list is "+
+		"built here and passed as a whole.",
+		"variadic-and-no-defaults", "slices-not-arrays")
+	l.emit(decl)
+
+	for ; i < len(parts); i++ {
+		p := parts[i]
+		var st ir.Stmt
+		if typeOrAny(p).Kind == ir.Slice {
+			add := appendTo(target, l.assignable(p, t, nil))
+			add.Ellipsis = true
+			st = assign("=", []ir.Expr{target}, []ir.Expr{add})
+		} else {
+			st = assign("=", []ir.Expr{target},
+				[]ir.Expr{appendTo(target, l.assignable(p, elem, nil))})
+		}
+		l.setProv(st, at)
+		l.emit(st)
+	}
+	return target
 }
 
 // callArgs returns a call's arguments, with a leading block turned into the

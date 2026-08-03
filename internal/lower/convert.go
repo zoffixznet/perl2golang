@@ -281,7 +281,7 @@ func (l *Lowerer) assignable(x ir.Expr, want *ir.Type, n ast.Node) ir.Expr {
 				helper = hAnyMap
 			}
 			out := l.helperCall(helper, want, x)
-			l.approximate(n, "P2G3020", "a typed collection stored where anything can go",
+			l.approximate(n, "P2G3021", "a typed collection stored where anything can go",
 				"the values are copied into a new collection",
 				"The destination holds values of no fixed type, and the source holds "+
 					"one particular type. Go has no conversion between the two, because "+
@@ -293,9 +293,76 @@ func (l *Lowerer) assignable(x ir.Expr, want *ir.Type, n ast.Node) ir.Expr {
 				"slice-aliasing-and-copy", "static-types-and-zero-values")
 			return out
 		}
+		// The same gap in the other direction: the source holds values of no
+		// fixed type and the destination wants one. Each value has to be
+		// asserted on the way across, which is what a type switch would do one
+		// value at a time.
+		if have != nil && have.Kind == want.Kind && want.Elem != nil && want.Elem.Kind != ir.Any &&
+			have.Elem != nil && have.Elem.Kind == ir.Any && l.pass == 2 {
+			helper := hTypedList
+			if want.Kind == ir.Map {
+				helper = hTypedMap
+			}
+			out := l.helperCall(helper, want, x)
+			out.TypeArgs = typeArgsFor(want)
+			l.approximate(n, "P2G3022", "a collection of anything stored where one type is wanted",
+				"the values are asserted one at a time into a new collection",
+				"The source holds values of no fixed type and the destination wants one "+
+					"particular type. Go has no conversion between the two, so the values "+
+					"are copied across with an assertion on each; a value that is not of "+
+					"that type lands as the type's zero value.",
+				"Give the source the same element type as the destination. The copy then "+
+					"disappears, and so does the chance of a value quietly turning into a "+
+					"zero.",
+				"collections-hold-one-type", "type-assertions-and-switches")
+			return out
+		}
+		// Two slices whose element types are both known but different. Go has
+		// no conversion between them either: []int and []float64 are laid out
+		// differently, so the elements are read across one at a time.
+		if have != nil && have.Kind == ir.Slice && want.Kind == ir.Slice && l.pass == 2 {
+			helper := ""
+			switch want.Elem.Kind {
+			case ir.Int:
+				helper = hIntList
+			case ir.Float:
+				helper = hFloatList
+			case ir.String:
+				helper = hStrList
+			}
+			if helper != "" {
+				out := l.helperCall(helper, want, x)
+				l.approximate(n, "P2G3021", "a list read as a different element type",
+					"the elements are read across into a new list",
+					"A Go slice holds one element type and there is no conversion "+
+						"between two of them, because they are laid out differently in "+
+						"memory. The elements are read across one at a time instead.",
+					"Declare both with the same element type; the copy then disappears, "+
+						"and so does the difference between changing one and changing the "+
+						"other.",
+					"collections-hold-one-type", "explicit-conversions-no-coercion")
+				return out
+			}
+		}
 		return x
 	}
 	return x
+}
+
+// typeArgsFor spells out the type parameters a typed-collection helper cannot
+// infer from its argument, since the element type appears only in its result.
+func typeArgsFor(want *ir.Type) []*ir.Type {
+	if want == nil {
+		return nil
+	}
+	if want.Kind == ir.Map {
+		key := want.Key
+		if key == nil {
+			key = ir.TString
+		}
+		return []*ir.Type{key, want.Elem}
+	}
+	return []*ir.Type{want.Elem}
 }
 
 // assertTo states what a value held in an any really is, so that Go will let

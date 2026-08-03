@@ -146,6 +146,34 @@ func isOrdered(t *ir.Type) bool {
 // isNum reports whether Go arithmetic applies to the type directly.
 func isNum(t *ir.Type) bool { return t != nil && (t.Kind == ir.Int || t.Kind == ir.Float) }
 
+// arithmeticResult is what an arithmetic operator leaves behind, given the type
+// of the other operand.
+//
+// It exists because Perl's `+`, `-` and `*` are numeric operators and nothing
+// else: `$total += $field` reads a number out of $field whatever $field was
+// spelled as, and the total is a number either way. Recording the operand's own
+// type as evidence for the total is what used to leave the accumulator in the
+// most common loop in Perl holding `any`, on the grounds that it had been seen
+// holding text, which it never had.
+//
+// Two whole numbers give a whole number and anything else gives a
+// floating-point number, since text can carry a fraction and nothing rules that
+// out. An operand whose own type has not resolved yet says nothing at all: the
+// first discovery round sees most variables as untyped, and a guess made there
+// would be evidence the later rounds could never take back.
+func arithmeticResult(operand *ir.Type) *ir.Type {
+	if operand == nil {
+		return nil
+	}
+	switch operand.Kind {
+	case ir.Int:
+		return ir.TInt
+	case ir.Any, ir.Invalid, ir.Void:
+		return nil
+	}
+	return ir.TFloat
+}
+
 // isStr reports whether the type is a Go string.
 func isStr(t *ir.Type) bool { return t != nil && t.Kind == ir.String }
 

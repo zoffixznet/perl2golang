@@ -186,6 +186,12 @@ const (
 	NumericAndString Code = "P2G3016"
 	// IntegerOverflow: integers past 2^63 behave differently.
 	IntegerOverflow Code = "P2G3020"
+	// CollectionWidened: a collection of one element type was copied into one
+	// that holds anything.
+	CollectionWidened Code = "P2G3021"
+	// CollectionNarrowed: a collection of values of no fixed type was copied
+	// into one with a single element type, asserting each value.
+	CollectionNarrowed Code = "P2G3022"
 	// UndefBecameZeroValue: undef became a zero value plus an ok boolean.
 	UndefBecameZeroValue Code = "P2G3025"
 	// NilDereference: a pointer that can be nil is dereferenced.
@@ -890,6 +896,24 @@ var catalogue = map[Code]Entry{
 		Advice:   "use `math/big.Int` if the values can reach that range, or check the operands before multiplying",
 		Cost:     "a product that Perl prints as 1.84467440737096e+19 comes out negative",
 		Concepts: []string{"explicit-conversions-no-coercion"},
+	},
+	CollectionWidened: {
+		Severity:  report.Warn,
+		Message:   "a collection of one element type has no conversion to one that holds anything",
+		Short:     "the collection was copied element by element",
+		Advice:    "give the destination the same element type as the source and the copy goes away",
+		Cost:      "the two are separate collections: changing one does not change the other",
+		Converted: "the elements were copied into a new collection of `any`",
+		Concepts:  []string{"collections-hold-one-type", "slice-aliasing-and-copy"},
+	},
+	CollectionNarrowed: {
+		Severity:  report.Warn,
+		Message:   "a collection of values of no fixed type has no conversion to one with a single element type",
+		Short:     "each value was asserted on the way across",
+		Advice:    "give the source the same element type as the destination and the assertions go away",
+		Cost:      "a value that is not of that type lands as the type's zero value",
+		Converted: "the values were copied across with a type assertion on each",
+		Concepts:  []string{"collections-hold-one-type", "type-assertions-and-switches"},
 	},
 	UndefBecameZeroValue: {
 		Severity:  report.Note,

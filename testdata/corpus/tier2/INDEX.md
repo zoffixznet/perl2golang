@@ -1,6 +1,6 @@
 # Tier 2 corpus - script-shaped Perl programs
 
-38 entries. Each is a self-contained, realistic Perl script of the kind a
+40 entries. Each is a self-contained, realistic Perl script of the kind a
 sysadmin or data wrangler actually writes, not a snippet.
 
 ## Layout of an entry
@@ -85,6 +85,8 @@ Two entries exit non-zero on purpose: **27** (65) and **32** (1). The other 33 e
 | 36 | `36-class-with-accessors` | The shape most scripts write a class in: constructor, hand-written accessors, chained mutators | `bless` on a hashref, named constructor arguments, accessors, method chaining, a class held in another class, a file-scope `my` every instance shares |
 | 37 | `37-getopt-options-hash` | An option block naming every option and its type, with the leftovers in `@ARGV` | `GetOptions` into a hash of defaults, `=i` `=s` `=f` `!` `+` `=s@` `=s%`, aliases, `or die` usage message |
 | 38 | `38-do-block-values` | `do BLOCK` as a term, in every shape a script uses it | setup-then-value, `if`/`elsif`/`else` as a term, a block whose value is a list, `EXPR or do {}`, `EXPR and do {}`, `return do {}`, nested blocks |
+| 39 | `39-numeric-accumulators` | Totals built out of text fields, and every compound arithmetic operator | `+=` over split fields, `/=`, `*=`, `-=`, `%=`, `**=`, `.=` on text, `++` on a hash element |
+| 40 | `40-flattened-arguments` | Argument lists that flatten arrays into `@_`, in every mixture | one array, single values, a value in front of an array, two arrays, interleaved, a fixed parameter plus a tail, an empty array |
 
 ## Coverage map
 
@@ -103,3 +105,4 @@ Two entries exit non-zero on purpose: **27** (65) and **32** (1). The other 33 e
   (Getopt::Long), 32 (Scalar::Util)
 - **Object shapes** - 36
 - **Blocks as terms** - 38; the slurp form of it in 21
+- **Arithmetic and argument typing** - 39, 40

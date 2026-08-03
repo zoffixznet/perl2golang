@@ -201,6 +201,22 @@ var notes = map[string]string{
 		"changes only the first match, so the first match is expanded by hand " +
 		"and the rest of the string is copied through untouched.",
 
+	"floatList": "A slice holds one element type, so a list of whole " +
+		"numbers used where fractions are needed is a new slice rather than " +
+		"a reinterpretation of the old one. The copy is the visible price of " +
+		"the guarantee that every element really is a float64.",
+
+	"typedList": "Going from a collection of values of no fixed type back " +
+		"to one concrete element type is a copy with an assertion per " +
+		"element, because the two are laid out differently in memory. An " +
+		"element that turns out not to be a T lands as T's zero value rather " +
+		"than stopping the program, which keeps one odd element from losing " +
+		"the rest.",
+
+	"typedMap": "The keyed form of typedList, with the same per-value " +
+		"assertion and the same choice to keep going past a value that does " +
+		"not fit.",
+
 	"readAll": "Reading a whole handle in one piece is one call here, and it " +
 		"leaves nothing set behind it. The mode this replaces was a global, so " +
 		"forgetting to put it back changed how a later read behaved somewhere " +

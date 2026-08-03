@@ -51,11 +51,14 @@ const (
 	hNextMatch     = "nextMatch"    // one step of a scalar-context //g scan
 	hAnyList       = "anyList"      // []T -> []any
 	hAnyMap        = "anyMap"       // map[K]V -> map[K]any
+	hTypedList     = "typedList"    // []any -> []T, asserting each element
+	hTypedMap      = "typedMap"     // map[K]any -> map[K]V, asserting each value
 	hCountChars    = "countChars"   // tr/// with an empty replacement list
 	hPick          = "pick"         // @a[...] where the indices are a computed list
 	hPickKeys      = "pickKeys"     // @h{...} where the keys are a computed list
 	hIntList       = "intList"      // []T -> []int, for a dynamic list of indices
 	hStrList       = "strList"      // []T -> []string, for a dynamic list of keys
+	hFloatList     = "floatList"    // []T -> []float64, when the elements have to carry fractions
 
 	// The stand-ins for a refusal. They keep a partly converted program
 	// runnable: the expression form yields the zero value of the type the

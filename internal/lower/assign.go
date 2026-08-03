@@ -746,9 +746,23 @@ func (l *Lowerer) assignToVar(v *ast.Var, n *ast.Assign) []ir.Stmt {
 		l.observe(b, typeOrAny(value))
 	}
 
-	st := assign("=", []ir.Expr{ir.NewIdent(b.Go, b.Type)}, []ir.Expr{l.assignable(value, b.Type, n.RHS)})
+	st := assign("=", []ir.Expr{l.writeTarget(b)}, []ir.Expr{l.assignable(value, b.Type, n.RHS)})
 	l.setProv(st, n)
 	return []ir.Stmt{st}
+}
+
+// writeTarget renders a binding as the place an assignment stores into.
+//
+// It differs from reading the binding in one case, and that case matters: a
+// foreach variable in Perl is an alias for the element, so `for my $w (@words)
+// { $w = ... }` writes back into the array. The converter rewrites such a
+// variable to the indexed element, and a write has to go through the same
+// rewrite or it lands in a name nothing declared.
+func (l *Lowerer) writeTarget(b *Binding) ir.Expr {
+	if x, ok := l.aliases[b]; ok {
+		return x
+	}
+	return ir.NewIdent(b.Go, b.Type)
 }
 
 // truncateArray lowers `$#array = N`, which shortens or extends an array.
@@ -980,16 +994,30 @@ func (l *Lowerer) compoundAssign(n *ast.Assign) []ir.Stmt {
 		return []ir.Stmt{st}
 
 	case "**":
-		st := assign("=", []ir.Expr{target}, []ir.Expr{l.power(&ast.BinOp{Op: "**", L: n.LHS, R: n.RHS})})
+		power := l.power(&ast.BinOp{Op: "**", L: n.LHS, R: n.RHS})
+		if b := l.bindingOfTarget(n.LHS); b != nil {
+			l.observe(b, arithmeticResult(typeOrAny(power)))
+		}
+		st := assign("=", []ir.Expr{target}, []ir.Expr{l.assignable(power, t, n.RHS)})
 		l.setProv(st, n)
 		return []ir.Stmt{st}
 
 	case "%":
-		st := assign("=", []ir.Expr{target}, []ir.Expr{l.modulo(&ast.BinOp{Op: "%", L: n.LHS, R: n.RHS})})
+		if b := l.bindingOfTarget(n.LHS); b != nil {
+			l.observe(b, ir.TInt)
+		}
+		st := assign("=", []ir.Expr{target},
+			[]ir.Expr{l.assignable(l.modulo(&ast.BinOp{Op: "%", L: n.LHS, R: n.RHS}), t, n.RHS)})
 		l.setProv(st, n)
 		return []ir.Stmt{st}
 
 	case "/":
+		if b := l.bindingOfTarget(n.LHS); b != nil {
+			// Division is the one arithmetic operator that produces a
+			// fraction from two whole numbers, so what it leaves behind is a
+			// floating-point number whatever went in.
+			l.observe(b, ir.TFloat)
+		}
 		st := assign("=", []ir.Expr{target},
 			[]ir.Expr{l.assignable(l.binop(&ast.BinOp{Op: "/", L: n.LHS, R: n.RHS}), t, n.RHS)})
 		l.setProv(st, n)
@@ -1000,7 +1028,7 @@ func (l *Lowerer) compoundAssign(n *ast.Assign) []ir.Stmt {
 		// setup it needed twice as well.
 		value := l.scalar(n.RHS)
 		if b := l.bindingOfTarget(n.LHS); b != nil {
-			l.observe(b, typeOrAny(value))
+			l.observe(b, arithmeticResult(typeOrAny(value)))
 		}
 		switch t.Kind {
 		case ir.Float:

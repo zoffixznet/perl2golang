@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T01:35:07Z",
+  "recorded": "2026-08-15T01:53:06Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -13,8 +13,8 @@
       "entries": 37,
       "stages": {
         "compiled": {
-          "pass": 36,
-          "fail": 1,
+          "pass": 37,
+          "fail": 0,
           "skip": 0
         },
         "emitted": {
@@ -23,8 +23,8 @@
           "skip": 0
         },
         "equivalent": {
-          "pass": 13,
-          "fail": 24,
+          "pass": 14,
+          "fail": 23,
           "skip": 0
         },
         "translated": {
@@ -33,65 +33,65 @@
           "skip": 0
         },
         "typed": {
-          "pass": 22,
-          "fail": 15,
+          "pass": 23,
+          "fail": 14,
           "skip": 0
         }
       },
       "equivalent_annotated": {
-        "pass": 13,
-        "fail": 24,
+        "pass": 14,
+        "fail": 23,
         "skip": 0
       },
       "quality": {
         "todos": 13,
         "symbols": 396,
-        "symbols_typed": 362,
+        "symbols_typed": 364,
         "refusals": 13,
         "approximations": 51
       }
     },
     {
       "tier": "tier2",
-      "entries": 38,
+      "entries": 40,
       "stages": {
         "compiled": {
-          "pass": 32,
-          "fail": 6,
+          "pass": 35,
+          "fail": 5,
           "skip": 0
         },
         "emitted": {
-          "pass": 38,
+          "pass": 40,
           "fail": 0,
           "skip": 0
         },
         "equivalent": {
-          "pass": 4,
-          "fail": 34,
+          "pass": 5,
+          "fail": 35,
           "skip": 0
         },
         "translated": {
-          "pass": 34,
+          "pass": 36,
           "fail": 4,
           "skip": 0
         },
         "typed": {
-          "pass": 3,
-          "fail": 35,
+          "pass": 6,
+          "fail": 34,
           "skip": 0
         }
       },
       "equivalent_annotated": {
-        "pass": 4,
-        "fail": 34,
+        "pass": 5,
+        "fail": 35,
         "skip": 0
       },
       "quality": {
         "todos": 49,
-        "symbols": 848,
-        "symbols_typed": 651,
+        "symbols": 878,
+        "symbols_typed": 683,
         "refusals": 50,
-        "approximations": 256
+        "approximations": 260
       }
     },
     {
@@ -99,8 +99,8 @@
       "entries": 28,
       "stages": {
         "compiled": {
-          "pass": 17,
-          "fail": 11,
+          "pass": 20,
+          "fail": 8,
           "skip": 0
         },
         "emitted": {
@@ -130,11 +130,11 @@
         "skip": 0
       },
       "quality": {
-        "todos": 136,
-        "symbols": 777,
-        "symbols_typed": 528,
+        "todos": 137,
+        "symbols": 779,
+        "symbols_typed": 531,
         "refusals": 141,
-        "approximations": 252
+        "approximations": 260
       }
     },
     {
@@ -142,8 +142,8 @@
       "entries": 35,
       "stages": {
         "compiled": {
-          "pass": 28,
-          "fail": 7,
+          "pass": 29,
+          "fail": 6,
           "skip": 0
         },
         "emitted": {
@@ -175,7 +175,7 @@
       "quality": {
         "todos": 35,
         "symbols": 152,
-        "symbols_typed": 105,
+        "symbols_typed": 106,
         "refusals": 36,
         "approximations": 55
       }
@@ -185,8 +185,8 @@
       "entries": 25,
       "stages": {
         "compiled": {
-          "pass": 20,
-          "fail": 5,
+          "pass": 21,
+          "fail": 4,
           "skip": 0
         },
         "emitted": {
@@ -217,29 +217,29 @@
       },
       "quality": {
         "todos": 20,
-        "symbols": 920,
-        "symbols_typed": 759,
+        "symbols": 924,
+        "symbols_typed": 766,
         "refusals": 20,
-        "approximations": 198
+        "approximations": 200
       }
     }
   ],
   "total": {
     "tier": "TOTAL",
-    "entries": 163,
+    "entries": 165,
     "stages": {
       "compiled": {
-        "pass": 133,
-        "fail": 30,
+        "pass": 142,
+        "fail": 23,
         "skip": 0
       },
       "emitted": {
-        "pass": 163,
+        "pass": 165,
         "fail": 0,
         "skip": 0
       },
       "equivalent": {
-        "pass": 21,
+        "pass": 23,
         "fail": 107,
         "skip": 0
       },
@@ -249,35 +249,35 @@
         "skip": 1
       },
       "translated": {
-        "pass": 114,
+        "pass": 116,
         "fail": 49,
         "skip": 0
       },
       "typed": {
-        "pass": 48,
-        "fail": 115,
+        "pass": 52,
+        "fail": 113,
         "skip": 0
       }
     },
     "equivalent_annotated": {
-      "pass": 21,
+      "pass": 23,
       "fail": 107,
       "skip": 0
     },
     "quality": {
-      "todos": 253,
-      "symbols": 3093,
-      "symbols_typed": 2405,
+      "todos": 254,
+      "symbols": 3129,
+      "symbols_typed": 2450,
       "refusals": 260,
-      "approximations": 812
+      "approximations": 826
     }
   },
   "quality": {
-    "todos": 253,
-    "symbols": 3093,
-    "symbols_typed": 2405,
+    "todos": 254,
+    "symbols": 3129,
+    "symbols_typed": 2450,
     "refusals": 260,
-    "approximations": 812
+    "approximations": 826
   },
   "entries": [
     {
@@ -1474,7 +1474,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: line 2, byte 8: got \"--- $0 is the script name, not a...\", wanted \"argv[0] = [build] (5 chars)\\nargv...\""
+          "reason": "stdout differs: line 16, byte 423: got \"extra\\n--- numeric use of an argu...\", wanted \"42|extra\\n--- numeric use of an a...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -1484,16 +1484,16 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "3 variables left dynamic out of 11"
+          "reason": "2 variables left dynamic out of 10"
         }
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: line 2, byte 8: got \"--- $0 is the script name, not a...\", wanted \"argv[0] = [build] (5 chars)\\nargv...\""
+        "reason": "stdout differs: line 16, byte 423: got \"extra\\n--- numeric use of an argu...\", wanted \"42|extra\\n--- numeric use of an a...\""
       },
       "quality": {
         "todos": 0,
-        "symbols": 11,
+        "symbols": 10,
         "symbols_typed": 8,
         "refusals": 0,
         "approximations": 0
@@ -1505,15 +1505,13 @@
       "kind": "convert",
       "stages": {
         "compiled": {
-          "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:10:10: undefined: args"
+          "outcome": "pass"
         },
         "emitted": {
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "the generated program did not compile"
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -1522,18 +1520,16 @@
           "outcome": "pass"
         },
         "typed": {
-          "outcome": "fail",
-          "reason": "1 variable left dynamic out of 3"
+          "outcome": "pass"
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "the generated program did not compile"
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
-        "symbols": 3,
-        "symbols_typed": 2,
+        "symbols": 4,
+        "symbols_typed": 4,
         "refusals": 0,
         "approximations": 0
       }
@@ -1651,15 +1647,14 @@
       "kind": "convert",
       "stages": {
         "compiled": {
-          "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:25:20: cannot use r (variable of type int) as float64 value in array or slice literal"
+          "outcome": "pass"
         },
         "emitted": {
           "outcome": "pass"
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "the generated program did not compile"
+          "reason": "stdout differs: line 4, byte 42: got \"9 4 1 7 rest=0\\n 0 =\u003e empty\\n 1 =\u003e...\", wanted \"rest=4\\n 0 =\u003e empty\\n 1 =\u003e single\\n...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -1674,7 +1669,7 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "the generated program did not compile"
+        "reason": "stdout differs: line 4, byte 42: got \"9 4 1 7 rest=0\\n 0 =\u003e empty\\n 1 =\u003e...\", wanted \"rest=4\\n 0 =\u003e empty\\n 1 =\u003e single\\n...\""
       },
       "quality": {
         "todos": 0,
@@ -1805,7 +1800,7 @@
       "stages": {
         "compiled": {
           "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:30:20: cannot use queue (variable of type []int) as int value in argument to pushAll"
+          "reason": "the generated Go does not compile: ./main.go:94:18: invalid append: argument must be a slice; have aref2 (variable of type int)"
         },
         "emitted": {
           "outcome": "pass"
@@ -1858,8 +1853,7 @@
           "outcome": "pass"
         },
         "typed": {
-          "outcome": "fail",
-          "reason": "2 variables left dynamic out of 21"
+          "outcome": "pass"
         }
       },
       "equivalent_annotated": {
@@ -1868,7 +1862,7 @@
       "quality": {
         "todos": 0,
         "symbols": 21,
-        "symbols_typed": 19,
+        "symbols_typed": 21,
         "refusals": 0,
         "approximations": 0
       }
@@ -2389,8 +2383,7 @@
           "outcome": "pass"
         },
         "typed": {
-          "outcome": "fail",
-          "reason": "1 variable left dynamic out of 23"
+          "outcome": "pass"
         }
       },
       "equivalent_annotated": {
@@ -2400,7 +2393,7 @@
       "quality": {
         "todos": 0,
         "symbols": 23,
-        "symbols_typed": 22,
+        "symbols_typed": 23,
         "refusals": 0,
         "approximations": 5
       }
@@ -2542,7 +2535,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "3 variables left dynamic out of 17"
+          "reason": "2 variables left dynamic out of 17"
         }
       },
       "equivalent_annotated": {
@@ -2552,7 +2545,7 @@
       "quality": {
         "todos": 0,
         "symbols": 17,
-        "symbols_typed": 14,
+        "symbols_typed": 15,
         "refusals": 0,
         "approximations": 6
       }
@@ -2619,7 +2612,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "3 variables left dynamic out of 16"
+          "reason": "3 variables left dynamic out of 17"
         }
       },
       "equivalent_annotated": {
@@ -2628,8 +2621,8 @@
       },
       "quality": {
         "todos": 2,
-        "symbols": 16,
-        "symbols_typed": 13,
+        "symbols": 17,
+        "symbols_typed": 14,
         "refusals": 2,
         "approximations": 16
       }
@@ -2926,7 +2919,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "6 variables left dynamic out of 24"
+          "reason": "5 variables left dynamic out of 24"
         }
       },
       "equivalent_annotated": {
@@ -2936,7 +2929,7 @@
       "quality": {
         "todos": 19,
         "symbols": 24,
-        "symbols_typed": 18,
+        "symbols_typed": 19,
         "refusals": 19,
         "approximations": 6
       }
@@ -3027,7 +3020,8 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "pass"
+          "outcome": "fail",
+          "reason": "stdout differs: line 4, byte 89: got \"-n,3,--format=csv,--no-header,--...\", wanted \"gamma,alpha,delta,beta]\\n1,alpha\\n...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -3040,12 +3034,13 @@
         }
       },
       "equivalent_annotated": {
-        "outcome": "pass"
+        "outcome": "fail",
+        "reason": "stdout differs: line 4, byte 89: got \"-n,3,--format=csv,--no-header,--...\", wanted \"gamma,alpha,delta,beta]\\n1,alpha\\n...\""
       },
       "quality": {
         "todos": 0,
-        "symbols": 5,
-        "symbols_typed": 5,
+        "symbols": 6,
+        "symbols_typed": 6,
         "refusals": 0,
         "approximations": 3
       }
@@ -3086,6 +3081,77 @@
         "symbols_typed": 15,
         "refusals": 0,
         "approximations": 1
+      }
+    },
+    {
+      "tier": "tier2",
+      "name": "39-numeric-accumulators",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "pass"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "pass"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 18,
+        "symbols_typed": 18,
+        "refusals": 0,
+        "approximations": 1
+      }
+    },
+    {
+      "tier": "tier2",
+      "name": "40-flattened-arguments",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "pass"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "3 variables left dynamic out of 10"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "pass"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 10,
+        "symbols_typed": 7,
+        "refusals": 0,
+        "approximations": 3
       }
     },
     {
@@ -3332,7 +3398,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: line 1, byte 4: got \"9 PATHS (of 9)\\nPATH             ...\", wanted \"4 PATHS (of 9)\\nPATH             ...\"; stderr differs: unexpected \"TODO P2G5581: this form of splice is not implemented\""
+          "reason": "exit status 255, wanted 0; stdout differs: 483 byte(s) missing after line 1, expected \"TOP 4 PATHS (of 9)\\nPATH         ...\"; stderr differs: unexpected \"open --top: open --top: no such file or directory\""
         },
         "honest": {
           "outcome": "n/a"
@@ -3343,17 +3409,17 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "10 variables left dynamic out of 34"
+          "reason": "9 variables left dynamic out of 35"
         }
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: line 1, byte 4: got \"9 PATHS (of 9)\\nPATH             ...\", wanted \"4 PATHS (of 9)\\nPATH             ...\"; stderr differs: unexpected \"TODO P2G5581: this form of splice is not implemented\""
+        "reason": "exit status 255, wanted 0; stdout differs: 483 byte(s) missing after line 1, expected \"TOP 4 PATHS (of 9)\\nPATH         ...\"; stderr differs: unexpected \"open --top: open --top: no such file or directory\""
       },
       "quality": {
         "todos": 1,
-        "symbols": 34,
-        "symbols_typed": 24,
+        "symbols": 35,
+        "symbols_typed": 26,
         "refusals": 1,
         "approximations": 8
       }
@@ -3442,7 +3508,7 @@
       "stages": {
         "compiled": {
           "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:70:26: cannot use cfg3 (variable of type map[string]any) as map[string]map[string]string value in argument to resolveSection"
+          "reason": "the generated Go does not compile: ./main.go:106:27: cannot use c (variable of type map[string]map[string]any) as map[string]map[string]string value in argument to resolveSection"
         },
         "emitted": {
           "outcome": "pass"
@@ -3471,7 +3537,7 @@
         "symbols": 34,
         "symbols_typed": 28,
         "refusals": 0,
-        "approximations": 14
+        "approximations": 19
       }
     },
     {
@@ -3783,7 +3849,7 @@
         "symbols": 32,
         "symbols_typed": 29,
         "refusals": 0,
-        "approximations": 16
+        "approximations": 15
       }
     },
     {
@@ -3793,7 +3859,7 @@
       "stages": {
         "compiled": {
           "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:151:26: cannot use deps (variable of type map[string]any) as map[string][]any value in argument to schedule"
+          "reason": "the generated Go does not compile: ./main.go:194:26: undefined: item10"
         },
         "emitted": {
           "outcome": "pass"
@@ -3822,7 +3888,7 @@
         "symbols": 44,
         "symbols_typed": 37,
         "refusals": 0,
-        "approximations": 20
+        "approximations": 21
       }
     },
     {
@@ -3831,15 +3897,14 @@
       "kind": "convert",
       "stages": {
         "compiled": {
-          "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:138:30: cannot use r3 (variable of type map[string]float64) as map[string]any value in array or slice literal"
+          "outcome": "pass"
         },
         "emitted": {
           "outcome": "pass"
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "the generated program did not compile"
+          "reason": "exit status 255, wanted 0; stdout differs: 535 byte(s) missing after line 1, expected \"network: 11 stations, 25 directe...\"; stderr differs: unexpected \"interface conversion: interface {} is nil, not map[string]interface {}\""
         },
         "honest": {
           "outcome": "n/a"
@@ -3854,14 +3919,14 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "the generated program did not compile"
+        "reason": "exit status 255, wanted 0; stdout differs: 535 byte(s) missing after line 1, expected \"network: 11 stations, 25 directe...\"; stderr differs: unexpected \"interface conversion: interface {} is nil, not map[string]interface {}\""
       },
       "quality": {
         "todos": 0,
         "symbols": 46,
         "symbols_typed": 40,
         "refusals": 0,
-        "approximations": 11
+        "approximations": 13
       }
     },
     {
@@ -3870,15 +3935,14 @@
       "kind": "convert",
       "stages": {
         "compiled": {
-          "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:122:10: cannot use cur (variable of type []float64) as []int value in assignment"
+          "outcome": "pass"
         },
         "emitted": {
           "outcome": "pass"
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "the generated program did not compile"
+          "reason": "stdout differs: line 2, byte 28: got \"known; did you mean stage 2 0 (d...\", wanted \"ambiguous prefix of 'status'\\ncom...\"; stderr differs: unexpected \"TODO P2G3599: the abbrev function is not implemented\""
         },
         "honest": {
           "outcome": "n/a"
@@ -3894,14 +3958,14 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "the generated program did not compile"
+        "reason": "stdout differs: line 2, byte 28: got \"known; did you mean stage 2 0 (d...\", wanted \"ambiguous prefix of 'status'\\ncom...\"; stderr differs: unexpected \"TODO P2G3599: the abbrev function is not implemented\""
       },
       "quality": {
-        "todos": 1,
+        "todos": 2,
         "symbols": 31,
         "symbols_typed": 24,
         "refusals": 2,
-        "approximations": 6
+        "approximations": 7
       }
     },
     {
@@ -3949,7 +4013,7 @@
       "stages": {
         "compiled": {
           "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:33:16: cannot use sizes (variable of type []int) as int value in argument to embiggen"
+          "reason": "the generated Go does not compile: ./main.go:69:33: self(toNum(k) - 1.0) (no value) used as value"
         },
         "emitted": {
           "outcome": "pass"
@@ -4028,15 +4092,14 @@
       "kind": "convert",
       "stages": {
         "compiled": {
-          "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:156:4: undefined: word"
+          "outcome": "pass"
         },
         "emitted": {
           "outcome": "pass"
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "the generated program did not compile"
+          "reason": "exit status 2, wanted 0; stdout differs: 639 byte(s) missing after line 7, expected \"--- diff files/policy-v1.txt fil...\"; stderr differs: unexpected \"panic: interface conversion: interface {} is func(interface {}) []str...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -4051,7 +4114,7 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "the generated program did not compile"
+        "reason": "exit status 2, wanted 0; stdout differs: 639 byte(s) missing after line 7, expected \"--- diff files/policy-v1.txt fil...\"; stderr differs: unexpected \"panic: interface conversion: interface {} is func(interface {}) []str...\""
       },
       "quality": {
         "todos": 0,
@@ -4130,8 +4193,8 @@
       },
       "quality": {
         "todos": 0,
-        "symbols": 5,
-        "symbols_typed": 5,
+        "symbols": 6,
+        "symbols_typed": 6,
         "refusals": 0,
         "approximations": 4
       }
@@ -4239,7 +4302,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "4 variables left dynamic out of 9"
+          "reason": "3 variables left dynamic out of 9"
         }
       },
       "equivalent_annotated": {
@@ -4248,7 +4311,7 @@
       "quality": {
         "todos": 0,
         "symbols": 9,
-        "symbols_typed": 5,
+        "symbols_typed": 6,
         "refusals": 0,
         "approximations": 1
       }
@@ -4702,8 +4765,7 @@
       ],
       "stages": {
         "compiled": {
-          "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:19:11: cannot use row (variable of type []string) as string value in argument to blankAll"
+          "outcome": "pass"
         },
         "emitted": {
           "outcome": "pass"
@@ -5613,7 +5675,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: 411 byte(s) missing after line 1, expected \"LVL   USE%       SIZE       USED...\"; stderr differs: unexpected \"panic: interface conversion: interface {} is func() int, not func() ...\""
+          "reason": "exit status 255, wanted 2; stdout differs: 411 byte(s) missing after line 1, expected \"LVL   USE%       SIZE       USED...\"; stderr differs: unexpected \"open --warn: open --warn: no such file or directory\""
         },
         "honest": {
           "outcome": "n/a"
@@ -5623,17 +5685,17 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "8 variables left dynamic out of 35"
+          "reason": "8 variables left dynamic out of 36"
         }
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: 411 byte(s) missing after line 1, expected \"LVL   USE%       SIZE       USED...\"; stderr differs: unexpected \"panic: interface conversion: interface {} is func() int, not func() ...\""
+        "reason": "exit status 255, wanted 2; stdout differs: 411 byte(s) missing after line 1, expected \"LVL   USE%       SIZE       USED...\"; stderr differs: unexpected \"open --warn: open --warn: no such file or directory\""
       },
       "quality": {
         "todos": 0,
-        "symbols": 35,
-        "symbols_typed": 27,
+        "symbols": 36,
+        "symbols_typed": 28,
         "refusals": 0,
         "approximations": 8
       }
@@ -5701,7 +5763,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "5 variables left dynamic out of 43"
+          "reason": "5 variables left dynamic out of 44"
         }
       },
       "equivalent_annotated": {
@@ -5710,8 +5772,8 @@
       },
       "quality": {
         "todos": 1,
-        "symbols": 43,
-        "symbols_typed": 38,
+        "symbols": 44,
+        "symbols_typed": 39,
         "refusals": 1,
         "approximations": 9
       }
@@ -5957,7 +6019,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: line 1, byte 24: got \" E001\\tJane Doe\\tD10\\tlisbon E002\\tB...\", wanted \"\\tdept_name\\tcost_center\\nE001\\tJane...\""
+          "reason": "exit status 255, wanted 0; stdout differs: 404 byte(s) missing after line 1, expected \"emp_id\\tname\\tdept_id\\tsite\\tdept_na...\"; stderr differs: unexpected \"open --key: open --key: no such file or directory\""
         },
         "honest": {
           "outcome": "n/a"
@@ -5967,17 +6029,17 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "3 variables left dynamic out of 31"
+          "reason": "3 variables left dynamic out of 32"
         }
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: line 1, byte 24: got \" E001\\tJane Doe\\tD10\\tlisbon E002\\tB...\", wanted \"\\tdept_name\\tcost_center\\nE001\\tJane...\""
+        "reason": "exit status 255, wanted 0; stdout differs: 404 byte(s) missing after line 1, expected \"emp_id\\tname\\tdept_id\\tsite\\tdept_na...\"; stderr differs: unexpected \"open --key: open --key: no such file or directory\""
       },
       "quality": {
         "todos": 0,
-        "symbols": 31,
-        "symbols_typed": 28,
+        "symbols": 32,
+        "symbols_typed": 29,
         "refusals": 0,
         "approximations": 5
       }
@@ -6104,15 +6166,14 @@
       "kind": "convert",
       "stages": {
         "compiled": {
-          "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:226:10: cannot use cur (variable of type []float64) as []int value in assignment"
+          "outcome": "pass"
         },
         "emitted": {
           "outcome": "pass"
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "the generated program did not compile"
+          "reason": "exit status 0, wanted 1; stdout differs: line 1, byte 0: got \"0 contacts, 0 duplicate cluster(...\", wanted \"13 contacts, 5 duplicate cluster...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -6127,14 +6188,14 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "the generated program did not compile"
+        "reason": "exit status 0, wanted 1; stdout differs: line 1, byte 0: got \"0 contacts, 0 duplicate cluster(...\", wanted \"13 contacts, 5 duplicate cluster...\""
       },
       "quality": {
         "todos": 0,
         "symbols": 49,
         "symbols_typed": 41,
         "refusals": 0,
-        "approximations": 4
+        "approximations": 5
       }
     },
     {
@@ -6159,7 +6220,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "4 variables left dynamic out of 28"
+          "reason": "1 variable left dynamic out of 28"
         }
       },
       "equivalent_annotated": {
@@ -6168,7 +6229,7 @@
       "quality": {
         "todos": 0,
         "symbols": 28,
-        "symbols_typed": 24,
+        "symbols_typed": 27,
         "refusals": 0,
         "approximations": 7
       }
@@ -6296,7 +6357,7 @@
       "stages": {
         "compiled": {
           "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:186:21: cannot use rec2[\"template\"] (map index expression of interface type any) as string value in argument to sprintf: need type assertion"
+          "reason": "the generated Go does not compile: ./main.go:189:21: cannot use rec2[\"template\"] (map index expression of interface type any) as string value in argument to sprintf: need type assertion"
         },
         "emitted": {
           "outcome": "pass"
@@ -6313,7 +6374,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "14 variables left dynamic out of 38"
+          "reason": "14 variables left dynamic out of 39"
         }
       },
       "equivalent_annotated": {
@@ -6322,8 +6383,8 @@
       },
       "quality": {
         "todos": 0,
-        "symbols": 38,
-        "symbols_typed": 24,
+        "symbols": 39,
+        "symbols_typed": 25,
         "refusals": 0,
         "approximations": 9
       }
@@ -6364,7 +6425,7 @@
         "symbols": 41,
         "symbols_typed": 35,
         "refusals": 0,
-        "approximations": 4
+        "approximations": 5
       }
     },
     {

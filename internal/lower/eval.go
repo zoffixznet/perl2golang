@@ -114,8 +114,7 @@ func (l *Lowerer) recoverInto(errVar *Binding) ir.Stmt {
 
 // errText returns the variable standing in for $@.
 func (l *Lowerer) errText(at ast.Node) *Binding {
-	b := l.lookup('$', "_err", at)
-	b.Perl = "$@"
+	b := l.special("$@", '$', "errText", at)
 	b.Type = ir.TString
 	l.observe(b, ir.TString)
 	if b.Doc == "" {
