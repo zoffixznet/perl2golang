@@ -139,6 +139,10 @@ type Sub struct {
 	Accessor *ClassField
 	// Setter records that the accessor also writes when handed a value.
 	Setter bool
+	// Promoted marks an accessor that had to become a real method after all,
+	// because something calls it on a value whose class is only known while
+	// the program runs and an interface cannot promise a field.
+	Promoted bool
 	// Named is the binding of a `%args` named-argument hash, which becomes
 	// one Go parameter per key the sub reads.
 	Named       *Binding

@@ -396,6 +396,12 @@ const (
 const (
 	// Bless: `bless` became a struct with methods.
 	Bless Code = "P2G7001"
+	// DynamicInvocant: a value of unknown class was asserted before a call.
+	DynamicInvocant Code = "P2G7002"
+	// IsaPredicate: `isa` became a predicate listing the concrete types.
+	IsaPredicate Code = "P2G7003"
+	// ClassForwarder: a class method forwarding to $class->new is inlined.
+	ClassForwarder Code = "P2G7004"
 	// MultipleInheritance: @ISA lists more than one parent.
 	MultipleInheritance Code = "P2G7005"
 	// SuperCall: `SUPER::` resolves to the embedded parent.
@@ -1677,6 +1683,30 @@ var catalogue = map[Code]Entry{
 		Advice:    "keep the pointer receiver: a value receiver copies the struct on every call, which `bless` never did",
 		Converted: "the hash keys became struct fields and the package's subs became methods",
 		Concepts:  []string{"methods-and-receivers", "structs-and-embedding"},
+	},
+	DynamicInvocant: {
+		Severity:  report.Warn,
+		Message:   "the class of the value was not known, so it is asserted to the type that answers to the method",
+		Short:     "the invocant is asserted before the call",
+		Advice:    "a type switch answers and hands back the typed value at once where the value really varies",
+		Converted: "the call went through a type assertion",
+		Concepts:  []string{"type-assertions-and-switches", "implicit-interfaces"},
+	},
+	IsaPredicate: {
+		Severity:  report.Warn,
+		Message:   "`->isa(%s)` became a predicate listing the concrete types that inherit from it",
+		Short:     "the inheritance test is spelled out",
+		Advice:    "embedding is not subtyping, so a new class in the hierarchy has to be added to the predicate too",
+		Converted: "the emitted code switches on the value's concrete type",
+		Concepts:  []string{"type-assertions-and-switches", "structs-and-embedding"},
+	},
+	ClassForwarder: {
+		Severity:  report.Warn,
+		Message:   "a class method that only forwards to `$class->new` is resolved at each call site",
+		Short:     "the forwarding class method is inlined",
+		Advice:    "a factory that picks a type from a name is a map from string to function in Go",
+		Converted: "each call builds the type it named",
+		Concepts:  []string{"methods-and-receivers", "compile-time-mindset"},
 	},
 	MultipleInheritance: {
 		Severity:  report.Warn,

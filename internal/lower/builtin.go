@@ -1150,6 +1150,12 @@ func (l *Lowerer) chompExpr(n *ast.Call) ir.Expr {
 // Program control
 
 func (l *Lowerer) dieCall(n *ast.Call) []ir.Stmt {
+	// Throwing an object is different from throwing a message: what is
+	// caught is the object itself, and the code that catches it calls
+	// methods on it. Rendering it as text here would lose it.
+	if obj, ok := l.thrownObject(n); ok {
+		return l.throwValue(obj, n)
+	}
 	msg := l.dieMessage(n)
 	if l.traps {
 		// Something in this program catches, so die has to unwind rather than
@@ -1176,6 +1182,56 @@ func (l *Lowerer) dieCall(n *ast.Call) []ir.Stmt {
 		"errors-are-values", "panic-and-recover")
 	out = append(out, exit)
 	return out
+}
+
+// throwValue builds the statements that throw an object rather than a
+// message.
+func (l *Lowerer) throwValue(obj ir.Expr, n ast.Node) []ir.Stmt {
+	// What is caught is the object, so the variable standing in for $@ has
+	// to be able to hold one.
+	l.throwsObject = true
+	l.observe(l.errText(n), typeOrAny(obj))
+	if !l.traps {
+		// Nothing catches, so the object never gets read as an object: it is
+		// printed and the program ends, which is what an uncaught die does.
+		l.usedExit = true
+		st := exprStmt(l.writeTo(ir.Pkg("os", "os", "Stderr", nil), l.toStr(obj, n)))
+		l.setProv(st, n)
+		return []ir.Stmt{st, exprStmt(call("os", "os", "Exit", ir.TVoid, ir.IntLit("255")))}
+	}
+	st := exprStmt(ir.CallOf(ir.NewIdent("panic", nil), ir.TVoid, obj))
+	l.setProv(st, n)
+	l.note(st, "panic carries a value of any type, not a string, so the object "+
+		"survives the unwinding and whatever recovers gets it back whole. Go's own "+
+		"convention is to panic with an error rather than with a bare value, so "+
+		"that the recovering side has something with an Error method.",
+		"panic-and-recover", "errors-are-values", "sentinel-and-custom-errors")
+	return []ir.Stmt{st}
+}
+
+// thrownObject reports whether a die throws a blessed object rather than a
+// message, and lowers it if so.
+//
+// It also records that the file throws objects at all, which is what decides
+// whether the variable standing in for $@ holds text or a value.
+func (l *Lowerer) thrownObject(n *ast.Call) (ir.Expr, bool) {
+	args := flatten(argList(n))
+	if len(args) != 1 {
+		return nil, false
+	}
+	switch args[0].(type) {
+	case *ast.StrLit, *ast.NumberLit:
+		return nil, false
+	}
+	x := l.expr(args[0])
+	if x == nil {
+		return nil, false
+	}
+	t := typeOrAny(x)
+	if l.classOf(t) == nil {
+		return nil, false
+	}
+	return x, true
 }
 
 // dieMessage builds the text die prints, adding the "at FILE line N." suffix

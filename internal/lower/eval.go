@@ -29,7 +29,8 @@ func (l *Lowerer) evalCall(n *ast.Call) ir.Expr {
 
 	l.traps = true
 	errVar := l.errText(n)
-	clear := assign("=", []ir.Expr{ir.NewIdent(errVar.Go, ir.TString)}, []ir.Expr{ir.Str(`""`)})
+	clear := assign("=", []ir.Expr{ir.NewIdent(errVar.Go, errVar.Type)},
+		[]ir.Expr{l.clearedErr(errVar)})
 	l.setProv(clear, n)
 	l.note(clear, "eval clears $@ before it runs the block, so a stale message from "+
 		"an earlier failure cannot be mistaken for this one. That is a real trap in "+
@@ -52,6 +53,19 @@ func (l *Lowerer) evalCall(n *ast.Call) ir.Expr {
 		stmts = append(stmts, assign("=", []ir.Expr{ir.NewIdent(result, t)},
 			[]ir.Expr{l.assignable(value, t, nil)}))
 	}
+
+	// Reaching the end of the block means nothing was thrown, and $@ is the
+	// empty string then whatever an eval further in left behind. The clear
+	// is the block's last statement rather than a line after the call,
+	// because a failure skips it and the deferred handler runs instead.
+	done := assign("=", []ir.Expr{ir.NewIdent(errVar.Go, errVar.Type)},
+		[]ir.Expr{l.clearedErr(errVar)})
+	l.setProv(done, n)
+	l.note(done, "An eval that finishes leaves $@ empty, which is how the caller "+
+		"tells success from failure. A nested eval that failed and was handled would "+
+		"otherwise leave its message behind for this one to be blamed for.",
+		"errors-are-values")
+	stmts = append(stmts, done)
 
 	body := l.markUnused(&ir.Block{Stmts: append([]ir.Stmt{l.recoverInto(errVar)}, stmts...)})
 	run := exprStmt(ir.CallOf(funcLit(nil, nil, body), ir.TVoid))
@@ -91,17 +105,32 @@ func (l *Lowerer) evalCall(n *ast.Call) ir.Expr {
 	return ir.NewIdent(result, t)
 }
 
+// clearedErr is the value $@ is reset to before a block runs: the empty
+// string when it holds text, and nothing at all when it holds a value.
+func (l *Lowerer) clearedErr(errVar *Binding) ir.Expr {
+	if errVar.Type != nil && errVar.Type.Kind == ir.Any {
+		return ir.Nil(ir.TAny)
+	}
+	return ir.Str(`""`)
+}
+
 // recoverInto builds the deferred call that turns a panic back into a message
 // in $@.
 func (l *Lowerer) recoverInto(errVar *Binding) ir.Stmt {
 	caught := l.tmp("caught")
+	// A file that throws objects keeps what was thrown; one that only throws
+	// messages renders it as text on the way in, so everything downstream
+	// can treat it as a string.
+	var stored ir.Expr = l.toStr(ir.NewIdent(caught, ir.TAny), nil)
+	if errVar.Type != nil && errVar.Type.Kind == ir.Any {
+		stored = ir.NewIdent(caught, ir.TAny)
+	}
 	handler := &ir.If{
 		Init: assign(":=", []ir.Expr{ir.NewIdent(caught, ir.TAny)},
 			[]ir.Expr{ir.CallOf(ir.NewIdent("recover", nil), ir.TAny)}),
 		Cond: ir.Bin("!=", ir.NewIdent(caught, ir.TAny), ir.Nil(ir.TAny), ir.TBool),
 		Then: &ir.Block{Stmts: []ir.Stmt{
-			assign("=", []ir.Expr{ir.NewIdent(errVar.Go, ir.TString)},
-				[]ir.Expr{l.toStr(ir.NewIdent(caught, ir.TAny), nil)}),
+			assign("=", []ir.Expr{ir.NewIdent(errVar.Go, errVar.Type)}, []ir.Expr{stored}),
 		}},
 	}
 	st := &ir.Defer{Call: ir.CallOf(funcLit(nil, nil, &ir.Block{Stmts: []ir.Stmt{handler}}), ir.TVoid)}
@@ -115,10 +144,18 @@ func (l *Lowerer) recoverInto(errVar *Binding) ir.Stmt {
 // errText returns the variable standing in for $@.
 func (l *Lowerer) errText(at ast.Node) *Binding {
 	b := l.special("$@", '$', "errText", at)
-	b.Type = ir.TString
+	// A file that only ever throws messages keeps this as text. One that
+	// throws an object somewhere has to keep the object, because the code
+	// that catches it asks it questions, so the variable widens to a value
+	// of any type and every reading of it as text becomes explicit.
+	if l.throwsObject {
+		b.Type = ir.TAny
+	} else {
+		b.Type = ir.TString
+	}
 	l.observe(b, ir.TString)
 	if b.Doc == "" {
-		b.Doc = b.Go + " holds the message from the last trapped failure."
+		b.Doc = b.Go + " holds what the last trapped failure threw."
 		b.Explain = "Perl keeps this in $@, which every eval overwrites, which is " +
 			"why it has to be read immediately after the eval that set it."
 	}

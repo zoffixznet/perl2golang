@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T03:44:31Z",
+  "recorded": "2026-08-15T04:12:53Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -87,54 +87,54 @@
         "skip": 0
       },
       "quality": {
-        "todos": 37,
+        "todos": 30,
         "symbols": 943,
-        "symbols_typed": 774,
-        "refusals": 38,
-        "approximations": 275
+        "symbols_typed": 769,
+        "refusals": 31,
+        "approximations": 282
       }
     },
     {
       "tier": "tier3",
-      "entries": 29,
+      "entries": 31,
       "stages": {
         "compiled": {
-          "pass": 21,
+          "pass": 23,
           "fail": 8,
           "skip": 0
         },
         "emitted": {
-          "pass": 29,
+          "pass": 31,
           "fail": 0,
           "skip": 0
         },
         "equivalent": {
           "pass": 1,
-          "fail": 28,
+          "fail": 30,
           "skip": 0
         },
         "translated": {
-          "pass": 13,
-          "fail": 16,
+          "pass": 16,
+          "fail": 15,
           "skip": 0
         },
         "typed": {
           "pass": 5,
-          "fail": 24,
+          "fail": 26,
           "skip": 0
         }
       },
       "equivalent_annotated": {
         "pass": 1,
-        "fail": 28,
+        "fail": 30,
         "skip": 0
       },
       "quality": {
-        "todos": 116,
-        "symbols": 789,
-        "symbols_typed": 558,
-        "refusals": 120,
-        "approximations": 255
+        "todos": 99,
+        "symbols": 816,
+        "symbols_typed": 575,
+        "refusals": 103,
+        "approximations": 288
       }
     },
     {
@@ -226,21 +226,21 @@
   ],
   "total": {
     "tier": "TOTAL",
-    "entries": 171,
+    "entries": 173,
     "stages": {
       "compiled": {
-        "pass": 149,
+        "pass": 151,
         "fail": 22,
         "skip": 0
       },
       "emitted": {
-        "pass": 171,
+        "pass": 173,
         "fail": 0,
         "skip": 0
       },
       "equivalent": {
         "pass": 30,
-        "fail": 106,
+        "fail": 108,
         "skip": 0
       },
       "honest": {
@@ -249,35 +249,35 @@
         "skip": 1
       },
       "translated": {
-        "pass": 128,
-        "fail": 43,
+        "pass": 131,
+        "fail": 42,
         "skip": 0
       },
       "typed": {
         "pass": 59,
-        "fail": 112,
+        "fail": 114,
         "skip": 0
       }
     },
     "equivalent_annotated": {
       "pass": 30,
-      "fail": 106,
+      "fail": 108,
       "skip": 0
     },
     "quality": {
-      "todos": 206,
-      "symbols": 3217,
-      "symbols_typed": 2617,
-      "refusals": 212,
-      "approximations": 844
+      "todos": 182,
+      "symbols": 3244,
+      "symbols_typed": 2629,
+      "refusals": 188,
+      "approximations": 884
     }
   },
   "quality": {
-    "todos": 206,
-    "symbols": 3217,
-    "symbols_typed": 2617,
-    "refusals": 212,
-    "approximations": 844
+    "todos": 182,
+    "symbols": 3244,
+    "symbols_typed": 2629,
+    "refusals": 188,
+    "approximations": 884
   },
   "entries": [
     {
@@ -2847,7 +2847,7 @@
       "stages": {
         "compiled": {
           "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:133:71: invalid argument: index item2 (variable of type string) must be integer"
+          "reason": "the generated Go does not compile: ./main.go:167:30: cannot use text (variable of interface type any) as string value in argument to strings.TrimSuffix: need type assertion"
         },
         "emitted": {
           "outcome": "pass"
@@ -2861,11 +2861,11 @@
         },
         "translated": {
           "outcome": "fail",
-          "reason": "10 untranslated constructs"
+          "reason": "4 untranslated constructs"
         },
         "typed": {
           "outcome": "fail",
-          "reason": "3 variables left dynamic out of 27"
+          "reason": "8 variables left dynamic out of 27"
         }
       },
       "equivalent_annotated": {
@@ -2873,11 +2873,11 @@
         "reason": "the generated program did not compile"
       },
       "quality": {
-        "todos": 9,
+        "todos": 3,
         "symbols": 27,
-        "symbols_typed": 24,
-        "refusals": 10,
-        "approximations": 16
+        "symbols_typed": 19,
+        "refusals": 4,
+        "approximations": 22
       }
     },
     {
@@ -2938,7 +2938,7 @@
         },
         "translated": {
           "outcome": "fail",
-          "reason": "19 untranslated constructs"
+          "reason": "18 untranslated constructs"
         },
         "typed": {
           "outcome": "fail",
@@ -2950,11 +2950,11 @@
         "reason": "stdout differs: line 3, byte 140: got \"no\\nfloat string    -        -   ...\", wanted \"yes\\nfloat string    -        -  ...\"; stderr differs: unexpected \"TODO P2G3599: the POSIX::tzset function is not implemented ...\""
       },
       "quality": {
-        "todos": 19,
+        "todos": 18,
         "symbols": 24,
         "symbols_typed": 19,
-        "refusals": 19,
-        "approximations": 6
+        "refusals": 18,
+        "approximations": 7
       }
     },
     {
@@ -3376,7 +3376,7 @@
         },
         "translated": {
           "outcome": "fail",
-          "reason": "7 untranslated constructs"
+          "reason": "4 untranslated constructs"
         },
         "typed": {
           "outcome": "fail",
@@ -3388,10 +3388,10 @@
         "reason": "exit status 255, wanted 0; stdout differs: 577 byte(s) missing after line 2, expected \"#1 rectangle  area=  12.000 peri...\"; stderr differs: unexpected \"Shape does not implement area()\""
       },
       "quality": {
-        "todos": 7,
+        "todos": 4,
         "symbols": 39,
         "symbols_typed": 34,
-        "refusals": 7,
+        "refusals": 4,
         "approximations": 12
       }
     },
@@ -3953,30 +3953,30 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "exit status 255, wanted 0; stdout differs: line 1, byte 11: got \"generic  retry=no\\nfetch-feed: ge...\", wanted \"succeeded (ok:42)\\nfetch-feed: ti...\"; stderr differs: unexpected \"TODO P2G7001: the class of this object did not resolve ...\""
+          "reason": "stdout differs: line 1, byte 11: got \"generic [App::Error] unknown err...\", wanted \"succeeded (ok:42)\\nfetch-feed: ti...\""
         },
         "honest": {
           "outcome": "n/a"
         },
         "translated": {
           "outcome": "fail",
-          "reason": "10 untranslated constructs"
+          "reason": "1 untranslated construct"
         },
         "typed": {
           "outcome": "fail",
-          "reason": "9 variables left dynamic out of 30"
+          "reason": "8 variables left dynamic out of 29"
         }
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "exit status 255, wanted 0; stdout differs: line 1, byte 11: got \"generic  retry=no\\nfetch-feed: ge...\", wanted \"succeeded (ok:42)\\nfetch-feed: ti...\"; stderr differs: unexpected \"TODO P2G7001: the class of this object did not resolve ...\""
+        "reason": "stdout differs: line 1, byte 11: got \"generic [App::Error] unknown err...\", wanted \"succeeded (ok:42)\\nfetch-feed: ti...\""
       },
       "quality": {
-        "todos": 10,
-        "symbols": 30,
+        "todos": 1,
+        "symbols": 29,
         "symbols_typed": 21,
-        "refusals": 10,
-        "approximations": 17
+        "refusals": 1,
+        "approximations": 25
       }
     },
     {
@@ -3986,7 +3986,7 @@
       "stages": {
         "compiled": {
           "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:103:72: use of package fmt not in selector"
+          "reason": "the generated Go does not compile: ./main.go:104:72: use of package fmt not in selector"
         },
         "emitted": {
           "outcome": "pass"
@@ -4219,7 +4219,7 @@
       "stages": {
         "compiled": {
           "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:20:48: undefined: args"
+          "reason": "the generated Go does not compile: ./main.go:25:48: undefined: args"
         },
         "emitted": {
           "outcome": "pass"
@@ -4303,14 +4303,13 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: line 5, byte 91: got \"nothing to do\\nbackup: nothing to...\", wanted \"copied archive\\nbackup: copied ba...\"; stderr differs: unexpected \"TODO P2G7041: this is not one of the methods the classes here share ...\""
+          "reason": "stdout differs: line 5, byte 91: got \"nothing to do\\nbackup: nothing to...\", wanted \"copied archive\\nbackup: copied ba...\""
         },
         "honest": {
           "outcome": "n/a"
         },
         "translated": {
-          "outcome": "fail",
-          "reason": "5 untranslated constructs"
+          "outcome": "pass"
         },
         "typed": {
           "outcome": "pass"
@@ -4318,14 +4317,14 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: line 5, byte 91: got \"nothing to do\\nbackup: nothing to...\", wanted \"copied archive\\nbackup: copied ba...\"; stderr differs: unexpected \"TODO P2G7041: this is not one of the methods the classes here share ...\""
+        "reason": "stdout differs: line 5, byte 91: got \"nothing to do\\nbackup: nothing to...\", wanted \"copied archive\\nbackup: copied ba...\""
       },
       "quality": {
-        "todos": 5,
+        "todos": 0,
         "symbols": 8,
         "symbols_typed": 8,
-        "refusals": 5,
-        "approximations": 1
+        "refusals": 0,
+        "approximations": 4
       }
     },
     {
@@ -4438,6 +4437,82 @@
         "symbols_typed": 5,
         "refusals": 0,
         "approximations": 4
+      }
+    },
+    {
+      "tier": "tier3",
+      "name": "30-error-dispatch",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "stdout differs: line 3, byte 79: got \"failure(61): connection refused\\n...\", wanted \"network(61): connection refused\\n...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "2 variables left dynamic out of 16"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "stdout differs: line 3, byte 79: got \"failure(61): connection refused\\n...\", wanted \"network(61): connection refused\\n...\""
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 16,
+        "symbols_typed": 14,
+        "refusals": 0,
+        "approximations": 13
+      }
+    },
+    {
+      "tier": "tier3",
+      "name": "31-dispatch-table",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "exit status 2, wanted 0; stdout differs: 156 byte(s) missing after line 7, expected \"greet: hello, world\\ncount: 3\\npar...\"; stderr differs: unexpected \"panic: interface conversion: interface {} is func(interface {}) strin...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "9 variables left dynamic out of 12"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "exit status 2, wanted 0; stdout differs: 156 byte(s) missing after line 7, expected \"greet: hello, world\\ncount: 3\\npar...\"; stderr differs: unexpected \"panic: interface conversion: interface {} is func(interface {}) strin...\""
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 12,
+        "symbols_typed": 3,
+        "refusals": 0,
+        "approximations": 9
       }
     },
     {
@@ -5128,7 +5203,7 @@
       "stages": {
         "compiled": {
           "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:35:16: NewA() (no value) used as value or type"
+          "reason": "the generated Go does not compile: ./main.go:41:16: NewA() (no value) used as value or type"
         },
         "emitted": {
           "outcome": "pass"
@@ -5834,7 +5909,7 @@
       "stages": {
         "compiled": {
           "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:150:24: cannot use paths2 (variable of type []string) as map[string]int value in assignment"
+          "reason": "the generated Go does not compile: ./main.go:151:24: cannot use paths2 (variable of type []string) as map[string]int value in assignment"
         },
         "emitted": {
           "outcome": "pass"

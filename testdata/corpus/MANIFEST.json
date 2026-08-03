@@ -2224,5 +2224,29 @@
     "expected_exit": 0,
     "deterministic": true,
     "kind": "convert"
+  },
+  {
+    "tier": "tier3",
+    "name": "30-error-dispatch",
+    "path": "testdata/corpus/tier3/30-error-dispatch",
+    "args": [],
+    "has_stdin": false,
+    "has_files": false,
+    "allow_stderr": false,
+    "expected_exit": 0,
+    "deterministic": true,
+    "kind": "convert"
+  },
+  {
+    "tier": "tier3",
+    "name": "31-dispatch-table",
+    "path": "testdata/corpus/tier3/31-dispatch-table",
+    "args": [],
+    "has_stdin": false,
+    "has_files": false,
+    "allow_stderr": false,
+    "expected_exit": 0,
+    "deterministic": true,
+    "kind": "convert"
   }
 ]

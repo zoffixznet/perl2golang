@@ -1,0 +1,16 @@
+count  exists=yes
+greet  exists=yes
+note   exists=yes
+pad    exists=yes
+parts  exists=yes
+-- calling through the table --
+greet: hello, world
+count: 3
+parts: 3
+pad:   left    |
+audit: first second
+-- walked --
+greet  -> hello, x,y
+count  -> 1
+parts  -> 2
+computed: hello, again

@@ -121,6 +121,17 @@ type Lowerer struct {
 	// by the ancestor and method set they were built from.
 	interfaces   map[string]*Class
 	interfaceOrd []*Class
+	// isaFuncs and isaDecls hold the predicate declared for each class the
+	// file asks isa about, which lists the concrete types that inherit from
+	// it because Go embedding is not subtyping.
+	isaFuncs map[*Class]string
+	isaDecls []ir.Decl
+	// throwsObject records that some die in the file throws a blessed
+	// object, which is what decides whether $@ holds text or a value.
+	throwsObject bool
+	// promoteWanted names the accessors a call reached through a value whose
+	// class did not resolve, gathered fresh on every discovery round.
+	promoteWanted map[string]bool
 	// fieldAt remembers which struct field an access resolved to, so that a
 	// write through it can say what the field holds. A field is not a binding
 	// and has nowhere else to record the evidence.
@@ -324,6 +335,7 @@ func Lower(res parser.Result, src []byte, opts Options) *Result {
 		// leave a signature promising the type a variable had before the
 		// round that pinned it down.
 		l.forgetResults()
+		l.promoteWanted = nil
 		l.run()
 		l.resolveTypes()
 		l.settleFields()
@@ -333,6 +345,11 @@ func Lower(res parser.Result, src []byte, opts Options) *Result {
 		}
 		prev = state
 	}
+
+	// An accessor reached through a value of unsettled class has to become a
+	// real method, and the rename happens here, once, on what the settled
+	// types asked for rather than on an early guess.
+	l.applyPromotions()
 
 	// Pass 2 builds the real tree.
 	l.pass = 2
@@ -355,6 +372,10 @@ func Lower(res parser.Result, src []byte, opts Options) *Result {
 	l.patternOrd = nil
 	l.helpers = map[string]bool{}
 	l.helperOrd = nil
+	// The predicates are declarations, so the pass that builds the real tree
+	// writes them afresh rather than inheriting the discovery pass's copies.
+	l.isaFuncs = nil
+	l.isaDecls = nil
 	out := l.run()
 
 	l.finishReport()
@@ -450,6 +471,7 @@ func (l *Lowerer) run() *Result {
 	for _, c := range l.interfaceOrd {
 		file.Decls = append(file.Decls, l.interfaceDecl(c))
 	}
+	file.Decls = append(file.Decls, l.isaDecls...)
 	for _, name := range l.classOrd {
 		c := l.classes[name]
 		if !c.IsType {

@@ -367,6 +367,23 @@ func (l *Lowerer) lowerMethodDecl(s *Sub, sd *ast.SubDecl) {
 		l.refuseSpecialMethod(s, sd)
 		return
 	}
+	if s.Accessor != nil && s.Promoted {
+		l.promotedAccessorDecl(s, sd)
+		return
+	}
+	if _, ok := classForwarder(s); ok {
+		// Nothing is emitted: every call to it was resolved where it was
+		// written, because that is the only place the class is known.
+		if l.pass == 2 {
+			l.inform(sd, "P2G7004", "sub "+s.Name,
+				"This forwards its arguments to `$class->new`, and `$class` is the class "+
+					"the call named. A Go function has no such name to work from, so there "+
+					"is nothing to declare here: each call site builds its own type "+
+					"directly, which is what a Go program does anyway.",
+				"methods-and-receivers", "compile-time-mindset")
+		}
+		return
+	}
 	if s.Accessor != nil {
 		// Nothing is emitted: the field took the name and the callers read
 		// it directly.
@@ -399,6 +416,44 @@ func (l *Lowerer) lowerMethodDecl(s *Sub, sd *ast.SubDecl) {
 	l.ensureReturn(s, fn.Body)
 	l.setProv(fn, sd)
 	l.explainMethod(fn, s)
+	s.irDecl = fn
+}
+
+// promotedAccessorDecl writes the getter an accessor had to become.
+//
+// Most accessors disappear, because an exported field already is the
+// interface. This one could not: something calls it on a value whose class is
+// decided while the program runs, and an interface can promise a method but
+// never a field. So the method keeps the exported name, the field steps back
+// to the unexported spelling, and the type satisfies the interface.
+func (l *Lowerer) promotedAccessorDecl(s *Sub, sd *ast.SubDecl) {
+	c := s.Class
+	f := s.Accessor
+	recv := "self"
+	if s.Recv != nil && s.Recv.Go != "" {
+		recv = s.Recv.Go
+	} else {
+		recv = l.receiverName(c)
+	}
+	fn := &ir.FuncDecl{
+		Name: s.Go,
+		Recv: &ir.Param{Name: recv, Type: c.Ptr},
+		Body: &ir.Block{Stmts: []ir.Stmt{
+			&ir.Return{Results: []ir.Expr{selector(ir.NewIdent(recv, c.Ptr), f.Go, f.Type)}},
+		}},
+	}
+	if l.pass == 2 {
+		fn.Results = []*ir.Type{f.Type}
+		fn.Doc = []string{s.Go + " reports the " + f.Perl + " this " + c.Go + " was built with."}
+		s.Results = fn.Results
+		l.note(fn, "Go code does not normally write a getter for a plain field. This one "+
+			"is here because the field has to be reachable through an interface, and an "+
+			"interface can promise methods but never fields. Exposing shared state as a "+
+			"method is how several types come to satisfy one interface, so the field "+
+			"steps back to the unexported name and the method takes the exported one.",
+			"implicit-interfaces", "methods-and-receivers", "accept-interfaces-return-structs")
+	}
+	l.setProv(fn, sd)
 	s.irDecl = fn
 }
 
@@ -779,6 +834,16 @@ func (l *Lowerer) methodCall(n *ast.MethodCall) ir.Expr {
 // unknownInvocant is the answer when nothing in the file said what class the
 // object belongs to.
 func (l *Lowerer) unknownInvocant(n *ast.MethodCall, method string, recv ir.Expr) ir.Expr {
+	// isa asks about the inheritance chain, which no single assertion
+	// answers, so it gets a predicate of its own.
+	if method == "isa" || method == "DOES" {
+		if c, ok := l.classArgument(n); ok {
+			return l.isaTest(n, recv, c)
+		}
+	}
+	if x, ok := l.dynamicDispatch(n, method, recv); ok {
+		return x
+	}
 	return l.todoExpr(n, "P2G7001", "method call on "+method,
 		"the class of this object did not resolve",
 		"Perl decides which method to run by looking at what the reference was "+
@@ -806,6 +871,11 @@ func (l *Lowerer) classDispatch(n *ast.MethodCall, c *Class, method string) ir.E
 		return l.defaultConstructor(n, c)
 	}
 	s := c.method(method)
+	if dies, ok := classForwarder(s); ok {
+		if x := l.inlineForwarder(n, c, s, dies); x != nil {
+			return x
+		}
+	}
 	if s == nil {
 		return l.todoExpr(n, "P2G7041", c.Perl+"->"+method,
 			"no such method was found in this file",
@@ -1699,7 +1769,8 @@ func sharedMethods(cs []*Class) map[string]*Sub {
 		ok := true
 		for _, c := range cs[1:] {
 			m := c.method(name)
-			if m == nil || m.Kind != SubMethod || m.Accessor != nil || !sameSignature(s, m) {
+			if m == nil || m.Kind != SubMethod || (m.Accessor != nil && !m.Promoted) ||
+				!sameSignature(s, m) {
 				ok = false
 				break
 			}
@@ -1757,7 +1828,7 @@ func collectMethods(c *Class) map[string]*Sub {
 	out := map[string]*Sub{}
 	for i := len(c.ancestors()) - 1; i >= 0; i-- {
 		for name, s := range c.ancestors()[i].subBy {
-			if s.Kind == SubMethod && s.Accessor == nil {
+			if s.Kind == SubMethod && (s.Accessor == nil || s.Promoted) {
 				out[name] = s
 			}
 		}
@@ -1842,7 +1913,12 @@ func (l *Lowerer) interfaceDecl(c *Class) ir.Decl {
 // interface several classes share.
 func (l *Lowerer) dispatchInterface(n *ast.MethodCall, c *Class, method string, recv ir.Expr) ir.Expr {
 	switch method {
-	case "isa", "DOES", "can":
+	case "isa", "DOES":
+		if want, ok := l.classArgument(n); ok {
+			return l.isaTest(n, recv, want)
+		}
+		fallthrough
+	case "can":
 		return l.todoExpr(n, "P2G7045", "->"+method,
 			"this value holds more than one class",
 			"The collection this came out of holds several classes, so its declared "+
@@ -1857,6 +1933,10 @@ func (l *Lowerer) dispatchInterface(n *ast.MethodCall, c *Class, method string, 
 		args, _ := l.listParts(n.Args)
 		return l.invoke(s, recv, args, n)
 	}
+	// The name may be an accessor, which is a field so far and cannot be
+	// promised by an interface. Asking for it to become a method is what
+	// makes it reachable here.
+	l.wantPromotion(method)
 	return l.todoExpr(n, "P2G7041", "->"+method,
 		"this is not one of the methods the classes here share",
 		"The value's declared type is the interface "+c.Go+", which names only what "+

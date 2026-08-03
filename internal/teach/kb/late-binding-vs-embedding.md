@@ -2,7 +2,7 @@
 id: late-binding-vs-embedding
 title: Embedding resolves at compile time, and Perl's method lookup does not
 tags: [oo, embedding, interfaces, dispatch]
-perl_triggers: [isa-array, use-parent, super-call, template-method, abstract-method, virtual-method]
+perl_triggers: [isa-array, use-parent, super-call, template-method, abstract-method, virtual-method, isa-check, error-hierarchy, exception-objects, die-with-object]
 severity: warning
 prerequisites: [structs-and-embedding, implicit-interfaces, methods-and-receivers]
 ---
@@ -129,6 +129,103 @@ wheel with area 19.63
 ```
 
 `base.self` is what `$self` was doing all along, written down. The constructor is the one place that can set it, which is why each type needs one — a bare `Rectangle{}` literal would leave `self` nil and `Describe` would panic, and that is the cost of the pattern.
+
+## The other half: embedding is not subtyping
+
+The template-method problem is about *calls*. There is a second, quieter half about *values*, and it bites the moment an error hierarchy is ported. Perl's `isa` walks `@ISA`, so a `Failure::Timeout` is a `Failure::Network` and a `Failure` at the same time, and one variable holds any of them. Go has no such relation: embedding `NetworkFailure` inside `TimeoutFailure` promotes its fields and its methods, and does nothing else. `*TimeoutFailure` is not assignable to `*NetworkFailure`, no assertion will convert one to the other, and there is no cast that pretends otherwise.
+
+So the two questions Perl asks of an object split apart in Go. "Can it do this?" is an interface, and an assertion answers it for a value of unknown type. "Is it one of these?" has no built-in answer at all: you write the list.
+
+```go
+package main
+
+import "fmt"
+
+type Failure struct {
+	detail string
+	code   int
+}
+
+// Detail is a method rather than an exported field, so the interface below
+// can promise it. An interface never promises a field.
+func (f *Failure) Detail() string { return f.detail }
+func (f *Failure) Code() int      { return f.code }
+func (f *Failure) Label() string  { return "failure" }
+
+type NetworkFailure struct{ Failure }
+
+func (n *NetworkFailure) Label() string { return "network" }
+
+type TimeoutFailure struct{ NetworkFailure }
+
+func (t *TimeoutFailure) Label() string { return "timeout" }
+
+// Reporter is what every failure here answers to, written next to the code
+// that needs it rather than next to the types.
+type Reporter interface {
+	Detail() string
+	Code() int
+	Label() string
+}
+
+// isNetworkFailure is what isa('Failure::Network') becomes. Embedding
+// promotes fields and methods but is not subtyping, so a *TimeoutFailure
+// does not satisfy an assertion to *NetworkFailure and the types have to be
+// listed.
+func isNetworkFailure(v any) bool {
+	switch v.(type) {
+	case *NetworkFailure, *TimeoutFailure:
+		return true
+	}
+	return false
+}
+
+func attempt(kind string) (result string) {
+	defer func() {
+		// recover hands back exactly what panic was given, so an object
+		// thrown survives whole and can still be asked questions.
+		if caught := recover(); caught != nil {
+			r, ok := caught.(Reporter)
+			if !ok {
+				result = fmt.Sprintf("not a failure: %v", caught)
+				return
+			}
+			result = fmt.Sprintf("%s(%d): %s network=%t",
+				r.Label(), r.Code(), r.Detail(), isNetworkFailure(caught))
+		}
+	}()
+	switch kind {
+	case "net":
+		panic(&NetworkFailure{Failure{detail: "connection refused", code: 61}})
+	case "slow":
+		panic(&TimeoutFailure{NetworkFailure{Failure{detail: "no answer", code: 60}}})
+	case "odd":
+		panic("a bare string, not an object")
+	}
+	return kind + " ok"
+}
+
+func main() {
+	for _, kind := range []string{"fine", "net", "slow", "odd"} {
+		fmt.Println(attempt(kind))
+	}
+	// The assertion is checked: a value that is not a Reporter is caught
+	// here rather than three frames later.
+	var v any = 42
+	_, ok := v.(Reporter)
+	fmt.Println("42 is a Reporter:", ok)
+}
+```
+
+```
+fine ok
+network(61): connection refused network=true
+timeout(60): no answer network=true
+not a failure: a bare string, not an object
+42 is a Reporter: false
+```
+
+Three details worth keeping. `Detail` and `Code` are methods rather than exported fields, because an interface can promise a method and never a field; that is the reason a Perl accessor, which usually wants to vanish into an exported field, has to stay a method as soon as anything calls it through an interface. The predicate has to be maintained: a new subclass is a new `case`, and forgetting it is a bug the compiler cannot see, which is the price Go charges for deciding the rest at compile time. And note that `Label` still resolves the wrong way inside a base method for the reason the first half of this page explains: `isNetworkFailure` and the interface fix the *value* half of the problem, not the *call* half.
 
 ## The mismatch
 

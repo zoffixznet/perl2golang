@@ -1,0 +1,13 @@
+fine: fine ok
+net     caught network   network=yes timeout=no  code=61
+        network(61): connection refused
+slow    caught timeout   network=yes timeout=yes code=60
+        timeout(60): no answer in 5s
+config  caught config    network=no  timeout=no  code=22
+        config(22): missing key host
+outer eval: value=recovered error=empty
+-- every failure --
+  failure(1): plain
+  network(61): refused
+  timeout(60): slow
+  config(22): bad key
