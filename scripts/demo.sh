@@ -4,7 +4,7 @@
 set -eu
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
-bin="$root/bin/perl2go"
+bin="$root/bin/perl2golang"
 src="$root/testdata/corpus/tier2/06-array-of-hashes/input.pl"
 
 if [ ! -x "$bin" ]; then

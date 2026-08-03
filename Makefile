@@ -1,23 +1,23 @@
 GO      ?= go
 BINDIR  ?= $(HOME)/.local/bin
-BIN     := perl2go
+BIN     := perl2golang
 
 .DEFAULT_GOAL := help
 
 .PHONY: help build install test test-short score lint fmt vet clean run explain repl repl-demo demo deps corpus-add corpus-record
 
 help: ## Show this help
-	@echo "perl2go - convert Perl 5 scripts to Go and learn Go along the way"
+	@echo "perl2golang - convert Perl 5 scripts to Go and learn Go along the way"
 	@echo
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-14s %s\n", $$1, $$2}'
 	@echo
 	@echo "make install puts the binary in $(BINDIR); set BINDIR to change that."
 
-build: ## Build the perl2go binary into ./bin
-	$(GO) build -o bin/$(BIN) ./cmd/perl2go
+build: ## Build the perl2golang binary into ./bin
+	$(GO) build -o bin/$(BIN) ./cmd/perl2golang
 
-install: ## Install perl2go where BINDIR says (see below)
-	$(GO) build -o $(BINDIR)/$(BIN) ./cmd/perl2go
+install: ## Install perl2golang where BINDIR says (see below)
+	$(GO) build -o $(BINDIR)/$(BIN) ./cmd/perl2golang
 	@echo "installed $(BINDIR)/$(BIN)"
 
 test: ## Run the full test suite

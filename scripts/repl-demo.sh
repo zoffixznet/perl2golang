@@ -6,14 +6,14 @@
 # a few meta commands. Everything the REPL does is visible in the output, so
 # the check below is a list of things that must appear in it.
 #
-# Usage: scripts/repl-demo.sh [path-to-perl2go]
+# Usage: scripts/repl-demo.sh [path-to-perl2golang]
 set -eu
 
 root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 bin=${1:-}
 if [ -z "$bin" ]; then
-	bin="$root/bin/perl2go"
-	[ -x "$bin" ] || (cd "$root" && go build -o bin/perl2go ./cmd/perl2go)
+	bin="$root/bin/perl2golang"
+	[ -x "$bin" ] || (cd "$root" && go build -o bin/perl2golang ./cmd/perl2golang)
 fi
 
 session="$root/testdata/repl/tour.pl"

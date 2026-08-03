@@ -1,14 +1,14 @@
-# perl2go
+# perl2golang
 
 Convert Perl 5 scripts to Go, and learn Go from your own code while you do it.
 
-`perl2go` reads a Perl script and writes a Go project. It produces two copies of
-the same program: a plain one that reads like Go somebody wrote by hand, and an
-annotated one, buried in comments explaining what each Go construct is, why it
-is written that way, and which line of your Perl it came from. Alongside them it
-writes a set of documents: a walkthrough tying regions of your script to regions
-of the output, a lesson for every Go concept your code actually touched, and an
-honest account of anything it could not translate.
+`perl2golang` reads a Perl script and writes a Go project. It produces two
+copies of the same program: a plain one that reads like Go somebody wrote by
+hand, and an annotated one, buried in comments explaining what each Go construct
+is, why it is written that way, and which line of your Perl it came from.
+Alongside them it writes a set of documents: a walkthrough tying regions of your
+script to regions of the output, a lesson for every Go concept your code
+actually touched, and an honest account of anything it could not translate.
 
 The conversion is the excuse. The point is that you finish reading knowing Go.
 
@@ -22,8 +22,8 @@ with `--ai`.
 Requires a Go toolchain, 1.24 or newer. The Go it generates needs 1.23.
 
 ```
-make build      # builds ./bin/perl2go
-make install    # installs perl2go into ~/.local/bin
+make build      # builds ./bin/perl2golang
+make install    # installs perl2golang into ~/.local/bin
 ```
 
 `make help` lists every target.
@@ -33,27 +33,27 @@ make install    # installs perl2go into ~/.local/bin
 Convert a file. The output goes to `<name>-go/` unless you say otherwise:
 
 ```
-perl2go convert report.pl
-perl2go report.pl -o /tmp/report-go
+perl2golang convert report.pl
+perl2golang report.pl -o /tmp/report-go
 ```
 
 Convert a snippet and print the result instead of writing files:
 
 ```
-perl2go -e 'my %count; $count{$_}++ for @ARGV; print "$_ => $count{$_}\n" for sort keys %count'
+perl2golang -e 'my %count; $count{$_}++ for @ARGV; print "$_ => $count{$_}\n" for sort keys %count'
 ```
 
 Read Perl from standard input:
 
 ```
-cat report.pl | perl2go -
+cat report.pl | perl2golang -
 ```
 
 Look a concept up directly, without converting anything:
 
 ```
-perl2go explain slice-aliasing-and-copy
-perl2go explain --list
+perl2golang explain slice-aliasing-and-copy
+perl2golang explain --list
 ```
 
 The lessons cover the language itself (types and zero values, `nil`, slices,
@@ -73,11 +73,11 @@ extra: it hands the finished Go to a model running on your own machine and asks
 it to name the things the converter had to invent names for.
 
 ```
-perl2go ai status                 what is configured, and what this machine can run
-perl2go report.pl --ai            convert, and let the model name things
+perl2golang ai status          what is configured, and what this machine can run
+perl2golang report.pl --ai     convert, and let the model name things
 ```
 
-Without `--ai`, perl2go opens no socket at all. There is no telemetry, no
+Without `--ai`, perl2golang opens no socket at all. There is no telemetry, no
 update check and no hosted service anywhere in it.
 
 What the model is asked for is narrow on purpose:
@@ -93,13 +93,13 @@ parsing, compiling and passing `go vet` alongside the rest of its package. A
 name that fails any of those is dropped and the converter's own name is kept.
 `--ai` can improve the result or leave it alone; it cannot damage it.
 
-It needs a local runtime speaking the Ollama API, which perl2go talks to and
+It needs a local runtime speaking the Ollama API, which perl2golang talks to and
 does not manage. Models are a machine-wide resource shared with everything else
-you run, so perl2go uses a model you already have, never downloads one to
+you run, so perl2golang uses a model you already have, never downloads one to
 convert a file, and never removes, moves or copies one. `OLLAMA_HOST` and
 `OLLAMA_MODELS` are honoured as the runtime's own tools honour them.
 
-`perl2go ai setup` inspects the machine, reports what it found, lists the
+`perl2golang ai setup` inspects the machine, reports what it found, lists the
 freely licensed models that fit it with their real download sizes, and prints
 the exact commands it would run. It stops there unless you add `--yes`.
 
@@ -113,13 +113,13 @@ than the rest by a wide margin.
 
 ## The interactive session
 
-`perl2go repl` gives you a prompt. Type Perl, see the Go it becomes, and see
+`perl2golang repl` gives you a prompt. Type Perl, see the Go it becomes, and see
 the Go concepts behind it. It is the fastest way to answer "what does this look
 like in Go", and the answer is the same Go a file conversion would produce.
 
 ```
-$ perl2go repl
-perl2go 0.1.0  type Perl, see the Go. :help for commands, :quit to leave.
+$ perl2golang repl
+perl2golang 0.1.0  type Perl, see the Go. :help for commands, :quit to leave.
 
 perl> my @nums = (3, 1, 4, 1, 5);
   nums := []int{3, 1, 4, 1, 5}
@@ -193,13 +193,13 @@ At a terminal you get line editing and history: arrow keys, `Ctrl-A`/`Ctrl-E`,
 word movement with `Alt-B`/`Alt-F`, `Ctrl-K`/`Ctrl-U`/`Ctrl-W`, history with the
 up and down arrows and `Ctrl-R` to search it, and `Ctrl-C` to throw away the
 snippet you are typing without leaving. History is kept in
-`$XDG_STATE_HOME/perl2go/history`; `--no-history` turns that off.
+`$XDG_STATE_HOME/perl2golang/history`; `--no-history` turns that off.
 
 A session also works from a pipe, prompts and all, which makes a transcript
 something you can save, read, diff and replay:
 
 ```
-perl2go repl < session.pl > transcript.txt
+perl2golang repl < session.pl > transcript.txt
 ```
 
 ## What you get
@@ -241,9 +241,9 @@ language version and nothing else.
 ## Honesty about what it could not do
 
 Every conversion produces a report. Anything approximated or refused appears
-three ways: a `TODO` in the generated code, an entry in the report with a stable
-diagnostic code, and a line in the terminal summary. `perl2go explain P2G4004`
-prints the full entry for any code.
+three ways: a `TODO` in the generated code, an entry in the report with a
+stable diagnostic code, and a line in the terminal summary.
+`perl2golang explain P2G4004` prints the full entry for any code.
 
 A refusal names the construct, says why Go cannot express it the same way, and
 tells you what to write instead. That is the intended output for the parts of
@@ -314,7 +314,7 @@ These are real and current, not oversights:
   it. Perl is only used by this repository's own test suite, against scripts in
   `testdata/corpus/`.
 
-## Working on perl2go
+## Working on perl2golang
 
 ```
 make test       # the full suite
