@@ -293,6 +293,12 @@ func (l *Lowerer) listValue(parts []ir.Expr, elem *ir.Type) ir.Expr {
 // element type. Perl lists are flat: a list inside a list is spliced in, and
 // an array contributes its elements rather than itself.
 func (l *Lowerer) listParts(es []ast.Expr) ([]ir.Expr, *ir.Type) {
+	// Several function literals in one list share a slot the same way they do
+	// in a hash, and a slice has one element type too.
+	saved := l.uniformFn
+	l.uniformFn = l.uniformFn || closureList(es)
+	defer func() { l.uniformFn = saved }()
+
 	var out []ir.Expr
 	var seen []*ir.Type
 	var add func(e ast.Expr)
@@ -495,6 +501,14 @@ func (l *Lowerer) pairs(elems []ast.Expr) (keys, vals []ir.Expr, t *ir.Type) {
 	for _, e := range elems {
 		flat = append(flat, flatten(e)...)
 	}
+	// A table of callbacks is the one case where several function literals
+	// share a slot, and Go's slot has one type. They are lowered to one
+	// signature so the map can hold them and so calling through it needs no
+	// assertion.
+	saved := l.uniformFn
+	l.uniformFn = l.uniformFn || closureTable(flat)
+	defer func() { l.uniformFn = saved }()
+
 	var seen []*ir.Type
 	for i := 0; i+1 < len(flat); i += 2 {
 		k := l.expr(flat[i])
@@ -531,6 +545,47 @@ func (l *Lowerer) pairs(elems []ast.Expr) (keys, vals []ir.Expr, t *ir.Type) {
 		vals[i] = l.assignable(v, t, nil)
 	}
 	return keys, vals, t
+}
+
+// closureTable reports whether a flat key/value list is a table of
+// callbacks: more than one of its values is written as a sub.
+//
+// One closure on its own keeps the signature its body implies, which is the
+// better Go. Two or more in one collection cannot, because a map has a single
+// value type and the two rarely agree about what they take or return.
+// closureList reports whether a list holds more than one function literal.
+func closureList(es []ast.Expr) bool {
+	subs := 0
+	var count func(ast.Expr)
+	count = func(e ast.Expr) {
+		switch n := e.(type) {
+		case *ast.AnonSub:
+			subs++
+		case *ast.List:
+			for _, el := range n.Elems {
+				count(el)
+			}
+		case *ast.BinOp:
+			if n.Op == "," {
+				count(n.L)
+				count(n.R)
+			}
+		}
+	}
+	for _, e := range es {
+		count(e)
+	}
+	return subs > 1
+}
+
+func closureTable(flat []ast.Expr) bool {
+	subs := 0
+	for i := 1; i < len(flat); i += 2 {
+		if _, ok := flat[i].(*ast.AnonSub); ok {
+			subs++
+		}
+	}
+	return subs > 1
 }
 
 // ---------------------------------------------------------------------------

@@ -167,6 +167,23 @@ var notes = map[string]string{
 		"they have to come out first. Decoding without padding accepts both " +
 		"the padded and the unpadded spelling.",
 
+	"callFn": "Go will not call an interface value: it has to be asserted " +
+		"to a function type first, and the assertion names the whole " +
+		"signature, so a table holding two functions that differ in one " +
+		"argument cannot be called through one assertion. Giving the " +
+		"collection a function type removes this entirely, and the call " +
+		"becomes a direct one the compiler checks.",
+
+	"fitTo": "The original turned an argument to whatever the sub wanted " +
+		"without saying so. Doing the same through reflection is the price " +
+		"of not knowing the signature; a declared function type makes the " +
+		"compiler do it instead, at no cost at all.",
+
+	"scalarOf": "A Go function has one return type and a caller cannot ask " +
+		"for a different one, so nothing here needs a notion of context. This " +
+		"exists only for values whose type did not resolve, where the choice " +
+		"between a collection and its length cannot be made at compile time.",
+
 	"makeTree": "os.MkdirAll creates every missing level and reports only an " +
 		"error, because that is all a caller usually needs. Which levels were " +
 		"new is a separate question, and answering it means looking before " +

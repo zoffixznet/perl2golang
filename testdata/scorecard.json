@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T05:57:31Z",
+  "recorded": "2026-08-15T06:15:50Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -53,45 +53,45 @@
     },
     {
       "tier": "tier2",
-      "entries": 53,
+      "entries": 55,
       "stages": {
         "compiled": {
-          "pass": 49,
+          "pass": 51,
           "fail": 4,
           "skip": 0
         },
         "emitted": {
-          "pass": 53,
+          "pass": 55,
           "fail": 0,
           "skip": 0
         },
         "equivalent": {
-          "pass": 15,
-          "fail": 38,
+          "pass": 16,
+          "fail": 39,
           "skip": 0
         },
         "translated": {
-          "pass": 48,
+          "pass": 50,
           "fail": 5,
           "skip": 0
         },
         "typed": {
-          "pass": 15,
-          "fail": 38,
+          "pass": 14,
+          "fail": 41,
           "skip": 0
         }
       },
       "equivalent_annotated": {
-        "pass": 15,
-        "fail": 38,
+        "pass": 16,
+        "fail": 39,
         "skip": 0
       },
       "quality": {
         "todos": 17,
-        "symbols": 1035,
-        "symbols_typed": 880,
+        "symbols": 1081,
+        "symbols_typed": 892,
         "refusals": 17,
-        "approximations": 372
+        "approximations": 386
       }
     },
     {
@@ -131,10 +131,10 @@
       },
       "quality": {
         "todos": 65,
-        "symbols": 822,
-        "symbols_typed": 618,
+        "symbols": 833,
+        "symbols_typed": 621,
         "refusals": 69,
-        "approximations": 303
+        "approximations": 295
       }
     },
     {
@@ -217,30 +217,30 @@
       },
       "quality": {
         "todos": 6,
-        "symbols": 925,
+        "symbols": 932,
         "symbols_typed": 838,
         "refusals": 6,
-        "approximations": 172
+        "approximations": 173
       }
     }
   ],
   "total": {
     "tier": "TOTAL",
-    "entries": 183,
+    "entries": 185,
     "stages": {
       "compiled": {
-        "pass": 162,
+        "pass": 164,
         "fail": 21,
         "skip": 0
       },
       "emitted": {
-        "pass": 183,
+        "pass": 185,
         "fail": 0,
         "skip": 0
       },
       "equivalent": {
-        "pass": 46,
-        "fail": 102,
+        "pass": 47,
+        "fail": 103,
         "skip": 0
       },
       "honest": {
@@ -249,35 +249,35 @@
         "skip": 1
       },
       "translated": {
-        "pass": 149,
+        "pass": 151,
         "fail": 34,
         "skip": 0
       },
       "typed": {
-        "pass": 67,
-        "fail": 116,
+        "pass": 66,
+        "fail": 119,
         "skip": 0
       }
     },
     "equivalent_annotated": {
-      "pass": 46,
-      "fail": 102,
+      "pass": 47,
+      "fail": 103,
       "skip": 0
     },
     "quality": {
       "todos": 123,
-      "symbols": 3353,
-      "symbols_typed": 2830,
+      "symbols": 3417,
+      "symbols_typed": 2845,
       "refusals": 128,
-      "approximations": 974
+      "approximations": 981
     }
   },
   "quality": {
     "todos": 123,
-    "symbols": 3353,
-    "symbols_typed": 2830,
+    "symbols": 3417,
+    "symbols_typed": 2845,
     "refusals": 128,
-    "approximations": 974
+    "approximations": 981
   },
   "entries": [
     {
@@ -1821,7 +1821,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "exit status 2, wanted 0; stdout differs: 89 byte(s) missing after line 21, expected \"registry: 3 words, 2 colours, sq...\"; stderr differs: unexpected \"panic: interface conversion: interface {} is func(interface {}) float...\""
+          "reason": "stdout differs: line 21, byte 425: got \"0 colours, sq(5)=25\\norig=alpha b...\", wanted \"2 colours, sq(5)=25\\norig=alpha b...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -1836,14 +1836,14 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "exit status 2, wanted 0; stdout differs: 89 byte(s) missing after line 21, expected \"registry: 3 words, 2 colours, sq...\"; stderr differs: unexpected \"panic: interface conversion: interface {} is func(interface {}) float...\""
+        "reason": "stdout differs: line 21, byte 425: got \"0 colours, sq(5)=25\\norig=alpha b...\", wanted \"2 colours, sq(5)=25\\norig=alpha b...\""
       },
       "quality": {
         "todos": 0,
         "symbols": 16,
         "symbols_typed": 12,
         "refusals": 0,
-        "approximations": 2
+        "approximations": 3
       }
     },
     {
@@ -1881,7 +1881,7 @@
         "symbols": 32,
         "symbols_typed": 18,
         "refusals": 0,
-        "approximations": 10
+        "approximations": 11
       }
     },
     {
@@ -2114,7 +2114,7 @@
       "stages": {
         "compiled": {
           "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:120:38: too many arguments in call to opFor(\"mul\")"
+          "reason": "the generated Go does not compile: ./main.go:133:38: too many arguments in call to opFor(\"mul\")"
         },
         "emitted": {
           "outcome": "pass"
@@ -2131,7 +2131,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "21 variables left dynamic out of 34"
+          "reason": "26 variables left dynamic out of 41"
         }
       },
       "equivalent_annotated": {
@@ -2140,8 +2140,8 @@
       },
       "quality": {
         "todos": 0,
-        "symbols": 34,
-        "symbols_typed": 13,
+        "symbols": 41,
+        "symbols_typed": 15,
         "refusals": 0,
         "approximations": 12
       }
@@ -2697,7 +2697,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "8 variables left dynamic out of 17"
+          "reason": "7 variables left dynamic out of 17"
         }
       },
       "equivalent_annotated": {
@@ -2707,9 +2707,9 @@
       "quality": {
         "todos": 0,
         "symbols": 17,
-        "symbols_typed": 9,
+        "symbols_typed": 10,
         "refusals": 0,
-        "approximations": 8
+        "approximations": 6
       }
     },
     {
@@ -3255,7 +3255,8 @@
           "outcome": "pass"
         },
         "typed": {
-          "outcome": "pass"
+          "outcome": "fail",
+          "reason": "2 variables left dynamic out of 30"
         }
       },
       "equivalent_annotated": {
@@ -3263,7 +3264,7 @@
       },
       "quality": {
         "todos": 0,
-        "symbols": 28,
+        "symbols": 30,
         "symbols_typed": 28,
         "refusals": 0,
         "approximations": 4
@@ -3669,7 +3670,81 @@
         "symbols": 6,
         "symbols_typed": 5,
         "refusals": 0,
-        "approximations": 8
+        "approximations": 9
+      }
+    },
+    {
+      "tier": "tier2",
+      "name": "54-callback-tables",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "pass"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "17 variables left dynamic out of 24"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "pass"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 24,
+        "symbols_typed": 7,
+        "refusals": 0,
+        "approximations": 6
+      }
+    },
+    {
+      "tier": "tier2",
+      "name": "55-callback-context",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "exit status 2, wanted 0; stdout differs: line 2, byte 31: got \"[alpha beta gamma]\\ncount: 1\\n-- t...\", wanted \"alpha|beta|gamma\\ncount: 3\\n-- the...\"; stderr differs: unexpected \"panic: interface conversion: interface {} is nil, not []interface {} ...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "11 variables left dynamic out of 13"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "exit status 2, wanted 0; stdout differs: line 2, byte 31: got \"[alpha beta gamma]\\ncount: 1\\n-- t...\", wanted \"alpha|beta|gamma\\ncount: 3\\n-- the...\"; stderr differs: unexpected \"panic: interface conversion: interface {} is nil, not []interface {} ...\""
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 13,
+        "symbols_typed": 2,
+        "refusals": 0,
+        "approximations": 7
       }
     },
     {
@@ -3731,7 +3806,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "5 variables left dynamic out of 39"
+          "reason": "6 variables left dynamic out of 41"
         }
       },
       "equivalent_annotated": {
@@ -3740,10 +3815,10 @@
       },
       "quality": {
         "todos": 4,
-        "symbols": 39,
-        "symbols_typed": 34,
+        "symbols": 41,
+        "symbols_typed": 35,
         "refusals": 4,
-        "approximations": 12
+        "approximations": 11
       }
     },
     {
@@ -4302,7 +4377,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: line 1, byte 11: got \"generic [App::Error] unknown err...\", wanted \"succeeded (ok:42)\\nfetch-feed: ti...\""
+          "reason": "stdout differs: line 2, byte 41: got \"generic [App::Error] no response...\", wanted \"timeout [App::Error::Timeout] no...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -4313,19 +4388,19 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "8 variables left dynamic out of 29"
+          "reason": "12 variables left dynamic out of 34"
         }
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: line 1, byte 11: got \"generic [App::Error] unknown err...\", wanted \"succeeded (ok:42)\\nfetch-feed: ti...\""
+        "reason": "stdout differs: line 2, byte 41: got \"generic [App::Error] no response...\", wanted \"timeout [App::Error::Timeout] no...\""
       },
       "quality": {
         "todos": 1,
-        "symbols": 29,
-        "symbols_typed": 21,
+        "symbols": 34,
+        "symbols_typed": 22,
         "refusals": 1,
-        "approximations": 25
+        "approximations": 24
       }
     },
     {
@@ -4614,7 +4689,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "exit status 2, wanted 0; stdout differs: 639 byte(s) missing after line 7, expected \"--- diff files/policy-v1.txt fil...\"; stderr differs: unexpected \"panic: interface conversion: interface {} is func(interface {}) []str...\""
+          "reason": "exit status 2, wanted 0; stdout differs: 639 byte(s) missing after line 7, expected \"--- diff files/policy-v1.txt fil...\"; stderr differs: unexpected \"panic: runtime error: index out of range [0] with length 0 ...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -4629,7 +4704,7 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "exit status 2, wanted 0; stdout differs: 639 byte(s) missing after line 7, expected \"--- diff files/policy-v1.txt fil...\"; stderr differs: unexpected \"panic: interface conversion: interface {} is func(interface {}) []str...\""
+        "reason": "exit status 2, wanted 0; stdout differs: 639 byte(s) missing after line 7, expected \"--- diff files/policy-v1.txt fil...\"; stderr differs: unexpected \"panic: runtime error: index out of range [0] with length 0 ...\""
       },
       "quality": {
         "todos": 0,
@@ -4837,7 +4912,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "exit status 2, wanted 0; stdout differs: 156 byte(s) missing after line 7, expected \"greet: hello, world\\ncount: 3\\npar...\"; stderr differs: unexpected \"panic: interface conversion: interface {} is func(interface {}) strin...\""
+          "reason": "stdout differs: line 15, byte 253: got \"[x y]\\ncomputed: hello, again\\n\", wanted \"2\\ncomputed: hello, again\\n\""
         },
         "honest": {
           "outcome": "n/a"
@@ -4847,19 +4922,19 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "9 variables left dynamic out of 12"
+          "reason": "12 variables left dynamic out of 16"
         }
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "exit status 2, wanted 0; stdout differs: 156 byte(s) missing after line 7, expected \"greet: hello, world\\ncount: 3\\npar...\"; stderr differs: unexpected \"panic: interface conversion: interface {} is func(interface {}) strin...\""
+        "reason": "stdout differs: line 15, byte 253: got \"[x y]\\ncomputed: hello, again\\n\", wanted \"2\\ncomputed: hello, again\\n\""
       },
       "quality": {
         "todos": 0,
-        "symbols": 12,
-        "symbols_typed": 3,
+        "symbols": 16,
+        "symbols_typed": 4,
         "refusals": 0,
-        "approximations": 9
+        "approximations": 3
       }
     },
     {
@@ -6311,7 +6386,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "1 variable left dynamic out of 36"
+          "reason": "4 variables left dynamic out of 39"
         }
       },
       "equivalent_annotated": {
@@ -6320,7 +6395,7 @@
       },
       "quality": {
         "todos": 0,
-        "symbols": 36,
+        "symbols": 39,
         "symbols_typed": 35,
         "refusals": 0,
         "approximations": 7
@@ -6969,7 +7044,7 @@
       "stages": {
         "compiled": {
           "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:149:20: multiple-value handlers[base](lines[i]) (value of type (string, string)) in single-value context"
+          "reason": "the generated Go does not compile: ./main.go:205:21: cannot use rec2.Template (variable of interface type any) as string value in argument to sprintf: need type assertion"
         },
         "emitted": {
           "outcome": "pass"
@@ -6986,7 +7061,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "9 variables left dynamic out of 39"
+          "reason": "13 variables left dynamic out of 43"
         }
       },
       "equivalent_annotated": {
@@ -6995,10 +7070,10 @@
       },
       "quality": {
         "todos": 0,
-        "symbols": 39,
+        "symbols": 43,
         "symbols_typed": 30,
         "refusals": 0,
-        "approximations": 5
+        "approximations": 6
       }
     },
     {

@@ -282,6 +282,24 @@ func (l *Lowerer) recoverParams(s *Sub, body []ast.Stmt) ([]ir.Param, []ast.Stmt
 	rest := body
 	var bindings []*Binding
 
+	// A closure sharing a slot with others takes everything through @_ and
+	// answers with one value, because that is the only signature they can
+	// all have. The body still names its arguments; it reads them out of the
+	// argument list instead of out of parameters.
+	if l.uniformFn {
+		var at ast.Node
+		if s.Decl != nil {
+			at = s.Decl
+		}
+		s.Variadic = true
+		if s.VarArgs == nil {
+			s.VarArgs = l.declareNamed("args@"+s.Name, '@', "args", KindParam, at)
+		}
+		s.VarArgs.Type = ir.SliceOf(ir.TAny)
+		s.Results = []*ir.Type{ir.TAny}
+		return []ir.Param{{Name: s.VarArgs.Go, Type: ir.TAny, Variadic: true}}, rest
+	}
+
 	for len(rest) > 0 {
 		es, ok := rest[0].(*ast.ExprStmt)
 		if !ok {

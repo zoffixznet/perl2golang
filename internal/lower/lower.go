@@ -236,6 +236,9 @@ type Lowerer struct {
 	// the empty string when the body was wrapped and needs no label. It is
 	// nil when the body being lowered is not inside such a wrapper.
 	redoLabel *string
+	// uniformFn forces the function literals being lowered to one signature,
+	// which is what lets a collection of callbacks have an element type.
+	uniformFn bool
 	// transValue holds the result of a transliteration written with the r
 	// modifier, which yields a new string instead of changing one.
 	transValue ir.Expr

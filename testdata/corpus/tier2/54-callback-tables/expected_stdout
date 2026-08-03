@@ -1,0 +1,14 @@
+-- one at a time --
+upper:   QUIET
+trim:    [padded]
+tag:     [warn] body
+measure: 4
+audit:   first second
+-- chosen by name --
+measure  -> 14
+trim     -> Mixed Case
+upper    ->   MIXED CASE  
+-- a pipeline in an array --
+piped:   < some spaced text >
+-- closing over a counter --
+hit=4 miss=1

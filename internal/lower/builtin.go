@@ -138,7 +138,22 @@ func (l *Lowerer) builtin(n *ast.Call) ir.Expr {
 		return l.splitCall(n)
 	case "scalar":
 		if len(n.Args) == 1 {
-			return l.scalar(n.Args[0])
+			x := l.scalar(n.Args[0])
+			// A value whose type did not resolve may be holding a list, and
+			// which of the two `scalar` meant cannot be decided here.
+			if typeOrAny(x).Kind == ir.Any {
+				out := l.helperCall(hScalarOf, ir.TAny, x)
+				l.approximate(n, "P2G2031", "scalar on a dynamic value",
+					"the choice is made while the program runs",
+					"scalar asks for one value where a list might be, and Perl decides "+
+						"which by looking at what is there. This value's type did not "+
+						"resolve, so the same decision is made at run time.",
+					"Give the value a concrete type where it is created, and the choice "+
+						"disappears: a slice has a length and a string does not.",
+					"context-is-gone", "static-types-and-zero-values")
+				return out
+			}
+			return x
 		}
 	case "length":
 		return l.lengthCall(n)

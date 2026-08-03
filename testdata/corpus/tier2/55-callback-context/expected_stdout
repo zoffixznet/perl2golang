@@ -1,0 +1,12 @@
+-- called for a list --
+words: alpha|beta|gamma
+count: 3
+-- the same sub, called for one value --
+in scalar context: 3
+explicit scalar:   3
+-- a callback returning a list of references --
+pairs: a=1 bb=2 ccc=3
+-- a callback that already picks one --
+first: alpha
+-- passed on to another sub --
+applied: 3 alpha

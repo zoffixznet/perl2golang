@@ -71,6 +71,18 @@ func (l *Lowerer) indexExpr(n *ast.Index) ir.Expr {
 		return out
 	}
 
+	// Reading an argument that was not passed is not an error in Perl, and a
+	// sub that takes its arguments as a list is written expecting that, so
+	// the read goes through the helper that answers with a zero value.
+	if v, ok := n.Base.(*ast.Var); ok && v.Name == "_" && l.curSub != nil && l.curSub.VarArgs != nil {
+		out := l.helperCall(hAt, elem, base, idx)
+		l.note(out, "A caller may pass fewer arguments than the body reads, which Perl "+
+			"answers with undef and Go answers by panicking. The helper gives the zero "+
+			"value instead, which is what the original did.",
+			"slices-not-arrays", "variadic-and-no-defaults")
+		return out
+	}
+
 	out := index(base, idx, elem)
 	if _, ok := n.Idx.(*ast.NumberLit); !ok {
 		l.note(out, "Reading past the end of a Perl array gives undef. Go panics with "+
@@ -526,11 +538,29 @@ func (l *Lowerer) anonSub(n *ast.AnonSub) ir.Expr {
 	l.scope = newScope(savedScope)
 	l.scope.fn = s
 	l.curSub = s
+	// The body may hold literals of its own, and they decide for themselves
+	// whether they hold a table of callbacks.
+	savedUniform := l.uniformFn
+	l.uniformFn = false
+	if savedUniform {
+		s.Uniform = true
+	}
+	if s.Uniform {
+		l.uniformFn = true
+	}
 	params, rest := l.recoverParams(s, valueTail(n.Body))
+	l.uniformFn = false
+	if s.Uniform {
+		// A closure sharing a slot answers with one value of no fixed type,
+		// whatever its body happens to produce, or the collection could not
+		// hold it beside the others.
+		s.Results = []*ir.Type{ir.TAny}
+	}
 	body := l.markUnused(&ir.Block{Stmts: l.stmts(rest)})
 	l.implicitReturn(s, body)
 	l.ensureReturn(s, body)
 	l.scope, l.curSub = savedScope, savedSub
+	l.uniformFn = savedUniform
 
 	// The signature the previous round settled is used from the second round
 	// of discovery onwards, so that whatever holds the literal is inferred
@@ -555,25 +585,29 @@ func (l *Lowerer) callRef(n *ast.FuncCallRef) ir.Expr {
 	t := typeOrAny(fn)
 
 	if t.Kind != ir.Func {
-		// The value's type did not resolve to a function, so Go needs to be
-		// told what it is before it can be called.
-		want := ir.FuncOf(argTypes(args), []*ir.Type{ir.TAny})
-		asserted := &ir.TypeAssert{X: fn, Assert: want}
-		asserted.T = want
-		fn = asserted
+		// The value's type did not resolve to a function. Go will not call an
+		// interface value, and an assertion would have to name the whole
+		// signature, which is exactly what a table of callbacks does not
+		// have in common. Asking the value what it takes is the only thing
+		// that works for all of them.
+		call := []ir.Expr{l.assignable(fn, ir.TAny, n)}
+		for _, a := range args {
+			call = append(call, l.assignable(a, ir.TAny, n))
+		}
+		out := l.helperCall(hCallFn, ir.TAny, call...)
 		l.approximate(n, "P2G7030", "call through a code reference",
-			"the reference is asserted to a function type before it is called",
+			"the call goes through reflection because the signature is not known",
 			"Nothing in the file pinned down what this reference points at, so it is "+
-				"held in an any. Go will not call an any, so the generated code asserts "+
-				"it to a function type first, and that assertion panics if the value "+
-				"turns out to be something else.",
-			"Give the variable a function type where it is created, so the compiler "+
-				"can check the calls instead of the run time.",
-			"type-assertions-and-switches")
-		out := ir.CallOf(fn, ir.TAny, args...)
-		l.note(out, "A type assertion says what the value in the interface really is. "+
-			"The two-result form, v, ok := x.(T), asks instead of insisting, and is "+
-			"what to use where the answer is not certain.",
+				"held in a value of no fixed type. Go will not call one, and an "+
+				"assertion would have to name the whole signature, which a collection "+
+				"of callbacks that differ in one argument does not have.",
+			"Give the collection a function type where it is created. Every call "+
+				"through it then becomes a direct one, checked when the program is "+
+				"compiled and several times faster.",
+			"type-assertions-and-switches", "closures-and-loop-capture")
+		l.note(out, "Reflection is the escape hatch, not the idiom. It is here because "+
+			"the value's type is not known; the moment it is, the call is written "+
+			"straight and the compiler checks it.",
 			"type-assertions-and-switches")
 		return out
 	}

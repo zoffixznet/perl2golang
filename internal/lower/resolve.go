@@ -139,6 +139,10 @@ type Sub struct {
 	Accessor *ClassField
 	// Setter records that the accessor also writes when handed a value.
 	Setter bool
+	// Uniform marks a closure that shares a collection with other closures
+	// and therefore has to take everything through @_ and answer with one
+	// value of no fixed type.
+	Uniform bool
 	// Promoted marks an accessor that had to become a real method after all,
 	// because something calls it on a value whose class is only known while
 	// the program runs and an interface cannot promise a field.

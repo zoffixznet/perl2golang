@@ -201,7 +201,7 @@ func (l *Lowerer) sortByRef(n *ast.Call) ir.Expr {
 				l.assignable(ir.NewIdent(xn, elem), left.Type, nil),
 				l.assignable(ir.NewIdent(yn, elem), right.Type, nil),
 			}),
-		&ir.Return{Results: []ir.Expr{l.toInt(ir.CallOf(cmp, ir.TInt), n)}},
+		&ir.Return{Results: []ir.Expr{l.toInt(ir.CallOf(cmp, comparatorResult(cmp)), n)}},
 	}}
 	fn := funcLit([]ir.Param{{Name: xn, Type: elem}, {Name: yn, Type: elem}},
 		[]*ir.Type{ir.TInt}, body)
@@ -494,6 +494,16 @@ func (l *Lowerer) grepCall(n *ast.Call) ir.Expr {
 	l.emit(decl)
 	l.emit(loop)
 	return ir.NewIdent(name, t)
+}
+
+// comparatorResult is what a comparator held in a variable actually returns,
+// which is an ordering number when its type is known and a value of no fixed
+// type when it shares a collection with other callbacks.
+func comparatorResult(cmp ir.Expr) *ir.Type {
+	if t := typeOrAny(cmp); t.Kind == ir.Func && len(t.Results) == 1 {
+		return t.Results[0]
+	}
+	return ir.TInt
 }
 
 // blockLoop is the shared setup for map and grep: it lowers the list, invents

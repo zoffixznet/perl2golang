@@ -64,6 +64,8 @@ const (
 	hFloatList     = "floatList"    // []T -> []float64, when the elements have to carry fractions
 
 	hDumpValues = "dumpValues" // a structure rendered as Go source
+	hScalarOf   = "scalarOf"   // one value wanted where a list may be
+	hCallFn     = "callFn"     // calling a function held in an untyped value
 
 	// Data formats.
 	hJSONCodec    = "jsonCodec"    // the type a configured encoder becomes
