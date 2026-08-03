@@ -151,6 +151,18 @@ true <nil> true
 
 Note `filepath.Ext` on `access.log.1`: it returns `.1`, the text after the *last* dot, with no notion of a suffix list. Perl's `fileparse($path, qr/\.log(\.\d+)?/)` could express "the extension I mean"; Go makes you write that rule yourself, usually as a `strings.TrimSuffix` or a small regex.
 
+## Walking a tree, and the three things that change
+
+`File::Find` is the one module here whose Go replacement is not just a rename. `find(\&wanted, $root)` sets three globals before each call, changes directory as it descends so that `$_` is a bare name, and offers `$File::Find::prune` as a way to stop going deeper. `filepath.WalkDir` does none of that, and the shape it uses instead is better in three separate ways.
+
+The callback is handed what it needs. `func(path string, d fs.DirEntry, err error) error` gives the full path where `$File::Find::name` was, and `d.Name()` where `$_` was. Nothing is global, so a callback is safe to call from two walks at once and reads correctly on its own.
+
+Pruning is a return value. `return fs.SkipDir` skips everything under the current directory and carries on with the rest; `return fs.SkipAll` stops the walk entirely; returning any *other* error stops the walk and hands that error back out of `WalkDir`. That last one is the real gain: an unreadable directory becomes a reported failure at the call site rather than a silently missing subtree.
+
+The `err` parameter is not decoration. It is non-nil when the directory could not be read, and the callback decides: `return err` to fail the walk, `return nil` to skip that entry and continue. Perl's walk had no way to express the difference.
+
+Two smaller notes. `WalkDir` visits in lexical order, so a `preprocess => sub { sort @_ }` block has nothing left to do. And `fs.DirEntry` answers `IsDir()` from what the directory read already told it, without a second `stat` per file, which is why `WalkDir` replaced the older `filepath.Walk` that handed you an `fs.FileInfo`.
+
 ## The mismatch
 
 `File::Spec` deserves its own paragraph, because the arrow in `File::Spec->catfile` misleads: there is no object, and the class exists only so each operating system can subclass it. Everything it offers is a plain function in `path/filepath`. `catfile` and `catdir` are both `Join`, `canonpath` is `Clean`, `file_name_is_absolute` is `IsAbs`, `rel2abs` is `Abs`, `abs2rel` is `Rel`, `splitdir` is `strings.Split` on the separator, `curdir` and `updir` are the strings `"."` and `".."`, and `tmpdir` is `os.TempDir`. Two of those are not exact. `Join` cleans as it builds and `catfile` does not, so they part company on input that is already untidy: `catfile('a', '', 'b')` is `a//b` and `Join("a", "", "b")` is `a/b`. And `canonpath` deliberately leaves `..` alone where `Clean` resolves it, which is the safer default for the same reason `Clean` is dangerous: neither consults the filesystem, so `..` out of a symlinked directory means one thing textually and another on disk.

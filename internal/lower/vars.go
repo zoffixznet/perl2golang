@@ -270,6 +270,14 @@ func (l *Lowerer) varExpr(v *ast.Var) ir.Expr {
 func (l *Lowerer) specialVar(v *ast.Var) ir.Expr {
 	name := string(v.Sigil) + v.Name
 
+	// The File::Find package variables are the walk's own state, which the
+	// generated walk keeps in named arguments rather than in globals.
+	if v.Sigil == '$' {
+		if x, ok := l.findGlobal(v.Name); ok {
+			return x
+		}
+	}
+
 	// $1, $2 and so on name the capture groups of the innermost match that is
 	// still in scope.
 	if v.Sigil == '$' && isDigits(v.Name) && v.Name != "0" {

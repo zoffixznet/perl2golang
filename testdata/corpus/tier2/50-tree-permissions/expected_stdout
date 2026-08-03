@@ -1,0 +1,16 @@
+stat gives 13 fields
+mode: 0640
+size: 14 and -s agrees: yes
+links: 1
+is a plain file: yes
+readable, writable, executable: yes yes no
+after chmod 0444, writable: no
+link is a link: yes
+link points at a file: yes
+readlink ends in sample.txt: yes
+atime: 1700000000 mtime: 1700000100
+mtime is later than atime: yes
+rename worked: yes
+old name gone: yes
+unlink removed 1
+unlink of a missing file removed 0

@@ -293,6 +293,11 @@ type Call struct {
 	SortSub string
 	// SortRef is the scalar holding a comparator for `sort $cmp @list`.
 	SortRef *Var
+	// Handle is the destination of a print, printf or say written with a
+	// lexical handle: `print $fh LIST` or `print {EXPR} LIST`. A bareword
+	// handle arrives as the first argument instead, because at that point it
+	// is indistinguishable from one.
+	Handle Expr
 }
 
 // MethodCall is $obj->method(@args) or Class->method(@args).

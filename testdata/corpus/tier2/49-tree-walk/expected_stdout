@@ -1,0 +1,20 @@
+root is a directory: yes
+created 4 directories
+created 0 on a second pass
+scratch file ends in .tmp: yes
+-- walking --
+directories: 5
+files: 4
+bytes: 73
+  doc/readme.md
+  src/bin/run.pl
+  src/lib/core.pm
+  src/lib/util.pm
+-- pruning --
+  doc/readme.md
+  src/lib/core.pm
+  src/lib/util.pm
+-- taking it down --
+removed 6 entries
+src is gone: yes
+doc survives: yes

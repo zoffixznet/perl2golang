@@ -71,6 +71,10 @@ const (
 	hLooksLikeNumber = "looksLikeNumber" // would this read as a number
 
 	// Paths.
+	hMakeTree      = "makeTree"      // a directory and everything above it
+	hRemoveTree    = "removeTree"    // a directory and everything under it
+	hTempDir       = "tempDir"       // a directory nothing else is using
+	hTempFile      = "tempFile"      // a file nothing else is using
 	hSplitPath     = "splitPath"     // volume, directory and final component
 	hPathParts     = "pathParts"     // a path broken into its components
 	hRelPath       = "relPath"       // one path expressed relative to another

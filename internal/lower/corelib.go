@@ -129,18 +129,33 @@ func (l *Lowerer) fileSpecCall(n ast.Node, method string, argNodes []ast.Expr) (
 // joinPath builds filepath.Join over a list of components, spreading a single
 // slice argument rather than passing it as one component.
 func (l *Lowerer) joinPath(args []ir.Expr, n ast.Node) ir.Expr {
-	if len(args) == 1 {
-		if t := args[0].Type(); t != nil && t.Kind == ir.Slice {
-			out := call("path/filepath", "filepath", "Join", ir.TString, l.strSlice(args[0], n))
-			out.Ellipsis = true
-			return out
+	spread := false
+	for _, a := range args {
+		if t := a.Type(); t != nil && t.Kind == ir.Slice {
+			spread = true
 		}
 	}
+	if !spread {
+		parts := make([]ir.Expr, len(args))
+		for i, a := range args {
+			parts[i] = l.toStr(a, n)
+		}
+		return call("path/filepath", "filepath", "Join", ir.TString, parts...)
+	}
+	// One of the components is itself a list of components, which Perl
+	// flattened into the argument list. Go passes a slice with ... and only
+	// as the whole argument list, so the pieces are gathered first.
 	parts := make([]ir.Expr, len(args))
 	for i, a := range args {
+		if t := a.Type(); t != nil && t.Kind == ir.Slice {
+			parts[i] = l.strSlice(a, n)
+			continue
+		}
 		parts[i] = l.toStr(a, n)
 	}
-	return call("path/filepath", "filepath", "Join", ir.TString, parts...)
+	out := call("path/filepath", "filepath", "Join", ir.TString, l.listValue(parts, ir.TString))
+	out.Ellipsis = true
+	return out
 }
 
 // strSlice renders a list expression as []string, which is what a spread

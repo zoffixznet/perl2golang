@@ -710,6 +710,16 @@ func (l *Lowerer) loopCtl(n *ast.LoopCtl) []ir.Stmt {
 
 // returnStmt lowers `return`.
 func (l *Lowerer) returnStmt(n *ast.Return) []ir.Stmt {
+	// Inside the block a tree walk runs, a bare return means "nothing more
+	// for this entry", and the walk reads that as a nil error.
+	if l.findWalk != nil && len(n.Exprs) == 0 {
+		out := &ir.Return{Results: []ir.Expr{ir.Nil(ir.TError)}}
+		l.setProv(out, n)
+		l.note(out, "The walk decides what to do next from what the callback returns, "+
+			"so leaving early is a nil error rather than a bare return.",
+			"errors-are-values")
+		return []ir.Stmt{out}
+	}
 	s := l.curSub
 	if s == nil {
 		// A return at file scope ends the program.

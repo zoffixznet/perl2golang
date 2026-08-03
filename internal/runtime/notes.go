@@ -117,6 +117,24 @@ var notes = map[string]string{
 		"strings.ContainsAny only reports whether any of them appear, so " +
 		"neither answers this without a loop around it.",
 
+	"makeTree": "os.MkdirAll creates every missing level and reports only an " +
+		"error, because that is all a caller usually needs. Which levels were " +
+		"new is a separate question, and answering it means looking before " +
+		"the call rather than after it.",
+
+	"removeTree": "os.RemoveAll deletes the tree and reports an error alone. " +
+		"Counting what went means walking it first, which is worth doing only " +
+		"when something prints the number.",
+
+	"tempDir": "os.MkdirTemp has no cleanup option: `defer os.RemoveAll(dir)` " +
+		"is where a Go program says when the directory goes, and it says it " +
+		"at the point the directory is made rather than at the end of a " +
+		"scope somewhere else. Inside a test, t.TempDir() does both.",
+
+	"tempFile": "os.CreateTemp returns the open file, and its name is " +
+		"f.Name() rather than a second result. The random part goes where a " +
+		"* appears in the pattern, which is how a suffix is asked for.",
+
 	"timeParts": "time.Time answers each of these with its own method, and " +
 		"a Go program calls the one it wants rather than taking nine numbers " +
 		"and indexing. The two offsets are why the list form is worth " +

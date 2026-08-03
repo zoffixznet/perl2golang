@@ -368,6 +368,18 @@ func (l *Lowerer) builtin(n *ast.Call) ir.Expr {
 		}
 	case "basename", "dirname":
 		return l.pathCall(n)
+	case "find", "finddepth", "File::Find::find", "File::Find::finddepth":
+		if x, ok := l.findCall(n); ok {
+			return x
+		}
+	case "tempdir", "File::Temp::tempdir":
+		return l.tempDirCall(n)
+	case "tempfile", "File::Temp::tempfile":
+		return l.tempFileCall(n)
+	case "make_path", "mkpath", "File::Path::make_path", "File::Path::mkpath":
+		return l.makePathCall(n)
+	case "remove_tree", "rmtree", "File::Path::remove_tree", "File::Path::rmtree":
+		return l.removeTreeCall(n)
 	case "fileparse":
 		return l.fileparseCall(n, l.argStr(n, 0), false)
 	case "Dumper":
@@ -460,13 +472,7 @@ func argCount(n *ast.Call) int { return len(flatten(argList(n))) }
 // printCall lowers print and say.
 func (l *Lowerer) printCall(n *ast.Call, newline bool) []ir.Stmt {
 	args := flatten(argList(n))
-	var dest ir.Expr
-	if len(args) > 0 {
-		if fh, ok := args[0].(*ast.FileHandle); ok {
-			dest = l.fileHandleExpr(fh)
-			args = args[1:]
-		}
-	}
+	dest := l.printDest(n, &args)
 	if len(args) == 0 {
 		args = []ast.Expr{&ast.Var{Sigil: '$', Name: "_"}}
 	}
@@ -581,13 +587,7 @@ func (l *Lowerer) printfFromInterp(il *ast.InterpLit, dest ir.Expr, newline bool
 // printfCall lowers printf.
 func (l *Lowerer) printfCall(n *ast.Call) []ir.Stmt {
 	args := flatten(argList(n))
-	var dest ir.Expr
-	if len(args) > 0 {
-		if fh, ok := args[0].(*ast.FileHandle); ok {
-			dest = l.fileHandleExpr(fh)
-			args = args[1:]
-		}
-	}
+	dest := l.printDest(n, &args)
 	if len(args) == 0 {
 		return nil
 	}
@@ -623,6 +623,48 @@ func (l *Lowerer) printfCall(n *ast.Call) []ir.Stmt {
 		"reported mistake rather than a silent stringification.",
 		"vet-and-staticcheck")
 	return []ir.Stmt{st}
+}
+
+// printDest works out where a print, printf or say is writing.
+//
+// A bareword handle arrives as the first argument, because at the point it is
+// parsed it is indistinguishable from one. A lexical handle, written either
+// as `print $fh LIST` or as `print {EXPR} LIST`, arrives in its own field.
+func (l *Lowerer) printDest(n *ast.Call, args *[]ast.Expr) ir.Expr {
+	if n.Handle != nil {
+		return l.writerFor(n.Handle)
+	}
+	if len(*args) > 0 {
+		if fh, ok := (*args)[0].(*ast.FileHandle); ok {
+			*args = (*args)[1:]
+			return l.fileHandleExpr(fh)
+		}
+	}
+	return nil
+}
+
+// writerFor renders the destination of a print as something Fprint accepts.
+func (l *Lowerer) writerFor(e ast.Expr) ir.Expr {
+	if fh, ok := e.(*ast.FileHandle); ok {
+		return l.fileHandleExpr(fh)
+	}
+	x := l.expr(e)
+	if x == nil {
+		return nil
+	}
+	if t := typeOrAny(x); t.Kind == ir.Any {
+		// The handle's type did not resolve, and Fprint takes an io.Writer,
+		// so the value says what it is expected to be.
+		want := ir.NamedType("io.Writer", "io")
+		out := &ir.TypeAssert{X: x, Assert: want}
+		out.T = want
+		l.note(out, "Anything that writes bytes satisfies io.Writer, and a file is "+
+			"only one of them. The assertion is here because this value's own type "+
+			"did not resolve; where it did, no assertion is needed at all.",
+			"io-reader-writer", "implicit-interfaces")
+		return out
+	}
+	return x
 }
 
 // sprintfCall lowers sprintf.

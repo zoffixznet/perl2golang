@@ -207,6 +207,9 @@ type Lowerer struct {
 	tmpSeq   int
 	curSub   *Sub
 	loopDeep int
+	// findWalk is the directory walk being lowered, when the code being
+	// lowered is the block a tree walk runs for every entry.
+	findWalk *findWalk
 	// topicStack tracks what $_ currently refers to.
 	topicStack []ir.Expr
 	// captureStack tracks the identifier holding the current regex

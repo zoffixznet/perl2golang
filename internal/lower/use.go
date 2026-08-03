@@ -103,6 +103,33 @@ func (l *Lowerer) useStmt(n *ast.Use) []ir.Stmt {
 			"filepath-and-paths", "errors-are-values")
 		return nil
 
+	case "File::Temp":
+		l.inform(n, "P2G7583", "use File::Temp",
+			"os.MkdirTemp and os.CreateTemp are the two constructors, and neither "+
+				"cleans up by itself: `defer os.RemoveAll(dir)` is where a Go program "+
+				"says when the tree goes. Inside a test, t.TempDir() does both.",
+			"filepath-and-paths", "defer-timing")
+		return nil
+
+	case "File::Path":
+		l.inform(n, "P2G7584", "use File::Path",
+			"os.MkdirAll is make_path and os.RemoveAll is remove_tree. Both are "+
+				"idempotent and both report an error rather than a list of what they "+
+				"touched, so a script that printed the count has to work it out itself.",
+			"filepath-and-paths", "errors-are-values")
+		return nil
+
+	case "File::Find":
+		l.inform(n, "P2G7588", "use File::Find",
+			"filepath.WalkDir is the counterpart, and the shape is better: the "+
+				"callback is handed the path and a directory entry instead of reading "+
+				"globals, returning fs.SkipDir prunes a subtree, and any other error "+
+				"stops the walk and comes back out of the call. It also visits in "+
+				"lexical order, so a preprocess block that sorted the names has nothing "+
+				"left to do.",
+			"filepath-and-paths", "errors-are-values")
+		return nil
+
 	case "File::Basename":
 		l.inform(n, "P2G7564", "use File::Basename",
 			"basename and dirname are filepath.Base and filepath.Dir. The filepath "+

@@ -1175,18 +1175,16 @@ func (p *parser) parsePrint() ast.Expr {
 		p.peekAt(1).Kind != token.Arrow && !isBinOpNext(p.peekAt(1).Kind):
 		fh := &ast.FileHandle{Name: p.cur().Text}
 		setSpan(fh, p.cur().Pos, endOf(p.cur()))
-		n.Args = append(n.Args, fh)
+		n.Handle = fh
 		p.next()
 	case p.kind() == token.LBrace:
 		p.next()
-		h := p.parseExpr(precLowest)
+		n.Handle = p.parseExpr(precLowest)
 		p.expect(token.RBrace, "}")
-		n.Args = append(n.Args, h)
 	case p.kind() == token.ScalarVar && p.peekAt(1).Kind != token.EOF &&
 		startsTermKind(p.peekAt(1).Kind) && p.peekAt(1).Kind != token.LBracket &&
 		p.peekAt(1).Kind != token.LBrace:
-		fh := p.parseVariable()
-		n.Args = append(n.Args, fh)
+		n.Handle = p.parseVariable()
 	}
 
 	stop := token.Semi

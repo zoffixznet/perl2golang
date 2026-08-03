@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T05:10:44Z",
+  "recorded": "2026-08-15T05:24:43Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -53,45 +53,45 @@
     },
     {
       "tier": "tier2",
-      "entries": 48,
+      "entries": 50,
       "stages": {
         "compiled": {
-          "pass": 44,
+          "pass": 46,
           "fail": 4,
           "skip": 0
         },
         "emitted": {
-          "pass": 48,
+          "pass": 50,
           "fail": 0,
           "skip": 0
         },
         "equivalent": {
-          "pass": 11,
+          "pass": 13,
           "fail": 37,
           "skip": 0
         },
         "translated": {
-          "pass": 43,
+          "pass": 45,
           "fail": 5,
           "skip": 0
         },
         "typed": {
           "pass": 14,
-          "fail": 34,
+          "fail": 36,
           "skip": 0
         }
       },
       "equivalent_annotated": {
-        "pass": 11,
+        "pass": 13,
         "fail": 37,
         "skip": 0
       },
       "quality": {
-        "todos": 13,
-        "symbols": 984,
-        "symbols_typed": 828,
-        "refusals": 13,
-        "approximations": 335
+        "todos": 17,
+        "symbols": 1010,
+        "symbols_typed": 853,
+        "refusals": 17,
+        "approximations": 349
       }
     },
     {
@@ -114,8 +114,8 @@
           "skip": 0
         },
         "translated": {
-          "pass": 16,
-          "fail": 15,
+          "pass": 17,
+          "fail": 14,
           "skip": 0
         },
         "typed": {
@@ -130,11 +130,11 @@
         "skip": 0
       },
       "quality": {
-        "todos": 97,
-        "symbols": 816,
-        "symbols_typed": 591,
-        "refusals": 101,
-        "approximations": 281
+        "todos": 83,
+        "symbols": 822,
+        "symbols_typed": 613,
+        "refusals": 87,
+        "approximations": 295
       }
     },
     {
@@ -226,20 +226,20 @@
   ],
   "total": {
     "tier": "TOTAL",
-    "entries": 177,
+    "entries": 179,
     "stages": {
       "compiled": {
-        "pass": 156,
+        "pass": 158,
         "fail": 21,
         "skip": 0
       },
       "emitted": {
-        "pass": 177,
+        "pass": 179,
         "fail": 0,
         "skip": 0
       },
       "equivalent": {
-        "pass": 36,
+        "pass": 38,
         "fail": 106,
         "skip": 0
       },
@@ -249,35 +249,35 @@
         "skip": 1
       },
       "translated": {
-        "pass": 135,
-        "fail": 42,
+        "pass": 138,
+        "fail": 41,
         "skip": 0
       },
       "typed": {
         "pass": 64,
-        "fail": 113,
+        "fail": 115,
         "skip": 0
       }
     },
     "equivalent_annotated": {
-      "pass": 36,
+      "pass": 38,
       "fail": 106,
       "skip": 0
     },
     "quality": {
-      "todos": 162,
-      "symbols": 3285,
-      "symbols_typed": 2739,
-      "refusals": 167,
-      "approximations": 908
+      "todos": 152,
+      "symbols": 3317,
+      "symbols_typed": 2786,
+      "refusals": 157,
+      "approximations": 936
     }
   },
   "quality": {
-    "todos": 162,
-    "symbols": 3285,
-    "symbols_typed": 2739,
-    "refusals": 167,
-    "approximations": 908
+    "todos": 152,
+    "symbols": 3317,
+    "symbols_typed": 2786,
+    "refusals": 157,
+    "approximations": 936
   },
   "entries": [
     {
@@ -2394,7 +2394,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: line 1, byte 0: got \"\u0026{0xADDR}%!(EXTRA string=%-8s %8...\", wanted \"REGION      TOTAL\\n--------------...\"; files written differ: wrote 0xADDR and the Perl did not"
+          "reason": "stdout differs: line 11, byte 247: got \"0 bytes / 0 lines\\nunlinked 0 fil...\", wanted \"21 bytes / 3 lines\\nunlinked 1 fi...\"; files written differ: wrote 0xADDR and the Perl did not"
         },
         "honest": {
           "outcome": "n/a"
@@ -2408,14 +2408,14 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: line 1, byte 0: got \"\u0026{0xADDR}%!(EXTRA string=%-8s %8...\", wanted \"REGION      TOTAL\\n--------------...\"; files written differ: wrote 0xADDR and the Perl did not"
+        "reason": "stdout differs: line 11, byte 247: got \"0 bytes / 0 lines\\nunlinked 0 fil...\", wanted \"21 bytes / 3 lines\\nunlinked 1 fi...\"; files written differ: wrote 0xADDR and the Perl did not"
       },
       "quality": {
         "todos": 0,
         "symbols": 23,
         "symbols_typed": 23,
         "refusals": 0,
-        "approximations": 5
+        "approximations": 2
       }
     },
     {
@@ -3289,31 +3289,28 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "exit status 255, wanted 0; stdout differs: line 1, byte 21: got \"no\\ndirectories created: 1\\nthe de...\", wanted \"yes\\ndirectories created: 3\\nthe d...\"; stderr differs: unexpected \"TODO P2G3599: the tempdir function is not implemented ...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
         },
         "translated": {
-          "outcome": "fail",
-          "reason": "7 untranslated constructs"
+          "outcome": "pass"
         },
         "typed": {
           "outcome": "fail",
-          "reason": "6 variables left dynamic out of 12"
+          "reason": "2 variables left dynamic out of 12"
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "exit status 255, wanted 0; stdout differs: line 1, byte 21: got \"no\\ndirectories created: 1\\nthe de...\", wanted \"yes\\ndirectories created: 3\\nthe d...\"; stderr differs: unexpected \"TODO P2G3599: the tempdir function is not implemented ...\""
+        "outcome": "pass"
       },
       "quality": {
-        "todos": 7,
+        "todos": 0,
         "symbols": 12,
-        "symbols_typed": 6,
-        "refusals": 7,
-        "approximations": 4
+        "symbols_typed": 10,
+        "refusals": 0,
+        "approximations": 5
       }
     },
     {
@@ -3462,6 +3459,81 @@
         "symbols_typed": 8,
         "refusals": 2,
         "approximations": 20
+      }
+    },
+    {
+      "tier": "tier2",
+      "name": "49-tree-walk",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "pass"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "2 variables left dynamic out of 18"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "pass"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 18,
+        "symbols_typed": 16,
+        "refusals": 0,
+        "approximations": 8
+      }
+    },
+    {
+      "tier": "tier2",
+      "name": "50-tree-permissions",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "exit status 2, wanted 0; stdout differs: line 1, byte 12: got \" fields\\n\", wanted \"3 fields\\nmode: 0640\\nsize: 14 and...\"; stderr differs: unexpected \"TODO P2G3599: the chmod function is not implemented ...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "fail",
+          "reason": "11 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "3 variables left dynamic out of 8"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "exit status 2, wanted 0; stdout differs: line 1, byte 12: got \" fields\\n\", wanted \"3 fields\\nmode: 0640\\nsize: 14 and...\"; stderr differs: unexpected \"TODO P2G3599: the chmod function is not implemented ...\""
+      },
+      "quality": {
+        "todos": 11,
+        "symbols": 8,
+        "symbols_typed": 5,
+        "refusals": 11,
+        "approximations": 8
       }
     },
     {
@@ -3662,7 +3734,7 @@
       "stages": {
         "compiled": {
           "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:197:35: cannot use i (variable of type int) as string value in map index"
+          "reason": "the generated Go does not compile: ./main.go:196:35: cannot use i (variable of type int) as string value in map index"
         },
         "emitted": {
           "outcome": "pass"
@@ -3676,11 +3748,11 @@
         },
         "translated": {
           "outcome": "fail",
-          "reason": "15 untranslated constructs"
+          "reason": "13 untranslated constructs"
         },
         "typed": {
           "outcome": "fail",
-          "reason": "12 variables left dynamic out of 25"
+          "reason": "11 variables left dynamic out of 25"
         }
       },
       "equivalent_annotated": {
@@ -3688,11 +3760,11 @@
         "reason": "the generated program did not compile"
       },
       "quality": {
-        "todos": 14,
+        "todos": 12,
         "symbols": 25,
-        "symbols_typed": 13,
-        "refusals": 15,
-        "approximations": 14
+        "symbols_typed": 14,
+        "refusals": 13,
+        "approximations": 15
       }
     },
     {
@@ -3939,30 +4011,30 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "exit status 2, wanted 0; stdout differs: line 1, byte 8: got \"0 dirs, 0 files, 0 bytes\\n\\nTREE (...\", wanted \"5 dirs, 7 files, 221 bytes\\n\\nTREE...\"; stderr differs: unexpected \"TODO P2G3599: the find function is not implemented ...\""
+          "reason": "exit status 2, wanted 0; stdout differs: line 1, byte 8: got \"6 dirs, 8 files, 240 bytes\\n\\nTREE...\", wanted \"5 dirs, 7 files, 221 bytes\\n\\nTREE...\"; stderr differs: unexpected \"panic: strings: negative Repeat count ...\""
         },
         "honest": {
           "outcome": "n/a"
         },
         "translated": {
           "outcome": "fail",
-          "reason": "2 untranslated constructs"
+          "reason": "1 untranslated construct"
         },
         "typed": {
           "outcome": "fail",
-          "reason": "9 variables left dynamic out of 22"
+          "reason": "1 variable left dynamic out of 27"
         }
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "exit status 2, wanted 0; stdout differs: line 1, byte 8: got \"0 dirs, 0 files, 0 bytes\\n\\nTREE (...\", wanted \"5 dirs, 7 files, 221 bytes\\n\\nTREE...\"; stderr differs: unexpected \"TODO P2G3599: the find function is not implemented ...\""
+        "reason": "exit status 2, wanted 0; stdout differs: line 1, byte 8: got \"6 dirs, 8 files, 240 bytes\\n\\nTREE...\", wanted \"5 dirs, 7 files, 221 bytes\\n\\nTREE...\"; stderr differs: unexpected \"panic: strings: negative Repeat count ...\""
       },
       "quality": {
-        "todos": 2,
-        "symbols": 22,
-        "symbols_typed": 13,
-        "refusals": 2,
-        "approximations": 4
+        "todos": 1,
+        "symbols": 27,
+        "symbols_typed": 26,
+        "refusals": 1,
+        "approximations": 9
       }
     },
     {
@@ -3978,30 +4050,29 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "exit status 255, wanted 0; stdout differs: line 1, byte 18: got \"0 directories\\nsecond make_path c...\", wanted \"7 directories\\nsecond make_path c...\"; stderr differs: unexpected \"TODO P2G3599: the tempdir function is not implemented ...\""
+          "reason": "stdout differs: line 1, byte 18: got \"0 directories\\nsecond make_path c...\", wanted \"7 directories\\nsecond make_path c...\""
         },
         "honest": {
           "outcome": "n/a"
         },
         "translated": {
-          "outcome": "fail",
-          "reason": "9 untranslated constructs"
+          "outcome": "pass"
         },
         "typed": {
           "outcome": "fail",
-          "reason": "12 variables left dynamic out of 26"
+          "reason": "6 variables left dynamic out of 27"
         }
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "exit status 255, wanted 0; stdout differs: line 1, byte 18: got \"0 directories\\nsecond make_path c...\", wanted \"7 directories\\nsecond make_path c...\"; stderr differs: unexpected \"TODO P2G3599: the tempdir function is not implemented ...\""
+        "reason": "stdout differs: line 1, byte 18: got \"0 directories\\nsecond make_path c...\", wanted \"7 directories\\nsecond make_path c...\""
       },
       "quality": {
-        "todos": 9,
-        "symbols": 26,
-        "symbols_typed": 14,
-        "refusals": 9,
-        "approximations": 3
+        "todos": 0,
+        "symbols": 27,
+        "symbols_typed": 21,
+        "refusals": 0,
+        "approximations": 10
       }
     },
     {
@@ -4011,7 +4082,7 @@
       "stages": {
         "compiled": {
           "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:37:34: cannot use lines[i2] (variable of interface type any) as string value in argument to strings.TrimSuffix: need type assertion"
+          "reason": "the generated Go does not compile: ./main.go:6:2: \"io\" imported and not used"
         },
         "emitted": {
           "outcome": "pass"
@@ -4025,11 +4096,11 @@
         },
         "translated": {
           "outcome": "fail",
-          "reason": "14 untranslated constructs"
+          "reason": "12 untranslated constructs"
         },
         "typed": {
           "outcome": "fail",
-          "reason": "10 variables left dynamic out of 18"
+          "reason": "9 variables left dynamic out of 18"
         }
       },
       "equivalent_annotated": {
@@ -4037,11 +4108,11 @@
         "reason": "the generated program did not compile"
       },
       "quality": {
-        "todos": 13,
+        "todos": 11,
         "symbols": 18,
-        "symbols_typed": 8,
-        "refusals": 14,
-        "approximations": 1
+        "symbols_typed": 9,
+        "refusals": 12,
+        "approximations": 2
       }
     },
     {

@@ -19,6 +19,21 @@ func (l *Lowerer) assignStmts(n *ast.Assign) []ir.Stmt {
 		return sts
 	}
 
+	// Setting the walk's prune flag says "do not go into this directory",
+	// which the walk hears as a particular error value.
+	if l.findWalk != nil {
+		if v, ok := n.LHS.(*ast.Var); ok && v.Sigil == '$' && v.Name == "File::Find::prune" {
+			out := &ir.Return{Results: []ir.Expr{ir.Pkg("io/fs", "fs", "SkipDir", ir.TError)}}
+			l.setProv(out, n)
+			l.note(out, "Returning fs.SkipDir tells the walk to skip everything under "+
+				"this directory and carry on with the rest, which is what the prune flag "+
+				"asked for. Returning any other error stops the walk and hands that error "+
+				"back to the caller.",
+				"errors-are-values", "filepath-and-paths")
+			return []ir.Stmt{out}
+		}
+	}
+
 	switch lhs := n.LHS.(type) {
 	case *ast.My:
 		return l.declareAssign(lhs, n)

@@ -522,6 +522,18 @@ const (
 	LocaleIgnored Code = "P2G7578"
 	// TimezoneCached: Go reads TZ once and caches the zone.
 	TimezoneCached Code = "P2G7579"
+	// TempCleanup: CLEANUP and UNLINK have no counterpart.
+	TempCleanup Code = "P2G7581"
+	// TreeResult: the tree calls report an error and not what they did.
+	TreeResult Code = "P2G7582"
+	// TempMapped: File::Temp maps to os.MkdirTemp and os.CreateTemp.
+	TempMapped Code = "P2G7583"
+	// PathModuleMapped: File::Path maps to os.MkdirAll and os.RemoveAll.
+	PathModuleMapped Code = "P2G7584"
+	// FindWalk: File::Find became filepath.WalkDir.
+	FindWalk Code = "P2G7587"
+	// FindMapped: File::Find maps to filepath.WalkDir.
+	FindMapped Code = "P2G7588"
 	// Base64Wrapping: base64 line wrapping differs.
 	Base64Wrapping Code = "P2G7570"
 	// YAMLDependency: YAML needs a third-party package.
@@ -2133,6 +2145,48 @@ var catalogue = map[Code]Entry{
 		Short:    "the zone is read once and cached",
 		Advice:   "`time.LoadLocation` names a zone explicitly and does not depend on the environment",
 		Concepts: []string{"time-layouts"},
+	},
+	TempCleanup: {
+		Severity: report.Warn,
+		Message:  "`%s` has no counterpart: nothing removes the temporary when the program ends",
+		Short:    "nothing removes the temporary",
+		Advice:   "write `defer os.RemoveAll(dir)` where it is made, or use t.TempDir() inside a test",
+		Concepts: []string{"defer-timing"},
+	},
+	TreeResult: {
+		Severity: report.Warn,
+		Message:  "`%s` reports an error and not what it did",
+		Short:    "the tree call reports only an error",
+		Advice:   "where only success matters the call stands on its own and is idempotent",
+		Concepts: []string{"errors-are-values", "filepath-and-paths"},
+	},
+	TempMapped: {
+		Severity: report.Note,
+		Message:  "`File::Temp` maps to `os.MkdirTemp` and `os.CreateTemp`, neither of which cleans up",
+		Short:    "File::Temp maps to the os package",
+		Advice:   "`defer os.RemoveAll(dir)` is where a Go program says when the tree goes",
+		Concepts: []string{"filepath-and-paths", "defer-timing"},
+	},
+	PathModuleMapped: {
+		Severity: report.Note,
+		Message:  "`File::Path` maps to `os.MkdirAll` and `os.RemoveAll`, which report an error alone",
+		Short:    "File::Path maps to the os package",
+		Advice:   "a script that printed how many directories were made has to work that out itself",
+		Concepts: []string{"filepath-and-paths", "errors-are-values"},
+	},
+	FindWalk: {
+		Severity: report.Warn,
+		Message:  "the walk keeps no globals and does not change directory, so `$_` is the full path",
+		Short:    "the walk passes the path as an argument",
+		Advice:   "`filepath.Base` of the path is what `$_` used to be, and the entry's Name method is the same",
+		Concepts: []string{"filepath-and-paths", "range-is-not-foreach"},
+	},
+	FindMapped: {
+		Severity: report.Note,
+		Message:  "`File::Find` maps to `filepath.WalkDir`, which passes the path and a directory entry",
+		Short:    "File::Find maps to filepath.WalkDir",
+		Advice:   "returning `fs.SkipDir` prunes a subtree and any other error stops the walk",
+		Concepts: []string{"filepath-and-paths", "errors-are-values"},
 	},
 	Base64Wrapping: {
 		Severity:  report.Note,
