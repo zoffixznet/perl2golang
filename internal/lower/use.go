@@ -103,6 +103,16 @@ func (l *Lowerer) useStmt(n *ast.Use) []ir.Stmt {
 			"filepath-and-paths", "errors-are-values")
 		return nil
 
+	case "FindBin":
+		l.inform(n, "P2G7589", "use FindBin",
+			"FindBin works out where the script is so that `use lib` can find the "+
+				"modules beside it. Go resolves every import when it compiles, so there "+
+				"is no search path at run time and nothing to add to it. Where the "+
+				"program genuinely needs its own location, os.Executable is the call, "+
+				"and it names the built binary rather than a source file.",
+			"go-mod-vs-cpan", "packages-and-exported-names")
+		return nil
+
 	case "File::Temp":
 		l.inform(n, "P2G7583", "use File::Temp",
 			"os.MkdirTemp and os.CreateTemp are the two constructors, and neither "+

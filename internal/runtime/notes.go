@@ -117,6 +117,23 @@ var notes = map[string]string{
 		"strings.ContainsAny only reports whether any of them appear, so " +
 		"neither answers this without a loop around it.",
 
+	"mapChars": "strings.NewReplacer covers the plain character-for-" +
+		"character case and is faster, because it builds a matcher once and " +
+		"reuses it. The three switches here change what the plain case " +
+		"means, and none of them has a counterpart in the strings package.",
+
+	"countOther": "strings.ContainsRune asks about one character at a time, " +
+		"which is the whole of this: there is no call that counts how many " +
+		"of a string's characters are outside a set.",
+
+	"programPath": "os.Executable returns an error because not every system " +
+		"can answer, and it reports where the built binary is rather than " +
+		"where any source file was. There is no script at run time to find.",
+
+	"programDir": "The directory a program is in is rarely what a Go program " +
+		"wants: data it needs is embedded with go:embed or passed in, because " +
+		"a binary is meant to be copied somewhere else and still work.",
+
 	"makeTree": "os.MkdirAll creates every missing level and reports only an " +
 		"error, because that is all a caller usually needs. Which levels were " +
 		"new is a separate question, and answering it means looking before " +

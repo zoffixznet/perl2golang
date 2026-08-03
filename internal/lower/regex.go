@@ -988,9 +988,12 @@ func (l *Lowerer) transStmt(n *ast.Trans) []ir.Stmt {
 	// is read as text on the way in. Storing a string back into a dynamic
 	// variable is fine, which is why only the read side needs the conversion.
 	text := l.toStr(target, nil)
-	if n.Mods != "" {
+	if mods := n.Mods; mods != "" {
+		if sts, ok := l.transModified(n, target, text); ok {
+			return sts
+		}
 		return []ir.Stmt{l.todoStmt(n, "P2G4520", "tr/// with modifiers",
-			"tr with modifiers is not implemented",
+			"this combination of tr modifiers is not implemented",
 			"The d, s, c and r modifiers change what tr does: delete unreplaced "+
 				"characters, squash repeats, complement the search list, or return the "+
 				"result instead of modifying in place.",
@@ -1053,6 +1056,50 @@ func (l *Lowerer) transStmt(n *ast.Trans) []ir.Stmt {
 	return []ir.Stmt{st}
 }
 
+// transModified lowers tr/// with the c, d, s or r modifiers, which change
+// what a plain character-for-character replacement means.
+func (l *Lowerer) transModified(n *ast.Trans, target, text ir.Expr) ([]ir.Stmt, bool) {
+	complement := strings.Contains(n.Mods, "c")
+	del := strings.Contains(n.Mods, "d")
+	squeeze := strings.Contains(n.Mods, "s")
+	ret := strings.Contains(n.Mods, "r")
+	for _, m := range n.Mods {
+		if !strings.ContainsRune("cdsr", m) {
+			return nil, false
+		}
+	}
+	search := string(expandTrList(n.SearchList))
+	repl := string(expandTrList(n.ReplList))
+	if search == "" {
+		return nil, false
+	}
+	out := l.helperCall(hMapChars, ir.TString, text,
+		ir.Str(quote(search)), ir.Str(quote(repl)),
+		ir.BoolLit(complement), ir.BoolLit(del), ir.BoolLit(squeeze))
+	l.note(out, "The modifiers on a transliteration change what it does rather than "+
+		"how it is spelled, and the strings package has no call that covers them: "+
+		"complementing the search list, deleting what has no replacement and "+
+		"collapsing repeats are three separate decisions.",
+		"strings-package", "strings-are-bytes")
+	l.approximate(n, "P2G4520", "tr/// with modifiers",
+		"the modifiers become arguments rather than syntax",
+		"`"+n.Mods+"` says what to do with characters the search list matches. Go "+
+			"has no transliteration operator at all, so the rules are passed to a "+
+			"helper as the flags they are.",
+		"Where only one modifier is in play, the direct Go is usually shorter: "+
+			"strings.Map returning -1 deletes, and strings.NewReplacer replaces.",
+		"strings-package")
+	if ret {
+		// The r modifier leaves the original alone and yields the result,
+		// which is the one form that is an expression rather than a change.
+		l.transValue = out
+		return nil, true
+	}
+	st := assign("=", []ir.Expr{target}, []ir.Expr{l.assignable(out, typeOrAny(target), n)})
+	l.setProv(st, n)
+	return []ir.Stmt{st}, true
+}
+
 const (
 	lowerAlphabet = "abcdefghijklmnopqrstuvwxyz"
 	upperAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -1063,21 +1110,33 @@ func (l *Lowerer) transExpr(n *ast.Trans) ir.Expr {
 	// With an empty replacement list the value is the count, and the string
 	// is untouched. That is the whole of the `my $n = ($s =~ tr/aeiou//)`
 	// idiom, which is Perl's way of counting characters.
-	if n.Mods == "" && len(expandTrList(n.ReplList)) == 0 {
+	if (n.Mods == "" || n.Mods == "c") && len(expandTrList(n.ReplList)) == 0 {
 		search := expandTrList(n.SearchList)
 		if len(search) > 0 {
 			if target := l.transTarget(n); target != nil {
-				out := l.helperCall(hCountChars, ir.TInt, l.toStr(target, nil), ir.Str(quote(string(search))))
+				helper, what := hCountChars, "in"
+				if n.Mods == "c" {
+					helper, what = hCountOther, "outside"
+				}
+				out := l.helperCall(helper, ir.TInt, l.toStr(target, nil), ir.Str(quote(string(search))))
 				l.note(out, "tr with no replacement list counts rather than translates: "+
-					"it reports how many characters of the string are in the search list "+
-					"and leaves the string alone.")
+					"it reports how many characters of the string are "+what+" the search "+
+					"list and leaves the string alone.")
 				return out
 			}
 		}
 	}
+	saved := l.transValue
+	l.transValue = nil
 	for _, st := range l.transStmt(n) {
 		l.emit(st)
 	}
+	if l.transValue != nil {
+		out := l.transValue
+		l.transValue = saved
+		return out
+	}
+	l.transValue = saved
 	if t := l.transTarget(n); t != nil {
 		return t
 	}
@@ -1091,6 +1150,18 @@ func (l *Lowerer) transTarget(n *ast.Trans) ir.Expr {
 		}
 		return l.assignTarget(&ast.Var{Sigil: '$', Name: "_"})
 	}
+	// `(my $copy = $original) =~ tr/.../.../` edits a copy and leaves the
+	// original alone, exactly as the substitution form does: the assignment
+	// becomes a statement of its own and the replacement names the copy.
+	if a, ok := boundAssign(n.Bound); ok {
+		for _, st := range l.assignStmts(a) {
+			l.emit(st)
+		}
+		if v, single := soleDeclaredVar(a); single {
+			return l.assignTarget(v)
+		}
+		return l.assignTarget(a.LHS)
+	}
 	return l.assignTarget(n.Bound)
 }
 
@@ -1102,7 +1173,26 @@ func expandTrList(s string) []rune {
 	for i := 0; i < len(rs); i++ {
 		if rs[i] == '\\' && i+1 < len(rs) {
 			i++
-			out = append(out, rs[i])
+			// A backslash escape names a character rather than quoting the
+			// one after it: \t is a tab and not the letter t.
+			switch rs[i] {
+			case 't':
+				out = append(out, '\t')
+			case 'n':
+				out = append(out, '\n')
+			case 'r':
+				out = append(out, '\r')
+			case 'f':
+				out = append(out, '\f')
+			case '0':
+				out = append(out, 0)
+			case 'e':
+				out = append(out, 27)
+			case 'a':
+				out = append(out, 7)
+			default:
+				out = append(out, rs[i])
+			}
 			continue
 		}
 		if i+2 < len(rs) && rs[i+1] == '-' && rs[i+2] >= rs[i] {

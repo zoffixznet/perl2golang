@@ -2,7 +2,7 @@
 id: range-is-not-foreach
 title: range gives you the index first, and the element is a copy
 tags: [gotcha, slices, loops, range]
-perl_triggers: [foreach, grep, map-block, topic-modification, while-each]
+perl_triggers: [foreach, grep, map-block, topic-modification, while-each, redo, loop-label, next-label, last-label]
 severity: warning
 prerequisites: [slices-not-arrays]
 ---
@@ -90,5 +90,50 @@ func main() {
 ## The mismatch
 
 The mechanical translations: `for my $f (@list)` → `for _, f := range list` (the `_` discards the index you did not ask for — writing `for f := range list` is the classic conversion bug); `for my $i (0..$#list)` → `for i := range list`; `for (1..10)` → `for i := 1; i <= 10; i++` or `for range 10` when the counter is unused (Go's only loop keyword is `for`; it plays `while` as `for cond {}` and `until`/`loop` as `for {}`). Mutation in place is always by index: `fruits[i] = ...`. For `grep`/`map`/`first`, the append-loop above is the culturally accepted answer — Go deliberately shipped no map/grep over slices even after generics made it possible, though `slices.ContainsFunc`, `slices.IndexFunc`, and `slices.DeleteFunc` cover common `grep`-adjacent cases; chains of transformations become sequential loops, more lines and measurably clearer stack traces. Ranging over a map gives key (one variable) or key, value (two) in random order (`map-iteration-order`); over a string, byte-offset and rune (`strings-are-bytes`); there is no `each`-style stateful iterator to leak state between loops.
+
+## The third keyword, and the shape it forces
+
+Perl has three loop keywords and Go has two. `next` is `continue`, `last` is `break`, and `redo` has no counterpart at all: it re-runs the body without advancing to the next element or re-testing the condition. The retry idiom it exists for is common enough to be worth knowing the translation for.
+
+The body goes inside a loop of its own, and once it is wrapped an unlabelled `continue` or `break` means the *inner* loop, so any `next` or `last` in the same body has to name the outer one:
+
+```go
+package main
+
+import "fmt"
+
+func run(jobs []string) {
+	attempts := map[string]int{}
+eachJob:
+	for _, job := range jobs {
+		for { // redo continues this one
+			attempts[job]++
+			if job == "beta" && attempts[job] < 3 {
+				continue // this is redo
+			}
+			if job == "skipme" {
+				continue eachJob // this is next
+			}
+			if job == "stop" {
+				break eachJob // and this is last
+			}
+			fmt.Println(job, attempts[job])
+			break // what makes the inner loop run once by default
+		}
+	}
+}
+
+func main() { run([]string{"alpha", "beta", "skipme", "gamma", "stop", "never"}) }
+```
+
+```
+alpha 1
+beta 3
+gamma 1
+```
+
+A Go label goes on the line above the loop, is written `Name:`, and can only appear after `break`, `continue` or `goto`. Go rejects a label nothing branches to, which is a small mercy: a wrapped body that never uses `next` or `last` needs no label at all.
+
+Having written it out once, it is usually worth rewriting by hand. A retry is clearer as a counted inner loop (`for attempt := 1; attempt <= 3; attempt++`) than as a conditional `continue`, because the counter is then visible in the header instead of hidden in a map. The mechanical translation is what keeps the behaviour; the rewrite is what makes it Go.
 
 Further reading: https://go.dev/ref/spec#For_statements

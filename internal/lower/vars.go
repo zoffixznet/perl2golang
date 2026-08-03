@@ -276,6 +276,9 @@ func (l *Lowerer) specialVar(v *ast.Var) ir.Expr {
 		if x, ok := l.findGlobal(v.Name); ok {
 			return x
 		}
+		if x, ok := l.programDir(v.Name); ok {
+			return x
+		}
 	}
 
 	// $1, $2 and so on name the capture groups of the innermost match that is

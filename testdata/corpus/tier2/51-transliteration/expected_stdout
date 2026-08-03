@@ -1,0 +1,15 @@
+-- plain replacement --
+complement: TGCANNTGCAXX
+-- counting --
+in ACGT: 8, outside: 4
+-- deleting --
+only bases: ACGTACGT
+-- squeezing --
+tidied: [a b c d]
+-- returning instead of changing --
+unchanged: ACGTNNACGTXX, returned: ACGTNNACGTXX
+-- complement with a replacement --
+masked: ACGT.ACGT.
+-- ranges --
+rot13: Uryyb, Jbeyq
+digits gone: abc

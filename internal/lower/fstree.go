@@ -330,3 +330,26 @@ func (l *Lowerer) findGlobal(name string) (ir.Expr, bool) {
 	}
 	return nil, false
 }
+
+// programDir answers $FindBin::Bin and $FindBin::RealBin, which name the
+// directory the script was found in.
+//
+// Go has no such thing to find: imports are resolved when the program is
+// compiled and there is no search path at run time. The nearest true answer
+// is where the built binary sits, which is what os.Executable reports.
+func (l *Lowerer) programDir(name string) (ir.Expr, bool) {
+	switch name {
+	case "FindBin::Bin", "FindBin::RealBin", "FindBin::Dir":
+		out := l.helperCall(hProgramDir, ir.TString)
+		l.note(out, "os.Executable reports the built binary's path, which is the "+
+			"nearest true answer: there is no script file at run time and no search "+
+			"path for one to be added to.",
+			"go-mod-vs-cpan", "errors-are-values")
+		return out, true
+	case "FindBin::Script", "FindBin::RealScript":
+		out := call("path/filepath", "filepath", "Base", ir.TString,
+			l.helperCall(hProgramPath, ir.TString))
+		return out, true
+	}
+	return nil, false
+}

@@ -232,6 +232,13 @@ type Lowerer struct {
 	// tmpNames hands out temporary identifiers, seeded on the second pass
 	// with every name a variable already claimed.
 	tmpNames *nameSet
+	// redoLabel is the label of the loop a redo-wrapped body belongs to, or
+	// the empty string when the body was wrapped and needs no label. It is
+	// nil when the body being lowered is not inside such a wrapper.
+	redoLabel *string
+	// transValue holds the result of a transliteration written with the r
+	// modifier, which yields a new string instead of changing one.
+	transValue ir.Expr
 	// usedLabels records which loop labels something actually branches to.
 	usedLabels map[string]bool
 	// lastStat is the path the most recent file test asked about, so that
@@ -253,6 +260,18 @@ type Lowerer struct {
 
 // label returns a loop label only when something branches to it. Go rejects a
 // label nothing uses, where Perl is happy to let one sit there.
+// outerLabel is the label a next or last should carry: the one written in the
+// source, or the one the redo wrapper gave the outer loop.
+func (l *Lowerer) outerLabel(name string) string {
+	if written := l.label(name); written != "" {
+		return written
+	}
+	if name == "" && l.redoLabel != nil {
+		return *l.redoLabel
+	}
+	return ""
+}
+
 func (l *Lowerer) label(name string) string {
 	if name == "" || !l.usedLabels[name] {
 		return ""

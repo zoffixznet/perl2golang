@@ -505,7 +505,8 @@ func (l *Lowerer) whileStmt(n *ast.While) []ir.Stmt {
 	}
 	setup := l.takePre()
 
-	out := &ir.For{Cond: cond, Body: l.block(n.Body), Label: l.label(n.Label)}
+	body, label := l.loopBody(n.Body, l.label(n.Label))
+	out := &ir.For{Cond: cond, Body: body, Label: label}
 	l.setProv(out, n)
 	l.note(out, "Go has one loop keyword. `for cond { }` is its while, `for { }` is "+
 		"its infinite loop, and there is no do-while and no until.",
@@ -585,9 +586,9 @@ func (l *Lowerer) forStmt(n *ast.ForC) []ir.Stmt {
 		}
 	}
 
-	body := l.block(n.Body)
+	body, forLabel := l.loopBody(n.Body, l.label(n.Label))
 	body.Stmts = append(body.Stmts, extraPost...)
-	out := &ir.For{Init: init, Cond: cond, Post: post, Body: body, Label: l.label(n.Label)}
+	out := &ir.For{Init: init, Cond: cond, Post: post, Body: body, Label: forLabel}
 	l.setProv(out, n)
 	l.note(out, "A C-style for loop carries over almost unchanged. Go drops the "+
 		"parentheses around the header and requires the braces.")
@@ -691,13 +692,30 @@ func (l *Lowerer) loopCtl(n *ast.LoopCtl) []ir.Stmt {
 	}
 	switch n.Op {
 	case "last":
-		out := &ir.Branch{Kind: "break", Label: l.label(n.Label)}
+		out := &ir.Branch{Kind: "break", Label: l.outerLabel(n.Label)}
 		l.setProv(out, n)
 		return []ir.Stmt{out}
 	case "next":
-		out := &ir.Branch{Kind: "continue", Label: l.label(n.Label)}
+		out := &ir.Branch{Kind: "continue", Label: l.outerLabel(n.Label)}
 		l.setProv(out, n)
 		return []ir.Stmt{out}
+	case "redo":
+		if n.Label == "" && l.redoLabel != nil {
+			out := &ir.Branch{Kind: "continue"}
+			l.setProv(out, n)
+			l.note(out, "The body is wrapped in a loop of its own so that redo has "+
+				"something to continue, which re-runs it without moving on.",
+				"range-is-not-foreach")
+			l.approximate(n, "P2G3510", "redo",
+				"the body was wrapped in a loop of its own",
+				"redo restarts the iteration without advancing, and Go has no keyword "+
+					"for that. The body now sits inside its own loop, which breaks at the "+
+					"bottom so it runs once by default.",
+				"Where the restart is really a retry, a counted inner loop reads better "+
+					"than a conditional continue.",
+				"range-is-not-foreach")
+			return []ir.Stmt{out}
+		}
 	}
 	return []ir.Stmt{l.todoStmt(n, "P2G3510", "redo",
 		"redo has no Go equivalent",
@@ -914,4 +932,77 @@ func (l *Lowerer) countGuardRead(e ast.Expr) {
 	if b := l.lookup(v.Sigil, v.Name, v); b != nil {
 		b.Reads++
 	}
+}
+
+// loopBody lowers a loop's body, wrapping it in an inner loop when something
+// in it restarts the iteration.
+//
+// Go has break and continue and nothing that re-runs an iteration without
+// advancing. An inner `for { ... break }` gives redo somewhere to continue
+// to, and the outer loop takes a label so that next and last still mean the
+// outer one. That is the shape a Go developer writes for the same problem,
+// and it is the only one that keeps all three keywords meaning what they did.
+func (l *Lowerer) loopBody(body []ast.Stmt, label string) (*ir.Block, string) {
+	saved := l.redoLabel
+	defer func() { l.redoLabel = saved }()
+
+	if !hasRedo(body) {
+		l.redoLabel = nil
+		return l.block(body), label
+	}
+	// The label is only needed when something else branches out of the body:
+	// Go rejects a label nothing uses.
+	if label == "" && hasLoopExit(body) {
+		label = l.tmp("eachTurn")
+	}
+	l.redoLabel = &label
+	blk := l.block(body)
+	inner := &ir.For{Body: &ir.Block{Stmts: append(blk.Stmts, &ir.Branch{Kind: "break"})}}
+	l.note(inner, "redo re-runs the body without moving on to the next element, and "+
+		"Go has nothing that does that. The body sits in a loop of its own, which "+
+		"redo continues and which breaks at the bottom so it runs once by default. "+
+		"next and last name the outer loop, because unlabelled they would now mean "+
+		"this one.",
+		"range-is-not-foreach")
+	return &ir.Block{Stmts: []ir.Stmt{inner}}, label
+}
+
+// hasRedo reports whether a loop body restarts itself, without looking inside
+// a nested loop or a nested sub, where a redo would belong to that one.
+func hasRedo(body []ast.Stmt) bool {
+	return scanLoopBody(body, func(c *ast.LoopCtl) bool { return c.Op == "redo" && c.Label == "" })
+}
+
+// hasLoopExit reports whether a loop body branches out of itself, which is
+// what decides whether the outer loop needs a label.
+func hasLoopExit(body []ast.Stmt) bool {
+	return scanLoopBody(body, func(c *ast.LoopCtl) bool {
+		return (c.Op == "next" || c.Op == "last") && c.Label == ""
+	})
+}
+
+// scanLoopBody looks for a loop-control statement belonging to this loop.
+func scanLoopBody(body []ast.Stmt, want func(*ast.LoopCtl) bool) bool {
+	for _, st := range body {
+		switch n := st.(type) {
+		case *ast.LoopCtl:
+			if want(n) {
+				return true
+			}
+		case *ast.If:
+			if scanLoopBody(n.Then, want) || scanLoopBody(n.Else, want) {
+				return true
+			}
+			for _, ei := range n.ElseIfs {
+				if scanLoopBody(ei.Then, want) {
+					return true
+				}
+			}
+		case *ast.Block:
+			if scanLoopBody(n.Body, want) {
+				return true
+			}
+		}
+	}
+	return false
 }

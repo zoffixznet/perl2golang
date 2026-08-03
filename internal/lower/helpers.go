@@ -55,6 +55,8 @@ const (
 	hTypedList     = "typedList"    // []any -> []T, asserting each element
 	hTypedMap      = "typedMap"     // map[K]any -> map[K]V, asserting each value
 	hCountChars    = "countChars"   // tr/// with an empty replacement list
+	hCountOther    = "countOther"   // the same with a complemented search list
+	hMapChars      = "mapChars"     // tr/// with the c, d and s modifiers
 	hPick          = "pick"         // @a[...] where the indices are a computed list
 	hPickKeys      = "pickKeys"     // @h{...} where the keys are a computed list
 	hIntList       = "intList"      // []T -> []int, for a dynamic list of indices
@@ -81,6 +83,8 @@ const (
 	hAbsPath       = "absPath"       // absolute, with symlinks followed
 	hAbsFrom       = "absFrom"       // absolute, resolved against a base
 	hWorkingDir    = "workingDir"    // the process's current directory
+	hProgramPath   = "programPath"   // where the running binary is
+	hProgramDir    = "programDir"    // the directory it sits in
 	hParseFilename = "parseFilename" // name, directory and matching suffix
 
 	// The stand-ins for a refusal. They keep a partly converted program

@@ -71,13 +71,14 @@ func (l *Lowerer) foreachStmt(n *ast.Foreach) []ir.Stmt {
 		defer func() { l.topicStack = l.topicStack[:len(l.topicStack)-1] }()
 	}
 
+	loopBody, loopLabel := l.loopBody(n.Body, l.label(n.Label))
 	out := &ir.Range{
 		Key:    ir.NewIdent("_", ir.TInt),
 		Value:  value,
 		X:      src,
 		Define: true,
-		Body:   l.block(n.Body),
-		Label:  l.label(n.Label),
+		Body:   loopBody,
+		Label:  loopLabel,
 	}
 	l.setProv(out, n)
 	if loopVar == nil {
@@ -160,12 +161,13 @@ func (l *Lowerer) countingLoop(n *ast.Foreach) ([]ir.Stmt, bool) {
 		defer func() { l.topicStack = l.topicStack[:len(l.topicStack)-1] }()
 	}
 
+	countBody, countLabel := l.loopBody(n.Body, l.label(n.Label))
 	out := &ir.For{
 		Init:  assign(":=", []ir.Expr{idx}, []ir.Expr{low}),
 		Cond:  ir.Bin("<=", idx, high, ir.TBool),
 		Post:  &ir.IncDec{X: idx},
-		Body:  l.block(n.Body),
-		Label: l.label(n.Label),
+		Body:  countBody,
+		Label: countLabel,
 	}
 	l.setProv(out, n)
 	l.note(out, "Perl's range operator builds the whole list before the loop starts, "+
@@ -195,12 +197,13 @@ func (l *Lowerer) aliasingLoop(n *ast.Foreach, src ir.Expr, elem *ir.Type, b *Bi
 		defer func() { l.topicStack = l.topicStack[:len(l.topicStack)-1] }()
 	}
 
+	aliasBody, aliasLabel := l.loopBody(n.Body, l.label(n.Label))
 	out := &ir.Range{
 		Key:    idx,
 		X:      src,
 		Define: true,
-		Body:   l.block(n.Body),
-		Label:  l.label(n.Label),
+		Body:   aliasBody,
+		Label:  aliasLabel,
 	}
 	l.setProv(out, n)
 	l.note(out, "Perl's foreach variable is an alias for the element, so assigning to "+

@@ -534,6 +534,8 @@ const (
 	FindWalk Code = "P2G7587"
 	// FindMapped: File::Find maps to filepath.WalkDir.
 	FindMapped Code = "P2G7588"
+	// FindBinMapped: FindBin has no counterpart, because there is no path.
+	FindBinMapped Code = "P2G7589"
 	// Base64Wrapping: base64 line wrapping differs.
 	Base64Wrapping Code = "P2G7570"
 	// YAMLDependency: YAML needs a third-party package.
@@ -2187,6 +2189,13 @@ var catalogue = map[Code]Entry{
 		Short:    "File::Find maps to filepath.WalkDir",
 		Advice:   "returning `fs.SkipDir` prunes a subtree and any other error stops the walk",
 		Concepts: []string{"filepath-and-paths", "errors-are-values"},
+	},
+	FindBinMapped: {
+		Severity: report.Note,
+		Message:  "the script location `FindBin` reports is for `use lib`, and there is no run-time search path here",
+		Short:    "there is no module search path",
+		Advice:   "`os.Executable` names the built binary where a program genuinely needs its own location",
+		Concepts: []string{"go-mod-vs-cpan", "packages-and-exported-names"},
 	},
 	Base64Wrapping: {
 		Severity:  report.Note,

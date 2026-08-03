@@ -1,0 +1,25 @@
+--- a retry that gives up ---
+alpha  succeeded on attempt 1
+beta   succeeded on attempt 3
+gamma  succeeded on attempt 1
+--- redo beside next and last ---
+  take 1
+  retry 2
+  retry 2
+  retry 2
+  skip 2
+  take 3
+  skip 4
+  stop at 5
+body ran 8 times
+--- redo in a while loop ---
+  handled 0
+  handled 1
+  patching pass 1
+  patching pass 2
+  handled 2
+  handled 3
+fixes: 2
+--- a labelled loop is unaffected ---
+  1.1
+  2.1
