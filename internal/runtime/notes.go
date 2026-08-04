@@ -179,6 +179,11 @@ var notes = map[string]string{
 		"of not knowing the signature; a declared function type makes the " +
 		"compiler do it instead, at no cost at all.",
 
+	"flatPairs": "Go randomises map iteration on purpose, so a list built " +
+		"from a map without sorting first changes between runs. Sorting here " +
+		"costs a little and makes the result diffable, which is what a list " +
+		"built this way is nearly always for.",
+
 	"scalarOf": "A Go function has one return type and a caller cannot ask " +
 		"for a different one, so nothing here needs a notion of context. This " +
 		"exists only for values whose type did not resolve, where the choice " +

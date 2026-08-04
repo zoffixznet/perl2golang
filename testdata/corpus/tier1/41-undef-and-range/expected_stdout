@@ -1,0 +1,22 @@
+--- undef stored in a hash ---
+alice  exists=1 defined=1 true=1
+frank  exists=1 defined=0 true=0
+zed    exists=0 defined=0 true=0
+--- undef as a value that is not zero ---
+unset is defined: no
+zero is defined:  yes
+defined-or on undef: fallback
+defined-or on zero:  0
+or on zero:          fallback
+--- draining a queue that contains a zero ---
+item 3
+item 0
+item 7
+--- the same drain without the defined test ---
+stopped-early item 3
+left behind: 1
+--- reading past the end ---
+past the end is defined: no
+the array is still 3 long
+after writing index 5 it is 6 long
+the gap at 4 is defined: no

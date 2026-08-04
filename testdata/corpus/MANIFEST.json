@@ -2392,5 +2392,29 @@
     "expected_exit": 0,
     "deterministic": true,
     "kind": "convert"
+  },
+  {
+    "tier": "tier1",
+    "name": "40-copy-and-context",
+    "path": "testdata/corpus/tier1/40-copy-and-context",
+    "args": [],
+    "has_stdin": false,
+    "has_files": false,
+    "allow_stderr": false,
+    "expected_exit": 0,
+    "deterministic": true,
+    "kind": "convert"
+  },
+  {
+    "tier": "tier1",
+    "name": "41-undef-and-range",
+    "path": "testdata/corpus/tier1/41-undef-and-range",
+    "args": [],
+    "has_stdin": false,
+    "has_files": false,
+    "allow_stderr": false,
+    "expected_exit": 0,
+    "deterministic": true,
+    "kind": "convert"
   }
 ]

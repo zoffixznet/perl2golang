@@ -217,8 +217,19 @@ func (l *Lowerer) builtin(n *ast.Call) ir.Expr {
 	case "chomp", "chop":
 		return l.chompExpr(n)
 
+	case "delete":
+		// delete yields the value it removed, and Go's built-in yields
+		// nothing, so the value is read out before the key goes.
+		if x, ok := l.deleteValue(n); ok {
+			return x
+		}
+		for _, st := range l.statementForm(n) {
+			l.emit(st)
+		}
+		return ir.BoolLit(true)
+
 	case "close", "open", "print", "printf", "say", "die", "warn", "exit",
-		"push", "unshift", "delete":
+		"push", "unshift":
 		// These reach expression position because of the `X or die` idiom.
 		// Perl's answer there is a truth value, so the statements run first
 		// and the value they produce is success. Only names the statement
@@ -771,18 +782,38 @@ func (l *Lowerer) keysCall(n *ast.Call, wantValues bool) ir.Expr {
 	return out
 }
 
-func (l *Lowerer) reverseCall(n *ast.Call) ir.Expr {
+// reverseText is reverse read for one value: everything joined and then
+// reversed character by character.
+func (l *Lowerer) reverseText(n *ast.Call) ir.Expr {
 	args := flatten(argList(n))
 	if len(args) == 1 {
 		if x := l.expr(args[0]); typeOrAny(x).Kind == ir.String {
 			out := l.helperCall(hReverseStr, ir.TString, x)
-			l.note(out, "reverse on a single string reverses its characters. Go has no "+
-				"built-in for it, partly because reversing text is only meaningful "+
-				"character by character, not byte by byte.",
-				"strings-are-bytes")
+			l.note(out, "reverse read for one value reverses characters rather than "+
+				"elements. Go has no built-in for it, partly because reversing text is "+
+				"only meaningful character by character, not byte by byte.",
+				"strings-are-bytes", "context-is-gone")
 			return out
 		}
 	}
+	joined := l.stringsJoin(l.list(argList(n)), ir.Str(`""`))
+	out := l.helperCall(hReverseStr, ir.TString, joined)
+	l.approximate(n, "P2G2031", "reverse read for one value",
+		"the list is joined and then reversed",
+		"reverse in list context reverses the elements; read for one value it "+
+			"runs them together and reverses the characters of the result. Go has no "+
+			"context, so which of the two was meant is decided here.",
+		"Write the two out separately: slices.Reverse for the elements, and a "+
+			"join followed by a character reversal for the text.",
+		"context-is-gone", "strings-are-bytes")
+	return out
+}
+
+func (l *Lowerer) reverseCall(n *ast.Call) ir.Expr {
+	// reverse decides what it does from the context it is called in: a list
+	// reversed where a list is wanted, and the characters of everything run
+	// together reversed where one value is wanted. Only the scalar form
+	// reaches reverseText.
 	src := l.list(argList(n))
 	name := l.tmp("reversed")
 	clone := assign(":=", []ir.Expr{ir.NewIdent(name, typeOrAny(src))},
@@ -1393,6 +1424,35 @@ func (l *Lowerer) exitCall(n *ast.Call) []ir.Stmt {
 		"be written before this line.",
 		"defer-timing")
 	return []ir.Stmt{st}
+}
+
+// deleteValue lowers a delete whose result is used, which Perl answers with
+// the value that was removed.
+func (l *Lowerer) deleteValue(n *ast.Call) (ir.Expr, bool) {
+	args := flatten(argList(n))
+	if len(args) != 1 {
+		return nil, false
+	}
+	hi, ok := args[0].(*ast.HashIndex)
+	if !ok {
+		return nil, false
+	}
+	m, key, elem := l.hashParts(hi)
+	if m == nil || key == nil {
+		return nil, false
+	}
+	name := l.tmp("removed")
+	decl := assign(":=", []ir.Expr{ir.NewIdent(name, elem)}, []ir.Expr{index(m, key, elem)})
+	l.setProv(decl, n)
+	l.note(decl, "Go's delete yields nothing, where Perl's yields the value it took "+
+		"out. Reading the key first is what keeps that value, and reading a key a "+
+		"map does not hold gives the zero value rather than an error.",
+		"comma-ok-idiom")
+	l.emit(decl)
+	st := exprStmt(ir.CallOf(ir.NewIdent("delete", nil), ir.TVoid, m, key))
+	l.setProv(st, n)
+	l.emit(st)
+	return ir.NewIdent(name, elem), true
 }
 
 func (l *Lowerer) deleteCall(n *ast.Call) []ir.Stmt {

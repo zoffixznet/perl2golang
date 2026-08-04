@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T06:15:50Z",
+  "recorded": "2026-08-15T06:29:26Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -10,45 +10,45 @@
   "tiers": [
     {
       "tier": "tier1",
-      "entries": 39,
+      "entries": 41,
       "stages": {
         "compiled": {
-          "pass": 39,
+          "pass": 41,
           "fail": 0,
           "skip": 0
         },
         "emitted": {
-          "pass": 39,
+          "pass": 41,
           "fail": 0,
           "skip": 0
         },
         "equivalent": {
-          "pass": 22,
-          "fail": 17,
+          "pass": 25,
+          "fail": 16,
           "skip": 0
         },
         "translated": {
-          "pass": 39,
+          "pass": 41,
           "fail": 0,
           "skip": 0
         },
         "typed": {
-          "pass": 24,
-          "fail": 15,
+          "pass": 23,
+          "fail": 18,
           "skip": 0
         }
       },
       "equivalent_annotated": {
-        "pass": 22,
-        "fail": 17,
+        "pass": 25,
+        "fail": 16,
         "skip": 0
       },
       "quality": {
         "todos": 0,
-        "symbols": 419,
-        "symbols_typed": 387,
+        "symbols": 448,
+        "symbols_typed": 410,
         "refusals": 0,
-        "approximations": 72
+        "approximations": 89
       }
     },
     {
@@ -66,8 +66,8 @@
           "skip": 0
         },
         "equivalent": {
-          "pass": 16,
-          "fail": 39,
+          "pass": 18,
+          "fail": 37,
           "skip": 0
         },
         "translated": {
@@ -82,16 +82,16 @@
         }
       },
       "equivalent_annotated": {
-        "pass": 16,
-        "fail": 39,
+        "pass": 18,
+        "fail": 37,
         "skip": 0
       },
       "quality": {
         "todos": 17,
         "symbols": 1081,
-        "symbols_typed": 892,
+        "symbols_typed": 886,
         "refusals": 17,
-        "approximations": 386
+        "approximations": 389
       }
     },
     {
@@ -99,8 +99,8 @@
       "entries": 31,
       "stages": {
         "compiled": {
-          "pass": 23,
-          "fail": 8,
+          "pass": 24,
+          "fail": 7,
           "skip": 0
         },
         "emitted": {
@@ -132,7 +132,7 @@
       "quality": {
         "todos": 65,
         "symbols": 833,
-        "symbols_typed": 621,
+        "symbols_typed": 622,
         "refusals": 69,
         "approximations": 295
       }
@@ -195,8 +195,8 @@
           "skip": 0
         },
         "equivalent": {
-          "pass": 7,
-          "fail": 18,
+          "pass": 8,
+          "fail": 17,
           "skip": 0
         },
         "translated": {
@@ -205,42 +205,42 @@
           "skip": 0
         },
         "typed": {
-          "pass": 6,
-          "fail": 19,
+          "pass": 7,
+          "fail": 18,
           "skip": 0
         }
       },
       "equivalent_annotated": {
-        "pass": 7,
-        "fail": 18,
+        "pass": 8,
+        "fail": 17,
         "skip": 0
       },
       "quality": {
         "todos": 6,
-        "symbols": 932,
-        "symbols_typed": 838,
+        "symbols": 933,
+        "symbols_typed": 837,
         "refusals": 6,
-        "approximations": 173
+        "approximations": 181
       }
     }
   ],
   "total": {
     "tier": "TOTAL",
-    "entries": 185,
+    "entries": 187,
     "stages": {
       "compiled": {
-        "pass": 164,
-        "fail": 21,
+        "pass": 167,
+        "fail": 20,
         "skip": 0
       },
       "emitted": {
-        "pass": 185,
+        "pass": 187,
         "fail": 0,
         "skip": 0
       },
       "equivalent": {
-        "pass": 47,
-        "fail": 103,
+        "pass": 53,
+        "fail": 99,
         "skip": 0
       },
       "honest": {
@@ -249,35 +249,35 @@
         "skip": 1
       },
       "translated": {
-        "pass": 151,
+        "pass": 153,
         "fail": 34,
         "skip": 0
       },
       "typed": {
         "pass": 66,
-        "fail": 119,
+        "fail": 121,
         "skip": 0
       }
     },
     "equivalent_annotated": {
-      "pass": 47,
-      "fail": 103,
+      "pass": 53,
+      "fail": 99,
       "skip": 0
     },
     "quality": {
       "todos": 123,
-      "symbols": 3417,
-      "symbols_typed": 2845,
+      "symbols": 3447,
+      "symbols_typed": 2862,
       "refusals": 128,
-      "approximations": 981
+      "approximations": 1009
     }
   },
   "quality": {
     "todos": 123,
-    "symbols": 3417,
-    "symbols_typed": 2845,
+    "symbols": 3447,
+    "symbols_typed": 2862,
     "refusals": 128,
-    "approximations": 981
+    "approximations": 1009
   },
   "entries": [
     {
@@ -478,7 +478,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: line 1, byte 18: got \"6, i is now 6\\npre-inc returned 7...\", wanted \"5, i is now 6\\npre-inc returned 7...\""
+          "reason": "stdout differs: line 6, byte 185: got \"3\\nAz ++ -\u003e 1\\nzz ++ -\u003e 1\\na9 ++ -\u003e...\", wanted \"ad\\nAz ++ -\u003e Ba\\nzz ++ -\u003e aaa\\na9 +...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -493,7 +493,7 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: line 1, byte 18: got \"6, i is now 6\\npre-inc returned 7...\", wanted \"5, i is now 6\\npre-inc returned 7...\""
+        "reason": "stdout differs: line 6, byte 185: got \"3\\nAz ++ -\u003e 1\\nzz ++ -\u003e 1\\na9 ++ -\u003e...\", wanted \"ad\\nAz ++ -\u003e Ba\\nzz ++ -\u003e aaa\\na9 +...\""
       },
       "quality": {
         "todos": 0,
@@ -625,7 +625,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "exit status 2, wanted 0; stdout differs: line 13, byte 310: got \"APPLE vs APPLE\\nout of range read...\", wanted \"apple vs APPLE\\nout of range read...\"; stderr differs: unexpected \"panic: runtime error: index out of range [6] with length 4 ...\""
+          "reason": "exit status 2, wanted 0; stdout differs: 119 byte(s) missing after line 16, expected \"after assigning index 6, count=7...\"; stderr differs: unexpected \"panic: runtime error: index out of range [6] with length 4 ...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -639,14 +639,14 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "exit status 2, wanted 0; stdout differs: line 13, byte 310: got \"APPLE vs APPLE\\nout of range read...\", wanted \"apple vs APPLE\\nout of range read...\"; stderr differs: unexpected \"panic: runtime error: index out of range [6] with length 4 ...\""
+        "reason": "exit status 2, wanted 0; stdout differs: 119 byte(s) missing after line 16, expected \"after assigning index 6, count=7...\"; stderr differs: unexpected \"panic: runtime error: index out of range [6] with length 4 ...\""
       },
       "quality": {
         "todos": 0,
         "symbols": 8,
         "symbols_typed": 8,
         "refusals": 0,
-        "approximations": 4
+        "approximations": 5
       }
     },
     {
@@ -735,8 +735,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 16, byte 549: got \"olleh\\n--- tail slices ---\\neveryt...\", wanted \"hello\\n--- tail slices ---\\neveryt...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -749,8 +748,7 @@
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 16, byte 549: got \"olleh\\n--- tail slices ---\\neveryt...\", wanted \"hello\\n--- tail slices ---\\neveryt...\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
@@ -856,7 +854,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "8 variables left dynamic out of 18"
+          "reason": "11 variables left dynamic out of 18"
         }
       },
       "equivalent_annotated": {
@@ -866,7 +864,7 @@
       "quality": {
         "todos": 0,
         "symbols": 18,
-        "symbols_typed": 10,
+        "symbols_typed": 7,
         "refusals": 0,
         "approximations": 1
       }
@@ -1097,8 +1095,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 6, byte 36: got \"i ended at 0\\nj=4\\nsquares: 1 4 9 ...\", wanted \"tick 0\\ni ended at -1\\nj=4\\nsquares...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -1111,8 +1108,7 @@
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 6, byte 36: got \"i ended at 0\\nj=4\\nsquares: 1 4 9 ...\", wanted \"tick 0\\ni ended at -1\\nj=4\\nsquares...\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
@@ -1421,7 +1417,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: line 8, byte 180: got \"4\\n--- split in two contexts ---\\n...\", wanted \"04030201\\n--- split in two contex...\""
+          "reason": "stdout differs: line 17, byte 386: got \"void context\\ncalled in void cont...\", wanted \"list context\\ncalled in scalar co...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -1430,19 +1426,20 @@
           "outcome": "pass"
         },
         "typed": {
-          "outcome": "pass"
+          "outcome": "fail",
+          "reason": "1 variable left dynamic out of 12"
         }
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: line 8, byte 180: got \"4\\n--- split in two contexts ---\\n...\", wanted \"04030201\\n--- split in two contex...\""
+        "reason": "stdout differs: line 17, byte 386: got \"void context\\ncalled in void cont...\", wanted \"list context\\ncalled in scalar co...\""
       },
       "quality": {
         "todos": 0,
         "symbols": 12,
-        "symbols_typed": 12,
+        "symbols_typed": 11,
         "refusals": 0,
-        "approximations": 3
+        "approximations": 5
       }
     },
     {
@@ -1478,7 +1475,7 @@
         "symbols": 10,
         "symbols_typed": 8,
         "refusals": 0,
-        "approximations": 0
+        "approximations": 2
       }
     },
     {
@@ -1513,7 +1510,7 @@
         "symbols": 4,
         "symbols_typed": 4,
         "refusals": 0,
-        "approximations": 0
+        "approximations": 1
       }
     },
     {
@@ -1695,6 +1692,80 @@
       }
     },
     {
+      "tier": "tier1",
+      "name": "40-copy-and-context",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "pass"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "1 variable left dynamic out of 19"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "pass"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 19,
+        "symbols_typed": 18,
+        "refusals": 0,
+        "approximations": 7
+      }
+    },
+    {
+      "tier": "tier1",
+      "name": "41-undef-and-range",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "exit status 2, wanted 0; stdout differs: line 3, byte 88: got \"1 true=0\\nzed    exists=0 defined...\", wanted \"0 true=0\\nzed    exists=0 defined...\"; stderr differs: unexpected \"panic: runtime error: index out of range [9] with length 3 ...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "1 variable left dynamic out of 10"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "exit status 2, wanted 0; stdout differs: line 3, byte 88: got \"1 true=0\\nzed    exists=0 defined...\", wanted \"0 true=0\\nzed    exists=0 defined...\"; stderr differs: unexpected \"panic: runtime error: index out of range [9] with length 3 ...\""
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 10,
+        "symbols_typed": 9,
+        "refusals": 0,
+        "approximations": 4
+      }
+    },
+    {
       "tier": "tier2",
       "name": "01-sub-calling-conventions",
       "kind": "convert",
@@ -1755,7 +1826,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "6 variables left dynamic out of 16"
+          "reason": "12 variables left dynamic out of 16"
         }
       },
       "equivalent_annotated": {
@@ -1765,7 +1836,7 @@
       "quality": {
         "todos": 0,
         "symbols": 16,
-        "symbols_typed": 10,
+        "symbols_typed": 4,
         "refusals": 0,
         "approximations": 2
       }
@@ -1843,7 +1914,7 @@
         "symbols": 16,
         "symbols_typed": 12,
         "refusals": 0,
-        "approximations": 3
+        "approximations": 4
       }
     },
     {
@@ -1953,7 +2024,7 @@
         "symbols": 20,
         "symbols_typed": 20,
         "refusals": 0,
-        "approximations": 0
+        "approximations": 1
       }
     },
     {
@@ -2114,7 +2185,7 @@
       "stages": {
         "compiled": {
           "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:133:38: too many arguments in call to opFor(\"mul\")"
+          "reason": "the generated Go does not compile: ./main.go:134:38: too many arguments in call to opFor(\"mul\")"
         },
         "emitted": {
           "outcome": "pass"
@@ -2724,8 +2795,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 30, byte 870: got \"       \\ncumulative coverage of t...\", wanted \"brown dog fox jumps lazy over qu...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -2739,8 +2809,7 @@
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 30, byte 870: got \"       \\ncumulative coverage of t...\", wanted \"brown dog fox jumps lazy over qu...\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
@@ -2937,7 +3006,7 @@
         "symbols": 30,
         "symbols_typed": 24,
         "refusals": 0,
-        "approximations": 11
+        "approximations": 12
       }
     },
     {
@@ -3101,8 +3170,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 6, byte 108: got \"\\ncounts: alpha=3 beta=2 gamma=1\\n...\", wanted \"alpha beta gamma\\ncounts: alpha=3...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -3116,8 +3184,7 @@
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 6, byte 108: got \"\\ncounts: alpha=3 beta=2 gamma=1\\n...\", wanted \"alpha beta gamma\\ncounts: alpha=3...\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
@@ -4098,15 +4165,14 @@
       "kind": "convert",
       "stages": {
         "compiled": {
-          "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:70:26: cannot use cfg3 (variable of type map[string]map[string]string) as map[string]map[string]any value in argument to resolveSection"
+          "outcome": "pass"
         },
         "emitted": {
           "outcome": "pass"
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "the generated program did not compile"
+          "reason": "exit status 255, wanted 0; stdout differs: 1113 byte(s) missing after line 1, expected \"[database]\\n  app_name   = orders...\"; stderr differs: unexpected \"unknown variable ${host} in database.map[app_name:ordersvc base_dir:/...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -4116,19 +4182,19 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "5 variables left dynamic out of 34"
+          "reason": "4 variables left dynamic out of 34"
         }
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "the generated program did not compile"
+        "reason": "exit status 255, wanted 0; stdout differs: 1113 byte(s) missing after line 1, expected \"[database]\\n  app_name   = orders...\"; stderr differs: unexpected \"unknown variable ${host} in database.map[app_name:ordersvc base_dir:/...\""
       },
       "quality": {
         "todos": 0,
         "symbols": 34,
-        "symbols_typed": 29,
+        "symbols_typed": 30,
         "refusals": 0,
-        "approximations": 15
+        "approximations": 14
       }
     },
     {
@@ -4555,7 +4621,7 @@
         "symbols": 31,
         "symbols_typed": 26,
         "refusals": 2,
-        "approximations": 7
+        "approximations": 8
       }
     },
     {
@@ -4603,7 +4669,7 @@
       "stages": {
         "compiled": {
           "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:69:29: self(toNum(k) - 1.0) (no value) used as value"
+          "reason": "the generated Go does not compile: ./main.go:70:29: self(toNum(k) - 1.0) (no value) used as value"
         },
         "emitted": {
           "outcome": "pass"
@@ -6348,7 +6414,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "2 variables left dynamic out of 58"
+          "reason": "3 variables left dynamic out of 58"
         }
       },
       "equivalent_annotated": {
@@ -6358,7 +6424,7 @@
       "quality": {
         "todos": 0,
         "symbols": 58,
-        "symbols_typed": 56,
+        "symbols_typed": 55,
         "refusals": 0,
         "approximations": 20
       }
@@ -6474,7 +6540,7 @@
         "symbols": 44,
         "symbols_typed": 41,
         "refusals": 0,
-        "approximations": 8
+        "approximations": 9
       }
     },
     {
@@ -6509,7 +6575,7 @@
         "symbols": 41,
         "symbols_typed": 41,
         "refusals": 0,
-        "approximations": 3
+        "approximations": 4
       }
     },
     {
@@ -6525,7 +6591,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "exit status 0, wanted 1; stdout differs: line 1, byte 7: got \"0/0 lines, 1 transferred\\n\\nby sta...\", wanted \"27/28 lines, 202,709 transferred...\""
+          "reason": "exit status 0, wanted 1; stdout differs: line 1, byte 7: got \"0/0 lines,  transferred\\n\\nby stat...\", wanted \"27/28 lines, 202,709 transferred...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -6541,14 +6607,14 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "exit status 0, wanted 1; stdout differs: line 1, byte 7: got \"0/0 lines, 1 transferred\\n\\nby sta...\", wanted \"27/28 lines, 202,709 transferred...\""
+        "reason": "exit status 0, wanted 1; stdout differs: line 1, byte 7: got \"0/0 lines,  transferred\\n\\nby stat...\", wanted \"27/28 lines, 202,709 transferred...\""
       },
       "quality": {
         "todos": 2,
         "symbols": 39,
         "symbols_typed": 29,
         "refusals": 2,
-        "approximations": 14
+        "approximations": 15
       }
     },
     {
@@ -6620,7 +6686,7 @@
         "symbols": 21,
         "symbols_typed": 20,
         "refusals": 0,
-        "approximations": 4
+        "approximations": 5
       }
     },
     {
@@ -6812,7 +6878,7 @@
         "symbols": 25,
         "symbols_typed": 16,
         "refusals": 0,
-        "approximations": 2
+        "approximations": 3
       }
     },
     {
@@ -6887,7 +6953,7 @@
         "symbols": 49,
         "symbols_typed": 49,
         "refusals": 0,
-        "approximations": 4
+        "approximations": 5
       }
     },
     {
@@ -6986,7 +7052,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "4 variables left dynamic out of 56"
+          "reason": "6 variables left dynamic out of 57"
         }
       },
       "equivalent_annotated": {
@@ -6995,10 +7061,10 @@
       },
       "quality": {
         "todos": 0,
-        "symbols": 56,
-        "symbols_typed": 52,
+        "symbols": 57,
+        "symbols_typed": 51,
         "refusals": 0,
-        "approximations": 12
+        "approximations": 13
       }
     },
     {
@@ -7022,8 +7088,7 @@
           "outcome": "pass"
         },
         "typed": {
-          "outcome": "fail",
-          "reason": "1 variable left dynamic out of 28"
+          "outcome": "pass"
         }
       },
       "equivalent_annotated": {
@@ -7032,7 +7097,7 @@
       "quality": {
         "todos": 0,
         "symbols": 28,
-        "symbols_typed": 27,
+        "symbols_typed": 28,
         "refusals": 0,
         "approximations": 4
       }
@@ -7088,8 +7153,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "exit status 3, wanted 2; stdout differs: line 2, byte 18: got \"FAILED: files/deps.txt line 3: d...\", wanted \"level 1: docs libcore\\nlevel 2: l...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -7103,15 +7167,14 @@
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "exit status 3, wanted 2; stdout differs: line 2, byte 18: got \"FAILED: files/deps.txt line 3: d...\", wanted \"level 1: docs libcore\\nlevel 2: l...\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
         "symbols": 41,
         "symbols_typed": 37,
         "refusals": 0,
-        "approximations": 5
+        "approximations": 6
       }
     },
     {

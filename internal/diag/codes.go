@@ -204,6 +204,8 @@ const (
 	ContextDependentReturn Code = "P2G3050"
 	// MixedArray: an array holds elements of more than one type.
 	MixedArray Code = "P2G3060"
+	// ListCopied: a list assignment copies rather than shares.
+	ListCopied Code = "P2G3080"
 	// HashIsRecord: a hash with fixed keys and mixed values became a struct.
 	HashIsRecord Code = "P2G3070"
 	// RecordFieldList: keys or values of a record was written out.
@@ -1017,6 +1019,13 @@ var catalogue = map[Code]Entry{
 		Advice:   "split it into one variable per element type, and both will type cleanly",
 		Cost:     "each read needs a type assertion, and the compiler cannot tell the two kinds apart",
 		Concepts: []string{"slices-not-arrays", "type-assertions-and-switches"},
+	},
+	ListCopied: {
+		Severity: report.Warn,
+		Message:  "the elements are copied, because assigning one slice to another would share them",
+		Short:    "the list assignment copies",
+		Advice:   "where nothing writes through either name, the clone can be dropped and the two can share",
+		Concepts: []string{"slice-aliasing-and-copy"},
 	},
 	HashIsRecord: {
 		Severity:  report.Note,

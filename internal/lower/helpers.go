@@ -65,6 +65,7 @@ const (
 
 	hDumpValues = "dumpValues" // a structure rendered as Go source
 	hScalarOf   = "scalarOf"   // one value wanted where a list may be
+	hFlatPairs  = "flatPairs"  // a keyed collection read where a list is wanted
 	hCallFn     = "callFn"     // calling a function held in an untyped value
 
 	// Data formats.

@@ -425,18 +425,44 @@ func (l *Lowerer) incDecExpr(n *ast.UnOp) ir.Expr {
 			"the step goes through a conversion. Giving the container a concrete "+
 			"element type turns this back into a plain ++.",
 			"explicit-conversions-no-coercion")
+		if n.Postfix {
+			before := l.tmp("before")
+			hold := assign(":=", []ir.Expr{ir.NewIdent(before, ir.TAny)}, []ir.Expr{target})
+			l.setProv(hold, n)
+			l.emit(hold)
+			l.emit(st)
+			return ir.NewIdent(before, ir.TAny)
+		}
 		l.emit(st)
 		return target
 	}
-	l.emit(&ir.IncDec{X: target, Dec: step == "--"})
 	if n.Postfix {
+		// The value of a post-step is what the variable held before it, so
+		// that is named before the step happens. Stepping first and reading
+		// the variable afterwards would give the value after, which is what
+		// the pre-step form means and a different answer entirely.
+		before := l.tmp("before")
+		t := typeOrAny(target)
+		hold := assign(":=", []ir.Expr{ir.NewIdent(before, t)}, []ir.Expr{target})
+		l.setProv(hold, n)
+		l.note(hold, "Go's ++ and -- are statements, not expressions, so a step used "+
+			"for its value has to be written out. The old value is named first "+
+			"because that is what the post-step form yields.",
+			"statements-vs-expressions")
+		l.emit(hold)
+		l.emit(&ir.IncDec{X: target, Dec: step == "--"})
 		l.approximate(n, "P2G3520", "post-increment used for its value",
 			"++ is a statement in Go, not an expression",
-			"Perl's $i++ yields the value before the increment and can appear inside a "+
-				"larger expression. Go's ++ is a statement, so it cannot.",
-			"The increment was moved to its own line before this expression, which "+
-				"changes the order if the surrounding expression also reads the variable.")
+			"Perl's $i++ yields the value before the increment and can appear inside "+
+				"a larger expression. Go's ++ is a statement, so the step is written on "+
+				"its own line and the old value is named.",
+			"Where the surrounding expression also writes the variable, check the "+
+				"order: the step now happens before the rest of the line rather than "+
+				"in the middle of it.",
+			"statements-vs-expressions")
+		return ir.NewIdent(before, t)
 	}
+	l.emit(&ir.IncDec{X: target, Dec: step == "--"})
 	return target
 }
 

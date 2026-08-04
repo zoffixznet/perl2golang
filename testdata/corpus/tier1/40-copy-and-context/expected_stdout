@@ -1,0 +1,25 @@
+--- a list assignment copies ---
+original: apple,banana,cherry
+copy:     APPLE,banana,cherry
+prices:   apple=1
+adjusted: apple=99
+--- reverse depends on what is wanted ---
+list:     4,3,2,1
+one value: 4321
+one element list: hello
+one value again:  olleh
+--- a step used for its value ---
+tick 2
+tick 1
+tick 0
+i ended at -1
+taken:    0,1,2,3
+n now:    4
+pre-step: 4 then 4
+--- taking a pair out ---
+removed:  3
+left:     doodad,widget
+removing what is not there gives: nothing
+--- a hash where a list was wanted ---
+flat length: 4
+merged keys: a,b,c

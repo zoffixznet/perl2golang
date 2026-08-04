@@ -131,6 +131,12 @@ func (l *Lowerer) scalar(e ast.Expr) ir.Expr {
 		if x, ok := l.multiResultCall(n, false); ok {
 			return x
 		}
+		// reverse read for one value reverses characters rather than
+		// elements, which is the one list operator that does not answer
+		// with a count.
+		if n.Name == "reverse" {
+			return l.reverseText(n)
+		}
 		// A time split read for one value is the readable stamp, not the
 		// length of the list it would have given.
 		if n.Name == "gmtime" || n.Name == "localtime" {
@@ -343,6 +349,19 @@ func (l *Lowerer) listParts(es []ast.Expr) ([]ir.Expr, *ir.Type) {
 		}
 		x := l.expr(e)
 		if x == nil {
+			return
+		}
+		// A keyed collection read where a list is wanted lays itself out as
+		// key, value, key, value.
+		if xt := typeOrAny(x); xt.Kind == ir.Map && flattensInList(e) {
+			flat := l.helperCall(hFlatPairs, ir.SliceOf(ir.TAny), x)
+			l.note(flat, "A hash used where a list is wanted becomes its pairs, laid "+
+				"out one after another. Go has no such flattening and no ordering "+
+				"either, so the pairs come out sorted by key, which is stable where "+
+				"ranging over the map would not be.",
+				"map-iteration-order", "context-is-gone")
+			out = append(out, flat)
+			seen = append(seen, ir.TAny)
 			return
 		}
 		out = append(out, x)

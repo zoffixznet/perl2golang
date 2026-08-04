@@ -325,7 +325,7 @@ func (l *Lowerer) declareSingle(v *ast.Var, n *ast.Assign) []ir.Stmt {
 	var value ir.Expr
 	switch v.Sigil {
 	case '@':
-		value = l.list(n.RHS)
+		value = l.copiedList(l.list(n.RHS), n.RHS)
 		l.observe(b, typeOrAny(value))
 	case '%':
 		// A hash an option block fills in is a struct, so its initialiser is
@@ -339,7 +339,7 @@ func (l *Lowerer) declareSingle(v *ast.Var, n *ast.Assign) []ir.Stmt {
 				return []ir.Stmt{st}
 			}
 		}
-		value = l.hashInit(n.RHS, elemOf(b.Type))
+		value = l.copiedMap(l.hashInit(n.RHS, elemOf(b.Type)), n.RHS)
 		l.observe(b, typeOrAny(value))
 	default:
 		value = l.scalar(n.RHS)
@@ -459,6 +459,12 @@ func (l *Lowerer) hashInit(rhs ast.Expr, want *ir.Type) ir.Expr {
 		keys, vals, t := l.pairs(flat)
 		return composite(ir.MapOf(t), keys, vals)
 	}
+	// A hash spliced into a hash literal contributes its own pairs, which is
+	// how a merged hash is written. Go builds that by cloning and then
+	// setting the extras.
+	if x, ok := l.mergedHash(flat, want, rhs); ok {
+		return x
+	}
 	// A single list whose length is not known until the program runs still
 	// pairs up: Perl walks it two at a time, and so does the loop.
 	if len(flat) == 1 && flattensInList(flat[0]) {
@@ -473,6 +479,44 @@ func (l *Lowerer) hashInit(rhs ast.Expr, want *ir.Type) ir.Expr {
 			"so the pairs cannot be matched up statically.",
 		"Build the map with an explicit loop over the list, two elements at a time.")
 	return composite(ir.MapOf(want), nil, nil)
+}
+
+// mergedHash lowers `( %base, extra => 1 )`, which is a hash with a few keys
+// added or replaced.
+//
+// Go has no splicing into a composite literal, and it does have maps.Clone
+// followed by ordinary assignment, which says the same thing in two lines and
+// makes the shallowness of the copy visible.
+func (l *Lowerer) mergedHash(flat []ast.Expr, want *ir.Type, rhs ast.Expr) (ir.Expr, bool) {
+	if len(flat) < 1 || len(flat[1:])%2 != 0 {
+		return nil, false
+	}
+	base := l.expr(flat[0])
+	if base == nil || typeOrAny(base).Kind != ir.Map {
+		return nil, false
+	}
+	t := typeOrAny(base)
+	if want != nil && !elemOf(t).Equal(want) {
+		t = ir.MapOf(joinAll([]*ir.Type{elemOf(t), want}))
+	}
+	name := l.tmp("merged")
+	decl := assign(":=", []ir.Expr{ir.NewIdent(name, t)},
+		[]ir.Expr{l.assignable(call("maps", "maps", "Clone", typeOrAny(base), base), t, rhs)})
+	l.setProv(decl, rhs)
+	l.note(decl, "A hash written inside another hash contributes its pairs. Go has "+
+		"no splicing into a literal, so the base is cloned and the extras are set "+
+		"afterwards, which also makes it plain that the copy is a shallow one.",
+		"nil-slices-vs-nil-maps", "slice-aliasing-and-copy")
+	l.emit(decl)
+	target := ir.NewIdent(name, t)
+	for i := 1; i+1 < len(flat); i += 2 {
+		key := l.toStr(l.expr(flat[i]), flat[i])
+		value := l.assignable(l.scalar(flat[i+1]), elemOf(t), flat[i+1])
+		st := assign("=", []ir.Expr{index(target, key, elemOf(t))}, []ir.Expr{value})
+		l.setProv(st, flat[i])
+		l.emit(st)
+	}
+	return target, true
 }
 
 // assignToEnv lowers `$ENV{NAME} = VALUE`.
@@ -782,6 +826,71 @@ func (l *Lowerer) bindDecl(declare bool, b *Binding, value ir.Expr) ir.Stmt {
 	return assign(declOp(declare), []ir.Expr{ir.NewIdent(b.Go, b.Type)}, []ir.Expr{coerced})
 }
 
+// copiedList makes a list assignment copy, which is what Perl's does.
+//
+// `my @copy = @original` copies the elements; Go's `copy := original` copies
+// only the slice header, so both names then share the same backing array and
+// writing through one is visible through the other. slices.Clone is the
+// difference, and it is the single most surprising thing about slices coming
+// from Perl.
+func (l *Lowerer) copiedList(x ir.Expr, rhs ast.Expr) ir.Expr {
+	if x == nil || !aliasesSource(rhs) {
+		return x
+	}
+	t := typeOrAny(x)
+	if t.Kind != ir.Slice {
+		return x
+	}
+	out := call("slices", "slices", "Clone", t, x)
+	l.note(out, "A Perl list assignment copies the elements. Go's assignment copies "+
+		"the slice header alone, so the two names would share one backing array and "+
+		"a write through either would be visible through the other. slices.Clone is "+
+		"what makes this a copy.",
+		"slice-aliasing-and-copy")
+	l.approximate(rhs, "P2G3080", "list assignment",
+		"the elements are copied, as the original did",
+		"Assigning one slice to another in Go shares the elements: only the header "+
+			"is copied. The generated code clones instead, which is what the Perl "+
+			"assignment meant, and which costs an allocation the original also paid.",
+		"Where nothing writes through either name, the clone can be dropped and the "+
+			"two can share.",
+		"slice-aliasing-and-copy")
+	return out
+}
+
+// copiedMap is copiedList for a hash, where the same sharing applies and Go's
+// answer is maps.Clone.
+func (l *Lowerer) copiedMap(x ir.Expr, rhs ast.Expr) ir.Expr {
+	if x == nil || !aliasesSource(rhs) {
+		return x
+	}
+	t := typeOrAny(x)
+	if t.Kind != ir.Map {
+		return x
+	}
+	out := call("maps", "maps", "Clone", t, x)
+	l.note(out, "A Perl hash assignment copies the pairs. A Go map is a reference: "+
+		"assigning one to another gives two names for the same map, and a write "+
+		"through either is visible through the other. maps.Clone is what makes this "+
+		"a copy, and it is a shallow one.",
+		"nil-slices-vs-nil-maps", "slice-aliasing-and-copy")
+	return out
+}
+
+// aliasesSource reports whether an expression names a collection something
+// else already holds, as opposed to building a fresh one.
+func aliasesSource(e ast.Expr) bool {
+	switch n := e.(type) {
+	case *ast.Var:
+		return n.Sigil == '@' || n.Sigil == '%'
+	case *ast.Deref:
+		return n.Sigil == '@' || n.Sigil == '%'
+	case *ast.Index, *ast.HashIndex:
+		return true
+	}
+	return false
+}
+
 // anyHoisted reports whether one of these bindings was moved to package
 // level because a sub reads it. Declaring it again here would shadow the one
 // the subs can see, and the subs would read an empty variable for ever.
@@ -860,7 +969,7 @@ func (l *Lowerer) assignToVar(v *ast.Var, n *ast.Assign) []ir.Stmt {
 	var value ir.Expr
 	switch v.Sigil {
 	case '@':
-		value = l.list(n.RHS)
+		value = l.copiedList(l.list(n.RHS), n.RHS)
 	case '%':
 		value = l.hashInit(n.RHS, elemOf(b.Type))
 	default:
