@@ -67,6 +67,7 @@ const (
 	hScalarOf   = "scalarOf"   // one value wanted where a list may be
 	hFlatPairs  = "flatPairs"  // a keyed collection read where a list is wanted
 	hCallFn     = "callFn"     // calling a function held in an untyped value
+	hAs         = "as"         // reading an untyped value as a type, without panicking
 
 	// Data formats.
 	hJSONCodec    = "jsonCodec"    // the type a configured encoder becomes

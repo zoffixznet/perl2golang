@@ -8,6 +8,13 @@ package runtime
 // A note is prose, wrapped when it is printed, and is keyed by the primary
 // name of the declaration. Every helper has one; a test enforces that.
 var notes = map[string]string{
+	"as": "A plain type assertion stops the program the moment the guess " +
+		"is wrong, and a value of no fixed type is where the guess can be " +
+		"wrong. The two-result form asks rather than insists, so a value " +
+		"that turns out to be something else leaves an empty collection or " +
+		"a nil record instead of a stack trace, and the lines below it " +
+		"still run.",
+
 	"permuteArgs": "flag.Parse stops at the first argument that is not an " +
 		"option, and the parser this replaces carried on and sorted the two " +
 		"apart. That difference is silent: `prog input.txt --verbose` leaves " +

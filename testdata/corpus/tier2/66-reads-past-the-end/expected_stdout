@@ -1,0 +1,17 @@
+-- reads past the end --
+in range:   30
+past end:   undef
+count is unchanged: 4
+first of an empty list: undef
+second field: undef
+-- writes past the end --
+after $a[6]: count=7 last index=6
+the gap at 5 is undef
+-- negative indices --
+last: fig second-last: undef
+after $a[-1] = 'end': end
+appended through -1: a
+b
+continued
+-- $#a as a place --
+after $#a = 2: 10,20,30

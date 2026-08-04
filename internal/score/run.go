@@ -436,6 +436,9 @@ func (r *runner) equivalence(ctx context.Context, e Entry, f *Fixture, compiled 
 		if err != nil {
 			return fail(err.Error())
 		}
+		if sub == "clean" && panicked(out) {
+			res.Quality.Crashes++
+		}
 		o := opts
 		o.GotLabel = label
 		o.GotFiles = files
@@ -467,6 +470,17 @@ func (r *runner) runIn(ctx context.Context, root, sub string, f *Fixture, name s
 		return out, nil, fmt.Errorf("could not read the working directory afterwards: %w", err)
 	}
 	return out, changesAgainst(baseline, after), nil
+}
+
+// panicked reports whether a generated program stopped on a Go runtime panic
+// rather than running to the end.
+//
+// It is the measure of whether a partial conversion is usable. A program that
+// builds and then dies on the first row of real data teaches nothing about the
+// lines below the one that died, however well those lines converted.
+func panicked(out Output) bool {
+	s := string(out.Stderr)
+	return strings.HasPrefix(s, "panic: ") || strings.Contains(s, "\npanic: ")
 }
 
 // driftNotes reports where live perl no longer agrees with what the entry

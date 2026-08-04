@@ -1,6 +1,6 @@
 # Tier 2 corpus - script-shaped Perl programs
 
-65 entries. Each is a self-contained, realistic Perl script of the kind a
+66 entries. Each is a self-contained, realistic Perl script of the kind a
 sysadmin or data wrangler actually writes, not a snippet.
 
 ## Layout of an entry
@@ -112,6 +112,7 @@ Two entries exit non-zero on purpose: **27** (65) and **32** (1). The rest exit 
 | 63 | `63-nested-mixed-and-read-autoviv` | Nested hashes that are records, and read-autovivification, neither of which converts yet | literal keys with mixed value kinds under one key, `push` into a nested list field, a nested read that creates the level above it |
 | 64 | `64-code-refs-called` | Calling through a code reference, in every shape a script does it | a factory returning several closures over one variable, `$code->(@array)` and the mixed forms, a hash of code refs read by variable key, `$h{$k} \|\| sub {...}` as a fallback |
 | 65 | `65-recursive-closures` | Closures that take records and closures that call themselves, neither of which converts yet | a ternary of comparators reading `$_[0]{field}`, `my $f; $f = sub { ... $f->(...) }`, a table whose members call each other through it |
+| 66 | `66-reads-past-the-end` | Reading and writing an array outside its range, which does not convert yet | `$a[99]` and `$empty[0]`, `$a[6] = ...` growing the array, `$a[-1]` on both sides of an assignment, `$lines[-1] .= ...`, `$#a = 2` as a place |
 
 ## Coverage map
 
@@ -131,7 +132,7 @@ Two entries exit non-zero on purpose: **27** (65) and **32** (1). The rest exit 
 - **Object shapes** - 36
 - **Blocks as terms** - 38; the slurp form of it in 21
 - **Arithmetic and argument typing** - 39, 40
-- **List and string surgery** - 41; the whole of `splice` in tier1 12
+- **List and string surgery** - 41, 66; the whole of `splice` in tier1 12
 - **Nested data and its types** - 42, 45, 46; also 06, 07, 08
 - **Paths and temporary trees** - 43, 44, 49, 50, 56
 - **Time** - 47, 48

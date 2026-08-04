@@ -80,6 +80,12 @@ type Quality struct {
 	// Refusals and Approximations count reported constructs across the run.
 	Refusals       int `json:"refusals"`
 	Approximations int `json:"approximations"`
+	// Crashes counts the programs that built and then stopped on a runtime
+	// panic instead of running to the end. A refusal that leaves a program
+	// unable to finish is worth less than the same refusal that lets the
+	// converted parts run, so this is the number that says whether a partial
+	// conversion is usable.
+	Crashes int `json:"crashes"`
 }
 
 // DynamicRate is the share of variables that stayed dynamic, in the range 0 to
@@ -212,6 +218,7 @@ func Summarize(results []EntryResult) ([]TierScore, TierScore) {
 		t.Quality.SymbolsTyped += r.Quality.SymbolsTyped
 		t.Quality.Refusals += r.Quality.Refusals
 		t.Quality.Approximations += r.Quality.Approximations
+		t.Quality.Crashes += r.Quality.Crashes
 	}
 
 	for _, r := range results {

@@ -1,0 +1,9 @@
+authors: list of 2 item(s)
+meta: record with 2 field(s)
+tables: list of 2 item(s)
+title: scalar 'Quarterly report'
+authors: ada, grace
+year: 2024 quarter: 3
+table sales   2 row(s) first=north/12
+table errors  0 row(s) (empty)
+missing key is undef

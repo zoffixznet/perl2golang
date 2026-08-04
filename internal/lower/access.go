@@ -247,20 +247,21 @@ func (l *Lowerer) noteDeepRead(n *ast.HashIndex) {
 //
 // A nested Perl structure often leaves inference with nothing to go on, and
 // the value lands as `any`. Go will not index an interface value, so the type
-// has to be asserted. The assertion panics when the value is something else,
-// which is exactly the moment the developer wants to hear about it.
+// has to be read out of it. A plain assertion would stop the program the
+// moment the value turned out to be something else, which is the whole
+// program lost to one line the inference did not work out, so the read goes
+// through the two-result form instead.
 func (l *Lowerer) asMap(x ir.Expr, at ast.Node) ir.Expr {
 	if typeOrAny(x).Kind != ir.Any {
 		return x
 	}
-	want := ir.MapOf(ir.TAny)
-	out := &ir.TypeAssert{X: x, Assert: want}
-	out.T = want
+	out := l.tolerantAs(x, ir.MapOf(ir.TAny))
 	l.note(out, "This value's type did not resolve, so it is held as `any`. Go will "+
-		"not index an interface value: the assertion says what it is expected to be, "+
-		"and panics on the spot if it turns out to be something else. The two-result "+
-		"form of an assertion asks the same question without panicking.",
-		"type-assertions-and-switches")
+		"not index an interface value, so it has to be read as a map first. A plain "+
+		"assertion, x.(map[string]any), stops the program if the value turns out to "+
+		"be something else; this is the two-result form, which asks instead and "+
+		"gives an empty map when the answer is no.",
+		"type-assertions-and-switches", "comma-ok-idiom")
 	return out
 }
 
@@ -269,13 +270,21 @@ func (l *Lowerer) asSlice(x ir.Expr, at ast.Node) ir.Expr {
 	if typeOrAny(x).Kind != ir.Any {
 		return x
 	}
-	want := ir.SliceOf(ir.TAny)
-	out := &ir.TypeAssert{X: x, Assert: want}
-	out.T = want
-	l.note(out, "A value declared as `any` cannot be indexed directly. The assertion "+
-		"states what it should be; if the program is right, it costs nothing, and if "+
-		"it is wrong, it stops here rather than further along.",
-		"type-assertions-and-switches")
+	out := l.tolerantAs(x, ir.SliceOf(ir.TAny))
+	l.note(out, "A value declared as `any` cannot be indexed directly, so it is read "+
+		"as a slice first. Reading it with the two-result form rather than asserting "+
+		"it means a value that turns out to be something else leaves an empty list "+
+		"here rather than stopping the program.",
+		"type-assertions-and-switches", "comma-ok-idiom")
+	return out
+}
+
+// tolerantAs builds the read of a dynamic value as a type, in the form that
+// yields the zero value rather than stopping the program when the value turns
+// out to hold something else.
+func (l *Lowerer) tolerantAs(x ir.Expr, want *ir.Type) *ir.Call {
+	out := l.helperCall(hAs, want, x)
+	out.TypeArgs = []*ir.Type{want}
 	return out
 }
 

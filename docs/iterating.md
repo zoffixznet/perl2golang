@@ -41,7 +41,12 @@ exist to prove the tool fails well. A skipped check never counts as a pass.
 Under the table:
 
 - **Quality** counts TODOs left in the output, how often type inference gave up,
-  and how many constructs were refused or approximated.
+  how many constructs were refused or approximated, and how many built programs
+  stopped on a runtime panic instead of running to the end. That last number is
+  the one that says whether a partial conversion is usable: a program that dies
+  on its fourth line teaches nothing about the forty lines below it, however
+  well they converted. Drive it towards zero even when it costs nothing on the
+  other columns.
 - **Where entries fall over first** groups every failing entry under the
   earliest stage it failed, with the reason. This is the list to pick from.
 - **Corpus notes** appear when an entry's own files contradict its row in

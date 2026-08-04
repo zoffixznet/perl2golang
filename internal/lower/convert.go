@@ -391,12 +391,18 @@ func (l *Lowerer) assertTo(x ir.Expr, want *ir.Type) ir.Expr {
 	if lit, ok := x.(*ir.Lit); ok && lit.Kind == ir.LitNil {
 		return zeroOf(want)
 	}
-	out := &ir.TypeAssert{X: x, Assert: want}
-	out.T = want
+	// A bare `x.(T)` stops the program the moment the guess is wrong, and a
+	// value of no fixed type is exactly where the guess can be wrong: this is
+	// the type inference saying it did not work the value out. The helper is
+	// the two-result form, which asks rather than insists, so a wrong guess
+	// leaves an empty collection or a nil record and the lines below still
+	// run. Where the type is known, neither shape is emitted at all.
+	out := l.tolerantAs(x, want)
 	l.note(out, "This value is held in an any, so Go needs to be told what it is "+
-		"before it can be used as one. The assertion panics if the value turns out "+
-		"to be something else; the two-result form asks instead of insisting.",
-		"type-assertions-and-switches")
+		"before it can be used as one. A plain assertion, x.(T), panics when the "+
+		"value turns out to be something else; this is the two-result form, which "+
+		"asks instead of insisting and gives the zero value when the answer is no.",
+		"type-assertions-and-switches", "comma-ok-idiom")
 	return out
 }
 

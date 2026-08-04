@@ -127,6 +127,7 @@ func renderQuality(w io.Writer, sc *Scorecard) {
 	fmt.Fprintf(w, "  dynamic fallback         %d of %d symbols (%.1f%%)\n", dynamic, q.Symbols, 100*q.DynamicRate())
 	fmt.Fprintf(w, "  constructs refused       %d\n", q.Refusals)
 	fmt.Fprintf(w, "  constructs approximated  %d\n", q.Approximations)
+	fmt.Fprintf(w, "  programs that panicked   %d\n", q.Crashes)
 }
 
 func renderFailures(w io.Writer, sc *Scorecard, opts RenderOptions) {
