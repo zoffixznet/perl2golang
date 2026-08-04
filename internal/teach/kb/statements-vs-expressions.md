@@ -98,6 +98,65 @@ func main() {
 ./sample.go:6:7: syntax error: unexpected keyword if, expected expression
 ```
 
+## The sub body is an expression too
+
+The same rule runs one level up. A Perl sub yields whatever it evaluated last, so the `return` is optional and experienced Perl leaves it out whenever the sub is short. The three shapes below are all one line, and none of them says what it hands back:
+
+```perl
+package Counter;
+sub new   { bless { n => 0, step => 1 }, shift }   # value: the new object
+sub total { $_[0]{n} }                             # value: a field
+sub twice { double( double( $_[0] ) ) }            # value: a call's result
+```
+
+Go has no such rule anywhere: a function with results must reach a `return`, and a function without results has no value to give. So each of those grows a `return`, and the type it returns becomes part of the function's signature — which is the point, because that signature is now the documentation the Perl never had.
+
+The constructor is worth reading closely, because it is the one shape Perl developers expect Go to have and it does not. Go has no constructors, no `new` keyword for your own types, and no way to hook object creation. A plain function returning `*T`, named `New` followed by the type name, is the entire convention:
+
+```go
+package main
+
+import "fmt"
+
+// Counter is what `package Counter` and its `bless` became.
+type Counter struct {
+	N    int
+	Step int
+}
+
+// NewCounter is the whole of `sub new { bless { n => 0, step => 1 }, shift }`.
+func NewCounter() *Counter {
+	return &Counter{N: 0, Step: 1}
+}
+
+func (c *Counter) Bump() int {
+	c.N += c.Step
+	return c.N
+}
+
+// Total is the accessor `sub total { $_[0]{n} }`, and in Go it should not
+// exist at all: N is exported, so a caller reads it directly.
+func (c *Counter) Total() int {
+	return c.N
+}
+
+func main() {
+	c := NewCounter()
+	for range 3 {
+		c.Bump()
+	}
+	fmt.Printf("counter reached %d\n", c.Total())
+	fmt.Printf("or just read the field: %d\n", c.N)
+}
+```
+
+```
+counter reached 3
+or just read the field: 3
+```
+
+Two habits to bring across and one to drop. Bring across: the constructor sets every field that has a non-zero starting value, and says nothing about the ones that start at zero, because Go already did. Bring across: `NewCounter` returns `*Counter` rather than `Counter`, so every caller is on the pointer side and the mutating methods work without a surprise (`methods-and-receivers` has the rule). Drop: the accessor. `Total` earns its place only when it computes something or when an interface has to promise it; a plain field is already a public interface in Go, and adding a method later changes no caller.
+
 ## What the operator hands back
 
 Separating statements from expressions has a second consequence, and it is the one that produces wrong answers rather than compile errors: several Perl operators hand back a value that Go's nearest equivalent does not.

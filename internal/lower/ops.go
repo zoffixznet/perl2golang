@@ -139,6 +139,22 @@ func typeOrAny(x ir.Expr) *ir.Type {
 	return x.Type()
 }
 
+// typeOr answers with a fallback where a type was never worked out.
+func typeOr(t, fallback *ir.Type) *ir.Type {
+	if t == nil {
+		return fallback
+	}
+	return t
+}
+
+// isNilLit reports whether an expression is a bare nil. Go's short
+// declaration form cannot infer a type from one, so a declaration
+// initialised with nothing has to say what it holds.
+func isNilLit(x ir.Expr) bool {
+	lit, ok := x.(*ir.Lit)
+	return ok && lit.Kind == ir.LitNil
+}
+
 // modulo lowers %, which is one of the genuine semantic traps.
 func (l *Lowerer) modulo(n *ast.BinOp) ir.Expr {
 	lx := l.toInt(l.scalar(n.L), n.L)

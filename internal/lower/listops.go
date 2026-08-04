@@ -614,8 +614,18 @@ func (l *Lowerer) mapToHash(n *ast.Call, want *ir.Type) (ir.Expr, bool) {
 	l.topicStack = append(l.topicStack, item)
 	defer func() { l.topicStack = l.topicStack[:len(l.topicStack)-1] }()
 
+	// The key and the value are evaluated once per element, so whatever setup
+	// they need belongs inside the loop. Lowering them with the queue emptied
+	// first is what separates their statements from the ones already waiting
+	// in the enclosing block; putting the queue back afterwards leaves those
+	// where they were.
+	savedPre := l.pre
+	l.pre = nil
 	key := l.toStr(l.expr(pair[0]), pair[0])
 	value := l.expr(pair[1])
+	inner := l.takePre()
+	l.pre = savedPre
+
 	mapT := ir.MapOf(typeOrAny(value))
 	if want != nil && want.Kind != ir.Any {
 		mapT = ir.MapOf(join(typeOrAny(value), want))
@@ -628,10 +638,10 @@ func (l *Lowerer) mapToHash(n *ast.Call, want *ir.Type) (ir.Expr, bool) {
 		Value:  item,
 		X:      src,
 		Define: true,
-		Body: &ir.Block{Stmts: []ir.Stmt{
+		Body: &ir.Block{Stmts: append(inner,
 			assign("=", []ir.Expr{index(ir.NewIdent(name, mapT), key, elemOf(mapT))},
 				[]ir.Expr{l.assignable(value, elemOf(mapT), pair[1])}),
-		}},
+		)},
 	}
 	l.setProv(decl, n)
 	l.note(decl, "`my %seen = map { $_ => 1 } @list` builds a lookup table through a "+

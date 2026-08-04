@@ -1,6 +1,6 @@
 # Tier 2 corpus - script-shaped Perl programs
 
-70 entries. Each is a self-contained, realistic Perl script of the kind a
+81 entries. Each is a self-contained, realistic Perl script of the kind a
 sysadmin or data wrangler actually writes, not a snippet.
 
 ## Layout of an entry
@@ -117,6 +117,17 @@ Two entries exit non-zero on purpose: **27** (65) and **32** (1). The rest exit 
 | 68 | `68-child-status-and-forks` | The process half of running a program, which does not convert yet | `$?` after a pipe close, `2>&1` and `2>/dev/null` inside a command, `fork` and `waitpid`, `$^X` |
 | 69 | `69-flattening-lists` | Lists are flat, and that rule decides how many results half the idioms produce | `map` blocks whose value is a list, a dereferenced array or a repetition, `( $_ ) x 2` versus `"ab" x 2`, two hashes spliced into one literal, an array in the middle of a list |
 | 70 | `70-hash-slices-as-places` | A hash slice on the left of an assignment or inside a delete, which does not convert yet | `@h{@keys} = @vals`, a literal key slice, a short right-hand side leaving undefs, `delete @h{...}` returning the removed values |
+| 71 | `71-optional-values-in-a-hash` | A settings table where "unset" and "zero" are different answers | a key set to 0, a key set to undef, a key never mentioned, `exists` against `defined`, `//` and `||` side by side |
+| 72 | `72-undef-through-a-sub` | The same absence crossing a sub boundary, which does not convert yet | undef returned from a sub, passed as an argument, and stored in a container it does not otherwise widen |
+| 73 | `73-growing-an-array-by-writing` | An array that stretches to fit whatever is written into it | a write past the end at a literal index, the gap it opens holding undef, `$#a` after the growth |
+| 74 | `74-a-computed-index-past-the-end` | The same stretching with an index the converter cannot see | `+=` at an index from a modulus, `defined` over a computed hole, a read past the end in a loop |
+| 75 | `75-case-folding-and-splicing` | What a replacement template cannot say, and a call that edits its argument | `\U` and `\E` in a replacement, `substr` as a place, four-argument `substr` |
+| 76 | `76-captures-after-the-match` | Capture variables that outlive the match, which does not convert | `$1` read after the block that matched, a failed match leaving the last answer standing, `` $` `` and `$'` |
+| 77 | `77-draining-a-worklist` | Emptying a list, where the test is "was there one" and not "was it true" | `while (defined(my $job = shift @queue))`, a queue holding 0, the truth-test version beside it |
+| 78 | `78-a-lookup-that-finds-nothing` | A lookup that can fail, which does not convert | a key absent from the hash rather than set to undef, `exists`, a default supplied at the read |
+| 79 | `79-a-scanning-tokeniser` | A hand-written lexer, where the position lives on the string | `\G` with `/g` in scalar context, `pos`, alternation over token kinds |
+| 80 | `80-a-scan-anchor-in-the-middle` | The scan anchor where it cannot be an anchor, which does not convert | `\G` away from the start of the pattern, and `\G` without `/g` |
+| 81 | `81-a-one-line-constructor` | A sub's value is whatever it evaluated last, in the four shapes ordinary code writes | `sub new { bless {...}, shift }`, a `$_[0]{field}` accessor, a sub whose value is a call, a sub returning nothing assigned to a scalar, `map { KEY => VALUE }` needing per-element setup |
 
 ## Coverage map
 
@@ -145,3 +156,7 @@ Two entries exit non-zero on purpose: **27** (65) and **32** (1). The rest exit 
 - **Processes** - 57, 67, 68
 - **Regex in list context** - 58, 59
 - **Option blocks** - 26, 37, 60, 61; manual parsing in 25
+- **Absence: undef against missing** - 71, 72, 78; the tier1 study of it in 45
+- **Arrays outside their range** - 66, 73, 74
+- **Match state that outlives the match** - 76, 79, 80
+- **Implicit returns** - 81; the constructor shape of it in tier3 34

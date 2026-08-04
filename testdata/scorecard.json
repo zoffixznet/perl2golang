@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T10:42:36Z",
+  "recorded": "2026-08-15T11:06:53Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -54,89 +54,89 @@
     },
     {
       "tier": "tier2",
-      "entries": 80,
+      "entries": 81,
       "stages": {
         "compiled": {
-          "pass": 79,
+          "pass": 80,
           "fail": 1,
           "skip": 0
         },
         "emitted": {
-          "pass": 80,
+          "pass": 81,
           "fail": 0,
           "skip": 0
         },
         "equivalent": {
-          "pass": 44,
+          "pass": 45,
           "fail": 36,
           "skip": 0
         },
         "translated": {
-          "pass": 72,
+          "pass": 73,
           "fail": 8,
           "skip": 0
         },
         "typed": {
           "pass": 40,
-          "fail": 40,
+          "fail": 41,
           "skip": 0
         }
       },
       "equivalent_annotated": {
-        "pass": 44,
+        "pass": 45,
         "fail": 36,
         "skip": 0
       },
       "quality": {
         "todos": 16,
-        "symbols": 1323,
-        "symbols_typed": 1142,
+        "symbols": 1334,
+        "symbols_typed": 1152,
         "refusals": 16,
-        "approximations": 484,
+        "approximations": 485,
         "crashes": 3
       }
     },
     {
       "tier": "tier3",
-      "entries": 33,
+      "entries": 34,
       "stages": {
         "compiled": {
-          "pass": 27,
+          "pass": 28,
           "fail": 6,
           "skip": 0
         },
         "emitted": {
-          "pass": 33,
+          "pass": 34,
           "fail": 0,
           "skip": 0
         },
         "equivalent": {
           "pass": 7,
-          "fail": 26,
+          "fail": 27,
           "skip": 0
         },
         "translated": {
-          "pass": 20,
+          "pass": 21,
           "fail": 13,
           "skip": 0
         },
         "typed": {
-          "pass": 7,
+          "pass": 8,
           "fail": 26,
           "skip": 0
         }
       },
       "equivalent_annotated": {
         "pass": 7,
-        "fail": 26,
+        "fail": 27,
         "skip": 0
       },
       "quality": {
         "todos": 53,
-        "symbols": 864,
-        "symbols_typed": 683,
+        "symbols": 874,
+        "symbols_typed": 693,
         "refusals": 56,
-        "approximations": 309,
+        "approximations": 312,
         "crashes": 1
       }
     },
@@ -145,8 +145,8 @@
       "entries": 36,
       "stages": {
         "compiled": {
-          "pass": 31,
-          "fail": 5,
+          "pass": 34,
+          "fail": 2,
           "skip": 0
         },
         "emitted": {
@@ -155,13 +155,13 @@
           "skip": 0
         },
         "honest": {
-          "pass": 27,
-          "fail": 8,
+          "pass": 28,
+          "fail": 7,
           "skip": 1
         },
         "translated": {
-          "pass": 23,
-          "fail": 13,
+          "pass": 22,
+          "fail": 14,
           "skip": 0
         },
         "typed": {
@@ -176,11 +176,11 @@
         "skip": 0
       },
       "quality": {
-        "todos": 35,
+        "todos": 38,
         "symbols": 159,
         "symbols_typed": 110,
-        "refusals": 36,
-        "approximations": 64,
+        "refusals": 38,
+        "approximations": 62,
         "crashes": 0
       }
     },
@@ -224,66 +224,66 @@
         "symbols": 924,
         "symbols_typed": 846,
         "refusals": 6,
-        "approximations": 198,
+        "approximations": 199,
         "crashes": 1
       }
     }
   ],
   "total": {
     "tier": "TOTAL",
-    "entries": 219,
+    "entries": 221,
     "stages": {
       "compiled": {
-        "pass": 205,
-        "fail": 14,
+        "pass": 210,
+        "fail": 11,
         "skip": 0
       },
       "emitted": {
-        "pass": 219,
+        "pass": 221,
         "fail": 0,
         "skip": 0
       },
       "equivalent": {
-        "pass": 99,
-        "fail": 84,
+        "pass": 100,
+        "fail": 85,
         "skip": 0
       },
       "honest": {
-        "pass": 27,
-        "fail": 8,
+        "pass": 28,
+        "fail": 7,
         "skip": 1
       },
       "translated": {
-        "pass": 182,
-        "fail": 37,
+        "pass": 183,
+        "fail": 38,
         "skip": 0
       },
       "typed": {
-        "pass": 102,
-        "fail": 117,
+        "pass": 103,
+        "fail": 118,
         "skip": 0
       }
     },
     "equivalent_annotated": {
-      "pass": 99,
-      "fail": 84,
+      "pass": 100,
+      "fail": 85,
       "skip": 0
     },
     "quality": {
-      "todos": 110,
-      "symbols": 3762,
-      "symbols_typed": 3237,
-      "refusals": 114,
-      "approximations": 1139,
+      "todos": 113,
+      "symbols": 3783,
+      "symbols_typed": 3257,
+      "refusals": 116,
+      "approximations": 1142,
       "crashes": 5
     }
   },
   "quality": {
-    "todos": 110,
-    "symbols": 3762,
-    "symbols_typed": 3237,
-    "refusals": 114,
-    "approximations": 1139,
+    "todos": 113,
+    "symbols": 3783,
+    "symbols_typed": 3257,
+    "refusals": 116,
+    "approximations": 1142,
     "crashes": 5
   },
   "entries": [
@@ -4947,6 +4947,43 @@
       }
     },
     {
+      "tier": "tier2",
+      "name": "81-a-one-line-constructor",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "pass"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "1 variable left dynamic out of 11"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "pass"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 11,
+        "symbols_typed": 10,
+        "refusals": 0,
+        "approximations": 1,
+        "crashes": 0
+      }
+    },
+    {
       "tier": "tier3",
       "name": "01-inventory-manager",
       "kind": "convert",
@@ -5660,15 +5697,14 @@
       "kind": "convert",
       "stages": {
         "compiled": {
-          "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:204:25: undefined: item10"
+          "outcome": "pass"
         },
         "emitted": {
           "outcome": "pass"
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "the generated program did not compile"
+          "reason": "stdout differs: line 21, byte 535: got \"0 units (ends at compile-cli)\\nco...\", wanted \"22 units (ends at publish)\\ncorru...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -5683,7 +5719,7 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "the generated program did not compile"
+        "reason": "stdout differs: line 21, byte 535: got \"0 units (ends at compile-cli)\\nco...\", wanted \"22 units (ends at publish)\\ncorru...\""
       },
       "quality": {
         "todos": 0,
@@ -6153,7 +6189,7 @@
         "symbols": 16,
         "symbols_typed": 4,
         "refusals": 0,
-        "approximations": 3,
+        "approximations": 4,
         "crashes": 0
       }
     },
@@ -6229,6 +6265,45 @@
         "symbols_typed": 14,
         "refusals": 0,
         "approximations": 3,
+        "crashes": 0
+      }
+    },
+    {
+      "tier": "tier3",
+      "name": "34-named-arguments-as-a-hash",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:19:46: undefined: args"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 10,
+        "symbols_typed": 10,
+        "refusals": 0,
+        "approximations": 2,
         "crashes": 0
       }
     },
@@ -6936,8 +7011,7 @@
       ],
       "stages": {
         "compiled": {
-          "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:41:16: NewA() (no value) used as value or type"
+          "outcome": "pass"
         },
         "emitted": {
           "outcome": "pass"
@@ -6960,7 +7034,7 @@
         "outcome": "n/a"
       },
       "quality": {
-        "todos": 1,
+        "todos": 2,
         "symbols": 7,
         "symbols_typed": 7,
         "refusals": 2,
@@ -7017,8 +7091,7 @@
       ],
       "stages": {
         "compiled": {
-          "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:32:83: undefined: m"
+          "outcome": "pass"
         },
         "emitted": {
           "outcome": "pass"
@@ -7027,11 +7100,11 @@
           "outcome": "n/a"
         },
         "honest": {
-          "outcome": "fail",
-          "reason": "refuse-statement: nothing was refused, the construct went through unreported"
+          "outcome": "pass"
         },
         "translated": {
-          "outcome": "pass"
+          "outcome": "fail",
+          "reason": "2 untranslated constructs"
         },
         "typed": {
           "outcome": "pass"
@@ -7041,11 +7114,11 @@
         "outcome": "n/a"
       },
       "quality": {
-        "todos": 0,
+        "todos": 2,
         "symbols": 4,
         "symbols_typed": 4,
-        "refusals": 0,
-        "approximations": 2,
+        "refusals": 2,
+        "approximations": 0,
         "crashes": 0
       }
     },
@@ -7537,8 +7610,7 @@
       ],
       "stages": {
         "compiled": {
-          "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:26:8: use of untyped nil in assignment"
+          "outcome": "pass"
         },
         "emitted": {
           "outcome": "pass"
@@ -7548,7 +7620,7 @@
         },
         "honest": {
           "outcome": "fail",
-          "reason": "convert-verify: the generated program did not compile"
+          "reason": "convert-verify: stdout differs: line 1, byte 15: got \"1 elements\\nundef in list: 1 elem...\", wanted \"0 elements\\nundef in list: 1 elem...\""
         },
         "translated": {
           "outcome": "pass"
@@ -7992,7 +8064,7 @@
         "symbols": 20,
         "symbols_typed": 20,
         "refusals": 0,
-        "approximations": 8,
+        "approximations": 7,
         "crashes": 0
       }
     },
@@ -8489,7 +8561,7 @@
         "symbols": 41,
         "symbols_typed": 38,
         "refusals": 0,
-        "approximations": 7,
+        "approximations": 9,
         "crashes": 0
       }
     },

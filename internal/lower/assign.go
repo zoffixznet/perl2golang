@@ -376,6 +376,12 @@ func (l *Lowerer) declareSingle(v *ast.Var, n *ast.Assign) []ir.Stmt {
 			"is declared at package level and this line sets its starting value.",
 			"packages-and-exported-names", "closures-and-loop-capture")
 		return []ir.Stmt{st}
+	case isNilLit(coerced):
+		// Nothing on the right, which is what `my $x = undef` says outright
+		// and what `my $x = f()` says when f returns no value at all. The
+		// short form has no type to infer from a bare nil, so the type is
+		// written and the zero value is left to stand for the nil.
+		st = &ir.DeclStmt{Names: []string{b.Go}, Type: typeOr(b.Type, ir.TAny)}
 	case b.Type == nil || typeOrAny(coerced).Equal(b.Type):
 		st = assign(":=", []ir.Expr{ir.NewIdent(b.Go, b.Type)}, []ir.Expr{coerced})
 	case b.Type.Kind == ir.Any:

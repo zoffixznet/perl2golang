@@ -923,6 +923,28 @@ func yieldsValue(e ast.Expr) bool {
 		return true
 	case *ast.UnOp:
 		return n.Op != "++" && n.Op != "--"
+	case *ast.Call:
+		// A call is the sub's value too, which matters most for the
+		// one-line constructor `sub new { bless {}, shift }`: `bless` becomes
+		// a composite literal rather than a Go call, and a composite literal
+		// is no more a statement in Go than a bare value is, so without this
+		// the whole body would vanish and the constructor would return
+		// nothing at all. The builtins that exist only for their effect are
+		// the exceptions; their value is one nobody reads.
+		return !effectOnlyCall[n.Name]
 	}
 	return false
+}
+
+// effectOnlyCall lists the builtins a sub can end with without meaning to
+// return anything. Perl gives every one of them a value, but it is a value
+// written for the interpreter rather than for the reader: `push` hands back
+// the new length and `print` hands back 1, and a Go function returning either
+// would be answering a question nobody asked.
+var effectOnlyCall = map[string]bool{
+	"print": true, "say": true, "printf": true, "push": true, "unshift": true,
+	"chomp": true, "chop": true, "die": true, "warn": true, "exit": true,
+	"close": true, "open": true, "opendir": true, "closedir": true,
+	"return": true, "local": true, "next": true, "last": true, "redo": true,
+	"goto": true,
 }

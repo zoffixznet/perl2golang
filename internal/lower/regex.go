@@ -61,6 +61,17 @@ func (l *Lowerer) patternOf(e ast.Expr) (ir.Expr, bool) {
 // compiledPattern turns a pattern into a Go *regexp.Regexp expression.
 func (l *Lowerer) compiledPattern(rx *ast.Regex, at ast.Node) (ir.Expr, bool) {
 	if interpolated(rx) {
+		// The parts around the variables are still pattern text, and a
+		// construct RE2 does not have is no more expressible for being next
+		// to a variable. Checking them here is what stops `(?{ $n++ })` from
+		// being read as an interpolation and pasted into a pattern string,
+		// which produces something that is not a pattern at all.
+		if feature, bad := unsupportedFeature(literalParts(rx)); bad {
+			todo := l.refuse(at, feature.code, feature.name,
+				feature.short, feature.message, feature.advice, "regexp-is-re2")
+			l.patternTodo = &todo
+			return nil, false
+		}
 		// The pattern is only known at run time, so it is compiled where it is
 		// used rather than once at start-up.
 		return l.runtimePattern(l.patternText(rx, at), at), true
@@ -160,6 +171,22 @@ func interpolated(rx *ast.Regex) bool {
 		}
 	}
 	return false
+}
+
+// literalParts joins the parts of an interpolated pattern that are written
+// out, with a placeholder standing in for each variable. The placeholder keeps
+// the pieces from running together, so that a construct spanning the join is
+// not invented out of two innocent halves.
+func literalParts(rx *ast.Regex) string {
+	var b strings.Builder
+	for _, p := range rx.Parts {
+		if s, ok := p.(*ast.StrLit); ok {
+			b.WriteString(s.Value)
+			continue
+		}
+		b.WriteByte('\x00')
+	}
+	return b.String()
 }
 
 // patternText builds the Go expression for an interpolated pattern.
