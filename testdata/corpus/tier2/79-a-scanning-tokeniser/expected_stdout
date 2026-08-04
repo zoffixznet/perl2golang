@@ -1,0 +1,8 @@
+11 tokens: NUM(12) OP(+) NUM(34) OP(*) PAREN(() NUM(5) OP(-) NUM(6) PAREN()) OP(/) NUM(7)
+--- the same walk over a key=value string ---
+read 3 settings, stopped at 26 of 26
+  host  web1
+  port  8080
+  tls   on
+--- a branch whose test costs something ---
+taken: a,b,full,full,full, 1 left in the queue

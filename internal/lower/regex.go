@@ -211,8 +211,51 @@ func (l *Lowerer) translatePattern(rx *ast.Regex, at ast.Node) (string, bool) {
 	}
 	body = renameCaptures(body)
 	body = translateAnchors(body, rx.Mods, l, at)
+	body, ok := l.translateScanAnchor(body, rx, at)
+	if !ok {
+		return "", false
+	}
 
 	return goFlags(rx.Mods) + body, true
+}
+
+// translateScanAnchor deals with \G, which anchors a match at the position the
+// last one left behind.
+//
+// Go's regexp has no such anchor and no notion of a position on a string, but
+// the scan that carries the position hands the engine the text from that
+// position onwards, and there `^` means exactly what \G meant. Anywhere else
+// the anchor has nothing to refer to, so it is refused rather than quietly
+// dropped: a tokeniser whose \G is missing matches the next token anywhere in
+// the input instead of at the cursor, and produces a plausible wrong answer.
+func (l *Lowerer) translateScanAnchor(body string, rx *ast.Regex, at ast.Node) (string, bool) {
+	if !strings.Contains(body, `\G`) {
+		return body, true
+	}
+	if strings.HasPrefix(body, `\G`) && strings.Contains(rx.Mods, "g") {
+		rest := body[2:]
+		if !strings.Contains(rest, `\G`) {
+			l.inform(at, "P2G4090", `\G anchor`,
+				"\\G anchors the match where the last one on this variable stopped. Go "+
+					"keeps no such position, so the walk carries it in a variable and hands "+
+					"the engine the text from there onwards. Against that text `^` is the "+
+					"same anchor, which is why it reads as an ordinary start-of-string "+
+					"anchor here.",
+				"regexp-is-re2")
+			return "^" + rest, true
+		}
+	}
+	todo := l.refuse(at, "P2G4090", `\G`,
+		"\\G is only available at the start of a global match",
+		"\\G anchors a match at the position the previous match on the same variable "+
+			"left behind. Go's regexp has no anchor for it and no position to anchor to; "+
+			"the converter can express it only as the start of the text a scanning loop "+
+			"hands the engine, which means at the start of a pattern used with /g.",
+		"Give the walk an explicit index and match against the remaining text, "+
+			"which is what the scanning form does and what makes \\G expressible at all.",
+		"regexp-is-re2")
+	l.patternTodo = &todo
+	return "", false
 }
 
 // goFlags renders the Perl modifiers Go can express as an inline flag group.

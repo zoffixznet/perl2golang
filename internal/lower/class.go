@@ -43,6 +43,11 @@ type Class struct {
 	// Blessed records that something in the package blesses a reference,
 	// which is what distinguishes a class from a plain namespace.
 	Blessed bool
+	// Exports records that the package hands its subs out for other files to
+	// call by name, through @EXPORT or @EXPORT_OK. A package that does that
+	// is a namespace: nobody exports a method, because a method is reached
+	// through the object rather than by name.
+	Exports bool
 	// Overloads names the operators `use overload` gave the class, which Go
 	// has no way to hook at all.
 	Overloads map[string]bool
@@ -250,6 +255,9 @@ func (l *Lowerer) collectClasses() {
 					c.ISAAt = n
 				}
 			}
+			if exportsSubs(n.X) {
+				c.Exports = true
+			}
 		}
 	}
 	// A bless naming a package makes that package a class even when the
@@ -393,12 +401,44 @@ func (l *Lowerer) isClass(c *Class, seen map[*Class]bool) bool {
 			return true
 		}
 	}
+	// A package that exports its subs is a namespace and its subs are
+	// functions. The shape test below cannot tell them apart on its own: a
+	// function whose first argument is a hash reference reaches through it
+	// with an arrow exactly as a method reaches through its object, so
+	// `sub summarize { my ($freq) = @_; ... $freq->{$w} ... }` looks like a
+	// method and is not one.
+	if c.Exports {
+		return false
+	}
 	for _, sd := range c.decls {
 		if _, ok := selfParam(sd.Body); ok {
 			return true
 		}
 	}
 	return false
+}
+
+// exportsSubs reports whether a statement is `our @EXPORT = ...` or
+// `our @EXPORT_OK = ...`, which is a package saying its subs are meant to be
+// called by name from elsewhere.
+func exportsSubs(e ast.Expr) bool {
+	a, ok := e.(*ast.Assign)
+	if !ok {
+		return false
+	}
+	target := a.LHS
+	if my, isMy := target.(*ast.My); isMy && len(my.Vars) == 1 {
+		target = my.Vars[0]
+	}
+	v, ok := target.(*ast.Var)
+	if !ok || v.Sigil != '@' {
+		return false
+	}
+	name := v.Name
+	if i := strings.LastIndex(name, "::"); i >= 0 {
+		name = name[i+2:]
+	}
+	return name == "EXPORT" || name == "EXPORT_OK"
 }
 
 // classGoName turns a Perl package name into a Go type name: the colons go and

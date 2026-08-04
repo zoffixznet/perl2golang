@@ -67,6 +67,22 @@ $ go build ./...
 
 Delete the `geo.clamp` line and it builds and prints `5`. Note the caller always writes `geo.Distance` — the package name is a mandatory qualifier. There is no equivalent of importing `distance` into your own namespace; the closest thing (dot-imports) is effectively banned by convention.
 
+## A package that exports is a namespace, not a class
+
+Perl uses one keyword for two different things. `package Foo;` with `bless` in it is a class, and its subs are methods reached through an object. `package Foo;` with `our @EXPORT_OK = qw(...)` in it is a namespace, and its subs are functions the caller imports by name. Nothing in the syntax separates them, and the bodies can look identical:
+
+```perl
+sub summarize {
+    my ($freq) = @_;                 # a hash reference, not an object
+    my @words = sort { $freq->{$b} <=> $freq->{$a} } keys %$freq;
+    ...
+}
+```
+
+That first line and that arrow are exactly what a method looks like. The thing that settles it is the export list: nobody exports a method, because a method is found through the object rather than by name. In Go the two land in completely different places — one becomes a method on a struct type, the other an ordinary function in a package — and getting it wrong is not a style problem, it is a call that does not compile.
+
+The lesson for reading Perl generally: `@EXPORT`, `@EXPORT_OK` and `use Exporter` are the marks of a module meant to be *called*, and `bless`, `->new` and `$self` are the marks of one meant to be *instantiated*. A module with both is doing both, and its Go translation will be a type plus a few package-level functions, which is a perfectly ordinary Go package.
+
 ## The mismatch
 
 Everything you know about `@EXPORT`, `import()`, and `Sub::Exporter` simply evaporates — there is nothing to configure. The rule applies uniformly to functions, types, struct fields, methods, constants, and package-level variables, and the struct-field case is the one that bites: `encoding/json` cannot see lower-case fields, so a struct of unexported fields marshals to `{}` (see `struct-tags`). Also unlearn Perl's file-to-package looseness: in Go, one directory equals one package, every file in it declares the same `package` name, and identifiers are shared across all files of the package without any `use`. And note the flipped naming signal: in Perl, `_underscore` marks private; in Go, `Capital` marks *public*, so the default (what you type without thinking) is private — a better default than Perl's.

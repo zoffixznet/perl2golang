@@ -463,8 +463,34 @@ func (l *Lowerer) ifStmt(n *ast.If) ir.Stmt {
 	}
 	for i := len(n.ElseIfs) - 1; i >= 0; i-- {
 		ei := n.ElseIfs[i]
-		branch := &ir.If{Cond: l.cond(ei.Cond), Then: l.block(ei.Then)}
+		// An elsif condition that needs setup has to run that setup only when
+		// the branches above it have failed. Leaving it in front of the whole
+		// statement would evaluate every condition in the chain, which for a
+		// scanning match means every alternative consumes input before the
+		// first one is even tested.
+		saved := l.pre
+		l.pre = nil
+		cond := l.cond(ei.Cond)
+		branchSetup := l.takePre()
+		l.pre = saved
+
+		branch := &ir.If{Cond: cond, Then: l.block(ei.Then)}
 		branch.Else = tail
+		if len(branchSetup) > 0 {
+			if len(branchSetup) == 1 {
+				if a, ok := branchSetup[0].(*ir.Assign); ok && a.Op == ":=" {
+					branch.Init = a
+					tail = branch
+					continue
+				}
+			}
+			blk := &ir.Block{Stmts: append(branchSetup, branch)}
+			l.note(blk, "The test in this branch needs a step of its own, and that step "+
+				"belongs inside the else: running it in front of the whole chain would "+
+				"run it even when an earlier branch had already been taken.")
+			tail = blk
+			continue
+		}
 		tail = branch
 	}
 	out.Else = tail

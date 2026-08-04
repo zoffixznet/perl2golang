@@ -257,6 +257,8 @@ const (
 	RegexDollarAnchor Code = "P2G4060"
 	// RuntimePattern: the pattern text is only known at run time.
 	RuntimePattern Code = "P2G4080"
+	// ScanAnchor: `\G` anchors a match where the last one stopped.
+	ScanAnchor Code = "P2G4090"
 	// StrayCapture: a capture variable is read where no match is in scope.
 	StrayCapture Code = "P2G4110"
 )
@@ -1211,6 +1213,14 @@ var catalogue = map[Code]Entry{
 		Advice:   "hoist the pattern to a package-level `regexp.MustCompile` wherever the text turns out to be constant",
 		Cost:     "`MustCompile` cannot be used, so the emitted code handles a compile error as a value on every call",
 		Concepts: []string{"mustcompile-pattern", "errors-are-values"},
+	},
+	ScanAnchor: {
+		Severity: report.Warn,
+		Message:  "`%s` anchors the match where the last one stopped, and Go keeps no such position",
+		Short:    "the scan anchor has no Go equivalent",
+		Advice:   "carry the position in a variable and match against the text from there onwards, where `^` is the same anchor",
+		Cost:     "at the start of a pattern used with /g the emitted code anchors with `^` against the remaining text; anywhere else it is refused",
+		Concepts: []string{"regexp-is-re2"},
 	},
 	StrayCapture: {
 		Severity: report.Refuse,

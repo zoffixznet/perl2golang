@@ -1,0 +1,8 @@
+--- \G inside an alternation ---
+items: red|green|blue
+--- \G with no walk to anchor to ---
+year at the start: 2024
+--- the position after a failed match with and without /c ---
+after a match: 2
+after a failure with /c: 2
+after a failure without /c: undef

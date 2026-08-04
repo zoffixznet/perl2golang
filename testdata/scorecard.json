@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T10:27:17Z",
+  "recorded": "2026-08-15T10:42:36Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -54,46 +54,46 @@
     },
     {
       "tier": "tier2",
-      "entries": 78,
+      "entries": 80,
       "stages": {
         "compiled": {
-          "pass": 77,
+          "pass": 79,
           "fail": 1,
           "skip": 0
         },
         "emitted": {
-          "pass": 78,
+          "pass": 80,
           "fail": 0,
           "skip": 0
         },
         "equivalent": {
-          "pass": 42,
+          "pass": 44,
           "fail": 36,
           "skip": 0
         },
         "translated": {
-          "pass": 71,
-          "fail": 7,
+          "pass": 72,
+          "fail": 8,
           "skip": 0
         },
         "typed": {
-          "pass": 39,
-          "fail": 39,
+          "pass": 40,
+          "fail": 40,
           "skip": 0
         }
       },
       "equivalent_annotated": {
-        "pass": 42,
+        "pass": 44,
         "fail": 36,
         "skip": 0
       },
       "quality": {
-        "todos": 14,
-        "symbols": 1305,
-        "symbols_typed": 1126,
-        "refusals": 14,
-        "approximations": 466,
-        "crashes": 5
+        "todos": 16,
+        "symbols": 1323,
+        "symbols_typed": 1142,
+        "refusals": 16,
+        "approximations": 484,
+        "crashes": 3
       }
     },
     {
@@ -132,11 +132,11 @@
         "skip": 0
       },
       "quality": {
-        "todos": 55,
+        "todos": 53,
         "symbols": 864,
-        "symbols_typed": 680,
-        "refusals": 58,
-        "approximations": 311,
+        "symbols_typed": 683,
+        "refusals": 56,
+        "approximations": 309,
         "crashes": 1
       }
     },
@@ -231,20 +231,20 @@
   ],
   "total": {
     "tier": "TOTAL",
-    "entries": 217,
+    "entries": 219,
     "stages": {
       "compiled": {
-        "pass": 203,
+        "pass": 205,
         "fail": 14,
         "skip": 0
       },
       "emitted": {
-        "pass": 217,
+        "pass": 219,
         "fail": 0,
         "skip": 0
       },
       "equivalent": {
-        "pass": 97,
+        "pass": 99,
         "fail": 84,
         "skip": 0
       },
@@ -254,37 +254,37 @@
         "skip": 1
       },
       "translated": {
-        "pass": 181,
-        "fail": 36,
+        "pass": 182,
+        "fail": 37,
         "skip": 0
       },
       "typed": {
-        "pass": 101,
-        "fail": 116,
+        "pass": 102,
+        "fail": 117,
         "skip": 0
       }
     },
     "equivalent_annotated": {
-      "pass": 97,
+      "pass": 99,
       "fail": 84,
       "skip": 0
     },
     "quality": {
       "todos": 110,
-      "symbols": 3744,
-      "symbols_typed": 3218,
+      "symbols": 3762,
+      "symbols_typed": 3237,
       "refusals": 114,
-      "approximations": 1123,
-      "crashes": 7
+      "approximations": 1139,
+      "crashes": 5
     }
   },
   "quality": {
     "todos": 110,
-    "symbols": 3744,
-    "symbols_typed": 3218,
+    "symbols": 3762,
+    "symbols_typed": 3237,
     "refusals": 114,
-    "approximations": 1123,
-    "crashes": 7
+    "approximations": 1139,
+    "crashes": 5
   },
   "entries": [
     {
@@ -2485,8 +2485,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "exit status 2, wanted 0; stdout differs: 489 byte(s) missing after line 1, expected \"keys: key1 key2 key3 key4\\npairs ...\"; stderr differs: unexpected \"panic: regexp: Compile(`\\\\G(\\\\w+)=(\\\\w+)`): error parsing regexp: invali...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -2499,8 +2498,7 @@
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "exit status 2, wanted 0; stdout differs: 489 byte(s) missing after line 1, expected \"keys: key1 key2 key3 key4\\npairs ...\"; stderr differs: unexpected \"panic: regexp: Compile(`\\\\G(\\\\w+)=(\\\\w+)`): error parsing regexp: invali...\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
@@ -2508,8 +2506,7 @@
         "symbols_typed": 18,
         "refusals": 0,
         "approximations": 23,
-        "crashes": 1,
-        "panic": "panic: regexp: Compile(`\\G(\\w+)=(\\w+)`): error parsing regexp: invalid escape sequence: `\\G`"
+        "crashes": 0
       }
     },
     {
@@ -3009,7 +3006,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "exit status 2, wanted 0; stdout differs: 1457 byte(s) missing after line 1, expected \"columns: order_id|customer|regio...\"; stderr differs: unexpected \"panic: regexp: Compile(`\\\\G(?:\\\"((?:[^\\\"]|\\\"\\\")*)\\\"|([^,]*))(?:,|$)`): erro...\""
+          "reason": "stdout differs: line 1, byte 63: got \" 1001|Acme Ltd|north|widget|12|4...\", wanted \"\\n8 order(s) loaded\\n\\nID     CUSTO...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -3024,7 +3021,7 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "exit status 2, wanted 0; stdout differs: 1457 byte(s) missing after line 1, expected \"columns: order_id|customer|regio...\"; stderr differs: unexpected \"panic: regexp: Compile(`\\\\G(?:\\\"((?:[^\\\"]|\\\"\\\")*)\\\"|([^,]*))(?:,|$)`): erro...\""
+        "reason": "stdout differs: line 1, byte 63: got \" 1001|Acme Ltd|north|widget|12|4...\", wanted \"\\n8 order(s) loaded\\n\\nID     CUSTO...\""
       },
       "quality": {
         "todos": 0,
@@ -3032,8 +3029,7 @@
         "symbols_typed": 22,
         "refusals": 0,
         "approximations": 12,
-        "crashes": 1,
-        "panic": "panic: regexp: Compile(`\\G(?:\"((?:[^\"]|\"\")*)\"|([^,]*))(?:,|$)`): error parsing regexp: invalid escape sequence: `\\G`"
+        "crashes": 0
       }
     },
     {
@@ -4875,6 +4871,82 @@
       }
     },
     {
+      "tier": "tier2",
+      "name": "79-a-scanning-tokeniser",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "pass"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "pass"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 11,
+        "symbols_typed": 11,
+        "refusals": 0,
+        "approximations": 8,
+        "crashes": 0
+      }
+    },
+    {
+      "tier": "tier2",
+      "name": "80-a-scan-anchor-in-the-middle",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "stdout differs: line 2, byte 40: got \"\\n--- \\\\G with no walk to anchor t...\", wanted \"red|green|blue\\n--- \\\\G with no wa...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "fail",
+          "reason": "2 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "2 variables left dynamic out of 7"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "stdout differs: line 2, byte 40: got \"\\n--- \\\\G with no walk to anchor t...\", wanted \"red|green|blue\\n--- \\\\G with no wa...\""
+      },
+      "quality": {
+        "todos": 2,
+        "symbols": 7,
+        "symbols_typed": 5,
+        "refusals": 2,
+        "approximations": 10,
+        "crashes": 0
+      }
+    },
+    {
       "tier": "tier3",
       "name": "01-inventory-manager",
       "kind": "convert",
@@ -5003,30 +5075,30 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: line 6, byte 173: got \"210 / 1234567\\nmodule: TextUtil (...\", wanted \",210 / 1,234,567\\nmodule: TextUti...\"; stderr differs: unexpected \"TODO P2G3599: the word_freq function is not implemented ...\""
+          "reason": "stdout differs: line 6, byte 173: got \"210 / 1234567\\nmodule: TextUtil (...\", wanted \",210 / 1,234,567\\nmodule: TextUti...\""
         },
         "honest": {
           "outcome": "n/a"
         },
         "translated": {
           "outcome": "fail",
-          "reason": "3 untranslated constructs"
+          "reason": "1 untranslated construct"
         },
         "typed": {
           "outcome": "fail",
-          "reason": "12 variables left dynamic out of 35"
+          "reason": "9 variables left dynamic out of 35"
         }
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: line 6, byte 173: got \"210 / 1234567\\nmodule: TextUtil (...\", wanted \",210 / 1,234,567\\nmodule: TextUti...\"; stderr differs: unexpected \"TODO P2G3599: the word_freq function is not implemented ...\""
+        "reason": "stdout differs: line 6, byte 173: got \"210 / 1234567\\nmodule: TextUtil (...\", wanted \",210 / 1,234,567\\nmodule: TextUti...\""
       },
       "quality": {
-        "todos": 3,
+        "todos": 1,
         "symbols": 35,
-        "symbols_typed": 23,
-        "refusals": 3,
-        "approximations": 15,
+        "symbols_typed": 26,
+        "refusals": 1,
+        "approximations": 13,
         "crashes": 0
       }
     },

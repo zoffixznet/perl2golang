@@ -1,6 +1,6 @@
 # Perl conversion corpus
 
-217 self-contained Perl programs with recorded expectations. They are the
+219 self-contained Perl programs with recorded expectations. They are the
 reference material the converter is measured against: every entry pairs a
 real Perl program with the exact output real perl produces for it, so a
 change to the converter can be scored instead of argued about.
@@ -21,7 +21,7 @@ like once it has been made relative again.
 | Directory | Entries | Purpose |
 |---|---|---|
 | `tier1/` | 45 | Language fundamentals: scalars, numbers, arrays, hashes, control flow, sorting, strings, output, context, exit status. Small programs, one topic each. |
-| `tier2/` | 78 | Script-shaped programs: subroutines, references, nested data, closures, regex, file and stdin I/O, command-line handling, error handling, core modules. |
+| `tier2/` | 80 | Script-shaped programs: subroutines, references, nested data, closures, regex, file and stdin I/O, command-line handling, error handling, core modules. |
 | `tier3/` | 33 | Full programs of the kind that decide whether the converter is any good: object systems, operator overloading, parsers, schedulers, template engines, process control. Several span more than one file. |
 | `tier4/` | 36 | Adversarial constructs. These exist to prove the converter **fails honestly** — see below. |
 | `domain/` | 25 | Sysadmin, text-wrangling, bioinformatics and release-engineering scripts, each reading fixtures under its own `files/` directory. |
