@@ -2632,5 +2632,29 @@
     "expected_exit": 0,
     "deterministic": true,
     "kind": "convert"
+  },
+  {
+    "tier": "tier1",
+    "name": "42-what-an-operator-yields",
+    "path": "testdata/corpus/tier1/42-what-an-operator-yields",
+    "args": [],
+    "has_stdin": false,
+    "has_files": false,
+    "allow_stderr": false,
+    "expected_exit": 0,
+    "deterministic": true,
+    "kind": "convert"
+  },
+  {
+    "tier": "tier1",
+    "name": "43-case-folding-and-squeeze",
+    "path": "testdata/corpus/tier1/43-case-folding-and-squeeze",
+    "args": [],
+    "has_stdin": false,
+    "has_files": false,
+    "allow_stderr": false,
+    "expected_exit": 0,
+    "deterministic": true,
+    "kind": "convert"
   }
 ]

@@ -873,13 +873,118 @@ func (l *Lowerer) substEval(n *ast.Subst) []ir.Stmt {
 // substExpr lowers s/// used for its value, which is the number of
 // substitutions made.
 func (l *Lowerer) substExpr(n *ast.Subst) ir.Expr {
+	// /r is the one form that answers with the new text: it leaves the
+	// original alone, which is what makes it usable inside a map block.
+	if n.Pattern != nil && strings.Contains(n.Pattern.Mods, "r") {
+		if x, ok := l.substCopy(n); ok {
+			return x
+		}
+	}
+	// The count has to be taken before the substitution runs, because
+	// afterwards there is nothing left to count. Reading the target first
+	// also means substStmt's own resolution of it does not run twice.
+	count := l.substCount(n)
 	for _, st := range l.substStmt(n) {
 		l.emit(st)
+	}
+	if count != nil {
+		return count
 	}
 	if t := l.substTarget(n); t != nil {
 		return t
 	}
 	return ir.Str(`""`)
+}
+
+// substCopy lowers `s///r`, which yields the edited text and leaves the
+// variable it was applied to untouched.
+func (l *Lowerer) substCopy(n *ast.Subst) (ir.Expr, bool) {
+	target := l.peekSubstTarget(n)
+	if target == nil {
+		return nil, false
+	}
+	pattern, ok := l.patternOf(n.Pattern)
+	if !ok {
+		return nil, false
+	}
+	repl, ok := l.replacement(n)
+	if !ok {
+		return nil, false
+	}
+	var out ir.Expr
+	if strings.Contains(n.Pattern.Mods, "g") {
+		out = ir.CallOf(selector(pattern, "ReplaceAllString", nil), ir.TString,
+			l.toStr(target, n), repl)
+	} else {
+		out = l.helperCall(hReplaceFirst, ir.TString, pattern, l.toStr(target, n), repl)
+	}
+	l.note(out, "/r edits a copy and hands it back, leaving the variable alone. Go "+
+		"has only that form: a string cannot be changed in place at all, so every "+
+		"replacement returns a new one and the /r question never comes up.",
+		"replace-and-expansion", "strings-are-bytes")
+	return out, true
+}
+
+// substCount names how many matches a substitution is about to replace, which
+// is the value `s///` yields.
+func (l *Lowerer) substCount(n *ast.Subst) ir.Expr {
+	if n.Pattern == nil {
+		return nil
+	}
+	pattern, ok := l.patternOf(n.Pattern)
+	if !ok {
+		return nil
+	}
+	target := l.peekSubstTarget(n)
+	if target == nil {
+		return nil
+	}
+	name := l.tmp("replaced")
+	var value ir.Expr
+	if strings.Contains(n.Pattern.Mods, "g") {
+		value = lenOf(ir.CallOf(selector(pattern, "FindAllString", nil), ir.SliceOf(ir.TString),
+			l.toStr(target, n), ir.IntLit("-1")))
+	} else {
+		value = ir.NewIdent(name, ir.TInt)
+		decl := &ir.DeclStmt{Names: []string{name}, Type: ir.TInt}
+		set := &ir.If{
+			Cond: ir.CallOf(selector(pattern, "MatchString", nil), ir.TBool, l.toStr(target, n)),
+			Then: &ir.Block{Stmts: []ir.Stmt{
+				assign("=", []ir.Expr{ir.NewIdent(name, ir.TInt)}, []ir.Expr{ir.IntLit("1")}),
+			}},
+		}
+		l.setProv(decl, n)
+		l.note(decl, "A substitution answers with how many matches it replaced, not "+
+			"with the new text, so the count is taken before the replacement runs. "+
+			"Without /g there is at most one.",
+			"replace-and-expansion")
+		l.emit(decl)
+		l.emit(set)
+		return value
+	}
+	st := assign(":=", []ir.Expr{ir.NewIdent(name, ir.TInt)}, []ir.Expr{value})
+	l.setProv(st, n)
+	l.note(st, "A substitution answers with how many matches it replaced, not with "+
+		"the new text, so they are counted before the replacement removes them.",
+		"replace-and-expansion")
+	l.emit(st)
+	return ir.NewIdent(name, ir.TInt)
+}
+
+// peekSubstTarget resolves what a substitution modifies without emitting
+// anything, so that the count can read it before the replacement runs.
+func (l *Lowerer) peekSubstTarget(n *ast.Subst) ir.Expr {
+	if n.Bound == nil {
+		if len(l.topicStack) > 0 {
+			return l.topicStack[len(l.topicStack)-1]
+		}
+		return nil
+	}
+	if _, ok := boundAssign(n.Bound); ok {
+		// The assignment has not run yet, so there is nothing to read.
+		return nil
+	}
+	return l.assignTarget(n.Bound)
 }
 
 // substTarget resolves what a substitution modifies.

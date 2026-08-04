@@ -98,6 +98,66 @@ func main() {
 ./sample.go:6:7: syntax error: unexpected keyword if, expected expression
 ```
 
+## What the operator hands back
+
+Separating statements from expressions has a second consequence, and it is the one that produces wrong answers rather than compile errors: several Perl operators hand back a value that Go's nearest equivalent does not.
+
+`&&` and `||` are the biggest. In Perl they answer with an **operand** -- the first false one, or the last -- which is exactly why `$a || $b || 'fallback'` is a defaulting chain. Go's are strictly boolean and answer with nothing else, so the chain becomes a variable and a sequence of `if`s. That reads longer, and it makes the short-circuit visible, which is a fair trade.
+
+`push` answers with the array's new length, `s///` answers with the number of replacements, `s///r` answers with the edited copy, and `chop` answers with the character it removed. None of those is what the Go call gives you, and each is a line of extra code:
+
+```go
+package main
+
+import (
+	"fmt"
+	"regexp"
+	"strings"
+)
+
+var errPattern = regexp.MustCompile(`ERROR`)
+
+func main() {
+	// $picked = $empty || $name || 'fallback'
+	empty, name := "", "ada"
+	picked := empty
+	if picked == "" {
+		picked = name
+	}
+	if picked == "" {
+		picked = "fallback"
+	}
+	fmt.Println(picked)
+
+	// my $n = push @queue, 4, 5
+	queue := []int{1, 2, 3}
+	queue = append(queue, 4, 5)
+	fmt.Println(len(queue), queue)
+
+	// my $hits = ( $log =~ s/ERROR/FATAL/g )
+	log := "ERROR ERROR WARN ERROR"
+	hits := len(errPattern.FindAllString(log, -1))
+	log = errPattern.ReplaceAllString(log, "FATAL")
+	fmt.Println(hits, log)
+
+	// my $trimmed = $orig =~ s/^\s+|\s+$//gr
+	orig := "  padded  "
+	trimmed := strings.TrimSpace(orig)
+	fmt.Printf("[%s] [%s]\n", orig, trimmed)
+}
+```
+
+```
+ada
+5 [1 2 3 4 5]
+3 FATAL FATAL WARN FATAL
+[  padded  ] [padded]
+```
+
+Two things are worth noticing. The count has to be taken **before** the replacement, because afterwards there is nothing left to count -- which is a good reminder that `ReplaceAllString` is a function of its input rather than an edit. And `s///r` needs no special form at all: a Go string cannot be changed in place, so every replacement already returns a new one and leaves the original alone. Perl needed a modifier for the behaviour Go gives by default.
+
+Where a value like this is genuinely wanted, `cmp.Or(a, b, "fallback")` covers the defaulting chain for comparable types in one call, returning the first non-zero argument. It is the closest thing Go has to `||` as a value, and it evaluates all its arguments, which the chain of `if`s does not.
+
 ## The mismatch
 
 Perl's `do` block and Go's statements differ in three ways worth holding on to.

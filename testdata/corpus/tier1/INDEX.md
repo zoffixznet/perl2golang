@@ -1,6 +1,6 @@
 # Tier 1 corpus -- fundamentals
 
-38 self-contained Perl programs covering the core of the language: scalars,
+43 self-contained Perl programs covering the core of the language: scalars,
 numbers, comparison, booleans, arrays, hashes, control flow, sorting, strings,
 and output. Every entry runs clean under `use strict; use warnings;` with no
 output on stderr (except the two entries marked below, which write to stderr on
@@ -69,6 +69,11 @@ sensitive formatting, or unsorted hash iteration order.
 | 36 | `36-parentheses-and-grouping` | Parentheses as grouping vs as a list, precedence with and without them, the floored-division identity, an array as an operand of `+`, `*`, `==` and `.`, the comma operator in scalar context |
 | 37 | `37-list-slice-in-scalar-context` | `(LIST)[i]` on a literal, on `split` and on `sort`, negative indices, the picked value used in arithmetic and concatenation, and `[0, -1]` making it a list again |
 | 38 | `38-lvalue-and-redo` | The places Perl lets you assign that Go has no name for: through a conditional, through `substr` in three shapes, through a hash slice and an array slice, plus `redo`, which has no Go counterpart at all |
+| 39 | `39-redo-and-labels` | `redo`, and what it does to `next` and `last`: the loop control Go has no keyword for |
+| 40 | `40-copy-and-context` | Copying, context, and the value of a step: what an assignment and a `++` hand back |
+| 41 | `41-undef-and-range` | `undef` in a typed container, and reading past the end of an array |
+| 42 | `42-what-an-operator-yields` | `&&` and `\|\|` yielding an operand, `push` and `unshift` yielding the new length, `chop` versus `chomp`, `chomp` wrapping a declaration, `s///` yielding a count and `s///r` yielding the copy |
+| 43 | `43-case-folding-and-squeeze` | `\u` `\L` `\U` inside a replacement and `tr///s`, neither of which converts yet, with the counting form of `tr` as the contrast |
 
 ## Entries with non-zero exit status
 

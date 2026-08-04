@@ -1,0 +1,8 @@
+--- case folding inside a replacement ---
+title case: Grace Hopper Wrote Compilers
+upper:      GRACE HOPPER WROTE COMPILERS
+first only: Hello world
+--- tr with the squeeze modifier ---
+squeezed:   abca
+one space:  [a b c]
+counted:    6 a(s), string unchanged: aaabbbcccaaa

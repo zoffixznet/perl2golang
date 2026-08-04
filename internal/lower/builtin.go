@@ -74,7 +74,7 @@ func (l *Lowerer) statementForm(n *ast.Call) []ir.Stmt {
 // statementFormOK reports whether a name has a statement form, and lowers it.
 func (l *Lowerer) statementFormOK(n *ast.Call) ([]ir.Stmt, bool) {
 	switch n.Name {
-	case "print", "say", "printf", "push", "unshift", "chomp", "die", "warn",
+	case "print", "say", "printf", "push", "unshift", "chomp", "chop", "die", "warn",
 		"exit", "delete", "close", "open", "return", "opendir", "closedir", "local":
 		return l.statementOnly(n), true
 	case "splice":
@@ -104,6 +104,8 @@ func (l *Lowerer) statementOnly(n *ast.Call) []ir.Stmt {
 		return l.unshiftCall(n)
 	case "chomp":
 		return l.chompCall(n)
+	case "chop":
+		return l.chopCall(n)
 	case "die":
 		return l.dieCall(n)
 	case "warn":
@@ -216,8 +218,10 @@ func (l *Lowerer) builtin(n *ast.Call) ir.Expr {
 		return call("time", "time", "Now", ir.NamedType("time.Time", "time"))
 	case "system":
 		return l.systemCall(n)
-	case "chomp", "chop":
+	case "chomp":
 		return l.chompExpr(n)
+	case "chop":
+		return l.chopExpr(n)
 
 	case "delete":
 		// delete yields the value it removed, and Go's built-in yields
@@ -230,8 +234,27 @@ func (l *Lowerer) builtin(n *ast.Call) ir.Expr {
 		}
 		return ir.BoolLit(true)
 
-	case "close", "open", "print", "printf", "say", "die", "warn", "exit",
-		"push", "unshift":
+	case "push", "unshift":
+		// Both answer with how many elements the array holds afterwards, which
+		// is what `my $n = push @q, $item` reads. The statements run first and
+		// the length is taken after them.
+		for _, st := range l.statementForm(n) {
+			l.emit(st)
+		}
+		args := flatten(argList(n))
+		if len(args) > 0 {
+			if target := l.assignTarget(args[0]); target != nil && typeOrAny(target).Kind == ir.Slice {
+				out := lenOf(target)
+				l.note(out, "push and unshift answer with the array's new length, not with "+
+					"what went in. Go's append answers with the new slice and len says how "+
+					"long it is, so the two are separate here.",
+					"slices-not-arrays")
+				return out
+			}
+		}
+		return ir.BoolLit(true)
+
+	case "close", "open", "print", "printf", "say", "die", "warn", "exit":
 		// These reach expression position because of the `X or die` idiom.
 		// Perl's answer there is a truth value, so the statements run first
 		// and the value they produce is success. Only names the statement
@@ -1257,7 +1280,12 @@ func (l *Lowerer) radixCall(n *ast.Call, base int) ir.Expr {
 }
 
 func (l *Lowerer) chompCall(n *ast.Call) []ir.Stmt {
-	target := l.assignTarget(l.chompTarget(n))
+	return l.chompStmts(l.assignTarget(l.chompTarget(n)), n)
+}
+
+// chompStmts trims a target that has already been resolved, so that the form
+// used for its value resolves it once rather than twice.
+func (l *Lowerer) chompStmts(target ir.Expr, n *ast.Call) []ir.Stmt {
 	if target == nil {
 		return nil
 	}
@@ -1302,10 +1330,65 @@ func (l *Lowerer) chompCall(n *ast.Call) []ir.Stmt {
 
 func (l *Lowerer) chompTarget(n *ast.Call) ast.Expr {
 	args := flatten(argList(n))
-	if len(args) > 0 {
-		return args[0]
+	if len(args) == 0 {
+		return &ast.Var{Sigil: '$', Name: "_"}
 	}
-	return &ast.Var{Sigil: '$', Name: "_"}
+	// `chomp( my $line = <STDIN> )` is a declaration and a chomp in one, and
+	// the thing being chomped is what the declaration named. The declaration
+	// runs first, on its own line, and the chomp is applied to the variable.
+	if as, ok := args[0].(*ast.Assign); ok && as.Op == "=" {
+		for _, st := range l.assignStmts(as) {
+			l.emit(st)
+		}
+		if my, isMy := as.LHS.(*ast.My); isMy {
+			if vars := declaredVars(my); len(vars) == 1 {
+				return vars[0]
+			}
+		}
+		return as.LHS
+	}
+	return args[0]
+}
+
+// chopCall lowers `chop`, which removes the last character rather than a
+// trailing newline.
+func (l *Lowerer) chopCall(n *ast.Call) []ir.Stmt {
+	target := l.assignTarget(l.chompTarget(n))
+	if target == nil {
+		return nil
+	}
+	rest := l.tmp("rest")
+	gone := l.tmp("_")
+	st := assign(":=", []ir.Expr{ir.NewIdent(rest, ir.TString), ir.NewIdent(gone, ir.TString)},
+		[]ir.Expr{l.helperCall(hChop, ir.TString, l.toStr(target, n))})
+	back := assign("=", []ir.Expr{target},
+		[]ir.Expr{l.assignable(ir.NewIdent(rest, ir.TString), typeOrAny(target), n)})
+	l.setProv(st, n)
+	l.note(st, "chop removes the last character whatever it is, where chomp removes "+
+		"a trailing newline and nothing else. The helper takes a whole character off "+
+		"rather than a byte, so a multi-byte character is not cut in half.",
+		"strings-are-bytes")
+	return []ir.Stmt{st, back}
+}
+
+// chopExpr lowers chop used for its value, which is the character it removed.
+func (l *Lowerer) chopExpr(n *ast.Call) ir.Expr {
+	target := l.assignTarget(l.chompTarget(n))
+	if target == nil {
+		return ir.Str(`""`)
+	}
+	rest := l.tmp("rest")
+	gone := l.tmp("removed")
+	st := assign(":=", []ir.Expr{ir.NewIdent(rest, ir.TString), ir.NewIdent(gone, ir.TString)},
+		[]ir.Expr{l.helperCall(hChop, ir.TString, l.toStr(target, n))})
+	l.setProv(st, n)
+	l.note(st, "chop yields the character it removed, not the shortened text, so "+
+		"both come back from the one call and the variable is set from the first.",
+		"multiple-return-values", "strings-are-bytes")
+	l.emit(st)
+	l.emit(assign("=", []ir.Expr{target},
+		[]ir.Expr{l.assignable(ir.NewIdent(rest, ir.TString), typeOrAny(target), n)}))
+	return ir.NewIdent(gone, ir.TString)
 }
 
 // chompExpr lowers chomp used for its value, which is the number of characters
@@ -1328,7 +1411,7 @@ func (l *Lowerer) chompExpr(n *ast.Call) ir.Expr {
 		"text, so the count has to be worked out before the trim happens.")
 	l.emit(decl)
 	l.emit(check)
-	for _, st := range l.chompCall(n) {
+	for _, st := range l.chompStmts(target, n) {
 		l.emit(st)
 	}
 	return ir.NewIdent(count, ir.TInt)

@@ -78,7 +78,7 @@ func (l *Lowerer) binop(n *ast.BinOp) ir.Expr {
 		return call("strings", "strings", "Compare", ir.TInt, lx, rx)
 
 	case "&&", "and":
-		return ir.Bin("&&", l.cond(n.L), l.cond(n.R), ir.TBool)
+		return l.andValue(n)
 
 	case "||", "or":
 		return l.orValue(n, false)
@@ -280,6 +280,39 @@ func (l *Lowerer) orValue(n *ast.BinOp, definedOr bool) ir.Expr {
 	l.emit(decl)
 	l.emit(guard)
 	return ir.NewIdent(name, t)
+}
+
+// andValue lowers `&&` used for its value rather than as a test.
+//
+// Perl's && answers with the first false operand or, when both are true, with
+// the second one, which is why `$name && uc $name` is a defaulting idiom and
+// not a yes-or-no. Go's && is strictly boolean, so where the two sides are not
+// booleans the choice is written out.
+func (l *Lowerer) andValue(n *ast.BinOp) ir.Expr {
+	lx := l.expr(n.L)
+	rx := l.expr(n.R)
+	t := join(typeOrAny(lx), typeOrAny(rx))
+	if t == nil || t.Kind == ir.Bool || t.Kind == ir.Any {
+		// Two tests, or two values with nothing in common to hold the answer
+		// in. The boolean form is both correct and the one a reader expects.
+		return ir.Bin("&&", l.toBool(lx, n.L), l.toBool(rx, n.R), ir.TBool)
+	}
+	name := l.tmp(defaultName(n.L))
+	decl := &ir.DeclStmt{Names: []string{name}, Type: t, Values: []ir.Expr{l.assignable(lx, t, n.L)}}
+	target := ir.NewIdent(name, t)
+	guard := &ir.If{
+		Cond: l.toBool(target, n.L),
+		Then: &ir.Block{Stmts: []ir.Stmt{assign("=", []ir.Expr{target}, []ir.Expr{l.assignable(rx, t, n.R)})}},
+	}
+	l.setProv(decl, n)
+	l.note(decl, "Perl's && answers with an operand rather than with true or false: "+
+		"the first false one, or the second when both are true. Go's && is strictly "+
+		"boolean, so the choice is written out, which is also where the "+
+		"short-circuit becomes visible.",
+		"static-types-and-zero-values")
+	l.emit(decl)
+	l.emit(guard)
+	return target
 }
 
 // orderingChain recognises the multi-key sort comparator, `$a->{x} <=> $b->{x}

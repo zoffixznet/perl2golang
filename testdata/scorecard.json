@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T08:42:31Z",
+  "recorded": "2026-08-15T08:51:00Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -10,45 +10,45 @@
   "tiers": [
     {
       "tier": "tier1",
-      "entries": 41,
+      "entries": 43,
       "stages": {
         "compiled": {
-          "pass": 41,
+          "pass": 43,
           "fail": 0,
           "skip": 0
         },
         "emitted": {
-          "pass": 41,
+          "pass": 43,
           "fail": 0,
           "skip": 0
         },
         "equivalent": {
-          "pass": 26,
-          "fail": 15,
+          "pass": 30,
+          "fail": 13,
           "skip": 0
         },
         "translated": {
-          "pass": 41,
+          "pass": 43,
           "fail": 0,
           "skip": 0
         },
         "typed": {
-          "pass": 24,
-          "fail": 17,
+          "pass": 27,
+          "fail": 16,
           "skip": 0
         }
       },
       "equivalent_annotated": {
-        "pass": 26,
-        "fail": 15,
+        "pass": 30,
+        "fail": 13,
         "skip": 0
       },
       "quality": {
         "todos": 0,
-        "symbols": 448,
-        "symbols_typed": 413,
+        "symbols": 477,
+        "symbols_typed": 443,
         "refusals": 0,
-        "approximations": 89,
+        "approximations": 91,
         "crashes": 2
       }
     },
@@ -134,7 +134,7 @@
       "quality": {
         "todos": 55,
         "symbols": 863,
-        "symbols_typed": 669,
+        "symbols_typed": 672,
         "refusals": 58,
         "approximations": 291,
         "crashes": 3
@@ -231,21 +231,21 @@
   ],
   "total": {
     "tier": "TOTAL",
-    "entries": 205,
+    "entries": 207,
     "stages": {
       "compiled": {
-        "pass": 188,
+        "pass": 190,
         "fail": 17,
         "skip": 0
       },
       "emitted": {
-        "pass": 205,
+        "pass": 207,
         "fail": 0,
         "skip": 0
       },
       "equivalent": {
-        "pass": 74,
-        "fail": 95,
+        "pass": 78,
+        "fail": 93,
         "skip": 0
       },
       "honest": {
@@ -254,36 +254,36 @@
         "skip": 1
       },
       "translated": {
-        "pass": 170,
+        "pass": 172,
         "fail": 35,
         "skip": 0
       },
       "typed": {
-        "pass": 84,
-        "fail": 121,
+        "pass": 87,
+        "fail": 120,
         "skip": 0
       }
     },
     "equivalent_annotated": {
-      "pass": 74,
-      "fail": 95,
+      "pass": 78,
+      "fail": 93,
       "skip": 0
     },
     "quality": {
       "todos": 105,
-      "symbols": 3636,
-      "symbols_typed": 3090,
+      "symbols": 3665,
+      "symbols_typed": 3123,
       "refusals": 109,
-      "approximations": 1072,
+      "approximations": 1074,
       "crashes": 12
     }
   },
   "quality": {
     "todos": 105,
-    "symbols": 3636,
-    "symbols_typed": 3090,
+    "symbols": 3665,
+    "symbols_typed": 3123,
     "refusals": 109,
-    "approximations": 1072,
+    "approximations": 1074,
     "crashes": 12
   },
   "entries": [
@@ -601,8 +601,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 6, byte 127: got \"1'\\n0 || ''           = ''\\n--- sh...\", wanted \"beta'\\n0 || ''           = ''\\n---...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -616,8 +615,7 @@
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 6, byte 127: got \"1'\\n0 || ''           = ''\\n--- sh...\", wanted \"beta'\\n0 || ''           = ''\\n---...\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
@@ -678,8 +676,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 8, byte 180: got \"1, array is 1 2 3 4\\nunshift retu...\", wanted \"4, array is 1 2 3 4\\nunshift retu...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -693,8 +690,7 @@
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 8, byte 180: got \"1, array is 1 2 3 4\\nunshift retu...\", wanted \"4, array is 1 2 3 4\\nunshift retu...\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
@@ -1342,8 +1338,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 2, byte 31: got \"] length 0\\nchomp on a line with ...\", wanted \"hello] length 5\\nchomp on a line ...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -1352,18 +1347,16 @@
           "outcome": "pass"
         },
         "typed": {
-          "outcome": "fail",
-          "reason": "1 variable left dynamic out of 13"
+          "outcome": "pass"
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 2, byte 31: got \"] length 0\\nchomp on a line with ...\", wanted \"hello] length 5\\nchomp on a line ...\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
-        "symbols": 13,
-        "symbols_typed": 12,
+        "symbols": 14,
+        "symbols_typed": 14,
         "refusals": 0,
         "approximations": 0,
         "crashes": 0
@@ -1808,6 +1801,80 @@
         "refusals": 0,
         "approximations": 4,
         "crashes": 1
+      }
+    },
+    {
+      "tier": "tier1",
+      "name": "42-what-an-operator-yields",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "pass"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "pass"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 18,
+        "symbols_typed": 18,
+        "refusals": 0,
+        "approximations": 0,
+        "crashes": 0
+      }
+    },
+    {
+      "tier": "tier1",
+      "name": "43-case-folding-and-squeeze",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "stdout differs: line 2, byte 54: got \"gRACE hopper WROTE compilers\\nupp...\", wanted \"Grace Hopper Wrote Compilers\\nupp...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "stdout differs: line 2, byte 54: got \"gRACE hopper WROTE compilers\\nupp...\", wanted \"Grace Hopper Wrote Compilers\\nupp...\""
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 10,
+        "symbols_typed": 10,
+        "refusals": 0,
+        "approximations": 2,
+        "crashes": 0
       }
     },
     {
@@ -2397,7 +2464,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: line 2, byte 46: got \"access.log substitution)\\nonce=a;...\", wanted \"1 substitution)\\nonce=a;b,,c,,d a...\""
+          "reason": "stdout differs: line 10, byte 337: got \"gRACE hopper WROTE compilers\\ncom...\", wanted \"Grace Hopper Wrote Compilers\\ncom...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -2412,7 +2479,7 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: line 2, byte 46: got \"access.log substitution)\\nonce=a;...\", wanted \"1 substitution)\\nonce=a;b,,c,,d a...\""
+        "reason": "stdout differs: line 10, byte 337: got \"gRACE hopper WROTE compilers\\ncom...\", wanted \"Grace Hopper Wrote Compilers\\ncom...\""
       },
       "quality": {
         "todos": 0,
@@ -5135,7 +5202,7 @@
       "stages": {
         "compiled": {
           "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:104:72: use of package fmt not in selector"
+          "reason": "the generated Go does not compile: ./main.go:103:72: use of package fmt not in selector"
         },
         "emitted": {
           "outcome": "pass"
@@ -5152,7 +5219,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "3 variables left dynamic out of 32"
+          "reason": "2 variables left dynamic out of 32"
         }
       },
       "equivalent_annotated": {
@@ -5162,7 +5229,7 @@
       "quality": {
         "todos": 0,
         "symbols": 32,
-        "symbols_typed": 29,
+        "symbols_typed": 30,
         "refusals": 0,
         "approximations": 15,
         "crashes": 0
@@ -5221,7 +5288,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: line 1, byte 9: got \"9 stations, 13 directed edges\\nDe...\", wanted \"11 stations, 25 directed edges\\nD...\""
+          "reason": "stdout differs: line 2, byte 55: got \"unreachable\\nRiverside:Uptown: un...\", wanted \"17 min via Depot -\u003e Central -\u003e O...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -5231,17 +5298,17 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "5 variables left dynamic out of 46"
+          "reason": "4 variables left dynamic out of 46"
         }
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: line 1, byte 9: got \"9 stations, 13 directed edges\\nDe...\", wanted \"11 stations, 25 directed edges\\nD...\""
+        "reason": "stdout differs: line 2, byte 55: got \"unreachable\\nRiverside:Uptown: un...\", wanted \"17 min via Depot -\u003e Central -\u003e O...\""
       },
       "quality": {
         "todos": 0,
         "symbols": 46,
-        "symbols_typed": 41,
+        "symbols_typed": 42,
         "refusals": 0,
         "approximations": 13,
         "crashes": 0
@@ -5310,7 +5377,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "6 variables left dynamic out of 22"
+          "reason": "5 variables left dynamic out of 22"
         }
       },
       "equivalent_annotated": {
@@ -5320,7 +5387,7 @@
       "quality": {
         "todos": 0,
         "symbols": 22,
-        "symbols_typed": 16,
+        "symbols_typed": 17,
         "refusals": 0,
         "approximations": 13,
         "crashes": 0

@@ -1,0 +1,18 @@
+--- && and || yield an operand ---
+'ada' && 'lovelace' = 'lovelace'
+''    && 'lovelace' = ''
+''    || 'anon'     = 'anon'
+0     || 'anon'     = 'anon'
+first true of three: ada
+--- push and unshift yield the new length ---
+push returned 5, queue is 1 2 3 4 5
+unshift returned 6, queue is 0 1 2 3 4 5
+--- chop and chomp ---
+chop removed 'o' leaving 'hell'
+chomp inside a declaration: [text]
+chomp removed 0 character(s) from [no newline]
+--- s/// yields a count, s///r yields the copy ---
+replaced 3, now: FATAL FATAL WARN FATAL
+without /g replaced 1, now: a+b-c
+orig=[  padded  ] trimmed=[padded]
+no match yields ''
