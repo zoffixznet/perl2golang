@@ -86,6 +86,12 @@ const (
 	hLooksLikeNumber = "looksLikeNumber" // would this read as a number
 
 	// Paths.
+	hFileStat      = "fileStat"      // the thirteen numbers a status call gives
+	hIsLink        = "isLink"        // -l, which must not follow the link
+	hReadLink      = "readLink"      // where a symbolic link points
+	hRemoveFiles   = "removeFiles"   // unlink over a list of paths
+	hSetMode       = "setMode"       // chmod over a list of paths
+	hSetTimes      = "setTimes"      // utime over a list of paths
 	hMakeTree      = "makeTree"      // a directory and everything above it
 	hRemoveTree    = "removeTree"    // a directory and everything under it
 	hTempDir       = "tempDir"       // a directory nothing else is using

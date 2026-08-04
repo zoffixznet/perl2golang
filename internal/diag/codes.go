@@ -524,6 +524,8 @@ const (
 	LocaleIgnored Code = "P2G7578"
 	// TimezoneCached: Go reads TZ once and caches the zone.
 	TimezoneCached Code = "P2G7579"
+	// TimeMake: time.Date normalises fields rather than refusing them.
+	TimeMake Code = "P2G7592"
 	// TempCleanup: CLEANUP and UNLINK have no counterpart.
 	TempCleanup Code = "P2G7581"
 	// TreeResult: the tree calls report an error and not what they did.
@@ -550,6 +552,10 @@ const (
 	YAMLDependency Code = "P2G7580"
 	// StorableFormat: Storable files have no Go reader.
 	StorableFormat Code = "P2G7585"
+	// StatList: stat's thirteen numbers have no counterpart.
+	StatList Code = "P2G6034"
+	// ErrorNotTruth: a call reports an error rather than a truth value.
+	ErrorNotTruth Code = "P2G6035"
 	// WalkOrder: directory walk order differs.
 	WalkOrder Code = "P2G7590"
 )
@@ -2163,6 +2169,13 @@ var catalogue = map[Code]Entry{
 		Advice:   "`time.LoadLocation` names a zone explicitly and does not depend on the environment",
 		Concepts: []string{"time-layouts"},
 	},
+	TimeMake: {
+		Severity: report.Warn,
+		Message:  "`%s` refuses a date that does not exist and `time.Date` rolls it forward",
+		Short:    "the fields are normalised, not checked",
+		Advice:   "check the parts first where the input is untrusted, or compare the day back afterwards",
+		Concepts: []string{"time-layouts"},
+	},
 	TempCleanup: {
 		Severity: report.Warn,
 		Message:  "`%s` has no counterpart: nothing removes the temporary when the program ends",
@@ -2258,6 +2271,20 @@ var catalogue = map[Code]Entry{
 		Cost:      "existing store files stay unreadable until they are converted once",
 		Converted: "the emitted code reads and writes JSON at the same paths",
 		Concepts:  []string{"encoding-json", "go-mod-vs-cpan"},
+	},
+	StatList: {
+		Severity: report.Warn,
+		Message:  "`%s` hands back thirteen numbers, and `os.Stat` hands back a value with methods",
+		Short:    "the status list has no counterpart",
+		Advice:   "keep the fs.FileInfo and call Size, Mode, ModTime or IsDir on it",
+		Concepts: []string{"errors-are-values"},
+	},
+	ErrorNotTruth: {
+		Severity: report.Warn,
+		Message:  "`%s` reports an error rather than answering true or false",
+		Short:    "the call reports an error",
+		Advice:   "test the error where it happens, which keeps the reason with the call",
+		Concepts: []string{"errors-are-values", "if-err-nil-rhythm"},
 	},
 	WalkOrder: {
 		Severity: report.Note,

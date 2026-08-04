@@ -14,11 +14,16 @@ func (l *Lowerer) stmts(list []ast.Stmt) []ir.Stmt {
 	for _, st := range list {
 		savedPre := l.pre
 		l.pre = nil
+		// The name $! resolves to is whatever the call on this line put it
+		// in, and that variable is only in scope for this statement.
+		savedErr := l.errVar
+		l.errVar = ""
 
 		lead := leadComments(st)
 		body := l.stmt(st)
 		pre := l.takePre()
 		l.pre = savedPre
+		l.errVar = savedErr
 
 		if len(lead) > 0 {
 			out = append(out, &ir.CommentStmt{Lines: lead})

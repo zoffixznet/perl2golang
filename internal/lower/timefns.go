@@ -132,6 +132,52 @@ func (l *Lowerer) strftimeCall(n *ast.Call) ir.Expr {
 	return out
 }
 
+// timeMake lowers Time::Local's timegm and timelocal, which are the inverse
+// of a time split: six numbers in, one epoch out.
+func (l *Lowerer) timeMake(n *ast.Call, local bool) ir.Expr {
+	args := flatten(argList(n))
+	var list ir.Expr
+	// The six numbers arrive either written out or as the list a time split
+	// produced, which is the same six with three more on the end.
+	if len(args) == 1 {
+		if x := l.expr(args[0]); typeOrAny(x).Kind == ir.Slice {
+			list = x
+			if t := typeOrAny(x); t.Elem == nil || t.Elem.Kind != ir.Int {
+				list = l.helperCall(hIntList, ir.SliceOf(ir.TInt), x)
+			}
+		}
+	}
+	if list == nil {
+		parts := make([]ir.Expr, 0, 6)
+		for i := 0; i < 6 && i < len(args); i++ {
+			parts = append(parts, l.argInt(n, i))
+		}
+		for len(parts) < 6 {
+			parts = append(parts, ir.IntLit("0"))
+		}
+		list = composite(ir.SliceOf(ir.TInt), nil, parts)
+	}
+	moment := ir.Expr(l.helperCall(hTimeFrom, ir.NamedType("time.Time", "time"), list))
+	if local {
+		moment = selectorCall(moment, "Local", ir.NamedType("time.Time", "time"))
+	}
+	out := conversion(ir.TInt, selectorCall(moment, "Unix", ir.TInt))
+	l.note(out, "time.Date is the inverse of taking a moment apart, and it takes the "+
+		"month as a time.Month and the year as the year, so the two offsets the "+
+		"list carried are undone here. It also normalises a value out of range "+
+		"rather than refusing it, which is how you add a month to the 31st and land "+
+		"where you expect.",
+		"time-layouts")
+	l.approximate(n, "P2G7592", n.Name,
+		"the fields are normalised rather than checked",
+		"timegm refuses a day of the month that does not exist. time.Date accepts "+
+			"it and rolls forward, so 31 February becomes 3 March instead of an error.",
+		"Where the input is untrusted, check the parts before building the moment, "+
+			"or build it and compare the day back against what went in.",
+		"time-layouts")
+	return out
+}
+
 // timeValue reads the moment argument of a time-formatting call, which Perl
 // passes as the nine-number list.
 func (l *Lowerer) timeValue(n *ast.Call, from int) ir.Expr {

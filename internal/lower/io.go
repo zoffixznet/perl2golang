@@ -82,14 +82,27 @@ func (l *Lowerer) openStatements(n *ast.Call, onFail func(errName string) []ir.S
 				ir.Pkg("os", "os", "O_WRONLY", ir.TInt), ir.TInt),
 			ir.Raw("0o644", ir.TInt))
 	default:
-		l.refuse(n, "P2G6002", "open mode "+mode,
+		// The handle is still declared, from the stand-in, so that every line
+		// below this one goes on compiling and the program fails here rather
+		// than refusing to build at all.
+		todo := l.refuse(n, "P2G6002", "open mode "+mode,
 			"this open mode is not implemented",
 			"The mode "+mode+" selects a pipe or a duplicated handle, which is a "+
 				"different operation in Go.",
 			"A pipe open becomes os/exec with StdoutPipe or StdinPipe; duplicating a "+
 				"handle becomes passing the *os.File value around.",
 			"os-exec")
-		return nil, false
+		handle.Type = fileType
+		l.observe(handle, fileType)
+		st := &ir.DeclStmt{Names: []string{handle.Go}, Type: fileType}
+		todo.Spelled = true
+		ir.MetaOf(st).Todo = &todo
+		l.setProv(st, n)
+		l.note(st, "The handle is declared but never opened, so everything below "+
+			"this line still compiles and the program fails here rather than "+
+			"refusing to build at all.",
+			"nil-vs-undef")
+		return []ir.Stmt{st}, true
 	}
 
 	handle.Type = fileType
@@ -385,27 +398,36 @@ func (l *Lowerer) unlinkCall(n *ast.Call) ir.Expr {
 	if len(args) == 0 {
 		return ir.IntLit("0")
 	}
-	if len(args) == 1 {
-		out := call("os", "os", "Remove", ir.TError, l.toStr(l.expr(args[0]), args[0]))
-		l.approximate(n, "P2G6045", "unlink",
-			"unlink's count becomes an error value",
-			"unlink returns how many files it managed to remove, so the reason a "+
-				"removal failed is left in $! and usually never looked at. os.Remove "+
-				"returns the error itself.",
-			"Test the returned error rather than a count. os.Remove on a missing file "+
-				"returns an error that errors.Is(err, fs.ErrNotExist) recognises, which "+
-				"is often the case worth ignoring.",
-			"errors-are-values")
-		return out
+	paths := make([]ir.Expr, 0, len(args))
+	spread := false
+	for _, a := range args {
+		x := l.expr(a)
+		if x == nil {
+			continue
+		}
+		if t := typeOrAny(x); t.Kind == ir.Slice {
+			paths = append(paths, l.strSlice(x, a))
+			spread = true
+			continue
+		}
+		paths = append(paths, l.toStr(x, a))
 	}
-	l.refuse(n, "P2G6045", "unlink of several files",
-		"removing several paths in one call is not implemented",
-		"unlink takes a list and returns how many of them it removed. os.Remove "+
-			"takes one path and returns one error.",
-		"Loop over the paths and call os.Remove for each, deciding what a failure "+
-			"means as you go.",
+	out := l.helperCall(hRemoveFiles, ir.TInt, paths...)
+	out.Ellipsis = spread && len(paths) == 1
+	l.approximate(n, "P2G6045", "unlink",
+		"the count is kept and the reason is not",
+		"unlink returns how many files it managed to remove, so the reason a "+
+			"removal failed is left in a global and usually never looked at. "+
+			"os.Remove returns the error itself, one path at a time.",
+		"Test the returned error rather than a count. os.Remove on a missing file "+
+			"returns an error that errors.Is(err, fs.ErrNotExist) recognises, which "+
+			"is often the case worth ignoring.",
 		"errors-are-values")
-	return ir.IntLit("0")
+	l.note(out, "One path at a time is the whole of os.Remove, so removing a list is "+
+		"a loop. What the loop throws away is the error, which is the part worth "+
+		"keeping.",
+		"errors-are-values")
+	return out
 }
 
 // handleBinding resolves an expression naming a filehandle.
@@ -756,6 +778,13 @@ func (l *Lowerer) fileTest(n *ast.FileTest) ir.Expr {
 				"no undef, so both answer 0.",
 			"Test with os.Stat and look at the error where the difference matters.",
 			"nil-vs-undef")
+		return out
+	case 'l':
+		out := l.helperCall(hIsLink, ir.TBool, arg)
+		l.note(out, "os.Stat follows a symbolic link and answers about what it points "+
+			"at, so asking whether something is a link needs os.Lstat, the call that "+
+			"does not follow. That is the whole difference between the two.",
+			"filepath-and-paths")
 		return out
 	case 'z':
 		out := ir.Bin("&&", l.helperCall(hFileExists, ir.TBool, arg),

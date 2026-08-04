@@ -189,6 +189,37 @@ var notes = map[string]string{
 		"exists only for values whose type did not resolve, where the choice " +
 		"between a collection and its length cannot be made at compile time.",
 
+	"fileStat": "os.Stat returns an fs.FileInfo and an error, and every " +
+		"field is a method on it: Size, Mode, ModTime, IsDir. Nothing hands " +
+		"back a list of thirteen numbers, so nothing has to remember which " +
+		"index is which, and the ones that are not portable are simply not " +
+		"there.",
+
+	"modeBits": "Go splits a file mode into permission bits and type bits, " +
+		"and asks about the type with named constants rather than with a " +
+		"mask: fi.Mode()&fs.ModeSymlink != 0 is the readable form of what a " +
+		"status call packed into one number.",
+
+	"isLink": "os.Stat follows a symbolic link and answers about the target, " +
+		"which is why -l needs os.Lstat and why the two disagree only when " +
+		"you use the right one of them.",
+
+	"readLink": "os.Readlink returns the target and an error, and a path " +
+		"that is not a link is an error rather than an empty answer, which " +
+		"is the more useful of the two behaviours.",
+
+	"removeFiles": "os.Remove takes one path and returns an error, where a " +
+		"count says only how many went and not why the rest stayed. The " +
+		"count is the older shape; testing the error is the one that can act " +
+		"on the answer.",
+
+	"setMode": "os.Chmod takes one path and reports an error, where the " +
+		"original took a list and reported a count. Permissions are written " +
+		"in octal because that is what they are, and Go spells that 0o644.",
+
+	"setTimes": "os.Chtimes takes time.Time values rather than whole " +
+		"seconds, which is the same information with the unit attached.",
+
 	"makeTree": "os.MkdirAll creates every missing level and reports only an " +
 		"error, because that is all a caller usually needs. Which levels were " +
 		"new is a separate question, and answering it means looking before " +

@@ -363,6 +363,9 @@ func (l *Lowerer) builtin(n *ast.Call) ir.Expr {
 		return l.posix(n)
 	case "strftime", "POSIX::strftime":
 		return l.strftimeCall(n)
+	case "timegm", "timelocal", "Time::Local::timegm", "Time::Local::timelocal",
+		"timegm_posix", "timelocal_posix":
+		return l.timeMake(n, strings.Contains(n.Name, "local"))
 	case "gmtime", "localtime":
 		return l.timeSplit(n, n.Name == "localtime")
 	case "blessed", "Scalar::Util::blessed":
@@ -404,6 +407,62 @@ func (l *Lowerer) builtin(n *ast.Call) ir.Expr {
 		if x, ok := l.formatFunction(n); ok {
 			return x
 		}
+	case "stat", "lstat":
+		out := l.helperCall(hFileStat, ir.SliceOf(ir.TInt), l.argStr(n, 0),
+			ir.BoolLit(n.Name == "stat"))
+		l.approximate(n, "P2G6034", n.Name,
+			"the thirteen numbers have no Go counterpart",
+			"os.Stat returns an fs.FileInfo and an error, and every field is a "+
+				"method on it: Size, Mode, ModTime, IsDir. Nothing hands back a list, "+
+				"so nothing has to remember which index is which.",
+			"Keep the FileInfo and call the method you want. The fields that are not "+
+				"portable, the device and inode numbers among them, are not there at "+
+				"all except through syscall.",
+			"errors-are-values")
+		l.note(out, "One status call answers every question the file tests ask "+
+			"separately, which is why a Go program that needs several of them keeps "+
+			"the FileInfo rather than asking again.",
+			"errors-are-values")
+		return out
+	case "chmod":
+		args := flatten(argList(n))
+		paths := make([]ir.Expr, 0, len(args))
+		for i := 1; i < len(args); i++ {
+			paths = append(paths, l.argStr(n, i))
+		}
+		out := l.helperCall(hSetMode, ir.TInt, append([]ir.Expr{l.argInt(n, 0)}, paths...)...)
+		l.note(out, "os.Chmod takes one path and reports an error, where this took a "+
+			"list and reported how many it changed. Permissions are written in octal "+
+			"because that is what they are, and Go spells octal 0o644.",
+			"errors-are-values")
+		return out
+	case "utime":
+		args := flatten(argList(n))
+		paths := make([]ir.Expr, 0, len(args))
+		for i := 2; i < len(args); i++ {
+			paths = append(paths, l.argStr(n, i))
+		}
+		out := l.helperCall(hSetTimes, ir.TInt,
+			append([]ir.Expr{l.argInt(n, 0), l.argInt(n, 1)}, paths...)...)
+		l.note(out, "os.Chtimes takes time.Time values rather than whole seconds, "+
+			"which is the same information with the unit attached to it.",
+			"time-layouts")
+		return out
+	case "rename":
+		return l.errorAsTruth(call("os", "os", "Rename", ir.TError,
+			l.argStr(n, 0), l.argStr(n, 1)), n, "rename")
+	case "symlink":
+		return l.errorAsTruth(call("os", "os", "Symlink", ir.TError,
+			l.argStr(n, 0), l.argStr(n, 1)), n, "symlink")
+	case "link":
+		return l.errorAsTruth(call("os", "os", "Link", ir.TError,
+			l.argStr(n, 0), l.argStr(n, 1)), n, "link")
+	case "readlink":
+		out := l.helperCall(hReadLink, ir.TString, l.argStr(n, 0))
+		l.note(out, "os.Readlink returns the target and an error, and a path that is "+
+			"not a link is an error rather than an empty answer.",
+			"errors-are-values")
+		return out
 	case "find", "finddepth", "File::Find::find", "File::Find::finddepth":
 		if x, ok := l.findCall(n); ok {
 			return x
@@ -1203,16 +1262,18 @@ func (l *Lowerer) chompCall(n *ast.Call) []ir.Stmt {
 
 	// chomp on an array chomps every element, which in Go is a loop that
 	// writes back through the index.
-	if typeOrAny(target).Kind == ir.Slice {
+	if t := typeOrAny(target); t.Kind == ir.Slice {
 		idx := l.tmp("i")
+		elem := elemOf(t)
+		at := index(target, ir.NewIdent(idx, ir.TInt), elem)
+		trimmed := ir.Expr(call("strings", "strings", "TrimSuffix", ir.TString,
+			l.toStr(at, n), ir.Str(`"\n"`)))
 		loop := &ir.Range{
 			Key:    ir.NewIdent(idx, ir.TInt),
 			X:      target,
 			Define: true,
 			Body: &ir.Block{Stmts: []ir.Stmt{
-				assign("=", []ir.Expr{index(target, ir.NewIdent(idx, ir.TInt), ir.TString)},
-					[]ir.Expr{call("strings", "strings", "TrimSuffix", ir.TString,
-						index(target, ir.NewIdent(idx, ir.TInt), ir.TString), ir.Str(`"\n"`))}),
+				assign("=", []ir.Expr{at}, []ir.Expr{l.assignable(trimmed, elem, n)}),
 			}},
 		}
 		l.setProv(loop, n)
@@ -1424,6 +1485,34 @@ func (l *Lowerer) exitCall(n *ast.Call) []ir.Stmt {
 		"be written before this line.",
 		"defer-timing")
 	return []ir.Stmt{st}
+}
+
+// errorAsTruth turns a call that reports an error into the truth value the
+// original expected, keeping the error where it can be read.
+//
+// Perl's rename, symlink and link answer true or false and leave the reason
+// in $!. Go returns the error itself, which is more information in a shape
+// that cannot be ignored, so the error is named and the truth value is
+// derived from it.
+func (l *Lowerer) errorAsTruth(x ir.Expr, n ast.Node, what string) ir.Expr {
+	name := l.tmp("err")
+	decl := assign(":=", []ir.Expr{ir.NewIdent(name, ir.TError)}, []ir.Expr{x})
+	l.setProv(decl, n)
+	l.note(decl, "Go reports failure by returning an error, not by setting a global "+
+		"and answering false. Naming it here keeps the reason, which the original "+
+		"would have had to read out of $! before the next call overwrote it.",
+		"errors-are-values", "if-err-nil-rhythm")
+	l.emit(decl)
+	l.approximate(n, "P2G6035", what,
+		"the call reports an error rather than a truth value",
+		"`"+what+"` answered true or false and left the reason in a global. The Go "+
+			"call returns the error itself, so the truth value here is derived from it.",
+		"Test the error directly: `if err := os."+exportedName(what)+"(...); err != nil` "+
+			"is the shape a Go program uses, and it keeps the reason where it happened.",
+		"errors-are-values", "if-err-nil-rhythm")
+	// $! on the rest of this line is the error this call returned.
+	l.errVar = name
+	return ir.Bin("==", ir.NewIdent(name, ir.TError), ir.Nil(ir.TError), ir.TBool)
 }
 
 // deleteValue lowers a delete whose result is used, which Perl answers with

@@ -1,0 +1,12 @@
+-- capturing output --
+captured 11 bytes and 2 lines
+as a list: 1,2,3
+-- exit status --
+success: rc=0 decoded=0
+failure decoded=42 signal=0
+-- the list form takes no shell --
+argument arrived whole: yes
+-- reading through a pipe --
+sum through the pipe: 10
+-- writing through a pipe --
+child saw 15

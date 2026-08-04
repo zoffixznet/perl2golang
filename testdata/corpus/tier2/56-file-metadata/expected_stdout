@@ -1,0 +1,25 @@
+-- the status list --
+fields: 13
+size:   14
+size agrees with -s: yes
+links:  1
+is a plain file: yes
+-- permissions --
+mode: 0640
+after 0444, writable: no
+after 0644, writable: yes
+-- times set to fixed values --
+mtime: 1703505600
+mtime is later than atime by 100
+mtime round trips: yes
+-- links --
+the link is a link:  yes
+the file is not:     no
+it points at a file: yes
+readlink names it:   yes
+-- moving and removing --
+rename worked:   yes
+the old name is gone: yes
+unlink removed:  1
+and again:       0
+the link is still there: yes

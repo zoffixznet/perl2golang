@@ -49,7 +49,14 @@ func timeFrom(parts []int) time.Time {
 		}
 		return 0
 	}
-	return time.Date(at(5)+1900, time.Month(at(4)+1), at(3), at(2), at(1), at(0), 0, time.UTC)
+	year := at(5)
+	// A year is written either in full or as the years since 1900, and both
+	// spellings are in use. Anything that looks like a real year is taken as
+	// one, which is the rule the older calls follow too.
+	if year < 1000 {
+		year += 1900
+	}
+	return time.Date(year, time.Month(at(4)+1), at(3), at(2), at(1), at(0), 0, time.UTC)
 }
 
 // timeText renders a moment the way a bare time-to-string conversion does:

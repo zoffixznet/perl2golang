@@ -176,6 +176,23 @@ func (l *Lowerer) scalar(e ast.Expr) ir.Expr {
 			}
 			return x
 		}
+	case *ast.Slice:
+		// A slice read where one value is wanted yields its last element,
+		// which for the common one-index form is simply that element.
+		x := l.expr(e)
+		if lit, ok := x.(*ir.CompositeLit); ok && len(lit.Elems) > 0 {
+			out := lit.Elems[len(lit.Elems)-1]
+			l.note(out, "A slice read for one value yields its last element rather "+
+				"than a list or a count. Go has no context, so the choice is made here "+
+				"and the element is named directly.",
+				"context-is-gone")
+			return out
+		}
+		if typeOrAny(x).Kind == ir.Slice {
+			return l.helperCall(hAt, elemOf(typeOrAny(x)), x,
+				ir.Bin("-", lenOf(x), ir.IntLit("1"), ir.TInt))
+		}
+		return x
 	case *ast.List:
 		if len(n.Elems) == 0 {
 			return ir.Nil(ir.TAny)
