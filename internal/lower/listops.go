@@ -674,6 +674,25 @@ func (l *Lowerer) splitCall(n *ast.Call) ir.Expr {
 	// `split ' '` is the awk special case: leading whitespace is skipped and
 	// runs of whitespace separate the fields.
 	if text, ok := staticString(args[0]); ok && text == " " {
+		if len(args) > 2 {
+			// A limit is the whole point of `split ' ', $line, 2`: take the
+			// first field and leave the rest of the line alone. strings.Fields
+			// has no limit, so the special case is written out instead: drop
+			// the leading whitespace, then split on runs of it.
+			ws, ok := l.compiledPattern(&ast.Regex{Raw: `\s+`}, n)
+			if ok {
+				trimmed := call("strings", "strings", "TrimLeft", ir.TString,
+					subject, ir.Str(quote(" \t\n\v\f\r")))
+				out := l.helperCall(hSplitPattern, ir.SliceOf(ir.TString), ws, trimmed,
+					l.toInt(l.expr(args[2]), args[2]))
+				l.note(out, "A single space as the split pattern means runs of whitespace "+
+					"with any leading whitespace dropped, which is strings.Fields. With a "+
+					"limit it is not, because Fields cannot be told to stop, so the two "+
+					"halves of the rule are written out: the trim is the dropped leading "+
+					"whitespace and the pattern is the runs.")
+				return out
+			}
+		}
 		out := call("strings", "strings", "Fields", ir.SliceOf(ir.TString), subject)
 		l.note(out, "A single space as the split pattern is a special case: it means "+
 			"split on runs of whitespace and drop any leading empty field. That is "+

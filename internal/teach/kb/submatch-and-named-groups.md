@@ -201,6 +201,59 @@ pre="" match="user=ada" post=" id=7"
 
 `` $` `` and `$'` have no counterpart at all, and they do not need one: `FindStringIndex` gives the two offsets, and the pieces either side are slices of the original string, which allocate nothing.
 
+## The substitution that keeps what it removed
+
+There is one shape where the captures are not merely inconvenient to reach but genuinely gone by the time Perl reads them, and it is the shape every line parser is built from:
+
+```perl
+if ( $line =~ s/^(\S+)\s+// ) {
+    $owner = $1;
+}
+```
+
+The condition is a substitution, so by the time the branch runs, the text `$1` came from has been deleted from `$line`. It still works in Perl because `$1` was filled in before the replacement and lives in a global afterwards. There is no Go equivalent of that global, and there does not need to be: the call that answers "did anything match" is the same call that has the groups, so ask it for them.
+
+```go
+package main
+
+import (
+	"fmt"
+	"regexp"
+	"strings"
+)
+
+var leadingField = regexp.MustCompile(`^(\S+)\s+`)
+
+func main() {
+	lines := []string{"web1     A     10.0.0.1", "         AAAA  fd00::1"}
+	prevOwner := ""
+
+	for _, line := range lines {
+		owner := ""
+		// One call decides whether anything matched and carries the group.
+		// m[0] is the whole match, so cutting it off is the replacement.
+		if m := leadingField.FindStringSubmatch(line); m != nil {
+			owner = m[1]
+			prevOwner = owner
+			line = line[len(m[0]):]
+		} else {
+			owner = prevOwner
+			line = strings.TrimLeft(line, " \t")
+		}
+		fmt.Printf("%-6s %s\n", owner, line)
+	}
+}
+```
+
+```
+web1   A     10.0.0.1
+web1   AAAA  fd00::1
+```
+
+Two things fall out of that shape and are worth taking with you. Because `m[0]` is the whole match, an anchored substitution that deletes what it matched is just a slice: `line[len(m[0]):]` copies nothing and needs no second pass over the string. And because the match happens once, the Go reads better than the Perl did: `s///` as a condition is doing two jobs at once, and here they are two lines that say which is which.
+
+`ReplaceAllString` is the right call when you want the replacement and not the groups, and it can reach the groups inside the replacement text with `$1` or `${1}` — but only inside that string, and never back in the surrounding code. If the branch after the substitution needs a group, `FindStringSubmatch` first is the whole answer.
+
 ## The mismatch
 
 Decoding the method-name grammar unlocks the whole package: `Find` + optional `All` (`//g`) + optional `String` (else `[]byte`) + optional `Submatch` (captures) + optional `Index` (byte offsets, the `@-`/`@+` replacement). So `FindAllStringSubmatch(s, -1)` is `while (/.../g)` collecting captures — the `-1` means unlimited; a positive n caps the count. Gotchas in the details: a group that participated but matched empty and a group that did not participate at all *both* appear as `""` in the submatch slice (use the `Index` variants, where non-participation is `-1`, when the distinction matters — Perl distinguishes via `defined $1`); `MatchString` is unanchored like Perl's bare `//`, so anchor explicitly with `^...$` when you mean whole-string (there is no `\z`/`\A` — `\z` is spelled `$` with no multiline flag, and `(?m)` changes `^$` to per-line exactly as `/m` did); and boolean-only tests should use `MatchString` rather than a discarded `Find`, both for clarity and speed. Named groups: `(?P<name>...)` (Go also accepts `(?<name>...)` since Go 1.22, but `P` remains the dominant style you will read), retrieved via `SubexpIndex("name")` as shown — there is no `%+` hash; if you want one, build `map[string]string` by zipping `re.SubexpNames()` with the match slice, a four-line helper worth writing once.

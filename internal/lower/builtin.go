@@ -927,6 +927,10 @@ func (l *Lowerer) pushCall(n *ast.Call) []ir.Stmt {
 	if len(args) < 2 {
 		return nil
 	}
+	// Pushing into a list that is not there yet makes it, and makes every
+	// level above it too. Go makes nothing on its own, and writing into a nil
+	// map is a panic rather than a growth.
+	l.autovivifyTarget(args[0])
 	target := l.assignTarget(args[0])
 	if target == nil {
 		target = l.expr(args[0])

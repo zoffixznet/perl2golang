@@ -933,6 +933,10 @@ func (l *Lowerer) returnStmt(n *ast.Return) []ir.Stmt {
 		return []ir.Stmt{out}
 	}
 
+	if sts, ok := l.returnCaptures(n, s); ok {
+		return sts
+	}
+
 	var results []ir.Expr
 	var kinds []*ir.Type
 	if len(n.Exprs) > 0 {

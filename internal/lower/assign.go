@@ -656,7 +656,11 @@ func (l *Lowerer) listAssign(targets []ast.Expr, rhs ast.Expr, n *ast.Assign, de
 	// A call that returns exactly as many values as there are targets.
 	if len(sources) == 1 {
 		if c, ok := sources[0].(*ast.Call); ok {
-			if s, known := l.findSub(c.Name); known && len(s.Results) == len(targets) && allScalarTargets(targets) {
+			// A sub whose one Go result is a list is not a sub returning one
+			// value per target: `my ($first) = fields($line)` takes the first
+			// field out of the list rather than the list itself.
+			if s, known := l.findSub(c.Name); known && len(s.Results) == len(targets) &&
+				allScalarTargets(targets) && !l.producesList(c) {
 				// This is the one place a multi-valued call stands as it is,
 				// because every result is taken at once, which is exactly
 				// what Go allows.
@@ -800,10 +804,99 @@ func (l *Lowerer) producesList(e ast.Expr) bool {
 			return true
 		}
 		if s, known := l.findSub(n.Name); known {
-			return len(s.Results) > 1
+			if len(s.Results) > 1 {
+				return true
+			}
+			// One Go result that is a slice is still a list to the caller:
+			// `my ($first) = fields($line)` takes the first field, not the
+			// whole list. Go erased the difference between a list and a
+			// reference to one, so the sub's own returns are what say which
+			// this is.
+			return len(s.Results) == 1 && typeOr(s.Results[0], ir.TAny).Kind == ir.Slice &&
+				l.subReturnsList(s)
 		}
 	}
 	return false
+}
+
+// subReturnsList reports whether a sub hands its caller a list rather than one
+// value, judged from the shape of what its own returns yield.
+//
+// Perl keeps the two apart and Go cannot: `return @found` and
+// `return \@found` are both a `[]string` here, and only the first flattens
+// into the caller's list. The question is answered from the source rather than
+// from the type, and answered conservatively, because reading a reference as a
+// list would take the assignment apart one element too far.
+func (l *Lowerer) subReturnsList(s *Sub) bool {
+	if s == nil || s.Decl == nil {
+		return false
+	}
+	if s.listReturn == 0 {
+		s.listReturn = 2
+		for _, e := range returnedExprs(s.Decl.Body) {
+			if yieldsListShape(e) {
+				s.listReturn = 1
+				break
+			}
+		}
+	}
+	return s.listReturn == 1
+}
+
+// yieldsListShape reports whether an expression is one that spreads into the
+// surrounding list, judged from its spelling alone.
+func yieldsListShape(e ast.Expr) bool {
+	switch n := e.(type) {
+	case *ast.Var:
+		return n.Sigil == '@' || n.Sigil == '%'
+	case *ast.Deref:
+		return n.Sigil == '@' || n.Sigil == '%'
+	case *ast.Slice, *ast.List:
+		return true
+	case *ast.Match:
+		return !n.Negate && (n.Pattern == nil || countGroups(n.Pattern.Raw) > 0)
+	case *ast.BinOp:
+		return n.Op == ".."
+	case *ast.Call:
+		return isListBuiltin(n.Name)
+	}
+	return false
+}
+
+// returnedExprs collects everything a sub body hands back: each `return`, and
+// the trailing expression that is a return without the word.
+func returnedExprs(body []ast.Stmt) []ast.Expr {
+	var out []ast.Expr
+	var walk func([]ast.Stmt)
+	walk = func(list []ast.Stmt) {
+		for _, st := range list {
+			switch n := st.(type) {
+			case *ast.Return:
+				out = append(out, n.Exprs...)
+			case *ast.If:
+				walk(n.Then)
+				for _, ei := range n.ElseIfs {
+					walk(ei.Then)
+				}
+				walk(n.Else)
+			case *ast.While:
+				walk(n.Body)
+			case *ast.ForC:
+				walk(n.Body)
+			case *ast.Foreach:
+				walk(n.Body)
+			case *ast.Block:
+				walk(n.Body)
+			}
+		}
+	}
+	walk(body)
+	if len(body) > 0 {
+		if es, ok := body[len(body)-1].(*ast.ExprStmt); ok {
+			out = append(out, es.X)
+		}
+	}
+	return out
 }
 
 // listAssignDirect fills the targets straight from a list whose elements are
@@ -1425,6 +1518,16 @@ func (l *Lowerer) autovivify(lhs *ast.HashIndex) []ir.Stmt {
 // hash of hashes is actually written, so without this the first line of the
 // loop panics.
 func (l *Lowerer) autovivifyTarget(e ast.Expr) {
+	// `push @{ $h{a}{b} }, $x` reaches the same place through a dereference,
+	// and Perl builds every level on the way down there too. The sigil in
+	// front says what the innermost slot holds, not where it lives, so the
+	// levels above it are found by looking through it.
+	if d, ok := e.(*ast.Deref); ok {
+		switch d.Sigil {
+		case '@', '%', '$':
+			e = d.X
+		}
+	}
 	h, ok := e.(*ast.HashIndex)
 	if !ok {
 		return

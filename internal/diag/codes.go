@@ -261,6 +261,9 @@ const (
 	ScanAnchor Code = "P2G4090"
 	// StrayCapture: a capture variable is read where no match is in scope.
 	StrayCapture Code = "P2G4110"
+	// ReturnedCaptures: a sub hands its caller a match's capture groups, so
+	// the choice Perl left to the call site has to be made in the signature.
+	ReturnedCaptures Code = "P2G4512"
 )
 
 // Regex and string-splitting semantics.
@@ -1229,6 +1232,16 @@ var catalogue = map[Code]Entry{
 		Advice:   "keep what the match found in a variable declared before the block that matches",
 		Cost:     "the emitted code yields an empty value there, where Perl yielded whatever the last successful match left behind",
 		Concepts: []string{"submatch-and-named-groups", "nil-vs-undef"},
+	},
+
+	ReturnedCaptures: {
+		Severity:  report.Warn,
+		Message:   "a sub returning a match hands its caller the capture groups, and Perl left that choice to the call site",
+		Short:     "a sub returns a match's captures",
+		Advice:    "where the caller only wanted to know whether it matched, `len(...) > 0` says so",
+		Cost:      "a caller that read the sub in scalar context saw a truth value, and now sees the list",
+		Converted: "the emitted function returns the groups, and nil where the pattern did not match",
+		Concepts:  []string{"context-is-gone", "submatch-and-named-groups"},
 	},
 
 	// -- Regex and splitting semantics --------------------------------------

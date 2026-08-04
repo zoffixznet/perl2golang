@@ -1,0 +1,12 @@
+--- records ---
+web1 A 10.0.0.1
+web1 AAAA fd00::1
+db1 CNAME web1
+db1 MX 10 mail1
+--- by owner ---
+  db1    CNAME 1
+  db1    MX    1
+  web1   A     1
+  web1   AAAA  1
+from 8000 to 8100, leaving 'ports open'
+collapsed 2 doubled comma(s): a,b,c,d

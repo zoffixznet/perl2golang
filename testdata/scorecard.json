@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T11:22:18Z",
+  "recorded": "2026-08-15T11:34:24Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -54,45 +54,45 @@
     },
     {
       "tier": "tier2",
-      "entries": 82,
+      "entries": 84,
       "stages": {
         "compiled": {
-          "pass": 81,
+          "pass": 83,
           "fail": 1,
           "skip": 0
         },
         "emitted": {
-          "pass": 82,
+          "pass": 84,
           "fail": 0,
           "skip": 0
         },
         "equivalent": {
-          "pass": 46,
+          "pass": 48,
           "fail": 36,
           "skip": 0
         },
         "translated": {
-          "pass": 74,
+          "pass": 76,
           "fail": 8,
           "skip": 0
         },
         "typed": {
-          "pass": 41,
-          "fail": 41,
+          "pass": 42,
+          "fail": 42,
           "skip": 0
         }
       },
       "equivalent_annotated": {
-        "pass": 46,
+        "pass": 48,
         "fail": 36,
         "skip": 0
       },
       "quality": {
         "todos": 16,
-        "symbols": 1348,
-        "symbols_typed": 1166,
+        "symbols": 1375,
+        "symbols_typed": 1190,
         "refusals": 16,
-        "approximations": 489,
+        "approximations": 499,
         "crashes": 2
       }
     },
@@ -136,7 +136,7 @@
         "symbols": 888,
         "symbols_typed": 703,
         "refusals": 56,
-        "approximations": 318,
+        "approximations": 320,
         "crashes": 1
       }
     },
@@ -222,29 +222,29 @@
       "quality": {
         "todos": 6,
         "symbols": 924,
-        "symbols_typed": 846,
+        "symbols_typed": 841,
         "refusals": 6,
-        "approximations": 199,
-        "crashes": 1
+        "approximations": 201,
+        "crashes": 0
       }
     }
   ],
   "total": {
     "tier": "TOTAL",
-    "entries": 223,
+    "entries": 225,
     "stages": {
       "compiled": {
-        "pass": 212,
+        "pass": 214,
         "fail": 11,
         "skip": 0
       },
       "emitted": {
-        "pass": 223,
+        "pass": 225,
         "fail": 0,
         "skip": 0
       },
       "equivalent": {
-        "pass": 101,
+        "pass": 103,
         "fail": 86,
         "skip": 0
       },
@@ -254,37 +254,37 @@
         "skip": 1
       },
       "translated": {
-        "pass": 185,
+        "pass": 187,
         "fail": 38,
         "skip": 0
       },
       "typed": {
-        "pass": 104,
-        "fail": 119,
+        "pass": 105,
+        "fail": 120,
         "skip": 0
       }
     },
     "equivalent_annotated": {
-      "pass": 101,
+      "pass": 103,
       "fail": 86,
       "skip": 0
     },
     "quality": {
       "todos": 113,
-      "symbols": 3811,
-      "symbols_typed": 3281,
+      "symbols": 3838,
+      "symbols_typed": 3300,
       "refusals": 116,
-      "approximations": 1152,
-      "crashes": 4
+      "approximations": 1166,
+      "crashes": 3
     }
   },
   "quality": {
     "todos": 113,
-    "symbols": 3811,
-    "symbols_typed": 3281,
+    "symbols": 3838,
+    "symbols_typed": 3300,
     "refusals": 116,
-    "approximations": 1152,
-    "crashes": 4
+    "approximations": 1166,
+    "crashes": 3
   },
   "entries": [
     {
@@ -1949,7 +1949,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: line 4, byte 42: got \"9 4 1 7 rest=0\\n 0 =\u003e empty\\n 1 =\u003e...\", wanted \"rest=4\\n 0 =\u003e empty\\n 1 =\u003e single\\n...\""
+          "reason": "stdout differs: line 4, byte 40: got \"[3 9 4 1 7] rest=0\\n 0 =\u003e empty\\n ...\", wanted \"3 rest=4\\n 0 =\u003e empty\\n 1 =\u003e singl...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -1959,17 +1959,17 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "2 variables left dynamic out of 21"
+          "reason": "3 variables left dynamic out of 21"
         }
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: line 4, byte 42: got \"9 4 1 7 rest=0\\n 0 =\u003e empty\\n 1 =\u003e...\", wanted \"rest=4\\n 0 =\u003e empty\\n 1 =\u003e single\\n...\""
+        "reason": "stdout differs: line 4, byte 40: got \"[3 9 4 1 7] rest=0\\n 0 =\u003e empty\\n ...\", wanted \"3 rest=4\\n 0 =\u003e empty\\n 1 =\u003e singl...\""
       },
       "quality": {
         "todos": 0,
         "symbols": 21,
-        "symbols_typed": 19,
+        "symbols_typed": 18,
         "refusals": 0,
         "approximations": 3,
         "crashes": 0
@@ -4123,8 +4123,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 2, byte 37: got \"1     \\n1     \\nunparsed: malforme...\", wanted \"web1  8080\\ndb1   5432\\nunparsed: ...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -4137,15 +4136,14 @@
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 2, byte 37: got \"1     \\n1     \\nunparsed: malforme...\", wanted \"web1  8080\\ndb1   5432\\nunparsed: ...\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
         "symbols": 10,
         "symbols_typed": 10,
         "refusals": 0,
-        "approximations": 1,
+        "approximations": 3,
         "crashes": 0
       }
     },
@@ -5019,6 +5017,81 @@
       }
     },
     {
+      "tier": "tier2",
+      "name": "83-a-strip-that-keeps-what-it-took",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "pass"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "pass"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 14,
+        "symbols_typed": 14,
+        "refusals": 0,
+        "approximations": 2,
+        "crashes": 0
+      }
+    },
+    {
+      "tier": "tier2",
+      "name": "84-captures-in-the-caller-s-context",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "stdout differs: line 10, byte 179: got \"[ada 1815]\\ngrace 1906 -\u003e [grace ...\", wanted \"1\\ngrace 1906 -\u003e 1\\nno year here -...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "2 variables left dynamic out of 13"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "stdout differs: line 10, byte 179: got \"[ada 1815]\\ngrace 1906 -\u003e [grace ...\", wanted \"1\\ngrace 1906 -\u003e 1\\nno year here -...\""
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 13,
+        "symbols_typed": 11,
+        "refusals": 0,
+        "approximations": 6,
+        "crashes": 0
+      }
+    },
+    {
       "tier": "tier3",
       "name": "01-inventory-manager",
       "kind": "convert",
@@ -5220,7 +5293,7 @@
       "stages": {
         "compiled": {
           "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:190:54: cannot use i (variable of type int) as string value in map index"
+          "reason": "the generated Go does not compile: ./main.go:194:54: cannot use i (variable of type int) as string value in map index"
         },
         "emitted": {
           "outcome": "pass"
@@ -5800,7 +5873,7 @@
         "symbols": 46,
         "symbols_typed": 42,
         "refusals": 0,
-        "approximations": 13,
+        "approximations": 15,
         "crashes": 0
       }
     },
@@ -7843,7 +7916,7 @@
       "stages": {
         "compiled": {
           "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:153:24: cannot use paths2 (variable of type []string) as map[string]int value in assignment"
+          "reason": "the generated Go does not compile: ./main.go:154:24: cannot use paths2 (variable of type []string) as map[string]any value in assignment"
         },
         "emitted": {
           "outcome": "pass"
@@ -7860,7 +7933,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "3 variables left dynamic out of 58"
+          "reason": "8 variables left dynamic out of 58"
         }
       },
       "equivalent_annotated": {
@@ -7870,9 +7943,9 @@
       "quality": {
         "todos": 0,
         "symbols": 58,
-        "symbols_typed": 55,
+        "symbols_typed": 50,
         "refusals": 0,
-        "approximations": 21,
+        "approximations": 19,
         "crashes": 0
       }
     },
@@ -8255,7 +8328,7 @@
         "symbols": 31,
         "symbols_typed": 31,
         "refusals": 0,
-        "approximations": 2,
+        "approximations": 6,
         "crashes": 0
       }
     },
@@ -8763,7 +8836,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "exit status 2, wanted 1; stdout differs: 1306 byte(s) missing after line 1, expected \"zone: 12 names, A=9, AAAA=1, CNA...\"; stderr differs: unexpected \"panic: runtime error: index out of range [1] with length 0 ...\""
+          "reason": "stdout differs: line 9, byte 455: got \" refresh= retry= expire= min=\\n  ...\", wanted \"2026081401 refresh=7200 retry=90...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -8778,7 +8851,7 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "exit status 2, wanted 1; stdout differs: 1306 byte(s) missing after line 1, expected \"zone: 12 names, A=9, AAAA=1, CNA...\"; stderr differs: unexpected \"panic: runtime error: index out of range [1] with length 0 ...\""
+        "reason": "stdout differs: line 9, byte 455: got \" refresh= retry= expire= min=\\n  ...\", wanted \"2026081401 refresh=7200 retry=90...\""
       },
       "quality": {
         "todos": 0,
@@ -8786,8 +8859,7 @@
         "symbols_typed": 40,
         "refusals": 0,
         "approximations": 11,
-        "crashes": 1,
-        "panic": "panic: runtime error: index out of range [1] with length 0"
+        "crashes": 0
       }
     }
   ],

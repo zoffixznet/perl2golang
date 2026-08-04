@@ -2848,5 +2848,29 @@
     "expected_exit": 0,
     "deterministic": true,
     "kind": "convert"
+  },
+  {
+    "tier": "tier2",
+    "name": "83-a-strip-that-keeps-what-it-took",
+    "path": "testdata/corpus/tier2/83-a-strip-that-keeps-what-it-took",
+    "args": [],
+    "has_stdin": false,
+    "has_files": false,
+    "allow_stderr": false,
+    "expected_exit": 0,
+    "deterministic": true,
+    "kind": "convert"
+  },
+  {
+    "tier": "tier2",
+    "name": "84-captures-in-the-caller-s-context",
+    "path": "testdata/corpus/tier2/84-captures-in-the-caller-s-context",
+    "args": [],
+    "has_stdin": false,
+    "has_files": false,
+    "allow_stderr": false,
+    "expected_exit": 0,
+    "deterministic": true,
+    "kind": "convert"
   }
 ]

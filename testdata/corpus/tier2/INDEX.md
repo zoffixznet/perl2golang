@@ -1,6 +1,6 @@
 # Tier 2 corpus - script-shaped Perl programs
 
-82 entries. Each is a self-contained, realistic Perl script of the kind a
+84 entries. Each is a self-contained, realistic Perl script of the kind a
 sysadmin or data wrangler actually writes, not a snippet.
 
 ## Layout of an entry
@@ -129,6 +129,8 @@ Two entries exit non-zero on purpose: **27** (65) and **32** (1). The rest exit 
 | 80 | `80-a-scan-anchor-in-the-middle` | The scan anchor where it cannot be an anchor, which does not convert | `\G` away from the start of the pattern, and `\G` without `/g` |
 | 81 | `81-a-one-line-constructor` | A sub's value is whatever it evaluated last, in the four shapes ordinary code writes | `sub new { bless {...}, shift }`, a `$_[0]{field}` accessor, a sub whose value is a call, a sub returning nothing assigned to a scalar, `map { KEY => VALUE }` needing per-element setup |
 | 82 | `82-a-table-built-by-index` | An array's length, in the three places Perl never mentions it | `$d[$i][$j]` building a table with no declaration, `0 .. @a` and `0 .. $#a` as ranges, `$a[$i-1]` counting from one, a read past the end of the shorter list |
+| 83 | `83-a-strip-that-keeps-what-it-took` | A substitution used as a condition, with the groups read in the branch | `if ($line =~ s/^(\S+)\s+//) { $owner = $1 }`, two groups read after the edit, `push` through a two-level autovivified hash, `split ' ', $line, 2` |
+| 84 | `84-captures-in-the-caller-s-context` | The same sub read in three contexts, and one that asks which, neither of which fully converts | a sub returning a match read as a list, as a test and as a scalar, `wantarray ? @got : scalar @got` |
 
 ## Coverage map
 
@@ -155,7 +157,7 @@ Two entries exit non-zero on purpose: **27** (65) and **32** (1). The rest exit 
 - **Serialisation** - 51, 52, 53
 - **Callbacks as values** - 54, 55; also 12, 25
 - **Processes** - 57, 67, 68
-- **Regex in list context** - 58, 59
+- **Regex in list context** - 58, 59, 83, 84
 - **Option blocks** - 26, 37, 60, 61; manual parsing in 25
 - **Absence: undef against missing** - 71, 72, 78; the tier1 study of it in 45
 - **Arrays outside their range** - 66, 73, 74, 82; behind a reference in tier3 35

@@ -1,0 +1,16 @@
+--- list context ---
+ada    1815
+grace  1906
+(none) (none)
+--- boolean context ---
+ada 1815: parsed
+grace 1906: parsed
+no year here: not parsed
+--- scalar context ---
+ada 1815 -> 1
+grace 1906 -> 1
+no year here -> 
+--- wantarray ---
+ada 1815     list=2 scalar=2
+grace 1906   list=2 scalar=2
+no year here list=0 scalar=0

@@ -136,6 +136,10 @@ type Sub struct {
 	ReturnsNothing bool
 	// Recursive marks a sub that calls itself.
 	Recursive bool
+	// listReturn caches whether the sub hands back a list rather than one
+	// value: 0 not yet asked, 1 yes, 2 no. Go has one shape for both, so the
+	// answer comes from the source and is worth working out only once.
+	listReturn int8
 	// CallSites counts calls found in the file.
 	CallSites int
 	// Line is the declaration line.

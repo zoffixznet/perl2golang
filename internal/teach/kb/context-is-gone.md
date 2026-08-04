@@ -110,6 +110,74 @@ alpha delta
 
 Two habits fall out of that. Negative indices are not indices in Go: `[-1]` is written `[len(xs)-1]`, and it panics on an empty slice where Perl would have handed you `undef`, so the emptiness has to be either checked or known. And a function returning a list returns exactly one thing, a slice, whatever the caller wanted; the caller asks for `len` when it wanted a count. Perl's `wantarray`, which let one sub answer differently depending on how it was called, has no expression in Go at all: it becomes two functions with two names, and the call sites choose.
 
+## When context crosses a function boundary
+
+The sharpest version of all this is a sub that returns a match:
+
+```perl
+sub parts { my ($t) = @_; return $t =~ /^(\w+)\s+(\d{4})$/ }
+
+my ($name, $year) = parts($row);      # the two capture groups
+if (parts($row))     { ... }          # a truth value
+```
+
+The parentheses that say "list" are at the call site, not at the match, so the same `return` yields two strings to one caller and a yes-or-no to the other, and the sub never learns which. That is context reaching across a function boundary, and it is the one thing in Perl that has no Go spelling at all: a Go function returns what it returns.
+
+The signature to pick is the one that keeps both answers rather than the one that matches either caller exactly. Return the groups, and return `nil` when nothing matched:
+
+```go
+package main
+
+import (
+	"fmt"
+	"regexp"
+)
+
+var nameYear = regexp.MustCompile(`^(\w+)\s+(\d{4})$`)
+
+// parts returns the capture groups, or nil when the pattern did not match.
+// One signature covers both the readings Perl left to the call site: nil is
+// empty when the caller wants a list, and false when it wants a test.
+func parts(text string) []string {
+	m := nameYear.FindStringSubmatch(text)
+	if m == nil {
+		return nil
+	}
+	return m[1:]
+}
+
+func main() {
+	for _, row := range []string{"ada 1815", "no year here"} {
+		got := parts(row)
+
+		// The list reading.
+		name, year := "(none)", "(none)"
+		if len(got) == 2 {
+			name, year = got[0], got[1]
+		}
+		fmt.Printf("%-6s %s\n", name, year)
+
+		// The test reading, out of the same value.
+		if len(got) > 0 {
+			fmt.Printf("  %q parsed\n", row)
+		} else {
+			fmt.Printf("  %q not parsed\n", row)
+		}
+	}
+}
+```
+
+```
+ada    1815
+  "ada 1815" parsed
+(none) (none)
+  "no year here" not parsed
+```
+
+A nil slice is doing a lot of work there, and it is worth being explicit about why it can: `len(nil)` is 0, ranging over nil iterates zero times, and appending to nil allocates. So "no match" needs no sentinel and no second result. That is the same reason Go code returns nil slices freely where other languages return empty ones.
+
+The reading this does *not* cover is `my $one = parts($row)`, where Perl puts the match in scalar context through the return and yields 1 or the empty string. There is no signature that gives the groups to one caller and a boolean to another, so the choice has to be made once, in the function, and stated in its name and its doc comment. If both readings are genuinely wanted, that is two functions: `parts` and `hasParts`. Two names at two call sites is more code and less to remember.
+
 ## Lists are flat, and Go's are not
 
 The other half of context is flattening, and it is the half that changes how many things you end up with. A Perl list inside a list is not a nested thing: it is more elements. `map { ($a, $b) } @rows` gives twice as many results as it has rows, `( 'start', @head, 'end' )` is as long as `@head` plus two, and `( 1, 2 ) x 3` is six elements. Go has no such rule anywhere, and the difference is spelled with three dots:

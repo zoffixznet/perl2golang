@@ -1130,9 +1130,34 @@ func (l *Lowerer) substCount(n *ast.Subst) ir.Expr {
 			l.toStr(target, n), ir.IntLit("-1")))
 	} else {
 		value = ir.NewIdent(name, ir.TInt)
+		// A pattern with groups leaves them in $1, $2 and so on, and
+		// `if ($line =~ s/^(\S+)\s+//) { $owner = $1 }` is how a parser strips
+		// a field and keeps it in one line. The call that decides whether
+		// anything matched is also the call that has the groups, so asking for
+		// the submatches rather than a yes or no costs nothing and is the only
+		// way the branch below can read them.
+		cond := ir.Expr(ir.CallOf(selector(pattern, "MatchString", nil), ir.TBool, l.toStr(target, n)))
+		if groups, named := l.substGroups(n); groups > 0 {
+			matchT := ir.SliceOf(ir.TString)
+			mName := l.tmp("m")
+			find := assign(":=", []ir.Expr{ir.NewIdent(mName, matchT)},
+				[]ir.Expr{ir.CallOf(selector(pattern, "FindStringSubmatch", nil), matchT,
+					l.toStr(target, n))})
+			l.setProv(find, n)
+			l.note(find, "The groups this pattern captures are gone once the "+
+				"replacement has run, so they are taken here, from the same call that "+
+				"says whether anything matched. Perl left them in $1 and $2, which are "+
+				"globals that outlive the match; Go returns them, and a nil slice means "+
+				"the pattern did not match.",
+				"submatch-and-named-groups", "replace-and-expansion")
+			l.emit(find)
+			l.captureStack = append(l.captureStack,
+				&captureFrame{Name: mName, Count: groups, Named: named})
+			cond = ir.Bin("!=", ir.NewIdent(mName, matchT), ir.Nil(matchT), ir.TBool)
+		}
 		decl := &ir.DeclStmt{Names: []string{name}, Type: ir.TInt}
 		set := &ir.If{
-			Cond: ir.CallOf(selector(pattern, "MatchString", nil), ir.TBool, l.toStr(target, n)),
+			Cond: cond,
 			Then: &ir.Block{Stmts: []ir.Stmt{
 				assign("=", []ir.Expr{ir.NewIdent(name, ir.TInt)}, []ir.Expr{ir.IntLit("1")}),
 			}},
@@ -1583,4 +1608,88 @@ func normalizeMatch(n *ast.Match) {
 	}
 	n.PatternExpr = v
 	n.Pattern = nil
+}
+
+// substGroups reports how many capture groups a substitution's pattern has,
+// and what the named ones are called.
+func (l *Lowerer) substGroups(n *ast.Subst) (int, map[string]int) {
+	if n.Pattern == nil {
+		return 0, nil
+	}
+	return countGroups(n.Pattern.Raw), namedGroups(n.Pattern.Raw)
+}
+
+// returnCaptures lowers `return $text =~ /a(b)c/`, where the sub is handing
+// its caller the capture groups rather than a yes or no.
+//
+// This is the one place where Perl's context reaches across a function
+// boundary. The parentheses that say "list" are at the call site, so the same
+// sub yields two strings to `my ($h, $p) = pair($rec)` and a truth value to
+// `if (pair($rec))`, and the match inside it never learns which. A Go
+// function has one shape, and the shape that keeps both answers is the
+// submatch slice: nil when the pattern did not match, which is false in the
+// test and empty in the list, and the groups when it did.
+func (l *Lowerer) returnCaptures(n *ast.Return, s *Sub) ([]ir.Stmt, bool) {
+	if s == nil || len(n.Exprs) != 1 {
+		return nil, false
+	}
+	m, ok := n.Exprs[0].(*ast.Match)
+	if !ok || m.Negate {
+		return nil, false
+	}
+	if m.Pattern != nil && strings.Contains(m.Pattern.Mods, "g") {
+		// A global match already yields every match rather than the groups of
+		// one, and the ordinary list path handles it.
+		return nil, false
+	}
+	groups, _ := l.matchGroups(m)
+	if groups == 0 {
+		return nil, false
+	}
+	matchT := ir.SliceOf(ir.TString)
+
+	depth := l.captureDepth()
+	l.matchExpr(m, false)
+	if l.captureDepth() <= depth {
+		return nil, false
+	}
+	name := l.captureStack[len(l.captureStack)-1].Name
+	l.restoreCaptures(depth)
+
+	if l.pass == 1 {
+		s.ResultEvidence = append(s.ResultEvidence, []*ir.Type{matchT})
+	}
+	found := ir.NewIdent(name, matchT)
+	guard := &ir.If{
+		Cond: ir.Bin("==", found, ir.Nil(matchT), ir.TBool),
+		Then: &ir.Block{Stmts: []ir.Stmt{&ir.Return{Results: []ir.Expr{ir.Nil(matchT)}}}},
+	}
+	l.setProv(guard, n)
+	l.note(guard, "A match that found nothing yields the empty list in Perl, so the "+
+		"caller's variables are left undef and the same call read as a test is "+
+		"false. A nil slice is both of those at once: len is 0, ranging over it "+
+		"does nothing, and it is the zero value the caller would get anyway.",
+		"nil-slices-vs-nil-maps", "context-is-gone")
+
+	out := &ir.Return{Results: []ir.Expr{
+		slicing(found, ir.IntLit("1"), nil, matchT),
+	}}
+	l.setProv(out, n)
+	l.note(out, "Index 0 of the submatch slice is the whole match and the groups "+
+		"start at 1, so the groups alone are the slice from 1 onwards. Perl put "+
+		"them in $1 and $2, which are globals the caller could read afterwards; Go "+
+		"has no such thing, so they are the return value.",
+		"submatch-and-named-groups", "multiple-return-values")
+
+	l.approximate(n, "P2G4512", "returning a match's captures",
+		"the sub returns the groups, and a caller that wanted a truth value gets a list",
+		"A Perl match yields its capture groups in list context and a truth value in "+
+			"scalar context, and a sub returning one passes that choice on to its own "+
+			"caller. A Go function has one shape. This one returns the groups, which is "+
+			"the answer that keeps the information: a nil slice is still false and still "+
+			"empty, so a caller testing it reads the same way.",
+		"Where the caller only wanted to know whether it matched, `len(...) > 0` says "+
+			"so; where it wanted the groups, they are already there.",
+		"context-is-gone", "submatch-and-named-groups")
+	return []ir.Stmt{guard, out}, true
 }
