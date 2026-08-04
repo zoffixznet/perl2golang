@@ -1,0 +1,11 @@
+-- reading a slice --
+read: db1,5432
+-- writing a slice --
+built 3 key(s): alpha=1 beta=2 gamma=3
+after a literal slice: alpha,beta,delta,epsilon,gamma
+-- a short right-hand side --
+one=x two=undef
+-- deleting a slice --
+left: host,port,user
+delete returned 2 value(s): 1,2
+fresh now: delta,epsilon,gamma

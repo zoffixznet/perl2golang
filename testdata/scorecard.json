@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T08:33:51Z",
+  "recorded": "2026-08-15T08:42:31Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -54,45 +54,45 @@
     },
     {
       "tier": "tier2",
-      "entries": 68,
+      "entries": 70,
       "stages": {
         "compiled": {
-          "pass": 66,
+          "pass": 68,
           "fail": 2,
           "skip": 0
         },
         "emitted": {
-          "pass": 68,
+          "pass": 70,
           "fail": 0,
           "skip": 0
         },
         "equivalent": {
-          "pass": 30,
-          "fail": 38,
+          "pass": 34,
+          "fail": 36,
           "skip": 0
         },
         "translated": {
-          "pass": 63,
-          "fail": 5,
+          "pass": 64,
+          "fail": 6,
           "skip": 0
         },
         "typed": {
           "pass": 28,
-          "fail": 40,
+          "fail": 42,
           "skip": 0
         }
       },
       "equivalent_annotated": {
-        "pass": 30,
-        "fail": 38,
+        "pass": 34,
+        "fail": 36,
         "skip": 0
       },
       "quality": {
-        "todos": 8,
-        "symbols": 1218,
-        "symbols_typed": 1045,
-        "refusals": 8,
-        "approximations": 451,
+        "todos": 9,
+        "symbols": 1238,
+        "symbols_typed": 1058,
+        "refusals": 9,
+        "approximations": 450,
         "crashes": 5
       }
     },
@@ -221,31 +221,31 @@
       },
       "quality": {
         "todos": 6,
-        "symbols": 929,
-        "symbols_typed": 841,
+        "symbols": 928,
+        "symbols_typed": 840,
         "refusals": 6,
-        "approximations": 180,
+        "approximations": 179,
         "crashes": 1
       }
     }
   ],
   "total": {
     "tier": "TOTAL",
-    "entries": 203,
+    "entries": 205,
     "stages": {
       "compiled": {
-        "pass": 186,
+        "pass": 188,
         "fail": 17,
         "skip": 0
       },
       "emitted": {
-        "pass": 203,
+        "pass": 205,
         "fail": 0,
         "skip": 0
       },
       "equivalent": {
-        "pass": 70,
-        "fail": 97,
+        "pass": 74,
+        "fail": 95,
         "skip": 0
       },
       "honest": {
@@ -254,36 +254,36 @@
         "skip": 1
       },
       "translated": {
-        "pass": 169,
-        "fail": 34,
+        "pass": 170,
+        "fail": 35,
         "skip": 0
       },
       "typed": {
         "pass": 84,
-        "fail": 119,
+        "fail": 121,
         "skip": 0
       }
     },
     "equivalent_annotated": {
-      "pass": 70,
-      "fail": 97,
+      "pass": 74,
+      "fail": 95,
       "skip": 0
     },
     "quality": {
-      "todos": 104,
-      "symbols": 3617,
-      "symbols_typed": 3078,
-      "refusals": 108,
-      "approximations": 1074,
+      "todos": 105,
+      "symbols": 3636,
+      "symbols_typed": 3090,
+      "refusals": 109,
+      "approximations": 1072,
       "crashes": 12
     }
   },
   "quality": {
-    "todos": 104,
-    "symbols": 3617,
-    "symbols_typed": 3078,
-    "refusals": 108,
-    "approximations": 1074,
+    "todos": 105,
+    "symbols": 3636,
+    "symbols_typed": 3090,
+    "refusals": 109,
+    "approximations": 1072,
     "crashes": 12
   },
   "entries": [
@@ -1862,7 +1862,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "exit status 255, wanted 0; stdout differs: 274 byte(s) missing after line 1, expected \"ada      role=guest   active=1 q...\"; stderr differs: unexpected \"make_user: 'name' is required\""
+          "reason": "stdout differs: line 1, byte 0: got \"         role=        active=0 q...\", wanted \"ada      role=guest   active=1 q...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -1872,17 +1872,17 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "12 variables left dynamic out of 16"
+          "reason": "13 variables left dynamic out of 16"
         }
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "exit status 255, wanted 0; stdout differs: 274 byte(s) missing after line 1, expected \"ada      role=guest   active=1 q...\"; stderr differs: unexpected \"make_user: 'name' is required\""
+        "reason": "stdout differs: line 1, byte 0: got \"         role=        active=0 q...\", wanted \"ada      role=guest   active=1 q...\""
       },
       "quality": {
         "todos": 0,
         "symbols": 16,
-        "symbols_typed": 4,
+        "symbols_typed": 3,
         "refusals": 0,
         "approximations": 2,
         "crashes": 0
@@ -2282,8 +2282,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 1, byte 12: got \"5\\nedsger dijkstra    professor  ...\", wanted \"10\\nedsger dijkstra    professor ...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -2297,8 +2296,7 @@
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 1, byte 12: got \"5\\nedsger dijkstra    professor  ...\", wanted \"10\\nedsger dijkstra    professor ...\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
@@ -2476,8 +2474,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 16, byte 498: got \"no\\nno separator: 1 field(s): unc...\", wanted \"yes\\nno separator: 1 field(s): un...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -2491,8 +2488,7 @@
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 16, byte 498: got \"no\\nno separator: 1 field(s): unc...\", wanted \"yes\\nno separator: 1 field(s): un...\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
@@ -2931,8 +2927,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 29, byte 741: got \"[] [] [] [net::timeout ui::rende...\", wanted \"net::timeout ui::render\\n\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -2945,15 +2940,14 @@
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 29, byte 741: got \"[] [] [] [net::timeout ui::rende...\", wanted \"net::timeout ui::render\\n\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
         "symbols": 17,
         "symbols_typed": 17,
         "refusals": 0,
-        "approximations": 1,
+        "approximations": 0,
         "crashes": 0
       }
     },
@@ -3049,7 +3043,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: line 7, byte 233: got \"5 sum=0.00 min=0.42 max=0.61\\nsum...\", wanted \"20 sum=10.17 min=0.09 max=0.91\\ns...\""
+          "reason": "stdout differs: line 13, byte 433: got \"[web1 web2 db1 cache1 edge1]=0.0...\", wanted \"cache1=0.69 db1=2.17 edge1=2.35 ...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -3064,14 +3058,14 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: line 7, byte 233: got \"5 sum=0.00 min=0.42 max=0.61\\nsum...\", wanted \"20 sum=10.17 min=0.09 max=0.91\\ns...\""
+        "reason": "stdout differs: line 13, byte 433: got \"[web1 web2 db1 cache1 edge1]=0.0...\", wanted \"cache1=0.69 db1=2.17 edge1=2.35 ...\""
       },
       "quality": {
         "todos": 0,
         "symbols": 30,
         "symbols_typed": 24,
         "refusals": 0,
-        "approximations": 12,
+        "approximations": 11,
         "crashes": 0
       }
     },
@@ -4388,6 +4382,83 @@
       }
     },
     {
+      "tier": "tier2",
+      "name": "69-flattening-lists",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "pass"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "2 variables left dynamic out of 13"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "pass"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 13,
+        "symbols_typed": 11,
+        "refusals": 0,
+        "approximations": 1,
+        "crashes": 0
+      }
+    },
+    {
+      "tier": "tier2",
+      "name": "70-hash-slices-as-places",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "stdout differs: line 4, byte 65: got \"1 key(s): alpha beta gamma=[1 2 ...\", wanted \"3 key(s): alpha=1 beta=2 gamma=3...\"; stderr differs: unexpected \"TODO P2G2530: the two sides of this slice assignment are different le...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "fail",
+          "reason": "1 untranslated construct"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "4 variables left dynamic out of 7"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "stdout differs: line 4, byte 65: got \"1 key(s): alpha beta gamma=[1 2 ...\", wanted \"3 key(s): alpha=1 beta=2 gamma=3...\"; stderr differs: unexpected \"TODO P2G2530: the two sides of this slice assignment are different le...\""
+      },
+      "quality": {
+        "todos": 1,
+        "symbols": 7,
+        "symbols_typed": 3,
+        "refusals": 1,
+        "approximations": 0,
+        "crashes": 0
+      }
+    },
+    {
       "tier": "tier3",
       "name": "01-inventory-manager",
       "kind": "convert",
@@ -4754,7 +4825,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "exit status 255, wanted 0; stdout differs: 1113 byte(s) missing after line 1, expected \"[database]\\n  app_name   = orders...\"; stderr differs: unexpected \"unknown variable ${host} in database.map[app_name:ordersvc base_dir:/...\""
+          "reason": "exit status 255, wanted 0; stdout differs: 282 byte(s) missing after line 36, expected \"web capacity: 240 slots\\nworker i...\"; stderr differs: unexpected \"missing key workers\""
         },
         "honest": {
           "outcome": "n/a"
@@ -4769,7 +4840,7 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "exit status 255, wanted 0; stdout differs: 1113 byte(s) missing after line 1, expected \"[database]\\n  app_name   = orders...\"; stderr differs: unexpected \"unknown variable ${host} in database.map[app_name:ordersvc base_dir:/...\""
+        "reason": "exit status 255, wanted 0; stdout differs: 282 byte(s) missing after line 36, expected \"web capacity: 240 slots\\nworker i...\"; stderr differs: unexpected \"missing key workers\""
       },
       "quality": {
         "todos": 0,
@@ -5150,7 +5221,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: line 1, byte 9: got \"9 stations, 9 directed edges\\nDep...\", wanted \"11 stations, 25 directed edges\\nD...\""
+          "reason": "stdout differs: line 1, byte 9: got \"9 stations, 13 directed edges\\nDe...\", wanted \"11 stations, 25 directed edges\\nD...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -5165,7 +5236,7 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: line 1, byte 9: got \"9 stations, 9 directed edges\\nDep...\", wanted \"11 stations, 25 directed edges\\nD...\""
+        "reason": "stdout differs: line 1, byte 9: got \"9 stations, 13 directed edges\\nDe...\", wanted \"11 stations, 25 directed edges\\nD...\""
       },
       "quality": {
         "todos": 0,
@@ -7814,7 +7885,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "6 variables left dynamic out of 57"
+          "reason": "6 variables left dynamic out of 56"
         }
       },
       "equivalent_annotated": {
@@ -7823,10 +7894,10 @@
       },
       "quality": {
         "todos": 0,
-        "symbols": 57,
-        "symbols_typed": 51,
+        "symbols": 56,
+        "symbols_typed": 50,
         "refusals": 0,
-        "approximations": 13,
+        "approximations": 12,
         "crashes": 0
       }
     },

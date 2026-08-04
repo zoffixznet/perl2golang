@@ -1,0 +1,13 @@
+-- a block whose value is a list --
+6 field(s): north|12|south|7|east|40
+-- flattening one level out of a nested structure --
+6 item(s): d,e,f,a,b,c
+-- a list repeated --
+6 item(s): a a b b c c
+pattern: 1 2 1 2 1 2
+-- a block whose value is one thing --
+3 pair(s), first is alpha/5
+-- merging hashes --
+host=localhost name=edge port=443 tls=1
+-- a list in the middle of another --
+4 item(s): start x y end

@@ -455,15 +455,17 @@ func (l *Lowerer) hashInit(rhs ast.Expr, want *ir.Type) ir.Expr {
 	if len(flat) == 0 {
 		return composite(ir.MapOf(want), nil, nil)
 	}
+	// A hash spliced into a hash literal contributes its own pairs, which is
+	// how a merged hash is written. Go builds that by cloning and then
+	// setting the extras. This is tried before the even-length case, because
+	// `( %defaults, %overrides )` is two elements and neither of them is a
+	// key.
+	if x, ok := l.mergedHash(flat, want, rhs); ok {
+		return x
+	}
 	if len(flat)%2 == 0 {
 		keys, vals, t := l.pairs(flat)
 		return composite(ir.MapOf(t), keys, vals)
-	}
-	// A hash spliced into a hash literal contributes its own pairs, which is
-	// how a merged hash is written. Go builds that by cloning and then
-	// setting the extras.
-	if x, ok := l.mergedHash(flat, want, rhs); ok {
-		return x
 	}
 	// A single list whose length is not known until the program runs still
 	// pairs up: Perl walks it two at a time, and so does the loop.
@@ -488,7 +490,13 @@ func (l *Lowerer) hashInit(rhs ast.Expr, want *ir.Type) ir.Expr {
 // followed by ordinary assignment, which says the same thing in two lines and
 // makes the shallowness of the copy visible.
 func (l *Lowerer) mergedHash(flat []ast.Expr, want *ir.Type, rhs ast.Expr) (ir.Expr, bool) {
-	if len(flat) < 1 || len(flat[1:])%2 != 0 {
+	// The hashes come first and the loose pairs follow, which is how the
+	// idiom is always written: a set of defaults, then what overrides them.
+	lead := 0
+	for lead < len(flat) && isHashExpr(flat[lead]) {
+		lead++
+	}
+	if lead == 0 || (len(flat)-lead)%2 != 0 {
 		return nil, false
 	}
 	base := l.expr(flat[0])
@@ -509,7 +517,20 @@ func (l *Lowerer) mergedHash(flat []ast.Expr, want *ir.Type, rhs ast.Expr) (ir.E
 		"nil-slices-vs-nil-maps", "slice-aliasing-and-copy")
 	l.emit(decl)
 	target := ir.NewIdent(name, t)
-	for i := 1; i+1 < len(flat); i += 2 {
+	for _, e := range flat[1:lead] {
+		more := l.expr(e)
+		if more == nil {
+			continue
+		}
+		st := exprStmt(call("maps", "maps", "Copy", ir.TVoid, target, l.assignable(more, t, e)))
+		l.setProv(st, e)
+		l.note(st, "A second hash in the same literal contributes its pairs too, and "+
+			"the later one wins where they share a key. maps.Copy is that rule: it "+
+			"writes every pair of the second into the first.",
+			"nil-slices-vs-nil-maps")
+		l.emit(st)
+	}
+	for i := lead; i+1 < len(flat); i += 2 {
 		key := l.toStr(l.expr(flat[i]), flat[i])
 		value := l.assignable(l.scalar(flat[i+1]), elemOf(t), flat[i+1])
 		st := assign("=", []ir.Expr{index(target, key, elemOf(t))}, []ir.Expr{value})
@@ -517,6 +538,18 @@ func (l *Lowerer) mergedHash(flat []ast.Expr, want *ir.Type, rhs ast.Expr) (ir.E
 		l.emit(st)
 	}
 	return target, true
+}
+
+// isHashExpr reports whether an expression is a whole hash rather than one
+// value: a named hash, or a hash reference written out with its sigil.
+func isHashExpr(e ast.Expr) bool {
+	switch n := e.(type) {
+	case *ast.Var:
+		return n.Sigil == '%'
+	case *ast.Deref:
+		return n.Sigil == '%'
+	}
+	return false
 }
 
 // assignToEnv lowers `$ENV{NAME} = VALUE`.
@@ -740,6 +773,11 @@ func (l *Lowerer) producesList(e ast.Expr) bool {
 	case *ast.Slice, *ast.List:
 		return true
 	case *ast.BinOp:
+		if n.Op == "x" {
+			// `( $_ ) x 3` repeats a list; `"ab" x 3` repeats a string. Which
+			// one it is comes from the left-hand side.
+			return l.producesList(n.L)
+		}
 		return n.Op == ".."
 	case *ast.Call:
 		if isListBuiltin(n.Name) {

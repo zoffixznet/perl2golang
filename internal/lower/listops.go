@@ -422,7 +422,7 @@ func (l *Lowerer) textComparator(elem *ir.Type, reverse bool) ir.Expr {
 
 // mapCall lowers map into the append loop that Go code writes instead.
 func (l *Lowerer) mapCall(n *ast.Call) ir.Expr {
-	src, item, body, value, ok := l.blockLoop(n)
+	src, item, body, value, tail, ok := l.blockLoopTail(n)
 	if !ok {
 		return ir.Nil(ir.TAny)
 	}
@@ -432,17 +432,33 @@ func (l *Lowerer) mapCall(n *ast.Call) ir.Expr {
 			"The block does not end in an expression, so there is nothing to collect.",
 			"Rewrite it as an explicit loop that appends what you want.")
 	}
+	// A block whose value is a list contributes every element of it, not one
+	// element holding the list: `map { ($a, $b) } @xs` and `map { @$_ } @xs`
+	// both give twice as many results as they have inputs. Go's append takes
+	// the elements one at a time or a whole slice spread with three dots,
+	// which is the same rule written where it can be seen.
+	flatten := tail != nil && l.producesList(tail) && typeOrAny(value).Kind == ir.Slice
 	outT := ir.SliceOf(typeOrAny(value))
+	if flatten {
+		outT = typeOrAny(value)
+	}
 	name := l.tmp("mapped")
 	decl := &ir.DeclStmt{Names: []string{name}, Type: outT}
+	add := appendTo(ir.NewIdent(name, outT), value)
+	add.Ellipsis = flatten
 	loop := &ir.Range{
 		Key:    ir.NewIdent("_", ir.TInt),
 		Value:  item,
 		X:      src,
 		Define: true,
 		Body: &ir.Block{Stmts: append(body,
-			assign("=", []ir.Expr{ir.NewIdent(name, outT)},
-				[]ir.Expr{appendTo(ir.NewIdent(name, outT), value)}))},
+			assign("=", []ir.Expr{ir.NewIdent(name, outT)}, []ir.Expr{add}))},
+	}
+	if flatten {
+		l.note(loop, "The block hands back a list rather than one value, and Perl "+
+			"flattens it into the result. Go spreads a slice into append with three "+
+			"dots, which does the same and says so.",
+			"slices-not-arrays", "context-is-gone")
 	}
 	l.setProv(decl, n)
 	l.note(decl, "Go has no map over a slice, and the standard library deliberately "+
@@ -509,6 +525,13 @@ func comparatorResult(cmp ir.Expr) *ir.Type {
 // blockLoop is the shared setup for map and grep: it lowers the list, invents
 // the loop variable, and lowers the block with $_ bound to it.
 func (l *Lowerer) blockLoop(n *ast.Call) (src ir.Expr, item ir.Expr, body []ir.Stmt, value ir.Expr, ok bool) {
+	src, item, body, value, _, ok = l.blockLoopTail(n)
+	return src, item, body, value, ok
+}
+
+// blockLoopTail is blockLoop plus the block's last expression as it was
+// written, which is what says whether the block's value is a list.
+func (l *Lowerer) blockLoopTail(n *ast.Call) (src ir.Expr, item ir.Expr, body []ir.Stmt, value ir.Expr, tail ast.Expr, ok bool) {
 	args := flatten(argList(n))
 	block := n.Block
 	if block == nil && len(args) > 0 {
@@ -517,7 +540,7 @@ func (l *Lowerer) blockLoop(n *ast.Call) (src ir.Expr, item ir.Expr, body []ir.S
 		args = args[1:]
 	}
 	if block == nil || len(args) == 0 {
-		return nil, nil, nil, nil, false
+		return nil, nil, nil, nil, nil, false
 	}
 	var listArgs []ast.Expr
 	listArgs = append(listArgs, args...)
@@ -542,7 +565,6 @@ func (l *Lowerer) blockLoop(n *ast.Call) (src ir.Expr, item ir.Expr, body []ir.S
 	// expression rather than as a statement: a statement layer would discard
 	// exactly the thing the block exists to produce.
 	lead := block
-	var tail ast.Expr
 	if last, isExpr := block[len(block)-1].(*ast.ExprStmt); isExpr {
 		lead = block[:len(block)-1]
 		tail = last.X
@@ -557,7 +579,7 @@ func (l *Lowerer) blockLoop(n *ast.Call) (src ir.Expr, item ir.Expr, body []ir.S
 	inner := l.takePre()
 	l.pre = savedPre
 	body = append(body, inner...)
-	return src, item, body, value, true
+	return src, item, body, value, tail, true
 }
 
 // mapToHash recognises `map { KEY => VALUE } LIST` used to build a hash, which

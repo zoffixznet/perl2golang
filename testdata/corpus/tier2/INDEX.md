@@ -1,6 +1,6 @@
 # Tier 2 corpus - script-shaped Perl programs
 
-68 entries. Each is a self-contained, realistic Perl script of the kind a
+70 entries. Each is a self-contained, realistic Perl script of the kind a
 sysadmin or data wrangler actually writes, not a snippet.
 
 ## Layout of an entry
@@ -115,6 +115,8 @@ Two entries exit non-zero on purpose: **27** (65) and **32** (1). The rest exit 
 | 66 | `66-reads-past-the-end` | Reading and writing an array outside its range, which does not convert yet | `$a[99]` and `$empty[0]`, `$a[6] = ...` growing the array, `$a[-1]` on both sides of an assignment, `$lines[-1] .= ...`, `$#a = 2` as a place |
 | 67 | `67-running-a-program` | Running another program, in every shape a script does it | `system LIST` for its value and for `$?`, backticks in scalar and list context, an argument with a space in it passed whole, `open '-|'` and `open '\|-'` with `close` |
 | 68 | `68-child-status-and-forks` | The process half of running a program, which does not convert yet | `$?` after a pipe close, `2>&1` and `2>/dev/null` inside a command, `fork` and `waitpid`, `$^X` |
+| 69 | `69-flattening-lists` | Lists are flat, and that rule decides how many results half the idioms produce | `map` blocks whose value is a list, a dereferenced array or a repetition, `( $_ ) x 2` versus `"ab" x 2`, two hashes spliced into one literal, an array in the middle of a list |
+| 70 | `70-hash-slices-as-places` | A hash slice on the left of an assignment or inside a delete, which does not convert yet | `@h{@keys} = @vals`, a literal key slice, a short right-hand side leaving undefs, `delete @h{...}` returning the removed values |
 
 ## Coverage map
 
@@ -134,7 +136,7 @@ Two entries exit non-zero on purpose: **27** (65) and **32** (1). The rest exit 
 - **Object shapes** - 36
 - **Blocks as terms** - 38; the slurp form of it in 21
 - **Arithmetic and argument typing** - 39, 40
-- **List and string surgery** - 41, 66; the whole of `splice` in tier1 12
+- **List and string surgery** - 41, 66, 69, 70; the whole of `splice` in tier1 12
 - **Nested data and its types** - 42, 45, 46; also 06, 07, 08
 - **Paths and temporary trees** - 43, 44, 49, 50, 56
 - **Time** - 47, 48
