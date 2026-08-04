@@ -90,7 +90,7 @@ func (l *Lowerer) perlFormat(format string, args []ir.Expr, at ast.Node) (string
 			outArgs = append(outArgs, l.toStr(a, at))
 		default:
 			out.WriteString("%v")
-			outArgs = append(outArgs, a)
+			outArgs = append(outArgs, l.unwrapNil(a))
 		}
 		i = end
 	}

@@ -926,6 +926,18 @@ func (l *Lowerer) resolveTypes() {
 				t = ir.MapOf(t)
 			}
 		}
+		// A container the file put undef into needs room in its element type
+		// for "nothing here", and a Go scalar has none: nil in a
+		// map[string]*int is a state that 0 in a map[string]int cannot
+		// express. Only the settled element type can be wrapped, because the
+		// wrapping has to happen once, after every observation is in.
+		if b.NilElems && (t.Kind == ir.Slice || t.Kind == ir.Map) && isScalarKind(t.Elem) {
+			if t.Kind == ir.Slice {
+				t = ir.SliceOf(nullable(t.Elem))
+			} else {
+				t = ir.MapOf(nullable(t.Elem))
+			}
+		}
 		b.Type = t
 		if isDynamic(scalarPart(t)) {
 			b.Dynamic = true

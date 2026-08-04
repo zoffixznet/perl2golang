@@ -246,6 +246,42 @@ func (l *Lowerer) list(e ast.Expr) ir.Expr {
 	return l.listValue(parts, t)
 }
 
+// containerList lowers a list that is about to become an array's contents,
+// which is the one place where undef among the values changes the element type
+// rather than one value.
+func (l *Lowerer) containerList(rhs ast.Expr) ir.Expr {
+	if !listHasUndef(rhs) {
+		return l.list(rhs)
+	}
+	parts, t := l.listParts([]ast.Expr{rhs})
+	if isScalarKind(t) {
+		t = nullable(t)
+	}
+	return l.listValue(parts, t)
+}
+
+// listHasUndef reports whether a list written out in the source has a bare
+// undef among its elements.
+func listHasUndef(e ast.Expr) bool {
+	switch n := e.(type) {
+	case nil:
+		return false
+	case *ast.List:
+		for _, el := range n.Elems {
+			if listHasUndef(el) {
+				return true
+			}
+		}
+		return false
+	case *ast.BinOp:
+		if n.Op == "," || n.Op == "=>" {
+			return listHasUndef(n.L) || listHasUndef(n.R)
+		}
+		return false
+	}
+	return isUndefLiteral(e)
+}
+
 // listValue builds the Go slice a lowered Perl list produces.
 //
 // Perl lists are flat: `(1, @rest, 2)` is one list of however many elements
@@ -547,6 +583,7 @@ func (l *Lowerer) pairs(elems []ast.Expr) (keys, vals []ir.Expr, t *ir.Type) {
 	defer func() { l.uniformFn = saved }()
 
 	var seen []*ir.Type
+	sawUndef := false
 	for i := 0; i+1 < len(flat); i += 2 {
 		k := l.expr(flat[i])
 		v := l.expr(flat[i+1])
@@ -555,6 +592,14 @@ func (l *Lowerer) pairs(elems []ast.Expr) (keys, vals []ir.Expr, t *ir.Type) {
 		}
 		keys = append(keys, l.toStr(k, flat[i]))
 		vals = append(vals, v)
+		if isUndefLiteral(flat[i+1]) {
+			// undef says the values can be absent, and says nothing about
+			// what the present ones are. Counting it as evidence would settle
+			// the whole map at `any` on the strength of the one key that
+			// holds nothing.
+			sawUndef = true
+			continue
+		}
 		seen = append(seen, v.Type())
 	}
 	// The values decide the map's value type together, and two that no single
@@ -577,6 +622,11 @@ func (l *Lowerer) pairs(elems []ast.Expr) (keys, vals []ir.Expr, t *ir.Type) {
 	t = usableElem(t, seen)
 	if t == nil {
 		t = ir.TAny
+	}
+	// A literal with undef among its values needs a value type with room for
+	// nothing, which for a Go scalar means a pointer.
+	if sawUndef {
+		t = nullable(t)
 	}
 	for i, v := range vals {
 		vals[i] = l.assignable(v, t, nil)
@@ -714,6 +764,8 @@ func (l *Lowerer) sprintfParts(pieces []interpPiece) (string, []ir.Expr) {
 			format.WriteString(strings.ReplaceAll(p.text, "%", "%%"))
 			continue
 		}
+		expr := l.unwrapNil(p.expr)
+		p.expr = expr
 		t := p.expr.Type()
 		switch {
 		case t == nil || t.Kind == ir.Any:

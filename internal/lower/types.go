@@ -86,6 +86,19 @@ func join(a, b *ir.Type) *ir.Type {
 	if a.Kind == ir.Map && b.Kind == ir.Map {
 		return ir.MapOf(join(a.Elem, b.Elem))
 	}
+	// A scalar seen both as a value and as something that might be absent is
+	// something that might be absent: `my $seen = $h{k}` copies out a *int and
+	// `$seen = 0` puts a number in it, and only the pointer holds both.
+	if isNullable(a) && isScalarKind(b) {
+		if elem := join(a.Elem, b); elem != nil && !isUnresolved(elem) {
+			return nullable(elem)
+		}
+	}
+	if isNullable(b) && isScalarKind(a) {
+		if elem := join(a, b.Elem); elem != nil && !isUnresolved(elem) {
+			return nullable(elem)
+		}
+	}
 	if a.Kind == ir.Pointer && b.Kind == ir.Pointer {
 		// Two pointers to different named types have no pointer type in
 		// common: *any is a pointer to an interface, which nothing assigns to.
@@ -198,6 +211,39 @@ func joinAll(ts []*ir.Type) *ir.Type {
 // isDynamic reports whether the type is the `any` fallback, which is what the
 // scorecard counts.
 func isDynamic(t *ir.Type) bool { return t == nil || t.Kind == ir.Any }
+
+// isScalarKind reports whether a type is one of the four Go types a Perl scalar
+// settles on. Those are the ones a pointer can usefully make optional: a slice,
+// a map and an interface already have a nil of their own.
+func isScalarKind(t *ir.Type) bool {
+	if t == nil {
+		return false
+	}
+	switch t.Kind {
+	case ir.Int, ir.Float, ir.String, ir.Bool:
+		return true
+	}
+	return false
+}
+
+// nullable is *T for a scalar T, and T unchanged for everything else.
+//
+// It is how a container that the program has put undef into spells its element
+// type. Perl's undef is a value a hash or an array element can hold, and no Go
+// scalar type has room for it: 0 in a map[string]int is a stored zero and
+// nothing else. A map[string]*int has room, because nil is not 0.
+func nullable(t *ir.Type) *ir.Type {
+	if !isScalarKind(t) {
+		return t
+	}
+	return ir.PointerTo(t)
+}
+
+// isNullable reports whether a type is the pointer-to-scalar shape nullable
+// produces. A pointer to a named type is an object reference and not this.
+func isNullable(t *ir.Type) bool {
+	return t != nil && t.Kind == ir.Pointer && isScalarKind(t.Elem)
+}
 
 // isOrdered reports whether Go's < applies to the type, which is what the
 // generic ordering functions in slices and cmp require.

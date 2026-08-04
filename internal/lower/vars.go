@@ -235,6 +235,34 @@ func (l *Lowerer) observeElem(b *Binding, t *ir.Type) {
 	}
 }
 
+// markNilElems records that the program put undef into one of a container's
+// elements, which is what decides whether its element type needs a pointer.
+//
+// It is deliberately about the container rather than about the element: Perl
+// has one array, and one slot holding undef makes every slot a slot that might.
+func (l *Lowerer) markNilElems(b *Binding) {
+	if b == nil || l.pass != 1 {
+		return
+	}
+	if b.Sigil == '@' || b.Sigil == '%' {
+		b.NilElems = true
+	}
+}
+
+// markNilElemsFrom does the same for a list being assigned to a container,
+// where undef can be any one of the values.
+func (l *Lowerer) markNilElemsFrom(b *Binding, rhs ast.Expr) {
+	if b == nil || l.pass != 1 || rhs == nil {
+		return
+	}
+	for _, e := range flatten(rhs) {
+		if isUndefLiteral(e) {
+			l.markNilElems(b)
+			return
+		}
+	}
+}
+
 // ident builds a reference to a binding and counts the read.
 func (l *Lowerer) ident(b *Binding) ir.Expr {
 	if b == nil {

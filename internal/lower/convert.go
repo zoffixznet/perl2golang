@@ -26,11 +26,26 @@ func (l *Lowerer) helperCall(name string, ret *ir.Type, args ...ir.Expr) *ir.Cal
 	return ir.CallOf(ir.NewIdent(l.use(name), nil), ret, args...)
 }
 
+// unwrapNil reads a value that may be absent as the value behind it.
+//
+// A slot with room for undef holds a pointer, and every conversion below wants
+// the value rather than the address. Perl read undef as 0, as the empty string
+// and as false depending on the operator, which is exactly what the zero value
+// behind a nil pointer gives, so the unwrapping is faithful and not an
+// approximation.
+func (l *Lowerer) unwrapNil(x ir.Expr) ir.Expr {
+	if x == nil || !isNullable(x.Type()) {
+		return x
+	}
+	return l.helperCall(hDeref, x.Type().Elem, x)
+}
+
 // toStr renders any expression as a Go string.
 func (l *Lowerer) toStr(x ir.Expr, n ast.Node) ir.Expr {
 	if x == nil {
 		return ir.Str(`""`)
 	}
+	x = l.unwrapNil(x)
 	t := x.Type()
 	switch {
 	case t == nil:
@@ -79,6 +94,7 @@ func (l *Lowerer) toFloat(x ir.Expr, n ast.Node) ir.Expr {
 	if x == nil {
 		return ir.FloatLit("0")
 	}
+	x = l.unwrapNil(x)
 	t := x.Type()
 	switch {
 	case t == nil:
@@ -108,6 +124,7 @@ func (l *Lowerer) toInt(x ir.Expr, n ast.Node) ir.Expr {
 	if x == nil {
 		return ir.IntLit("0")
 	}
+	x = l.unwrapNil(x)
 	t := x.Type()
 	switch {
 	case t != nil && t.Kind == ir.Bool:
@@ -190,6 +207,7 @@ func (l *Lowerer) toBool(x ir.Expr, n ast.Node) ir.Expr {
 	if x == nil {
 		return ir.BoolLit(false)
 	}
+	x = l.unwrapNil(x)
 	t := x.Type()
 	switch {
 	case t == nil:
@@ -236,6 +254,25 @@ func (l *Lowerer) assignable(x ir.Expr, want *ir.Type, n ast.Node) ir.Expr {
 	have := x.Type()
 	if have != nil && have.Equal(want) {
 		return x
+	}
+	// A slot that has room for undef holds *T, and the two directions across
+	// that boundary are the whole point of the pointer: nothing going in stays
+	// nil, and a value coming out has to be read through the pointer.
+	if isNullable(want) {
+		if lit, ok := x.(*ir.Lit); ok && lit.Kind == ir.LitNil {
+			return ir.Nil(want)
+		}
+		if isNullable(have) {
+			return x
+		}
+		return l.helperCall(hPtr, want, l.assignable(x, want.Elem, n))
+	}
+	if isNullable(have) && want.Kind != ir.Any {
+		x = l.helperCall(hDeref, have.Elem, x)
+		have = have.Elem
+		if have.Equal(want) {
+			return x
+		}
 	}
 	switch want.Kind {
 	case ir.String:

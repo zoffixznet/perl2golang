@@ -143,6 +143,54 @@ read=30
 write is not there
 ```
 
+### A run of // is one decision, not a chain of two-value expressions
+
+`$opt{a} // $opt{b} // 5` cannot be built up one operator at a time, because the value of `$opt{a} // $opt{b}` is itself either a number or nothing, and no Go expression has room for that second answer. Take the whole run as one decision and it becomes an if/else ladder where each rung asks the question its own type can answer:
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	opt := map[string]int{"retries": 0}
+
+	// $opt{retries} // $opt{tries} // 5
+	var retries int
+	if v, ok := opt["retries"]; ok {
+		retries = v
+	} else if v, ok := opt["tries"]; ok {
+		retries = v
+	} else {
+		retries = 5
+	}
+
+	// $opt{tries} // $opt{retries} // 5
+	var tries int
+	if v, ok := opt["tries"]; ok {
+		tries = v
+	} else if v, ok := opt["retries"]; ok {
+		tries = v
+	} else {
+		tries = 5
+	}
+
+	// The truth test that || would have become gets both of them wrong.
+	loud := opt["retries"]
+	if loud == 0 {
+		loud = 5
+	}
+
+	fmt.Println(retries, tries, loud)
+}
+```
+
+```
+0 0 5
+```
+
+Two things are worth noticing. The ladder is lazy in the same way the operator was: a rung's lookup only happens when every rung above it has failed, which is what the `if` statement's own initialiser buys. And each rung is free to ask differently: a plain map asks with the two-result form, a `map[string]*int` asks with `!= nil`, and a variable that was given a value where it was declared has no question to ask at all, so that rung ends the ladder and everything below it is dead code worth deleting rather than translating.
+
 For a plain variable there is no such form, and there is no way to add one: `var n int` holds 0 from the moment it exists, and nothing distinguishes that from a 0 someone stored. Two consequences follow, and they are worth taking seriously rather than working around.
 
 The first is that a `defined` test on an ordinary variable usually has one answer. A variable given a value where it is declared and never set to undef always has one, so the test is a constant and writing it out as a zero-value comparison would be worse than useless: it would answer a different question, and answer it wrongly for exactly the values that matter.

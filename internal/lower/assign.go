@@ -330,9 +330,10 @@ func (l *Lowerer) declareSingle(v *ast.Var, n *ast.Assign) []ir.Stmt {
 	defer func() { l.hints = l.hints[:len(l.hints)-1] }()
 
 	var value ir.Expr
+	l.markNilElemsFrom(b, n.RHS)
 	switch v.Sigil {
 	case '@':
-		value = l.copiedList(l.list(n.RHS), n.RHS)
+		value = l.copiedList(l.containerList(n.RHS), n.RHS)
 		l.observe(b, typeOrAny(value))
 	case '%':
 		// A hash an option block fills in is a struct, so its initialiser is
@@ -349,7 +350,7 @@ func (l *Lowerer) declareSingle(v *ast.Var, n *ast.Assign) []ir.Stmt {
 		value = l.copiedMap(l.hashInit(n.RHS, elemOf(b.Type)), n.RHS)
 		l.observe(b, typeOrAny(value))
 	default:
-		value = l.scalar(n.RHS)
+		value = l.scalarKeepingNil(n.RHS)
 		l.observe(b, typeOrAny(value))
 	}
 	notePattern(b, n.RHS)
@@ -1054,9 +1055,10 @@ func (l *Lowerer) assignToVar(v *ast.Var, n *ast.Assign) []ir.Stmt {
 	b.Writes++
 
 	var value ir.Expr
+	l.markNilElemsFrom(b, n.RHS)
 	switch v.Sigil {
 	case '@':
-		value = l.copiedList(l.list(n.RHS), n.RHS)
+		value = l.copiedList(l.containerList(n.RHS), n.RHS)
 	case '%':
 		value = l.hashInit(n.RHS, elemOf(b.Type))
 	default:
@@ -1114,6 +1116,9 @@ func (l *Lowerer) assignToIndex(lhs *ast.Index, n *ast.Assign) []ir.Stmt {
 	value := l.assignable(raw, elem, n.RHS)
 	if b := l.arrayBindingOf(lhs); b != nil {
 		b.Writes++
+		if isUndefLiteral(n.RHS) {
+			l.markNilElems(b)
+		}
 		l.observeElem(b, typeOrAny(raw))
 	} else if f, wrap, ok := l.fieldPlace(lhs.Base); ok {
 		l.observeField(f, wrap(ir.SliceOf(typeOrAny(raw))))
@@ -1183,6 +1188,9 @@ func (l *Lowerer) assignToHash(lhs *ast.HashIndex, n *ast.Assign) []ir.Stmt {
 	case l.hashBindingOf(lhs) != nil:
 		hb := l.hashBindingOf(lhs)
 		hb.Writes++
+		if isUndefLiteral(n.RHS) {
+			l.markNilElems(hb)
+		}
 		l.observeElem(hb, typeOrAny(raw))
 	default:
 		if f, fwrap, isField := l.fieldPlace(lhs.Base); isField {
@@ -1360,6 +1368,9 @@ func (l *Lowerer) compoundAssign(n *ast.Assign) []ir.Stmt {
 			"Translate it by hand.")}
 	}
 	t := typeOrAny(target)
+	if sts, ok := l.compoundNullable(op, target, t, n); ok {
+		return sts
+	}
 
 	switch op {
 	case "||", "//":
@@ -1474,6 +1485,82 @@ func (l *Lowerer) compoundAssign(n *ast.Assign) []ir.Stmt {
 	st := assign(op+"=", []ir.Expr{target}, []ir.Expr{l.scalar(n.RHS)})
 	l.setProv(st, n)
 	return []ir.Stmt{st}
+}
+
+// compoundNullable lowers `$h{k} += 1` and its relatives where the element has
+// room for undef and therefore holds a pointer.
+//
+// Go has no compound assignment for a pointer, so the operator works on the
+// value behind it and the answer goes back as a new pointer. undef reads as 0
+// or as the empty string in an operator, which is what makes reading a nil slot
+// as the zero value the right answer rather than an approximate one.
+func (l *Lowerer) compoundNullable(op string, target ir.Expr, t *ir.Type, n *ast.Assign) ([]ir.Stmt, bool) {
+	if !isNullable(t) {
+		return nil, false
+	}
+	elem := t.Elem
+	current := func() ir.Expr { return l.helperCall(hDeref, elem, target) }
+	store := func(x ir.Expr) []ir.Stmt {
+		st := assign("=", []ir.Expr{target}, []ir.Expr{l.assignable(x, t, n.RHS)})
+		l.setProv(st, n)
+		l.note(st, "The element may be absent, so it holds a pointer and Go has no "+
+			"compound assignment for one. The operator works on the value behind it, "+
+			"and the answer is stored as a pointer of its own.",
+			"nil-vs-undef", "pointers-vs-references")
+		return []ir.Stmt{st}
+	}
+
+	switch op {
+	case "||", "//", "&&":
+		raw := l.scalar(n.RHS)
+		l.observeElemOfTarget(n.LHS, typeOrAny(raw))
+		var cond ir.Expr
+		switch op {
+		case "//":
+			cond = ir.Bin("==", target, ir.Nil(t), ir.TBool)
+		case "||":
+			cond = negated(l.toBool(current(), n.LHS))
+		default:
+			cond = l.toBool(current(), n.LHS)
+		}
+		guard := &ir.If{
+			Cond: cond,
+			Then: &ir.Block{Stmts: []ir.Stmt{
+				assign("=", []ir.Expr{target}, []ir.Expr{l.assignable(raw, t, n.RHS)}),
+			}},
+		}
+		l.setProv(guard, n)
+		l.note(guard, "//= assigns only when there is nothing there, which for a slot "+
+			"that can be absent is the nil test itself rather than a test against zero.",
+			"nil-vs-undef")
+		return []ir.Stmt{guard}, true
+
+	case ".":
+		value := l.toStr(l.scalar(n.RHS), n.RHS)
+		l.observeElemOfTarget(n.LHS, ir.TString)
+		return store(ir.Bin("+", l.toStr(current(), n.LHS), value, ir.TString)), true
+
+	case "**":
+		return store(l.power(&ast.BinOp{Op: "**", L: n.LHS, R: n.RHS})), true
+
+	case "%":
+		return store(l.modulo(&ast.BinOp{Op: "%", L: n.LHS, R: n.RHS})), true
+
+	case "x":
+		return store(call("strings", "strings", "Repeat", ir.TString,
+			l.toStr(current(), n.LHS), l.toInt(l.expr(n.RHS), n.RHS))), true
+
+	case "+", "-", "*", "/":
+		raw := l.scalar(n.RHS)
+		want := elem
+		if op == "/" {
+			want = ir.TFloat
+		}
+		l.observeElemOfTarget(n.LHS, arithmeticResult(typeOrAny(raw)))
+		return store(ir.Bin(op, l.assignable(current(), want, n.LHS),
+			l.assignable(raw, want, n.RHS), want)), true
+	}
+	return nil, false
 }
 
 // assignTarget lowers the left side of an assignment as an addressable Go

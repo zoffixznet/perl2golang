@@ -380,6 +380,25 @@ func (l *Lowerer) incDecStmt(n *ast.UnOp) []ir.Stmt {
 		l.pre = savedPre
 		return out
 	}
+	if t := typeOrAny(target); isNullable(t) {
+		// The slot can be absent, so it holds a pointer and Go has no ++ for
+		// one. undef counts as 0 in Perl's arithmetic, which is exactly what
+		// reading a nil pointer as the zero value gives.
+		step := "+"
+		if n.Op == "--" {
+			step = "-"
+		}
+		st := assign("=", []ir.Expr{target}, []ir.Expr{
+			l.helperCall(hPtr, t, ir.Bin(step, l.helperCall(hDeref, t.Elem, target),
+				ir.IntLit("1"), t.Elem)),
+		})
+		l.setProv(st, n)
+		l.note(st, "This element can be absent, so it holds a pointer. Counting through "+
+			"one means reading the value behind it, stepping that, and storing a new "+
+			"pointer: a missing slot counts as zero, exactly as undef did.",
+			"nil-vs-undef", "pointers-vs-references")
+		return []ir.Stmt{st}
+	}
 	if typeOrAny(target).Kind == ir.Any {
 		// Go's ++ needs a numeric type, and this one is not known until the
 		// program runs, so the step is written as arithmetic instead.

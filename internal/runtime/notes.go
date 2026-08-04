@@ -141,6 +141,17 @@ var notes = map[string]string{
 		"printed straight from a map changes order between runs. Sorting the " +
 		"keys is what keeps the output diffable.",
 
+	"ptr": "A pointer type is how Go says a value may be absent, and it is " +
+		"the shape a collection takes once the program has put nothing into " +
+		"one of its slots. The helper exists because Go will not take the " +
+		"address of a literal or of a map element, so the value needs a " +
+		"variable of its own to point at.",
+
+	"deref": "Reading a *T where a T is wanted is one line of Go, and it is " +
+		"the line that crashes when the pointer is nil. Treating absent as " +
+		"empty is usually what the original did, so the helper says that " +
+		"once rather than at every read.",
+
 	"at": "Reading past the end of a list is not an error, it is a missing " +
 		"value, so the helper answers with the zero value where a Go index " +
 		"expression would panic. A negative index counts back from the end, " +

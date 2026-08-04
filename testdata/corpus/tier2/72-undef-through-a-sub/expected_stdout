@@ -1,0 +1,11 @@
+--- a sub that may answer with nothing ---
+bolt    costs 0
+nut     costs 3
+washer  no price
+screw   no price
+--- absence inside a list of records ---
+bolt    qty 4
+washer  qty unknown
+nut     qty 0
+--- the first defined one wins ---
+first defined candidate: 0

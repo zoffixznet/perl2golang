@@ -1,0 +1,17 @@
+--- three states per key ---
+retries  exists=yes defined=yes value=0
+timeout  exists=yes defined=yes value=30
+burst    exists=yes defined=no value=-
+window   exists=no defined=no value=-
+--- defaults only fill what is missing ---
+retries=0 burst=5 window=60
+--- counting through a slot that was never set ---
+alpha  3
+beta   1
+gamma  1
+--- undef read as a number and as text ---
+count as number: 0
+count as text:   []
+label is core
+--- delete hands back what was there ---
+removed timeout=30, left with 3 keys

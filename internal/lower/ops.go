@@ -241,37 +241,7 @@ func (l *Lowerer) orValue(n *ast.BinOp, definedOr bool) ir.Expr {
 		}
 	}
 	if definedOr {
-		// A left side that cannot be undef makes the default unreachable, and
-		// that includes another // whose own default is a value: `$a // $b //
-		// 5` always ends with something.
-		if definiteValue(n.L) {
-			out := l.expr(n.L)
-			l.note(out, "The left side always has a value, so // can never reach its "+
-				"right side and the default is dropped.",
-				"nil-vs-undef", "static-types-and-zero-values")
-			return out
-		}
-		// `$h{k} // $default` asks whether the hash has that key, which is the
-		// two-result index form and not a truth test: a stored 0 keeps its
-		// place.
-		if h, ok := n.L.(*ast.HashIndex); ok {
-			if out, done := l.definedOrKey(h, n); done {
-				return out
-			}
-		}
-		// `$x // $default` asks whether the left side has a value, and a
-		// variable that always has one makes the default unreachable. Writing
-		// the test out would compare against the zero value and take the
-		// default for a stored 0, which is the wrong answer rather than an
-		// approximate one.
-		if _, ok := l.alwaysDefined(n.L, n); ok {
-			out := l.expr(n.L)
-			l.note(out, "The left side always has a value, so // can never reach its "+
-				"right side and the default is dropped. Perl's undef is a state a Go "+
-				"variable of this type does not have.",
-				"nil-vs-undef", "static-types-and-zero-values")
-			return out
-		}
+		return l.definedOrChain(n)
 	}
 	lx := l.expr(n.L)
 	rx := l.expr(n.R)
@@ -298,21 +268,198 @@ func (l *Lowerer) orValue(n *ast.BinOp, definedOr bool) ir.Expr {
 	target := ir.NewIdent(name, t)
 	body := &ir.Block{Stmts: []ir.Stmt{assign("=", []ir.Expr{target}, []ir.Expr{l.assignable(rx, t, n.R)})}}
 	guard := &ir.If{Cond: negated(l.toBool(target, n.L)), Then: body}
-	if definedOr {
-		l.note(decl, "// tests whether the left side is defined, not whether it is "+
-			"true, so 0 and the empty string pass it. Go has no undefined value: a "+
-			"declared variable always holds its type's zero value, which is why this "+
-			"is written as an explicit test.",
-			"nil-vs-undef", "static-types-and-zero-values")
-	} else {
-		l.note(decl, "Perl's || returns the first true operand, not a bool, which is "+
-			"why it works for defaulting. Go's || is strictly boolean, so the default "+
-			"is applied with an if.",
-			"static-types-and-zero-values")
-	}
+	l.note(decl, "Perl's || returns the first true operand, not a bool, which is "+
+		"why it works for defaulting. Go's || is strictly boolean, so the default "+
+		"is applied with an if.",
+		"static-types-and-zero-values")
 	l.emit(decl)
 	l.emit(guard)
 	return ir.NewIdent(name, t)
+}
+
+// definedProbe is one operand of a // chain: how to read it, how to ask whether
+// it had a value at all, and the value itself once it did.
+type definedProbe struct {
+	init ir.Stmt // read the operand into a name the test and the value share
+	cond ir.Expr // the test that says it had a value
+	val  ir.Expr // what the chain answers with when the test passes
+	// last marks an operand that always has a value, so nothing after it in
+	// the chain can ever be reached.
+	last bool
+	// note explains this rung, and is attached where the rung is built.
+	note string
+}
+
+// definedOrChain lowers a whole run of //, which is what the operator is nearly
+// always written as: `$opt{a} // $opt{b} // 5`.
+//
+// Lowering one // at a time cannot get this right, because the value of
+// `$a // $b` is itself either a value or undef and a Go expression has nowhere
+// to put that second answer. Taking the run as a unit lets each operand keep
+// its own way of asking the question, which for a hash element is the
+// two-result index form and never a test against zero: a stored 0 is defined.
+func (l *Lowerer) definedOrChain(n *ast.BinOp) ir.Expr {
+	operands := flattenDefinedOr(n)
+	var probes []definedProbe
+	var fallback ir.Expr
+	for i, x := range operands {
+		if i == len(operands)-1 {
+			fallback = l.expr(x)
+			break
+		}
+		p := l.definedProbeOf(x, n)
+		if p.last {
+			// This operand always has a value, so nothing after it in the
+			// chain can be reached and it becomes the answer.
+			fallback = p.val
+			l.note(fallback, "This operand always has a value, so // can never reach "+
+				"what follows it and the rest of the chain is dropped. Perl's undef is a "+
+				"state a Go variable of this type does not have.",
+				"nil-vs-undef", "static-types-and-zero-values")
+			break
+		}
+		probes = append(probes, p)
+	}
+	return l.buildDefinedOr(probes, fallback, n)
+}
+
+// buildDefinedOr writes the ladder out: one if per operand that might be
+// undefined, and the last operand as the else that always runs.
+func (l *Lowerer) buildDefinedOr(probes []definedProbe, fallback ir.Expr, n *ast.BinOp) ir.Expr {
+	if len(probes) == 0 {
+		return fallback
+	}
+	types := make([]*ir.Type, 0, len(probes)+1)
+	for _, p := range probes {
+		types = append(types, typeOrAny(p.val))
+	}
+	types = append(types, typeOrAny(fallback))
+	t := joinAll(types)
+	if t == nil || isUnresolved(t) {
+		t = ir.TAny
+	}
+
+	name := l.tmp(defaultName(n.L))
+	decl := &ir.DeclStmt{Names: []string{name}, Type: t}
+	l.setProv(decl, n)
+	l.note(decl, "// asks whether the left side is defined, not whether it is true, "+
+		"so a stored 0 or empty string stops the chain. Go has no undefined value, so "+
+		"each step asks the question in the form that type allows and the answers meet "+
+		"in one variable.",
+		"nil-vs-undef", "comma-ok-idiom")
+	target := ir.NewIdent(name, t)
+
+	var chain ir.Stmt = &ir.Block{Stmts: []ir.Stmt{
+		assign("=", []ir.Expr{target}, []ir.Expr{l.assignable(fallback, t, n.R)}),
+	}}
+	for i := len(probes) - 1; i >= 0; i-- {
+		p := probes[i]
+		step := &ir.If{
+			Init: p.init,
+			Cond: p.cond,
+			Then: &ir.Block{Stmts: []ir.Stmt{
+				assign("=", []ir.Expr{target}, []ir.Expr{l.assignable(p.val, t, n.L)}),
+			}},
+			Else: chain,
+		}
+		if p.note != "" {
+			l.note(step, p.note, "nil-vs-undef", "comma-ok-idiom")
+		}
+		chain = step
+	}
+	l.setProv(chain, n)
+	l.emit(decl)
+	l.emit(chain)
+	return ir.NewIdent(name, t)
+}
+
+// flattenDefinedOr returns the operands of a run of //, left to right. Perl's
+// // is left-associative, so `a // b // c` nests to the left.
+func flattenDefinedOr(n *ast.BinOp) []ast.Expr {
+	if inner, ok := n.L.(*ast.BinOp); ok && inner.Op == "//" {
+		return append(flattenDefinedOr(inner), n.R)
+	}
+	return []ast.Expr{n.L, n.R}
+}
+
+// definedProbeOf works out how to ask whether one operand of a // chain has a
+// value, choosing the exact question wherever the type allows one.
+func (l *Lowerer) definedProbeOf(x ast.Expr, at ast.Node) definedProbe {
+	// A literal, or arithmetic on literals, cannot be undef.
+	if definiteValue(x) {
+		return definedProbe{val: l.expr(x), last: true}
+	}
+	if _, ok := l.alwaysDefined(x, at); ok {
+		return definedProbe{val: l.expr(x), last: true}
+	}
+	if h, ok := x.(*ast.HashIndex); ok {
+		m, key, elem, field := l.hashPartsField(h)
+		if m != nil && key != nil && field == nil {
+			if isNullable(elem) {
+				name := l.tmp(defaultName(h))
+				p := ir.NewIdent(name, elem)
+				return definedProbe{
+					init: assign(":=", []ir.Expr{p}, []ir.Expr{index(m, key, elem)}),
+					cond: ir.Bin("!=", p, ir.Nil(elem), ir.TBool),
+					val:  ir.Un("*", p, elem.Elem),
+					note: "The map has room for undef, so nil answers both halves of the " +
+						"question at once: the key was missing, or it held nothing.",
+				}
+			}
+			name := l.tmp(defaultName(h))
+			okName := l.tmp("ok")
+			v := ir.NewIdent(name, elem)
+			return definedProbe{
+				init: assign(":=", []ir.Expr{v, ir.NewIdent(okName, ir.TBool)},
+					[]ir.Expr{indexComma(m, key, elem)}),
+				cond: ir.NewIdent(okName, ir.TBool),
+				val:  v,
+				note: "Reading a missing key from a Go map gives the value type's zero " +
+					"value, which a stored zero is indistinguishable from. The two-result " +
+					"form of the index expression is the only way to ask which happened, " +
+					"and it is the question // is asking.",
+			}
+		}
+	}
+	lowered := l.expr(x)
+	t := typeOrAny(lowered)
+	if isNullable(t) {
+		name := l.tmp(defaultName(x))
+		p := ir.NewIdent(name, t)
+		return definedProbe{
+			init: assign(":=", []ir.Expr{p}, []ir.Expr{lowered}),
+			cond: ir.Bin("!=", p, ir.Nil(t), ir.TBool),
+			val:  ir.Un("*", p, t.Elem),
+		}
+	}
+	switch t.Kind {
+	case ir.Any, ir.Pointer, ir.Slice, ir.Map, ir.Error:
+		name := l.tmp(defaultName(x))
+		v := ir.NewIdent(name, t)
+		return definedProbe{
+			init: assign(":=", []ir.Expr{v}, []ir.Expr{lowered}),
+			cond: ir.Bin("!=", v, ir.Nil(t), ir.TBool),
+			val:  v,
+		}
+	}
+	// Nothing exact is available: the value has a concrete Go type, so the
+	// nearest question is whether it holds that type's zero value.
+	name := l.tmp(defaultName(x))
+	v := ir.NewIdent(name, t)
+	l.approximate(at, "P2G2110", "//",
+		"defined has no exact Go equivalent for this value",
+		"Perl's undef is a value a scalar can hold, distinct from 0 and from the "+
+			"empty string. A Go variable of type "+t.String()+" always holds a "+
+			t.String()+", so the test here asks whether it holds the zero value and "+
+			"a stored zero takes the default where the original kept it.",
+		"Where the difference matters, declare the variable as *"+t.String()+
+			", which has nil for absent and a value for everything else.",
+		"nil-vs-undef", "static-types-and-zero-values")
+	return definedProbe{
+		init: assign(":=", []ir.Expr{v}, []ir.Expr{lowered}),
+		cond: ir.Bin("!=", v, zeroOf(t), ir.TBool),
+		val:  v,
+	}
 }
 
 // andValue lowers `&&` used for its value rather than as a test.
@@ -562,7 +709,19 @@ func (l *Lowerer) definedExpr(x ast.Expr, at ast.Node) ir.Expr {
 	}
 	switch n := x.(type) {
 	case *ast.HashIndex:
-		m, key, _, field := l.hashPartsField(n)
+		m, key, elem, field := l.hashPartsField(n)
+		if m != nil && key != nil && isNullable(elem) {
+			// The map has room for undef, so the question has an exact
+			// answer: a missing key and a stored undef are both nil, which
+			// is what `defined` asks and what `exists` does not.
+			out := ir.Bin("!=", index(m, key, elem), ir.Nil(elem), ir.TBool)
+			l.note(out, "This map holds pointers because the program stored undef in "+
+				"it, and that makes `defined` an exact question in Go: nil means the key "+
+				"was missing or held nothing, and anything else means a value is there. "+
+				"`exists` is the different question, and it is the two-result index form.",
+				"nil-vs-undef", "comma-ok-idiom")
+			return out
+		}
 		if m != nil && key == nil {
 			// A struct field or a constructor parameter: there is no key to
 			// ask about, so the question becomes the zero-value test.
@@ -583,42 +742,23 @@ func (l *Lowerer) definedExpr(x ast.Expr, at ast.Node) ir.Expr {
 		}
 	case *ast.Index:
 		if base, idx, elem := l.indexParts(n); base != nil {
-			_ = elem
-			return ir.Bin("<", idx, lenOf(base), ir.TBool)
+			inRange := ir.Bin("<", idx, lenOf(base), ir.TBool)
+			if !isNullable(elem) {
+				return inRange
+			}
+			// The slice has room for undef, so being in range is not the
+			// whole answer: a slot inside the slice can still hold nothing.
+			out := ir.Bin("&&", inRange,
+				ir.Bin("!=", index(base, idx, elem), ir.Nil(elem), ir.TBool), ir.TBool)
+			l.note(out, "Two things can make a Perl array element undefined: the index "+
+				"is past the end, or the slot itself holds undef. Go needs both tests, "+
+				"and the order matters because the second one would panic on its own.",
+				"nil-vs-undef", "slices-not-arrays")
+			return out
 		}
 	}
 
 	return l.definedValue(l.expr(x), at)
-}
-
-// definedOrKey lowers `$h{k} // $default`, where the question is whether the
-// hash holds the key at all.
-func (l *Lowerer) definedOrKey(h *ast.HashIndex, n *ast.BinOp) (ir.Expr, bool) {
-	m, key, elem, field := l.hashPartsField(h)
-	if m == nil || key == nil || field != nil {
-		return nil, false
-	}
-	name := l.tmp(defaultName(h))
-	okName := l.tmp("ok")
-	decl := assign(":=", []ir.Expr{ir.NewIdent(name, elem), ir.NewIdent(okName, ir.TBool)},
-		[]ir.Expr{indexComma(m, key, elem)})
-	target := ir.NewIdent(name, elem)
-	guard := &ir.If{
-		Cond: negated(ir.NewIdent(okName, ir.TBool)),
-		Then: &ir.Block{Stmts: []ir.Stmt{
-			assign("=", []ir.Expr{target}, []ir.Expr{l.assignable(l.scalar(n.R), elem, n.R)}),
-		}},
-	}
-	l.setProv(decl, n)
-	l.note(decl, "// asks whether the key is there, not whether its value is true, so "+
-		"a stored 0 or empty string keeps its place. The two-result form of the index "+
-		"expression is that question, and it is the only way to ask it: reading a "+
-		"missing key on its own gives the value type's zero value, which is "+
-		"indistinguishable from a stored one.",
-		"comma-ok-idiom", "nil-vs-undef")
-	l.emit(decl)
-	l.emit(guard)
-	return target, true
 }
 
 // alwaysDefined answers `defined` for a variable that can never hold nothing.

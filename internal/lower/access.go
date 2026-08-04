@@ -59,6 +59,14 @@ func (l *Lowerer) indexExpr(n *ast.Index) ir.Expr {
 		return ir.Nil(ir.TAny)
 	}
 
+	if isNullable(elem) {
+		if text, neg := negativeLiteral(n.Idx); neg {
+			off := ir.Bin("-", lenOf(base), ir.IntLit(text), ir.TInt)
+			return l.readNullable(index(base, off, elem), elem)
+		}
+		return l.readNullable(index(base, idx, elem), elem)
+	}
+
 	// A literal negative index counts from the end, which Go spells out.
 	if text, neg := negativeLiteral(n.Idx); neg {
 		off := ir.Bin("-", lenOf(base), ir.IntLit(text), ir.TInt)
@@ -298,12 +306,62 @@ func (l *Lowerer) hashExpr(n *ast.HashIndex) ir.Expr {
 		// %ENV, already fully lowered.
 		return m
 	}
+	if isNullable(elem) {
+		return l.readNullable(index(m, key, elem), elem)
+	}
 	out := index(m, key, elem)
 	l.note(out, "Reading a key that is not in a Go map returns the value type's zero "+
 		"value rather than undef, and it does not create the key the way Perl's "+
 		"autovivification can. Use the two-result form when you need to tell a "+
 		"missing key from a stored zero.",
 		"comma-ok-idiom", "nil-slices-vs-nil-maps")
+	return out
+}
+
+// scalarKeepingNil lowers an expression for a scalar that is about to be
+// declared from it, keeping the pointer where the source can be absent.
+//
+// `my $seen = $count{$word}` copies undef out of the hash when the key is not
+// there, and a later `defined $seen` asks about that. Reading the value out
+// eagerly would make the copy a 0 and turn that question into "is it zero",
+// which is a different one. Keeping the pointer keeps the question exact, and
+// every use of the variable in an operator reads through it.
+func (l *Lowerer) scalarKeepingNil(e ast.Expr) ir.Expr {
+	switch n := e.(type) {
+	case *ast.HashIndex:
+		if m, key, elem, field := l.hashPartsField(n); m != nil && key != nil &&
+			field == nil && isNullable(elem) {
+			out := index(m, key, elem)
+			l.note(out, "The map holds pointers because the program stored undef in it, "+
+				"so a missing key and a stored undef both read as nil. Copying the "+
+				"pointer out rather than the value is what keeps `defined` answerable "+
+				"further down.",
+				"nil-vs-undef", "pointers-vs-references")
+			return out
+		}
+	case *ast.Index:
+		if base, idx, elem := l.indexParts(n); base != nil && isNullable(elem) {
+			out := l.helperCall(hAt, elem, base, idx)
+			l.note(out, "The slice holds pointers because the program put undef in it. "+
+				"Reading past the end gives nil here, which is the same nothing Perl "+
+				"gave, so the two cases the original could not tell apart stay together.",
+				"nil-vs-undef", "slices-not-arrays")
+			return out
+		}
+	}
+	return l.scalar(e)
+}
+
+// readNullable reads an element whose type has room for undef, in a position
+// that wants the value rather than the pointer.
+func (l *Lowerer) readNullable(x ir.Expr, elem *ir.Type) ir.Expr {
+	out := l.helperCall(hDeref, elem.Elem, x)
+	l.note(out, "This collection has held undef, so its elements are "+elem.String()+
+		" rather than "+elem.Elem.String()+": nil is the absence Perl spelled undef, "+
+		"and it is a state no Go number or string has. Reading one where a value is "+
+		"wanted goes through the pointer, and a missing element reads as the zero "+
+		"value the way undef did.",
+		"nil-vs-undef", "pointers-vs-references")
 	return out
 }
 
