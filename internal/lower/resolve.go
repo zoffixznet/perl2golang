@@ -213,4 +213,5 @@ var specialVars = map[string]bool{
 	"$!": true, "$@": true, "$/": true, "$\\": true, "$,": true, "$\"": true,
 	"$;": true, "$a": true, "$b": true, "@INC": true, "%INC": true,
 	"$$": true, "$?": true, "$^W": true, "$^O": true, "$|": true,
+	"$^X": true,
 }

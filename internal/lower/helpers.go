@@ -114,6 +114,15 @@ const (
 	hNotImplemented     = "notImplemented"
 	hNotImplementedHere = "notImplementedHere"
 
+	// Running another program.
+	hRunProgram     = "runProgram"     // start a program from a list of words
+	hRunShell       = "runShell"       // start a command line through the shell
+	hCaptureProgram = "captureProgram" // the same, keeping standard output
+	hCaptureShell   = "captureShell"   // and for a command line
+	hCaptureLines   = "captureLines"   // the list-context form of backticks
+	hOpenRead       = "openRead"       // a handle reading a program's output
+	hOpenWrite      = "openWrite"      // a handle writing a program's input
+
 	// Command line options.
 	hPermuteArgs        = "permuteArgs"        // options and operands sorted apart
 	hPermutePassThrough = "permutePassThrough" // the same, keeping unknown options

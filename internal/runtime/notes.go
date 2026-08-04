@@ -15,6 +15,49 @@ var notes = map[string]string{
 		"a nil record instead of a stack trace, and the lines below it " +
 		"still run.",
 
+	"runProgram": "exec.Command takes the program and its arguments " +
+		"separately and starts the program directly, so nothing re-splits an " +
+		"argument that has a space or a semicolon in it. That is the whole " +
+		"difference between the list form and the string form, and it is the " +
+		"reason the list form is the one to write.",
+
+	"runShell": "A command written as one string was taken apart by a shell, " +
+		"which split the words, expanded the globs and would have run " +
+		"whatever a semicolon introduced. Naming the shell here says that out " +
+		"loud instead of pretending the words were separate.",
+
+	"captureProgram": "Output collects what the program wrote to standard " +
+		"output and leaves its standard error joined to this program's, which " +
+		"is where it went before. The error and the output come back " +
+		"separately, so a failure cannot be mistaken for empty output.",
+
+	"captureShell": "The string form of captureProgram, for a command line " +
+		"that was already written as text.",
+
+	"captureLines": "A command read where a list was wanted gives one string " +
+		"per line, with the newline still on the end, which is why the loops " +
+		"that use it chomp. A last line with no newline is still a line.",
+
+	"openRead": "Starting a program and reading its output is three calls " +
+		"rather than one: the pipe, the start, and the wait at the end. The " +
+		"order matters, because waiting before the output has been read " +
+		"closes the pipe under the reader.",
+
+	"openWrite": "The writing end of the same idea. Closing the handle is " +
+		"what tells the program there is no more input, and only then can it " +
+		"finish.",
+
+	"pipeHandle": "A program running alongside this one, wrapped so that it " +
+		"reads and writes like a file. The wrapper exists to own the wait: " +
+		"Close finishes the conversation and then waits, which keeps the one " +
+		"ordering rule in one place instead of at every call site.",
+
+	"waitStatus": "The exit code in the high byte is the shape the original " +
+		"read, so the code that shifts it right by eight goes on working. New " +
+		"code should ask ExitCode directly. A child killed by a signal is the " +
+		"case this cannot reproduce: the standard library reports the code as " +
+		"-1 without saying which signal.",
+
 	"permuteArgs": "flag.Parse stops at the first argument that is not an " +
 		"option, and the parser this replaces carried on and sorted the two " +
 		"apart. That difference is silent: `prog input.txt --verbose` leaves " +

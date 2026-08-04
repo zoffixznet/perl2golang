@@ -88,14 +88,7 @@ func (l *Lowerer) exprInner(e ast.Expr) ir.Expr {
 	case *ast.MethodCall:
 		return l.methodCall(n)
 	case *ast.BacktickCmd:
-		return l.todoExpr(n, "P2G6501", "backticks",
-			"running an external command is not implemented",
-			"Backticks run a shell command and capture its output. Go can do this with "+
-				"os/exec, but the shape is different enough that a mechanical translation "+
-				"would hide the error handling Go insists on.",
-			"Use exec.Command(name, args...).Output(), check the returned error, and "+
-				"note that Go does not involve a shell unless you ask for one explicitly.",
-			"os-exec", "errors-are-values")
+		return l.backtickCmd(n, false)
 	case *ast.GlobExpr:
 		return l.todoExpr(n, "P2G6020", "glob",
 			"filename globbing is not implemented",
@@ -357,6 +350,14 @@ func (l *Lowerer) listParts(es []ast.Expr) ([]ir.Expr, *ir.Type) {
 				}
 				return
 			}
+		case *ast.BacktickCmd:
+			// A command read where a list is wanted hands back one string per
+			// line, which is a different call from the one that hands back
+			// the whole output.
+			x := l.backtickCmd(n, true)
+			out = append(out, x)
+			seen = append(seen, elemOf(typeOrAny(x)))
+			return
 		case *ast.Call:
 			if x, ok := l.multiResultCall(n, true); ok {
 				out = append(out, x)

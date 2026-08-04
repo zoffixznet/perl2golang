@@ -1,6 +1,6 @@
 # Tier 2 corpus - script-shaped Perl programs
 
-66 entries. Each is a self-contained, realistic Perl script of the kind a
+68 entries. Each is a self-contained, realistic Perl script of the kind a
 sysadmin or data wrangler actually writes, not a snippet.
 
 ## Layout of an entry
@@ -113,6 +113,8 @@ Two entries exit non-zero on purpose: **27** (65) and **32** (1). The rest exit 
 | 64 | `64-code-refs-called` | Calling through a code reference, in every shape a script does it | a factory returning several closures over one variable, `$code->(@array)` and the mixed forms, a hash of code refs read by variable key, `$h{$k} \|\| sub {...}` as a fallback |
 | 65 | `65-recursive-closures` | Closures that take records and closures that call themselves, neither of which converts yet | a ternary of comparators reading `$_[0]{field}`, `my $f; $f = sub { ... $f->(...) }`, a table whose members call each other through it |
 | 66 | `66-reads-past-the-end` | Reading and writing an array outside its range, which does not convert yet | `$a[99]` and `$empty[0]`, `$a[6] = ...` growing the array, `$a[-1]` on both sides of an assignment, `$lines[-1] .= ...`, `$#a = 2` as a place |
+| 67 | `67-running-a-program` | Running another program, in every shape a script does it | `system LIST` for its value and for `$?`, backticks in scalar and list context, an argument with a space in it passed whole, `open '-|'` and `open '\|-'` with `close` |
+| 68 | `68-child-status-and-forks` | The process half of running a program, which does not convert yet | `$?` after a pipe close, `2>&1` and `2>/dev/null` inside a command, `fork` and `waitpid`, `$^X` |
 
 ## Coverage map
 
@@ -138,6 +140,6 @@ Two entries exit non-zero on purpose: **27** (65) and **32** (1). The rest exit 
 - **Time** - 47, 48
 - **Serialisation** - 51, 52, 53
 - **Callbacks as values** - 54, 55; also 12, 25
-- **Processes** - 57
+- **Processes** - 57, 67, 68
 - **Regex in list context** - 58, 59
 - **Option blocks** - 26, 37, 60, 61; manual parsing in 25

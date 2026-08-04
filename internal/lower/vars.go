@@ -347,6 +347,28 @@ func (l *Lowerer) specialVar(v *ast.Var) ir.Expr {
 	case "$$":
 		return call("os", "os", "Getpid", ir.TInt)
 
+	case "$?":
+		return l.ident(l.childStatus(v))
+
+	case "$^X":
+		return l.todoExpr(v, "P2G6504", "$^X",
+			"the interpreter that ran the original is not here",
+			"$^X is the path to the perl binary running the script, and a script "+
+				"usually uses it to run more Perl. This program is not run by an "+
+				"interpreter at all: os.Executable() names this binary, which is a "+
+				"different thing and would not understand Perl handed to it.",
+			"Decide what the child process should be now. Where the script was "+
+				"re-running itself, a function call replaces the whole thing; where it "+
+				"was running a helper script, name the helper.",
+			"os-exec")
+
+	case "$^O":
+		out := ir.Pkg("runtime", "runtime", "GOOS", ir.TString)
+		l.note(out, "$^O is the operating system the program was built for, which Go "+
+			"records in runtime.GOOS. The spellings differ: Perl says darwin and "+
+			"linux too, but MSWin32 where Go says windows.")
+		return out
+
 	case "$@":
 		return l.ident(l.errText(v))
 

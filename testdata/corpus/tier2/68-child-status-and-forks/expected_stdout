@@ -1,0 +1,10 @@
+-- the status a pipe close leaves --
+read 1 line(s), close status 0
+read 0 line(s), close status 7
+-- keeping the two streams apart --
+merged: out|err|
+stdout only: out
+-- forking --
+child exited with 3
+-- the interpreter that is running this --
+have an interpreter path: yes

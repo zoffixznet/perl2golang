@@ -214,6 +214,8 @@ func (l *Lowerer) builtin(n *ast.Call) ir.Expr {
 		return l.radixCall(n, 8)
 	case "time":
 		return call("time", "time", "Now", ir.NamedType("time.Time", "time"))
+	case "system":
+		return l.systemCall(n)
 	case "chomp", "chop":
 		return l.chompExpr(n)
 
@@ -502,7 +504,7 @@ func isBuiltinName(name string) bool {
 		"substr", "index", "rindex", "uc", "lc", "ucfirst", "lcfirst", "chomp",
 		"chop", "abs", "int", "sqrt", "hex", "oct", "ord", "chr", "die", "warn",
 		"exit", "open", "close", "eof", "ref", "bless", "wantarray", "local",
-		"eval", "time", "sleep":
+		"eval", "time", "sleep", "system":
 		return true
 	}
 	return false

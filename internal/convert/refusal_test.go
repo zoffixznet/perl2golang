@@ -23,13 +23,17 @@ import (
 // ended the program pre-empted every converted line below it, and a refusal
 // spelled inline as a function literal made the line it sat in unreadable.
 
-// shellOut is a Perl line with no Go counterpart at all: backticks run a shell
-// command and hand back its output. These tests are written around constructs
-// like it, rather than around ones that are merely unimplemented, so that
-// widening the converter's coverage cannot quietly stop them covering what they
-// say. It is spelled apart from the scripts because Go has no escape for a
-// backquote inside a raw string.
-const shellOut = "my $listing = `ls`;\n"
+// noCounterpart is a Perl line with no Go counterpart at all: Go's runtime is
+// multi-threaded from the first line, so forking a process is not something
+// the standard library offers and never will be. These tests are written
+// around a construct like that, rather than around one that is merely
+// unimplemented, so that widening the converter's coverage cannot quietly stop
+// them covering what they say.
+//
+// Backticks used to play this part and stopped being a fair choice the round
+// they started converting, which is exactly the failure this comment is here
+// to prevent.
+const noCounterpart = "my $listing = fork();\n"
 
 // stubCall matches the stand-in a refused expression becomes, with its
 // diagnostic code captured.
@@ -39,7 +43,7 @@ var stubCall = regexp.MustCompile(`notImplemented(?:Here|\[[^]]+\])\("(P2G\d+)",
 // second line and checks that everything after it is still there and still
 // reachable.
 func TestARefusalDoesNotPreEmptTheProgram(t *testing.T) {
-	src := []byte("use strict;\n" + shellOut + `my $count = 0;
+	src := []byte("use strict;\n" + noCounterpart + `my $count = 0;
 foreach my $n (1, 2, 3) {
     $count += $n;
 }
@@ -102,7 +106,7 @@ func TestNoRefusalIsEmittedAsAPanic(t *testing.T) {
 func TestARefusedExpressionKeepsItsDiagnosticCode(t *testing.T) {
 	// Running a shell command: refused, and refused inside an expression
 	// rather than as a whole statement.
-	src := []byte("use strict;\n" + shellOut + `print "listing $listing\n";
+	src := []byte("use strict;\n" + noCounterpart + `print "listing $listing\n";
 `)
 	res, err := convert.Convert(src, convert.Options{Path: "shell.pl", NoDocs: true})
 	if err != nil {
@@ -171,7 +175,7 @@ func TestAPartlyConvertedProgramRunsToItsEnd(t *testing.T) {
 		t.Skip("this one builds and runs a program with the Go toolchain")
 	}
 	src := []byte("use strict;\n" + `print "before\n";
-` + shellOut + `print "middle\n";
+` + noCounterpart + `print "middle\n";
 my $n = eval "1 + 1";
 print "after $n\n";
 `)

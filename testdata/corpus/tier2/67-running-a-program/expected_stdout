@@ -1,0 +1,15 @@
+-- exit status --
+ok:   rc=0 decoded=0
+fail: decoded=42 signal=0
+-- capturing output --
+captured 11 bytes, 2 line(s)
+text: alpha
+beta
+as a list: 3 item(s): 1,2,3
+sum: 6
+-- the list form takes no shell --
+a b; echo oops
+-- reading through a pipe --
+sum through the pipe: 60
+-- writing through a pipe --
+wrote 3 lines to the child

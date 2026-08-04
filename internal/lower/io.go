@@ -64,6 +64,10 @@ func (l *Lowerer) openStatements(n *ast.Call, onFail func(errName string) []ir.S
 		return nil, false
 	}
 
+	if mode, ok := staticString(args[1]); ok && (mode == "-|" || mode == "|-") {
+		return l.openPipe(handle, mode, args[2:], n, onFail)
+	}
+
 	mode, path, ok := l.openMode(args, n)
 	if !ok {
 		return nil, false

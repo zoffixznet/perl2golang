@@ -386,6 +386,11 @@ const (
 const (
 	// Backticks: backticks capture the output of a shell command.
 	Backticks Code = "P2G6501"
+	// NoCommand: `system` was called with nothing to run.
+	NoCommand Code = "P2G6502"
+	// NoInterpreter: `$^X` names the interpreter that ran the original, and
+	// the converted program is not run by one.
+	NoInterpreter Code = "P2G6504"
 	// SystemCall: `system` runs a command through a shell.
 	SystemCall Code = "P2G6505"
 	// ExitStatusShift: `$? >> 8` decodes a wait status.
@@ -1693,6 +1698,22 @@ var catalogue = map[Code]Entry{
 		Advice:    "pass the arguments to `exec.Command` one per element, and call `sh -c` only where the shell was wanted",
 		Cost:      "globbing, redirection and pipes in the command string are no longer expanded",
 		Converted: "the emitted code runs the program directly and reads `exec.Cmd.Output`",
+		Concepts:  []string{"os-exec"},
+	},
+	NoCommand: {
+		Severity: report.Refuse,
+		Message:  "`system` was called with nothing naming a program to run",
+		Short:    "system with no command",
+		Advice:   "give the call a program and its arguments",
+		Concepts: []string{"os-exec"},
+	},
+	NoInterpreter: {
+		Severity:  report.Refuse,
+		Message:   "`$^X` is the path to the interpreter running the original, and this program is not run by one",
+		Short:     "there is no interpreter to name",
+		Advice:    "decide what the child process should be: a function call where the script was re-running itself, or the helper by name where it was not",
+		Cost:      "a script that re-ran itself has no equivalent to re-run",
+		Converted: "the read is refused and the surrounding code still runs",
 		Concepts:  []string{"os-exec"},
 	},
 	SystemCall: {
