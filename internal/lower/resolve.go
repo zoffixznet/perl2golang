@@ -92,6 +92,25 @@ type Binding struct {
 	// that a match against the variable knows what its captures are called.
 	Groups      int
 	NamedGroups map[string]int
+	// Bounds records that this is a loop variable counting over one array's
+	// indices, which is what lets `$a[$i]` inside `for my $i (0 .. $#a)`
+	// stay a plain Go index expression instead of a tolerant read.
+	Bounds *indexBounds
+}
+
+// indexBounds says which array a counting loop's variable is an index into,
+// and how far its range reaches.
+//
+// Top is the largest value the variable takes, written as an offset from the
+// array's length: `0 .. $#a` counts up to len(a)-1 and so has a Top of -1,
+// while `1 .. @a` counts up to len(a) and has a Top of 0. Low is the smallest
+// value it takes. Between them they answer, for an index written as the
+// variable plus or minus a constant, whether every value it can hold is one
+// the array already has.
+type indexBounds struct {
+	Arr *Binding
+	Low int
+	Top int
 }
 
 // declared reports whether the binding is a real Go declaration the emitter

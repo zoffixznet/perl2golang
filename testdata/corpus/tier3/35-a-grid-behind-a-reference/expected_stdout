@@ -1,0 +1,8 @@
+--- the grid ---
+   1  2  3  4
+   2  4  6  8
+   3  6  9 12
+row totals: 10,20,30
+after widening: 5 rows, last row 6 wide
+the corner holds 99
+a cell the widening skipped is undef

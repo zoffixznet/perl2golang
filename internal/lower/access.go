@@ -100,13 +100,18 @@ func (l *Lowerer) indexExpr(n *ast.Index) ir.Expr {
 // read, for one array element.
 //
 // Reading past the end of a Perl array is undef; the same read in Go is a
-// panic that stops the program. Where the index is written out as a number and
-// the array is not known to be that long, the tolerant read is both the
-// honest translation and the one that lets the rest of the program run. Where
-// the index is computed the plain expression stays, because wrapping every
-// `xs[i]` in a call would cost more readability than it buys.
+// panic that stops the program. So the plain index expression is only the
+// honest translation where the element is known to be there, and the whole
+// job of this function is deciding whether it is. It is, in two cases: the
+// index is a number smaller than a length the converter watched the array
+// reach, or it is a loop variable counting over that same array's indices.
+// Everywhere else the tolerant read goes in, because a program that dies on
+// its fourth line teaches nothing about the forty below it.
 func (l *Lowerer) elementRead(n *ast.Index, base, idx ir.Expr, elem *ir.Type) ir.Expr {
-	if _, literal := staticIndex(n.Idx); !literal || typeOrAny(base).Kind != ir.Slice {
+	if typeOrAny(base).Kind != ir.Slice {
+		// Not a Go slice at all: a map keyed by an index, or a value whose
+		// type inference never worked out. There is nothing to be tolerant
+		// with and no length to compare against.
 		out := index(base, idx, elem)
 		if _, ok := n.Idx.(*ast.NumberLit); !ok {
 			l.note(out, "Reading past the end of a Perl array gives undef. Go panics with "+
@@ -116,7 +121,7 @@ func (l *Lowerer) elementRead(n *ast.Index, base, idx ir.Expr, elem *ir.Type) ir
 		}
 		return out
 	}
-	if withinLength(l.arrayBindingOf(n), n.Idx) {
+	if l.provablyInRange(n) {
 		return index(base, idx, elem)
 	}
 	out := l.helperCall(hAt, elem, base, idx)
@@ -127,6 +132,58 @@ func (l *Lowerer) elementRead(n *ast.Index, base, idx ir.Expr, elem *ir.Type) ir
 		"the better line.",
 		"slices-not-arrays")
 	return out
+}
+
+// provablyInRange reports whether an array element access can only ever name
+// an element the array has.
+func (l *Lowerer) provablyInRange(n *ast.Index) bool {
+	arr := l.arrayBindingOf(n)
+	if arr == nil {
+		return false
+	}
+	if withinLength(arr, n.Idx) {
+		return true
+	}
+	v, off, ok := indexOffset(n.Idx)
+	if !ok {
+		return false
+	}
+	b, found := l.scope.lookup(varKey('$', v.Name))
+	if !found || b.Bounds == nil || b.Bounds.Arr != arr {
+		return false
+	}
+	// The largest value the index takes has to land inside the array, and
+	// the smallest has to stay at or above zero.
+	return b.Bounds.Top+off <= -1 && b.Bounds.Low+off >= 0
+}
+
+// indexOffset splits an index written as a scalar plus or minus a constant
+// into the two parts, which is the shape `$a[$i - 1]` takes inside a loop
+// counting from one.
+func indexOffset(e ast.Expr) (*ast.Var, int, bool) {
+	switch n := e.(type) {
+	case *ast.Var:
+		if n.Sigil == '$' {
+			return n, 0, true
+		}
+	case *ast.BinOp:
+		if n.Op != "+" && n.Op != "-" {
+			return nil, 0, false
+		}
+		k, ok := staticIndex(n.R)
+		if !ok {
+			return nil, 0, false
+		}
+		v, off, ok := indexOffset(n.L)
+		if !ok {
+			return nil, 0, false
+		}
+		if n.Op == "-" {
+			k = -k
+		}
+		return v, off + k, true
+	}
+	return nil, 0, false
 }
 
 // negativeLiteral reports whether an index is a negative constant, and returns

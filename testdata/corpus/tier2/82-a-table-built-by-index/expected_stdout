@@ -1,0 +1,24 @@
+edit distance kitten -> sitting is 3
+the table is 7 rows of 8
+--- every index the list has ---
+  0 k
+  1 i
+  2 t
+  3 t
+  4 e
+  5 n
+--- the same count written the other way ---
+  1 k
+  2 i
+  3 t
+  4 t
+  5 e
+  6 n
+--- one list's indices against another list ---
+  0 k/s
+  1 i/i
+  2 t/t
+  3 t/t
+  4 e/i
+  5 n/n
+  6 -/g

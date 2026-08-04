@@ -106,6 +106,8 @@ func (l *Lowerer) toFloat(x ir.Expr, n ast.Node) ir.Expr {
 			return ir.FloatLit(lit.Value)
 		}
 		return conversion(ir.TFloat, x)
+	case t.Kind == ir.Slice, t.Kind == ir.Map:
+		return conversion(ir.TFloat, l.elementCount(x))
 	case t.Kind == ir.String:
 		out := l.helperCall(hParseNum, ir.TFloat, x)
 		l.note(out, "Perl reads the longest numeric prefix of a string and calls the "+
@@ -117,6 +119,18 @@ func (l *Lowerer) toFloat(x ir.Expr, n ast.Node) ir.Expr {
 		return out
 	}
 	return l.helperCall(hToNum, ir.TFloat, x)
+}
+
+// elementCount is an array or a hash in numeric context, which in Perl is how many
+// elements it holds. `0 .. @a` and `@a + 0` both mean the count; Go asks for
+// it by name.
+func (l *Lowerer) elementCount(x ir.Expr) ir.Expr {
+	out := lenOf(x)
+	l.note(out, "An array or a hash used as a number is its element count in Perl, "+
+		"which is why `if (@list > 3)` reads the way it does. Go has no such "+
+		"context: len says what is being asked for, and it is the same answer.",
+		"slices-not-arrays", "explicit-conversions-no-coercion")
+	return out
 }
 
 // toInt renders any expression as an int.
@@ -153,6 +167,8 @@ func (l *Lowerer) toInt(x ir.Expr, n ast.Node) ir.Expr {
 		return conversion(ir.TInt, l.helperCall(hToNum, ir.TFloat, x))
 	case t.Kind == ir.Int:
 		return x
+	case t.Kind == ir.Slice, t.Kind == ir.Map:
+		return l.elementCount(x)
 	case t.Kind == ir.Float:
 		// Go refuses to convert an untyped float constant to int, because the
 		// truncation would be silent. Doing it here is the same answer.

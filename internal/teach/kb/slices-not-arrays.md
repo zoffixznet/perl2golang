@@ -142,6 +142,67 @@ Three things in that sample are worth keeping. `at` exists because reading past 
 
 The bigger question the growth raises is whether the data structure is right. An array written at arbitrary computed indices is a sparse table, and in Go that is usually `map[int]T`: no growth, no gaps, no panic, and the two-result read answers exactly what `defined` was asking (`comma-ok-idiom`).
 
+## Two dimensions, where the growth happens at every level
+
+`my @d; $d[$i][$j] = 0;` is the shape every dynamic-programming table, grid and matrix in Perl is written in, and it is doing three invisible things: extending `@d` to reach `$i`, putting a fresh array reference there, and extending *that* to reach `$j`. Go's `[][]int` starts nil at both levels, so all three have to be written, outermost first. The growth is assigned back at each level for the same reason `append`'s result is: growing may have to move the data.
+
+```go
+package main
+
+import "fmt"
+
+func grow[T any](xs []T, n int) []T {
+	if n <= len(xs) {
+		return xs
+	}
+	return append(xs, make([]T, n-len(xs))...)
+}
+
+func main() {
+	a, b := []rune("kitten"), []rune("sitting")
+
+	// my @d; $d[$i][$j] = ... -- both levels are made by the write.
+	var d [][]int
+	for i := 0; i <= len(a); i++ {
+		d = grow(d, i+1)
+		d[i] = grow(d[i], 1)
+		d[i][0] = i
+	}
+	for j := 0; j <= len(b); j++ {
+		d[0] = grow(d[0], j+1)
+		d[0][j] = j
+	}
+	for i := 1; i <= len(a); i++ {
+		for j := 1; j <= len(b); j++ {
+			cost := 1
+			if a[i-1] == b[j-1] {
+				cost = 0
+			}
+			best := d[i-1][j] + 1
+			d[i] = grow(d[i], j+1)
+			if d[i][j-1]+1 < best {
+				best = d[i][j-1] + 1
+			}
+			if d[i-1][j-1]+cost < best {
+				best = d[i-1][j-1] + cost
+			}
+			d[i][j] = best
+		}
+	}
+	fmt.Println(d[len(a)][len(b)], len(d), len(d[0]))
+}
+```
+
+```
+3 7 8
+```
+
+Notice which reads in that loop are plain and which are not. `d[i-1][j]` needs no help: `i` counts from 1 to `len(a)` and the outer slice was grown to `len(a)+1` on the way in, so the element is certainly there. That is the general rule, and it is worth stating as a rule because it decides how the whole program reads: **an index is safe exactly when something in view bounds it.** A loop over `0 .. $#a` bounds its variable by `a`'s length, and so does `1 .. @a` with `$a[$i-1]`; an index that came from arithmetic, from input, or from a different array's length bounds nothing, and that read needs `at`. A converter that cannot tell the two apart has to choose between panicking programs and a call wrapped round every index expression, and neither is what a reader wants.
+
+When the size is known before the loop, none of this is needed and the table should simply be made: `d := make([][]int, len(a)+1)` followed by a loop setting each `d[i] = make([]int, len(b)+1)`. That is the Go a reviewer expects, and the growth above is what a converter emits when the source never says how big the table is.
+
+One more thing Perl hid in that loop: `0 .. @a` puts an array in *numeric context*, where it is the element count. It is `len(a)` and nothing else, which is the same answer `scalar @a` gives and the same one `if (@list > 3)` was asking for.
+
 ## The mismatch
 
 The porting table: `push @a, $x` → `a = append(a, x)` (assignment mandatory — within capacity `append` writes in place and returns the same header; past capacity it copies everything to a bigger array and returns a *different* header, and code keeping the old one holds stale data); `pop` → `x := a[len(a)-1]; a = a[:len(a)-1]`; `shift`/`unshift` → re-slicing `a[1:]` or `append([]T{x}, a...)`, both of which should make you pause, because O(n) front operations that Perl hides are visible in Go — a genuine queue wants a different structure. `scalar @a` and `$#a` → `len(a)` and `len(a)-1`; there is no separate "last index" spelling and *negative indices do not exist* — `a[len(a)-1]`, never `a[-1]`, which is a compile error for constants and a runtime panic otherwise. `splice` has no single equivalent; the `slices` package (`slices.Insert`, `slices.Delete`) covers most uses. Pre-size with `make([]T, 0, n)` when you know `n` — the Perl habit of just pushing is fine, but this is the cheap optimisation Go reviewers expect in hot paths. Finally, when you see `[3]int` in real code it is usually deliberate value semantics or a fixed-size key (`maps-of-slices`); default to slices everywhere else.

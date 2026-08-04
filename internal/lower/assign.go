@@ -1191,13 +1191,73 @@ func (l *Lowerer) arrayPlace(lhs *ast.Index) (ir.Expr, []ir.Stmt, *ir.Type) {
 			"slices-not-arrays")
 		return out, nil, elem
 	}
-	b := l.arrayBindingOf(lhs)
-	if b == nil || withinLength(b, lhs.Idx) || l.aliases[b] != nil {
-		return index(base, idx, elem), nil, elem
+	if pre, place, t, ok := l.growPath(lhs); ok {
+		return place, pre, t
+	}
+	return index(base, idx, elem), nil, elem
+}
+
+// growPath makes room for a write at an array element, creating every level
+// above it first, and answers with the place to write through.
+//
+// This is Perl's autovivification for arrays. `$grid[$i][$j] = 1` builds the
+// outer array up to `$i`, puts an array reference there, and builds that one
+// up to `$j`, all without a word in the source. Go does none of it: a slice of
+// slices starts nil at every level, and both a write past the end and a write
+// into a nil inner slice are panics. So the growth is written out, outermost
+// first, and it is written back into the place it came from because `grow` may
+// have to reallocate.
+//
+// It answers false where the shape is not a chain of index steps down to a
+// named array, which is where the converter has nothing solid to grow.
+func (l *Lowerer) growPath(n *ast.Index) (pre []ir.Stmt, place ir.Expr, elem *ir.Type, ok bool) {
+	var container ir.Expr
+	var store func(ir.Expr) ir.Stmt
+	// alwaysRoom is set where the array is already known to be long enough,
+	// which is the common case and the one that should read as a plain index
+	// expression with nothing in front of it.
+	alwaysRoom := false
+
+	switch base := n.Base.(type) {
+	case *ast.Var:
+		if base.Sigil != '$' {
+			return nil, nil, nil, false
+		}
+		b := l.arrayBindingOf(n)
+		if b == nil || l.aliases[b] != nil {
+			return nil, nil, nil, false
+		}
+		container = l.identFor(b)
+		target := l.writeTarget(b)
+		store = func(x ir.Expr) ir.Stmt {
+			return assign("=", []ir.Expr{target}, []ir.Expr{x})
+		}
+		alwaysRoom = withinLength(b, n.Idx)
+	case *ast.Index:
+		outer, up, _, found := l.growPath(base)
+		if !found {
+			return nil, nil, nil, false
+		}
+		pre = append(pre, outer...)
+		container = up
+		store = func(x ir.Expr) ir.Stmt {
+			return assign("=", []ir.Expr{up}, []ir.Expr{x})
+		}
+	default:
+		return nil, nil, nil, false
+	}
+
+	t := typeOrAny(container)
+	if t.Kind != ir.Slice {
+		return nil, nil, nil, false
+	}
+	elem = elemOf(t)
+	idx := l.toInt(l.expr(n.Idx), n.Idx)
+	if alwaysRoom {
+		return pre, index(container, idx, elem), elem, true
 	}
 	// The index is read into a name so the growth and the write agree about
 	// which element is meant even when working it out has a cost.
-	var pre []ir.Stmt
 	switch idx.(type) {
 	case *ir.Lit, *ir.Ident:
 	default:
@@ -1205,25 +1265,23 @@ func (l *Lowerer) arrayPlace(lhs *ast.Index) (ir.Expr, []ir.Stmt, *ir.Type) {
 		pre = append(pre, assign(":=", []ir.Expr{ir.NewIdent(name, ir.TInt)}, []ir.Expr{idx}))
 		idx = ir.NewIdent(name, ir.TInt)
 	}
-	target := l.writeTarget(b)
-	g := assign("=", []ir.Expr{target}, []ir.Expr{
-		l.helperCall(hGrow, b.Type, l.identFor(b), plusOne(idx)),
-	})
+	g := store(l.helperCall(hGrow, t, container, plusOne(idx)))
 	l.note(g, "Writing past the end of a Perl array extends it and fills the gap "+
 		"with undef. A Go slice has a length, and a write past that length panics "+
 		"rather than growing, so the room is made first and the growth is visible.",
 		"slices-not-arrays")
-	l.approximate(lhs, "P2G5561", "assigning past the end of an array",
+	l.approximate(n, "P2G5561", "assigning past the end of an array",
 		"the array is grown to fit the write",
 		"Assigning to an index beyond the end of a Perl array extends it, filling "+
 			"the gap with undef. A Go slice panics instead, so the generated code "+
-			"grows it first.",
+			"grows it first. A nested write grows every level, which is what "+
+			"autovivification was doing invisibly.",
 		"Where the index is always inside the array, the growth is dead weight and "+
 			"a plain index expression says so. Where the array is really a sparse "+
 			"table, a map keyed by the index is the better shape.",
 		"slices-not-arrays")
 	pre = append(pre, g)
-	return index(base, idx, elem), pre, elem
+	return pre, index(container, idx, elem), elem, true
 }
 
 // arrayBindingOf finds the binding an array element access refers to, when it

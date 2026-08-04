@@ -155,6 +155,7 @@ func (l *Lowerer) countingLoop(n *ast.Foreach) ([]ir.Stmt, bool) {
 	if l.pass == 2 {
 		b.Type = ir.TInt
 	}
+	b.Bounds = l.rangeBounds(r.L, r.R)
 	idx := ir.NewIdent(b.Go, ir.TInt)
 	if n.Var == nil {
 		l.topicStack = append(l.topicStack, idx)
@@ -310,4 +311,81 @@ func (l *Lowerer) assignsTo(body []ast.Stmt, v *ast.Var) bool {
 	}
 	walkStmts(body)
 	return found
+}
+
+// rangeBounds works out whether a counting loop is walking one array's
+// indices, and how far.
+//
+// This is what separates the two ways the same Perl line can be written in
+// Go. `$a[$i]` inside `for my $i (0 .. $#a)` can only ever read an element
+// the array has, so it is a plain index expression and says so. The same
+// read with an index that came from anywhere else may be past the end, which
+// is undef in Perl and a panic in Go, and has to go through the tolerant
+// read instead. Neither form is better in general; the analysis is what
+// decides which one is honest here.
+func (l *Lowerer) rangeBounds(low, high ast.Expr) *indexBounds {
+	from, ok := staticIndex(low)
+	if !ok || from < 0 {
+		return nil
+	}
+	arr, top, ok := l.lengthOffset(high)
+	if !ok {
+		return nil
+	}
+	return &indexBounds{Arr: arr, Low: from, Top: top}
+}
+
+// lengthOffset reads an expression that measures one array, and returns the
+// array together with what was added to or taken from its length. `$#a` is
+// len(a)-1, `@a` and `scalar @a` are len(a), and a constant on either may be
+// added or subtracted.
+func (l *Lowerer) lengthOffset(e ast.Expr) (*Binding, int, bool) {
+	switch n := e.(type) {
+	case *ast.BinOp:
+		if n.Op != "+" && n.Op != "-" {
+			return nil, 0, false
+		}
+		k, ok := staticIndex(n.R)
+		if !ok {
+			return nil, 0, false
+		}
+		b, off, ok := l.lengthOffset(n.L)
+		if !ok {
+			return nil, 0, false
+		}
+		if n.Op == "-" {
+			k = -k
+		}
+		return b, off + k, true
+	case *ast.Call:
+		// `scalar @a` asks for the count and nothing else.
+		if n.Name != "scalar" {
+			return nil, 0, false
+		}
+		args := flatten(argList(n))
+		if len(args) != 1 {
+			return nil, 0, false
+		}
+		return l.lengthOffset(args[0])
+	case *ast.Var:
+		switch n.Sigil {
+		case '#':
+			// $#a is the last index, one less than the length.
+			return l.lookupArray(n), -1, l.lookupArray(n) != nil
+		case '@':
+			return l.lookupArray(n), 0, l.lookupArray(n) != nil
+		}
+	}
+	return nil, 0, false
+}
+
+// lookupArray finds an already-resolved array binding, without inventing a
+// global for a name nobody declared. An analysis must not create bindings as
+// a side effect of asking a question.
+func (l *Lowerer) lookupArray(v *ast.Var) *Binding {
+	b, ok := l.scope.lookup(varKey('@', v.Name))
+	if !ok {
+		return nil
+	}
+	return b
 }
