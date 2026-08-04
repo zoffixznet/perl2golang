@@ -42,6 +42,13 @@ type optionSpec struct {
 	Raw        string
 }
 
+// optionSite is where one option was registered: the flag set's variable and
+// the name it answers to.
+type optionSite struct {
+	set  string
+	name string
+}
+
 // primary is the name the options hash stores an option under.
 func (s optionSpec) primary() string {
 	if len(s.Names) == 0 {
@@ -157,7 +164,21 @@ func (l *Lowerer) collectOptions() {
 	}
 	walkExprs(stmts, func(e ast.Expr) {
 		c, ok := e.(*ast.Call)
-		if !ok || !isGetOptions(c.Name) {
+		if !ok {
+			return
+		}
+		if c.Name == "Getopt::Long::Configure" || c.Name == "Getopt::Long::config" {
+			for _, a := range flatten(argList(c)) {
+				switch s, _ := staticString(a); s {
+				case "bundling", "gnu_getopt", "bundling_override":
+					l.bundling = true
+				case "pass_through":
+					l.passThrough = true
+				}
+			}
+			return
+		}
+		if !isGetOptions(c.Name) {
 			return
 		}
 		args := flatten(argList(c))
@@ -167,31 +188,16 @@ func (l *Lowerer) collectOptions() {
 		if len(args) == 0 {
 			return
 		}
+		specs := args
 		v, ok := hashRefVar(args[0])
-		if !ok {
+		if ok {
+			specs = args[1:]
+		} else if v, ok = optionsHashFromPairs(args); !ok {
 			return
 		}
-		key := varKey('%', v.Name)
-		cls, seen := l.optionHash[key]
-		if !seen {
-			cls = &Class{
-				Perl:    v.Name,
-				Go:      l.names.take(exportedName(v.Name)),
-				fieldBy: map[string]*ClassField{},
-				subBy:   map[string]*Sub{},
-				IsType:  true,
-				Line:    posLine(v),
-				Options: true,
-			}
-			cls.Value = ir.NamedType(cls.Go, "")
-			cls.Ptr = ir.PointerTo(cls.Value)
-			l.byGoType[cls.Go] = cls
-			l.classes["\x00options\x00"+v.Name] = cls
-			l.classOrd = append(l.classOrd, "\x00options\x00"+v.Name)
-			l.optionHash[key] = cls
-		}
-		for _, a := range args[1:] {
-			text, ok := staticString(a)
+		cls := l.declareOptionClass(v)
+		for i := 0; i < len(specs); i++ {
+			text, ok := staticString(specs[i])
 			if !ok {
 				continue
 			}
@@ -199,11 +205,112 @@ func (l *Lowerer) collectOptions() {
 			if !ok {
 				continue
 			}
-			f := l.declareField(cls, spec.primary(), c)
+			// In the pair form the hash key is the destination's, not the
+			// option's: `'v+' => \$opt{verbose}` fills in `verbose`.
+			name := spec.primary()
+			if i+1 < len(specs) {
+				if key, ok := optionHashKey(specs[i+1]); ok {
+					name = key
+					i++
+				}
+			}
+			f := l.declareField(cls, name, c)
 			f.Type = spec.destType()
 			f.Fixed = true
 		}
 	})
+}
+
+// declareOptionClass returns the struct type standing in for one options hash,
+// creating it the first time an option block names it.
+func (l *Lowerer) declareOptionClass(v *ast.Var) *Class {
+	key := varKey('%', v.Name)
+	if cls, seen := l.optionHash[key]; seen {
+		return cls
+	}
+	cls := &Class{
+		Perl:    v.Name,
+		Go:      l.names.take(exportedName(v.Name)),
+		fieldBy: map[string]*ClassField{},
+		subBy:   map[string]*Sub{},
+		IsType:  true,
+		Line:    posLine(v),
+		Options: true,
+	}
+	cls.Value = ir.NamedType(cls.Go, "")
+	cls.Ptr = ir.PointerTo(cls.Value)
+	l.byGoType[cls.Go] = cls
+	l.classes["\x00options\x00"+v.Name] = cls
+	l.classOrd = append(l.classOrd, "\x00options\x00"+v.Name)
+	l.optionHash[key] = cls
+	return cls
+}
+
+// optionsHashFromPairs finds the options hash of a block written as pairs.
+//
+// `GetOptions('warn=i' => \$opt{warn}, 'crit=i' => \$opt{crit})` says exactly
+// what `GetOptions(\%opt, 'warn=i', 'crit=i')` says, one destination at a
+// time, and it is the commoner of the two spellings. The hash is only taken as
+// an options hash when every destination is an element of it: a block that
+// also writes into ordinary scalars is not one hash's declaration.
+func optionsHashFromPairs(args []ast.Expr) (*ast.Var, bool) {
+	var found *ast.Var
+	for _, a := range args {
+		if _, ok := staticString(a); ok {
+			continue
+		}
+		v, ok := optionHashElem(a)
+		if !ok || (found != nil && found.Name != v.Name) {
+			return nil, false
+		}
+		found = v
+	}
+	return found, found != nil
+}
+
+// optionHashElem reads the hash an option destination writes into, when the
+// destination is one of that hash's elements.
+//
+// A scalar option is passed by reference, `\$opt{warn}`. A list or keyed one
+// is passed as the reference the hash already holds, `$opt{include}`, with no
+// backslash, because the option parser pushes through it rather than replacing
+// it. Both name the same field.
+func optionHashElem(e ast.Expr) (*ast.Var, bool) {
+	h, ok := optionHashIndex(e)
+	if !ok {
+		return nil, false
+	}
+	v, ok := h.Base.(*ast.Var)
+	return v, ok
+}
+
+// optionHashKey is the key an option destination writes under, which is the
+// name the hash is read by afterwards and so the name the field takes.
+func optionHashKey(e ast.Expr) (string, bool) {
+	h, ok := optionHashIndex(e)
+	if !ok {
+		return "", false
+	}
+	return staticString(h.Key)
+}
+
+// optionHashIndex reads through the reference an option destination is passed
+// as, when it is an element of a hash keyed by a literal.
+func optionHashIndex(e ast.Expr) (*ast.HashIndex, bool) {
+	if r, ok := e.(*ast.RefGen); ok {
+		e = r.X
+	}
+	h, ok := e.(*ast.HashIndex)
+	if !ok || h.Arrow {
+		return nil, false
+	}
+	if _, ok := h.Base.(*ast.Var); !ok {
+		return nil, false
+	}
+	if _, ok := staticString(h.Key); !ok {
+		return nil, false
+	}
+	return h, true
 }
 
 // isGetOptions reports whether a name is one of the option-parsing entry
@@ -262,17 +369,15 @@ func (l *Lowerer) getOptions(n *ast.Call) (ir.Expr, bool) {
 			b.Reads++
 			args = args[1:]
 		}
+	} else if v, ok := optionsHashFromPairs(args); ok {
+		// The pair form names the same hash once per option instead of once
+		// at the front. The destinations are still read below, and still
+		// discarded in favour of the struct field they resolve to.
+		opts = l.optionHash[varKey('%', v.Name)]
 	}
 
 	if source == nil {
-		source = l.lookup('@', "args", n)
-		source.Perl = "@ARGV"
-		source.Type = ir.SliceOf(ir.TString)
-		if source.Init == nil {
-			source.Init = slicing(ir.Pkg("os", "os", "Args", ir.SliceOf(ir.TString)),
-				ir.IntLit("1"), nil, ir.SliceOf(ir.TString))
-			source.Doc = "args holds the command line arguments, without the program name."
-		}
+		source = l.argv(n)
 	}
 
 	set := l.tmp("flags")
@@ -305,24 +410,41 @@ func (l *Lowerer) getOptions(n *ast.Call) (ir.Expr, bool) {
 				"flag-package")
 			continue
 		}
+		// A block written as pairs has the destination after the
+		// specification; the options-hash form has the destinations named
+		// once, at the front, and nothing between the specifications.
+		var pair ast.Expr
+		if i+1 < len(args) {
+			if _, isSpec := staticString(args[i+1]); !isSpec {
+				i++
+				pair = args[i]
+			}
+		}
 		var dest ir.Expr
-		if opts != nil {
-			f := opts.field(spec.primary())
+		switch {
+		case opts != nil:
+			name := spec.primary()
+			if pair != nil {
+				if key, ok := optionHashKey(pair); ok {
+					name = key
+				}
+			}
+			f := opts.field(name)
 			if f == nil {
 				continue
 			}
 			b := l.lookup('%', opts.Perl, n)
+			b.Writes++
 			dest = selector(l.identFor(b), f.Go, f.Type)
-		} else {
-			if i+1 >= len(args) {
-				break
-			}
-			i++
-			d, ok := l.optionDest(args[i], spec, n)
+			l.optionSites[f] = optionSite{set: set, name: spec.primary()}
+		case pair != nil:
+			d, ok := l.optionDest(pair, spec, set, n)
 			if !ok {
 				continue
 			}
 			dest = d
+		default:
+			continue
 		}
 		l.registerOption(set, setT, spec, dest, n)
 		registered++
@@ -332,10 +454,19 @@ func (l *Lowerer) getOptions(n *ast.Call) (ir.Expr, bool) {
 	}
 
 	errName := l.tmp("err")
+	prepared := ir.Expr(l.identFor(source))
+	if l.bundling {
+		prepared = l.helperCall(hUnbundleArgs, ir.SliceOf(ir.TString),
+			ir.NewIdent(set, setT), prepared)
+	}
+	permute := hPermuteArgs
+	if l.passThrough {
+		permute = hPermutePassThrough
+	}
 	parse := assign(":=", []ir.Expr{ir.NewIdent(errName, ir.TError)},
 		[]ir.Expr{ir.CallOf(selector(ir.NewIdent(set, setT), "Parse", nil), ir.TError,
-			l.helperCall(hPermuteArgs, ir.SliceOf(ir.TString),
-				ir.NewIdent(set, setT), l.identFor(source)))})
+			l.helperCall(permute, ir.SliceOf(ir.TString),
+				ir.NewIdent(set, setT), prepared))})
 	l.setProv(parse, n)
 	l.note(parse, "Perl's option parser sorts options and file names apart wherever "+
 		"they appear, and flag stops at the first word that is not an option. Without "+
@@ -385,7 +516,7 @@ func arrayRefVar(e ast.Expr) (*ast.Var, bool) {
 }
 
 // optionDest resolves the destination of one `'spec' => \$var` pair.
-func (l *Lowerer) optionDest(e ast.Expr, spec optionSpec, at ast.Node) (ir.Expr, bool) {
+func (l *Lowerer) optionDest(e ast.Expr, spec optionSpec, set string, at ast.Node) (ir.Expr, bool) {
 	var v *ast.Var
 	switch n := e.(type) {
 	case *ast.RefGen:
@@ -414,8 +545,55 @@ func (l *Lowerer) optionDest(e ast.Expr, spec optionSpec, at ast.Node) (ir.Expr,
 	b.Writes++
 	want := spec.destType()
 	l.optionDests[b] = want
+	l.optionSites[b] = optionSite{set: set, name: spec.primary()}
 	b.Type = want
 	return l.identFor(b), true
+}
+
+// optionGiven answers `defined` for an option destination by asking the flag
+// set whether the option was written on the command line.
+//
+// This is the one place where a Go value can be told apart from an absent one
+// without changing its type. An option that was never given leaves its
+// destination holding whatever it started with, and `--tag ”` leaves it
+// holding the same empty string, so the value cannot answer the question. The
+// flag set remembers which options it actually saw, and that is the question
+// `defined $tag` was asking all along.
+func (l *Lowerer) optionGiven(x ast.Expr, at ast.Node) (ir.Expr, bool) {
+	var site optionSite
+	var found bool
+	switch n := x.(type) {
+	case *ast.Var:
+		if n.Sigil != '$' {
+			return nil, false
+		}
+		b, ok := l.scope.lookup(varKey('$', n.Name))
+		if !ok {
+			return nil, false
+		}
+		site, found = l.optionSites[b]
+	case *ast.HashIndex:
+		if _, _, _, f := l.hashPartsField(n); f != nil {
+			site, found = l.optionSites[f]
+		}
+	}
+	if !found {
+		return nil, false
+	}
+	out := l.helperCall(hFlagGiven, ir.TBool,
+		ir.NewIdent(site.set, ir.NamedType("*flag.FlagSet", "flag")),
+		ir.Str(quote(site.name)))
+	l.note(out, "An option that was never given leaves its destination holding the "+
+		"value it started with, which a Go variable cannot tell apart from the same "+
+		"value written out. The flag set remembers which options it saw, so that is "+
+		"what the test asks.",
+		"flag-package", "nil-vs-undef")
+	l.inform(at, "P2G7506", "defined on an option",
+		"Perl's undef says an option was never given. The destination here is an "+
+			"ordinary Go value with no such state, so the question is put to the flag "+
+			"set, which is the one thing that still knows.",
+		"flag-package", "nil-vs-undef")
+	return out, true
 }
 
 // registerOption emits the flag registration for one option, once per name it
@@ -503,23 +681,21 @@ func (l *Lowerer) configureNote(n *ast.Call) bool {
 	for _, m := range modes {
 		switch m {
 		case "bundling", "gnu_getopt", "bundling_override":
-			l.approximate(n, "P2G7507", "Configure "+m,
-				"single-letter options can no longer be run together",
-				"Bundling reads `-abc` as three options and `-n5` as an option with its "+
-					"value attached. The flag package cannot be taught either, so `-vv` "+
-					"becomes an unknown option rather than a count of two.",
-				"Callers have to write the options out separately. Where that is not "+
-					"acceptable, github.com/spf13/pflag is a drop-in replacement for flag "+
-					"with GNU semantics, including bundling.",
-				"flag-package", "go-mod-vs-cpan")
+			l.inform(n, "P2G7507", "Configure "+m,
+				"Bundling reads `-abc` as three options and `-j4` as an option with its "+
+					"value attached, and the flag package cannot be taught either. The "+
+					"arguments are split before the flag set sees them, so `-vv` still "+
+					"counts as two. A run is only taken apart when every letter in it is a "+
+					"registered option, which leaves an unknown `-xyz` to be reported as "+
+					"itself.",
+				"flag-package")
 		case "pass_through":
-			l.approximate(n, "P2G7508", "Configure pass_through",
-				"an unknown option is an error rather than an operand",
+			l.inform(n, "P2G7508", "Configure pass_through",
 				"pass_through leaves an option the parser does not recognise in @ARGV and "+
 					"carries on, which is how a script that wraps another command forwards "+
-					"its arguments. The flag package stops at the first unknown option.",
-				"Split the argument list yourself before parsing, or use "+
-					"github.com/spf13/pflag, which has an allowlist for unknown options.",
+					"its arguments. The flag package stops at the first unknown option, so "+
+					"the unknown ones are moved in with the operands before parsing and "+
+					"come back out among the leftovers, in the order they were written.",
 				"flag-package")
 		case "require_order", "posix_default", "no_auto_abbrev", "no_ignore_case",
 			"no_bundling", "no_permute":

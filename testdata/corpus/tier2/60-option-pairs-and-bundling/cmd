@@ -1,0 +1,1 @@
+-vvq -j4 --format=csv -D env=prod -D tier=gold -o cpu --keep-going build test

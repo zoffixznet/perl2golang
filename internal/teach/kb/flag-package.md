@@ -197,12 +197,130 @@ jobs=2 verbose=false files=["-weird.c"]
 
 Two details earn their keep. The `--` before the operands stops one of them that begins with a dash from being read as an option once it has moved to the front, which the third line shows. And whether an option swallows the next word is decided by asking the flag set: `Lookup` finds the option and the `IsBoolFlag` method its boolean values carry says whether it takes a value. That is the same information `flag` uses itself, so the reordering never disagrees with the parsing that follows it.
 
+## Bundling and pass-through, without a dependency
+
+Two more Getopt::Long behaviours cost about twenty lines each, and both are worth writing out before reaching for a CLI framework.
+
+**Bundling** is `Getopt::Long::Configure('bundling')`: `-vvq` means `-v -v -q` and `-j4` means `-j 4`. `flag` reads `-vvq` as one option named `vvq` and reports it as unknown, so the first thing a long-time user types stops working. Splitting the runs before parsing fixes it, and the flag set itself says what may be split:
+
+```go
+package main
+
+import (
+	"flag"
+	"fmt"
+	"io"
+	"strings"
+)
+
+func takesNoValue(f *flag.Flag) bool {
+	b, ok := f.Value.(interface{ IsBoolFlag() bool })
+	return ok && b.IsBoolFlag()
+}
+
+// unbundleArgs splits -vvq into -v -v -q and -j4 into -j 4. A run is only
+// taken apart when every letter in it is a registered option, so an unknown
+// -xyz is still reported as -xyz.
+func unbundleArgs(fs *flag.FlagSet, args []string) []string {
+	out := make([]string, 0, len(args))
+	for i, a := range args {
+		if a == "--" {
+			return append(out, args[i:]...)
+		}
+		if len(a) < 3 || a[0] != '-' || a[1] == '-' || strings.IndexByte(a, '=') >= 0 {
+			out = append(out, a)
+			continue
+		}
+		if split, ok := unbundle(fs, a[1:]); ok {
+			out = append(out, split...)
+			continue
+		}
+		out = append(out, a)
+	}
+	return out
+}
+
+func unbundle(fs *flag.FlagSet, letters string) ([]string, bool) {
+	out := make([]string, 0, len(letters))
+	for i := range letters {
+		f := fs.Lookup(letters[i : i+1])
+		if f == nil {
+			return nil, false
+		}
+		out = append(out, "-"+letters[i:i+1])
+		if takesNoValue(f) {
+			continue
+		}
+		if rest := letters[i+1:]; rest != "" {
+			out = append(out, rest)
+		}
+		return out, true
+	}
+	return out, true
+}
+
+// countOption is Getopt::Long's '+': it counts how many times it was given.
+func countOption(fs *flag.FlagSet, p *int, name string) {
+	fs.BoolFunc(name, "", func(string) error { *p++; return nil })
+}
+
+func main() {
+	fs := flag.NewFlagSet("build", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	var verbose, jobs int
+	quiet := fs.Bool("q", false, "")
+	countOption(fs, &verbose, "v")
+	fs.IntVar(&jobs, "j", 1, "")
+
+	argv := []string{"-vvq", "-j4", "target"}
+	fmt.Printf("as written:  %q\n", argv)
+	fmt.Printf("unbundled:   %q\n", unbundleArgs(fs, argv))
+
+	if err := fs.Parse(unbundleArgs(fs, argv)); err != nil {
+		fmt.Println("error:", err)
+		return
+	}
+	fmt.Printf("verbose=%d quiet=%v jobs=%d rest=%q\n", verbose, *quiet, jobs, fs.Args())
+
+	// A letter the flag set does not know leaves the whole run alone, so the
+	// error names what the user actually typed.
+	fmt.Printf("unknown run: %q\n", unbundleArgs(fs, []string{"-xyz"}))
+}
+```
+
+```
+as written:  ["-vvq" "-j4" "target"]
+unbundled:   ["-v" "-v" "-q" "-j" "4" "target"]
+verbose=2 quiet=true jobs=4 rest=["target"]
+unknown run: ["-xyz"]
+```
+
+`BoolFunc` is the piece that makes `-v` countable: it registers an option that takes no value and runs a function each time it is seen, which is `'v+'`. The same call with a non-boolean `Func` is how `=s@` collects a list and how `=s%` collects `NAME=VALUE` pairs.
+
+**Pass-through** is `Configure('pass_through')`, which a wrapper script uses to forward the options it does not recognise to the command it runs. `flag` stops at the first unknown option and returns an error. The fix reuses the permutation above: treat an unknown option as an operand rather than as an option, so it survives parsing and comes back out of `fs.Args()` in the order it was written. One `fs.Lookup(name) == nil` test inside the loop is the whole change.
+
+**Was this option given at all?** Perl answers with `defined $opt{tag}`, because an option that was never mentioned leaves its destination undef. A Go destination is an ordinary value: an option never given and an option given the empty string leave the same string behind. The flag set is the only thing that still knows, and `Visit` walks exactly the options that were set:
+
+```go
+func flagGiven(set *flag.FlagSet, name string) bool {
+	found := false
+	set.Visit(func(f *flag.Flag) {
+		if f.Name == name {
+			found = true
+		}
+	})
+	return found
+}
+```
+
+`Visit` walks the options that were set and `VisitAll` walks every registered one, which is also how you write your own usage block.
+
 ## The mismatch
 
 The mapping, option type by option type. `'name=s' => \$name` is `flag.StringVar(&name, "name", "anon", "help text")`, or `name := flag.String(...)` if you would rather have a pointer; the `Var` forms are worth preferring because the rest of your code then reads `name` instead of `*name`. `'count=i'` is `flag.Int`, `'rate=f'` is `flag.Float64`, and `'verbose!'` is `flag.Bool`, which has no negated twin: `--no-verbose` does not exist and `-verbose=false` is the spelling. Perl's `=s@` repeatable option has no built-in equivalent at all, which is why the example implements `flag.Value` (a `String()` and a `Set(string) error` method); the same interface is how you accept an enum, a comma-separated list, or a validated path. `flag.Duration` is a small gift with no Perl counterpart: it parses `90s`, `1m30s`, and `2h` into a `time.Duration` (`time-layouts`).
 
 The surrounding behaviour differs more than the types do. There is no such thing as a required flag: check for the zero value after `flag.Parse()` and write your own error. There is no abbreviation, so `-verb` is an unknown flag rather than a prefix match. Positional arguments are `flag.Args()` and `flag.NArg()`, never `os.Args` directly, and `os.Args[0]` is still the program name. On a bad flag the default `flag.ExitOnError` mode prints the usage and calls `os.Exit(2)`, which is fine in `main` and terrible in a library or a test, so construct a `flag.NewFlagSet` with `flag.ContinueOnError` when you want the error back as a value. Subcommands are several `FlagSet`s and a switch on `os.Args[1]`, which is more typing than a CPAN module and easy to read afterwards.
 
-When the stdlib genuinely is not enough (GNU-style `-abc` bundling, `--flag` distinct from `-f`, unknown options passed through to a wrapped command), the ecosystem answer is `spf13/pflag` or a full CLI framework, and taking that dependency is a normal decision rather than a defeat. Start with `flag`; most scripts never outgrow it.
+The behaviours the section above rebuilds by hand -- permutation, bundling, pass-through, counting, repeatable options -- are all small, and writing them keeps the program dependency-free and readable. What stays genuinely out of reach is the part of Getopt::Long that has no shape in `flag` at all: a destination that is a subroutine called per occurrence, the `<>` catch-all for operands, and the unique-prefix abbreviation that lets `--verb` mean `--verbose`. When you want those, or `--flag` distinct from `-f`, the ecosystem answer is `spf13/pflag` or a full CLI framework, and taking that dependency is a normal decision rather than a defeat. Start with `flag`; most scripts never outgrow it.
 
 Further reading: https://pkg.go.dev/flag

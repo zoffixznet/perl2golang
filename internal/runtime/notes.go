@@ -15,6 +15,29 @@ var notes = map[string]string{
 		"nothing is printed on either stream. Reordering the arguments first " +
 		"is what keeps the command line meaning what it used to.",
 
+	"permutePassThrough": "A parser told to pass unknown options through " +
+		"leaves them in the argument list and carries on, which is how a " +
+		"wrapper script forwards its caller's options to the command it runs. " +
+		"flag stops at the first option it does not know, so an unknown one " +
+		"is moved in with the operands before parsing and comes back out " +
+		"among the leftovers, in the order it was written.",
+
+	"permute": "Both reorderings are the same walk over the arguments, with " +
+		"one decision differing: whether an option the flag set does not know " +
+		"is left where it is for flag to complain about, or treated as an " +
+		"operand and passed through.",
+
+	"unbundleArgs": "flag reads -vvq as one option named vvq and reports it " +
+		"as unknown, where a bundling parser reads it as three. Splitting the " +
+		"runs before parsing keeps a command line that has always worked " +
+		"working. A run is only taken apart when every letter in it is a " +
+		"registered option, so a genuinely unknown -xyz is still reported as " +
+		"itself rather than as three separate mysteries.",
+
+	"unbundle": "Bundled letters end at the first one that takes a value: " +
+		"everything after it is that value, which is what makes -j4 mean -j 4 " +
+		"and -vvq mean three separate options.",
+
 	"takesNoValue": "Whether an option takes a value decides whether the " +
 		"word after it belongs to it. flag knows, through the IsBoolFlag " +
 		"method its boolean values carry, and asking it is what keeps the " +

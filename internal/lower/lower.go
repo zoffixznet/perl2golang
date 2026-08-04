@@ -117,6 +117,16 @@ type Lowerer struct {
 	// optionDests holds the type an option specification gave a destination
 	// variable, which is a declaration and beats anything inference saw.
 	optionDests map[*Binding]*ir.Type
+	// optionSites records where each option destination was registered, so
+	// that `defined $opt` after parsing can ask whether the option was given
+	// rather than whether its value is the zero one.
+	optionSites map[any]optionSite
+	// bundling and passThrough record what Getopt::Long::Configure asked for,
+	// which changes how the arguments are prepared before the flag set sees
+	// them. They are read from the whole program before anything is lowered,
+	// because a Configure call inside a sub still governs every block.
+	bundling    bool
+	passThrough bool
 	// interfaces are the types a collection of several classes needed, keyed
 	// by the ancestor and method set they were built from.
 	interfaces   map[string]*Class
@@ -313,6 +323,7 @@ func Lower(res parser.Result, src []byte, opts Options) *Result {
 		hoisted:     map[*ast.Var]bool{},
 		classVars:   map[*Binding]*Class{},
 		optionHash:  map[string]*Class{},
+		optionSites: map[any]optionSite{},
 		loaded:      map[string]bool{},
 		aliases:     map[*Binding]ir.Expr{},
 		optionDests: map[*Binding]*ir.Type{},

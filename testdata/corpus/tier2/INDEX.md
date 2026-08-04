@@ -1,6 +1,6 @@
 # Tier 2 corpus - script-shaped Perl programs
 
-59 entries. Each is a self-contained, realistic Perl script of the kind a
+61 entries. Each is a self-contained, realistic Perl script of the kind a
 sysadmin or data wrangler actually writes, not a snippet.
 
 ## Layout of an entry
@@ -106,6 +106,8 @@ Two entries exit non-zero on purpose: **27** (65) and **32** (1). The rest exit 
 | 57 | `57-process-and-shell` | Running another program, which does not convert yet | `system`, backticks in scalar and list context, `open` on a pipe both ways, `$?` decoded into status and signal, an argument with a space in it |
 | 58 | `58-captures-in-list-context` | A match read for its captures rather than for its truth | `my ($x) = $s =~ /(...)/`, several groups at once, a failed match yielding undef, `/g` in list context, a match with no groups, the whole thing as an `if` condition |
 | 59 | `59-captures-through-a-sub` | Captures that leave the sub that made them, which does not convert yet | `return $text =~ /(..)(..)/`, the result taken as a list, as a count and as a truth value |
+| 60 | `60-option-pairs-and-bundling` | An option block written as pairs, with bundling and pass-through | `GetOptions` in pair form where the hash key is the destination's, `Configure('bundling', 'pass_through')`, `+` `=i` `:s` `=s@` `=s%`, `defined` on an option, `@ARGV` after the block |
+| 61 | `61-option-callbacks-and-abbrev` | Option callbacks and abbreviation, which do not convert yet | a `sub` as a destination, the `<>` operand catch-all, unique-prefix abbreviation, a mixed block where only some destinations are hash elements |
 
 ## Coverage map
 
@@ -133,3 +135,4 @@ Two entries exit non-zero on purpose: **27** (65) and **32** (1). The rest exit 
 - **Callbacks as values** - 54, 55; also 12, 25
 - **Processes** - 57
 - **Regex in list context** - 58, 59
+- **Option blocks** - 26, 37, 60, 61; manual parsing in 25

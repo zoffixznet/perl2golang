@@ -473,6 +473,9 @@ func (l *Lowerer) incDecExpr(n *ast.UnOp) ir.Expr {
 // Go variable of type string is always a string, and the closest thing to
 // undef is the zero value.
 func (l *Lowerer) definedExpr(x ast.Expr, at ast.Node) ir.Expr {
+	if out, ok := l.optionGiven(x, at); ok {
+		return out
+	}
 	switch n := x.(type) {
 	case *ast.HashIndex:
 		m, key, _, field := l.hashPartsField(n)

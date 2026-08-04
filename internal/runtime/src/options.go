@@ -33,6 +33,22 @@ import (
 // set does not know is passed through untouched, so the diagnostic comes from
 // flag rather than from here.
 func permuteArgs(fs *flag.FlagSet, args []string) []string {
+	return permute(fs, args, false)
+}
+
+// permutePassThrough is permuteArgs for a parser told to pass unknown options
+// through instead of failing on them.
+//
+// An option the flag set does not know is moved in with the operands, so it
+// survives parsing untouched and comes back out among the leftovers in the
+// order it was written, which is where the original script looked for it.
+func permutePassThrough(fs *flag.FlagSet, args []string) []string {
+	return permute(fs, args, true)
+}
+
+// permute does the work for both, keeping options and their values in front
+// of a "--" and everything else behind it.
+func permute(fs *flag.FlagSet, args []string, passUnknown bool) []string {
 	var opts, operands []string
 	for i := 0; i < len(args); {
 		a := args[i]
@@ -46,12 +62,21 @@ func permuteArgs(fs *flag.FlagSet, args []string) []string {
 			continue
 		}
 		name := strings.TrimLeft(a, "-")
-		if strings.IndexByte(name, '=') >= 0 {
-			opts = append(opts, a)
+		if j := strings.IndexByte(name, '='); j >= 0 {
+			if passUnknown && fs.Lookup(name[:j]) == nil {
+				operands = append(operands, a)
+			} else {
+				opts = append(opts, a)
+			}
 			i++
 			continue
 		}
 		f := fs.Lookup(name)
+		if f == nil && passUnknown {
+			operands = append(operands, a)
+			i++
+			continue
+		}
 		opts = append(opts, a)
 		i++
 		if f != nil && !takesNoValue(f) && i < len(args) {
@@ -63,6 +88,55 @@ func permuteArgs(fs *flag.FlagSet, args []string) []string {
 		opts = append(opts, "--")
 	}
 	return append(opts, operands...)
+}
+
+// unbundleArgs splits the run-together short options a bundling parser
+// accepts: `-vvq` becomes `-v -v -q`, and `-j4` becomes `-j 4`.
+//
+// The flag package reads `-vvq` as one option named "vvq" and reports it as
+// unknown, so a script whose callers have always written `-vv` stops working
+// on the first argument. What may be bundled is decided by asking the flag
+// set: a run is only split when every letter in it is a registered option,
+// which leaves a genuinely unknown `-xyz` to be reported as itself rather than
+// as three separate mysteries.
+func unbundleArgs(fs *flag.FlagSet, args []string) []string {
+	out := make([]string, 0, len(args))
+	for i, a := range args {
+		if a == "--" {
+			return append(out, args[i:]...)
+		}
+		if len(a) < 3 || a[0] != '-' || a[1] == '-' || strings.IndexByte(a, '=') >= 0 {
+			out = append(out, a)
+			continue
+		}
+		if split, ok := unbundle(fs, a[1:]); ok {
+			out = append(out, split...)
+			continue
+		}
+		out = append(out, a)
+	}
+	return out
+}
+
+// unbundle takes apart one run of bundled letters, stopping at the first one
+// that takes a value: everything after it is that value.
+func unbundle(fs *flag.FlagSet, letters string) ([]string, bool) {
+	out := make([]string, 0, len(letters))
+	for i := range letters {
+		f := fs.Lookup(letters[i : i+1])
+		if f == nil {
+			return nil, false
+		}
+		out = append(out, "-"+letters[i:i+1])
+		if takesNoValue(f) {
+			continue
+		}
+		if rest := letters[i+1:]; rest != "" {
+			out = append(out, rest)
+		}
+		return out, true
+	}
+	return out, true
 }
 
 // takesNoValue reports whether an option is one of the boolean kinds, which

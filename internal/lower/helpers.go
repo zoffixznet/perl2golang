@@ -114,15 +114,17 @@ const (
 	hNotImplementedHere = "notImplementedHere"
 
 	// Command line options.
-	hPermuteArgs      = "permuteArgs"      // options and operands sorted apart
-	hFlagGiven        = "flagGiven"        // was this option written at all
-	hIntOption        = "intOption"        // a base-ten whole number option
-	hFloatOption      = "floatOption"      // a floating-point option
-	hCountOption      = "countOption"      // an option that counts occurrences
-	hNegatableBool    = "negatableBool"    // --name and --no-name together
-	hStringListOption = "stringListOption" // a repeatable option
-	hStringMapOption  = "stringMapOption"  // a repeatable NAME=VALUE option
-	hIntMapOption     = "intMapOption"     // a repeatable NAME=NUMBER option
-	hOptionalString   = "optionalString"   // an option whose value may be left off
-	hSortedPairs      = "sortedPairs"      // a map of options rendered in name order
+	hPermuteArgs        = "permuteArgs"        // options and operands sorted apart
+	hPermutePassThrough = "permutePassThrough" // the same, keeping unknown options
+	hUnbundleArgs       = "unbundleArgs"       // -vvq split into -v -v -q
+	hFlagGiven          = "flagGiven"          // was this option written at all
+	hIntOption          = "intOption"          // a base-ten whole number option
+	hFloatOption        = "floatOption"        // a floating-point option
+	hCountOption        = "countOption"        // an option that counts occurrences
+	hNegatableBool      = "negatableBool"      // --name and --no-name together
+	hStringListOption   = "stringListOption"   // a repeatable option
+	hStringMapOption    = "stringMapOption"    // a repeatable NAME=VALUE option
+	hIntMapOption       = "intMapOption"       // a repeatable NAME=NUMBER option
+	hOptionalString     = "optionalString"     // an option whose value may be left off
+	hSortedPairs        = "sortedPairs"        // a map of options rendered in name order
 )

@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T07:16:33Z",
+  "recorded": "2026-08-15T07:32:25Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -53,45 +53,45 @@
     },
     {
       "tier": "tier2",
-      "entries": 59,
+      "entries": 61,
       "stages": {
         "compiled": {
-          "pass": 55,
+          "pass": 57,
           "fail": 4,
           "skip": 0
         },
         "emitted": {
-          "pass": 59,
+          "pass": 61,
           "fail": 0,
           "skip": 0
         },
         "equivalent": {
-          "pass": 24,
-          "fail": 35,
+          "pass": 27,
+          "fail": 34,
           "skip": 0
         },
         "translated": {
-          "pass": 55,
+          "pass": 57,
           "fail": 4,
           "skip": 0
         },
         "typed": {
-          "pass": 22,
+          "pass": 24,
           "fail": 37,
           "skip": 0
         }
       },
       "equivalent_annotated": {
-        "pass": 24,
-        "fail": 35,
+        "pass": 27,
+        "fail": 34,
         "skip": 0
       },
       "quality": {
-        "todos": 11,
-        "symbols": 1130,
-        "symbols_typed": 941,
-        "refusals": 11,
-        "approximations": 425
+        "todos": 10,
+        "symbols": 1134,
+        "symbols_typed": 946,
+        "refusals": 10,
+        "approximations": 420
       }
     },
     {
@@ -109,8 +109,8 @@
           "skip": 0
         },
         "equivalent": {
-          "pass": 2,
-          "fail": 29,
+          "pass": 3,
+          "fail": 28,
           "skip": 0
         },
         "translated": {
@@ -125,16 +125,16 @@
         }
       },
       "equivalent_annotated": {
-        "pass": 2,
-        "fail": 29,
+        "pass": 3,
+        "fail": 28,
         "skip": 0
       },
       "quality": {
         "todos": 64,
-        "symbols": 833,
-        "symbols_typed": 625,
+        "symbols": 831,
+        "symbols_typed": 623,
         "refusals": 67,
-        "approximations": 297
+        "approximations": 294
       }
     },
     {
@@ -217,30 +217,30 @@
       },
       "quality": {
         "todos": 6,
-        "symbols": 933,
-        "symbols_typed": 840,
+        "symbols": 929,
+        "symbols_typed": 836,
         "refusals": 6,
-        "approximations": 182
+        "approximations": 180
       }
     }
   ],
   "total": {
     "tier": "TOTAL",
-    "entries": 191,
+    "entries": 193,
     "stages": {
       "compiled": {
-        "pass": 172,
+        "pass": 174,
         "fail": 19,
         "skip": 0
       },
       "emitted": {
-        "pass": 191,
+        "pass": 193,
         "fail": 0,
         "skip": 0
       },
       "equivalent": {
-        "pass": 60,
-        "fail": 96,
+        "pass": 64,
+        "fail": 94,
         "skip": 0
       },
       "honest": {
@@ -249,35 +249,35 @@
         "skip": 1
       },
       "translated": {
-        "pass": 158,
+        "pass": 160,
         "fail": 33,
         "skip": 0
       },
       "typed": {
-        "pass": 75,
+        "pass": 77,
         "fail": 116,
         "skip": 0
       }
     },
     "equivalent_annotated": {
-      "pass": 60,
-      "fail": 96,
+      "pass": 64,
+      "fail": 94,
       "skip": 0
     },
     "quality": {
-      "todos": 116,
-      "symbols": 3496,
-      "symbols_typed": 2923,
-      "refusals": 120,
-      "approximations": 1048
+      "todos": 115,
+      "symbols": 3494,
+      "symbols_typed": 2922,
+      "refusals": 119,
+      "approximations": 1038
     }
   },
   "quality": {
-    "todos": 116,
-    "symbols": 3496,
-    "symbols_typed": 2923,
-    "refusals": 120,
-    "approximations": 1048
+    "todos": 115,
+    "symbols": 3494,
+    "symbols_typed": 2922,
+    "refusals": 119,
+    "approximations": 1038
   },
   "entries": [
     {
@@ -2711,31 +2711,27 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "exit status 255, wanted 0; stdout differs: 329 byte(s) missing after line 1, expected \"header=0 threshold=40 format=csv...\"; stderr differs: unexpected \"TODO P2G7500: this option block was not understood ...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
         },
         "translated": {
-          "outcome": "fail",
-          "reason": "2 untranslated constructs"
+          "outcome": "pass"
         },
         "typed": {
-          "outcome": "fail",
-          "reason": "3 variables left dynamic out of 17"
+          "outcome": "pass"
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "exit status 255, wanted 0; stdout differs: 329 byte(s) missing after line 1, expected \"header=0 threshold=40 format=csv...\"; stderr differs: unexpected \"TODO P2G7500: this option block was not understood ...\""
+        "outcome": "pass"
       },
       "quality": {
-        "todos": 2,
-        "symbols": 17,
-        "symbols_typed": 14,
-        "refusals": 2,
-        "approximations": 16
+        "todos": 0,
+        "symbols": 16,
+        "symbols_typed": 16,
+        "refusals": 0,
+        "approximations": 4
       }
     },
     {
@@ -3126,8 +3122,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 4, byte 89: got \"-n,3,--format=csv,--no-header,--...\", wanted \"gamma,alpha,delta,beta]\\n1,alpha\\n...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -3140,13 +3135,12 @@
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 4, byte 89: got \"-n,3,--format=csv,--no-header,--...\", wanted \"gamma,alpha,delta,beta]\\n1,alpha\\n...\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
-        "symbols": 6,
-        "symbols_typed": 6,
+        "symbols": 5,
+        "symbols_typed": 5,
         "refusals": 0,
         "approximations": 3
       }
@@ -3944,6 +3938,86 @@
       }
     },
     {
+      "tier": "tier2",
+      "name": "60-option-pairs-and-bundling",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "pass"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "pass"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 3,
+        "symbols_typed": 3,
+        "refusals": 0,
+        "approximations": 2
+      },
+      "notes": [
+        "cmd holds [\"-vvq\" \"-j4\" \"--format=csv\" \"-D\" \"env=prod\" \"-D\" \"tier=gold\" \"-o\" \"cpu\" \"--keep-going\" \"build\" \"test\"], the manifest says []"
+      ]
+    },
+    {
+      "tier": "tier2",
+      "name": "61-option-callbacks-and-abbrev",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "exit status 255, wanted 0; stdout differs: 86 byte(s) missing after line 1, expected \"level=debug dry_run=1\\ntrace: tra...\"; stderr differs: unexpected \"TODO P2G7500: this option block was not understood ...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "fail",
+          "reason": "1 untranslated construct"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "2 variables left dynamic out of 3"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "exit status 255, wanted 0; stdout differs: 86 byte(s) missing after line 1, expected \"level=debug dry_run=1\\ntrace: tra...\"; stderr differs: unexpected \"TODO P2G7500: this option block was not understood ...\""
+      },
+      "quality": {
+        "todos": 1,
+        "symbols": 3,
+        "symbols_typed": 1,
+        "refusals": 1,
+        "approximations": 5
+      },
+      "notes": [
+        "cmd holds [\"--lev\" \"warn\" \"--dry\" \"--trace\" \"a=1\" \"--trace\" \"b=2\" \"--loud\" \"extra\"], the manifest says []"
+      ]
+    },
+    {
       "tier": "tier3",
       "name": "01-inventory-manager",
       "kind": "convert",
@@ -4186,7 +4260,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "exit status 255, wanted 0; stdout differs: 483 byte(s) missing after line 1, expected \"TOP 4 PATHS (of 9)\\nPATH         ...\"; stderr differs: unexpected \"open --top: open --top: no such file or directory\""
+          "reason": "stdout differs: line 21, byte 365: got \"1 (1)\\n  1 (1)\\n  1 (1)\\n\\nmalformed...\", wanted \"/api/v1/reports (20480)\\n  /index...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -4196,17 +4270,17 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "9 variables left dynamic out of 35"
+          "reason": "9 variables left dynamic out of 34"
         }
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "exit status 255, wanted 0; stdout differs: 483 byte(s) missing after line 1, expected \"TOP 4 PATHS (of 9)\\nPATH         ...\"; stderr differs: unexpected \"open --top: open --top: no such file or directory\""
+        "reason": "stdout differs: line 21, byte 365: got \"1 (1)\\n  1 (1)\\n  1 (1)\\n\\nmalformed...\", wanted \"/api/v1/reports (20480)\\n  /index...\""
       },
       "quality": {
         "todos": 0,
-        "symbols": 35,
-        "symbols_typed": 26,
+        "symbols": 34,
+        "symbols_typed": 25,
         "refusals": 0,
         "approximations": 10
       }
@@ -4957,8 +5031,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "exit status 255, wanted 0; stdout differs: 69 byte(s) missing after line 1, expected \"verbose=2 quiet=1 jobs=4 tag=''\\n...\"; stderr differs: unexpected \"flag provided but not defined: -vvq ...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -4971,15 +5044,14 @@
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "exit status 255, wanted 0; stdout differs: 69 byte(s) missing after line 1, expected \"verbose=2 quiet=1 jobs=4 tag=''\\n...\"; stderr differs: unexpected \"flag provided but not defined: -vvq ...\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
-        "symbols": 6,
-        "symbols_typed": 6,
+        "symbols": 5,
+        "symbols_typed": 5,
         "refusals": 0,
-        "approximations": 4
+        "approximations": 1
       }
     },
     {
@@ -6570,7 +6642,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "exit status 255, wanted 2; stdout differs: 411 byte(s) missing after line 1, expected \"LVL   USE%       SIZE       USED...\"; stderr differs: unexpected \"open --warn: open --warn: no such file or directory\""
+          "reason": "exit status 0, wanted 2; stdout differs: line 2, byte 51: got \"\\n0 filesystems, 0K used total; c...\", wanted \"CRIT   96%        20G      18.9G...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -6580,17 +6652,17 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "4 variables left dynamic out of 39"
+          "reason": "4 variables left dynamic out of 38"
         }
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "exit status 255, wanted 2; stdout differs: 411 byte(s) missing after line 1, expected \"LVL   USE%       SIZE       USED...\"; stderr differs: unexpected \"open --warn: open --warn: no such file or directory\""
+        "reason": "exit status 0, wanted 2; stdout differs: line 2, byte 51: got \"\\n0 filesystems, 0K used total; c...\", wanted \"CRIT   96%        20G      18.9G...\""
       },
       "quality": {
         "todos": 0,
-        "symbols": 39,
-        "symbols_typed": 35,
+        "symbols": 38,
+        "symbols_typed": 34,
         "refusals": 0,
         "approximations": 7
       }
@@ -6656,7 +6728,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "3 variables left dynamic out of 44"
+          "reason": "3 variables left dynamic out of 43"
         }
       },
       "equivalent_annotated": {
@@ -6665,8 +6737,8 @@
       },
       "quality": {
         "todos": 0,
-        "symbols": 44,
-        "symbols_typed": 41,
+        "symbols": 43,
+        "symbols_typed": 40,
         "refusals": 0,
         "approximations": 9
       }
@@ -6907,7 +6979,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "exit status 255, wanted 0; stdout differs: 404 byte(s) missing after line 1, expected \"emp_id\\tname\\tdept_id\\tsite\\tdept_na...\"; stderr differs: unexpected \"open --key: open --key: no such file or directory\""
+          "reason": "stdout differs: line 1, byte 24: got \" E001\\tJane Doe\\tD10\\tlisbon E002\\tB...\", wanted \"\\tdept_name\\tcost_center\\nE001\\tJane...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -6921,14 +6993,14 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "exit status 255, wanted 0; stdout differs: 404 byte(s) missing after line 1, expected \"emp_id\\tname\\tdept_id\\tsite\\tdept_na...\"; stderr differs: unexpected \"open --key: open --key: no such file or directory\""
+        "reason": "stdout differs: line 1, byte 24: got \" E001\\tJane Doe\\tD10\\tlisbon E002\\tB...\", wanted \"\\tdept_name\\tcost_center\\nE001\\tJane...\""
       },
       "quality": {
         "todos": 0,
-        "symbols": 32,
-        "symbols_typed": 32,
+        "symbols": 31,
+        "symbols_typed": 31,
         "refusals": 0,
-        "approximations": 4
+        "approximations": 2
       }
     },
     {
@@ -7236,7 +7308,7 @@
       "stages": {
         "compiled": {
           "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:205:21: cannot use rec2.Template (variable of interface type any) as string value in argument to sprintf: need type assertion"
+          "reason": "the generated Go does not compile: ./main.go:202:21: cannot use rec2.Template (variable of interface type any) as string value in argument to sprintf: need type assertion"
         },
         "emitted": {
           "outcome": "pass"
@@ -7253,7 +7325,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "13 variables left dynamic out of 43"
+          "reason": "13 variables left dynamic out of 42"
         }
       },
       "equivalent_annotated": {
@@ -7262,8 +7334,8 @@
       },
       "quality": {
         "todos": 0,
-        "symbols": 43,
-        "symbols_typed": 30,
+        "symbols": 42,
+        "symbols_typed": 29,
         "refusals": 0,
         "approximations": 6
       }
@@ -7450,5 +7522,9 @@
         "approximations": 9
       }
     }
+  ],
+  "notes": [
+    "tier2/60-option-pairs-and-bundling: cmd holds [\"-vvq\" \"-j4\" \"--format=csv\" \"-D\" \"env=prod\" \"-D\" \"tier=gold\" \"-o\" \"cpu\" \"--keep-going\" \"build\" \"test\"], the manifest says []",
+    "tier2/61-option-callbacks-and-abbrev: cmd holds [\"--lev\" \"warn\" \"--dry\" \"--trace\" \"a=1\" \"--trace\" \"b=2\" \"--loud\" \"extra\"], the manifest says []"
   ]
 }

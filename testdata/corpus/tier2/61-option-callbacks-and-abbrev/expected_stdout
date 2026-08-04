@@ -1,0 +1,3 @@
+level=debug dry_run=1
+trace: trace=a=1 | trace=b=2 | operand=extra
+argv after: (none)

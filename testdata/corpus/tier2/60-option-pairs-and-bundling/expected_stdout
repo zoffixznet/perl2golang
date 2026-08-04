@@ -1,0 +1,6 @@
+verbose=2 quiet=1 jobs=4 format=csv
+tag given: no
+define: env=prod tier=gold
+only: cpu
+left over: --keep-going build test
+first target: --keep-going, 2 more
