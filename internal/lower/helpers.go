@@ -37,6 +37,7 @@ const (
 	hAt            = "at"       // indexing that tolerates a short list, as Perl does
 	hPtr           = "ptr"      // a value moved somewhere a *T slot can point at
 	hDeref         = "deref"    // a *T read as a T, with nil reading as the zero value
+	hGrow          = "grow"     // a slice extended to a length, as Perl extends an array
 	hSeq           = "seq"      // the numeric range operator as a slice
 	hSortedKeys    = "sortedKeys"
 	hReplaceFirst  = "replaceFirst" // s/// without the /g modifier

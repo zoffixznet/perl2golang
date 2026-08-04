@@ -59,23 +59,18 @@ func (l *Lowerer) indexExpr(n *ast.Index) ir.Expr {
 		return ir.Nil(ir.TAny)
 	}
 
-	if isNullable(elem) {
-		if text, neg := negativeLiteral(n.Idx); neg {
-			off := ir.Bin("-", lenOf(base), ir.IntLit(text), ir.TInt)
-			return l.readNullable(index(base, off, elem), elem)
-		}
-		return l.readNullable(index(base, idx, elem), elem)
-	}
-
 	// A literal negative index counts from the end, which Go spells out.
 	if text, neg := negativeLiteral(n.Idx); neg {
 		off := ir.Bin("-", lenOf(base), ir.IntLit(text), ir.TInt)
-		out := index(base, off, elem)
+		out := ir.Expr(index(base, off, elem))
 		l.note(out, "A negative Perl index counts back from the end. Go has no such "+
 			"rule, so the arithmetic is written out. Note that Perl returns undef for "+
 			"an index that is out of range while Go panics, which is louder and, on "+
 			"balance, kinder.",
 			"slices-not-arrays")
+		if isNullable(elem) {
+			out = l.readNullable(out, elem)
+		}
 		return out
 	}
 
@@ -83,21 +78,54 @@ func (l *Lowerer) indexExpr(n *ast.Index) ir.Expr {
 	// sub that takes its arguments as a list is written expecting that, so
 	// the read goes through the helper that answers with a zero value.
 	if v, ok := n.Base.(*ast.Var); ok && v.Name == "_" && l.curSub != nil && l.curSub.VarArgs != nil {
-		out := l.helperCall(hAt, elem, base, idx)
+		out := ir.Expr(l.helperCall(hAt, elem, base, idx))
 		l.note(out, "A caller may pass fewer arguments than the body reads, which Perl "+
 			"answers with undef and Go answers by panicking. The helper gives the zero "+
 			"value instead, which is what the original did.",
 			"slices-not-arrays", "variadic-and-no-defaults")
+		if isNullable(elem) {
+			out = l.readNullable(out, elem)
+		}
 		return out
 	}
 
-	out := index(base, idx, elem)
-	if _, ok := n.Idx.(*ast.NumberLit); !ok {
-		l.note(out, "Reading past the end of a Perl array gives undef. Go panics with "+
-			"an index out of range instead, which turns a silent wrong answer into an "+
-			"immediate stack trace.",
-			"slices-not-arrays")
+	out := l.elementRead(n, base, idx, elem)
+	if isNullable(elem) {
+		out = l.readNullable(out, elem)
 	}
+	return out
+}
+
+// elementRead picks between the plain Go index expression and the tolerant
+// read, for one array element.
+//
+// Reading past the end of a Perl array is undef; the same read in Go is a
+// panic that stops the program. Where the index is written out as a number and
+// the array is not known to be that long, the tolerant read is both the
+// honest translation and the one that lets the rest of the program run. Where
+// the index is computed the plain expression stays, because wrapping every
+// `xs[i]` in a call would cost more readability than it buys.
+func (l *Lowerer) elementRead(n *ast.Index, base, idx ir.Expr, elem *ir.Type) ir.Expr {
+	if _, literal := staticIndex(n.Idx); !literal || typeOrAny(base).Kind != ir.Slice {
+		out := index(base, idx, elem)
+		if _, ok := n.Idx.(*ast.NumberLit); !ok {
+			l.note(out, "Reading past the end of a Perl array gives undef. Go panics with "+
+				"an index out of range instead, which turns a silent wrong answer into an "+
+				"immediate stack trace.",
+				"slices-not-arrays")
+		}
+		return out
+	}
+	if withinLength(l.arrayBindingOf(n), n.Idx) {
+		return index(base, idx, elem)
+	}
+	out := l.helperCall(hAt, elem, base, idx)
+	l.note(out, "Nothing here says the list is this long, and reading past the end of "+
+		"a Perl array gives undef where a Go index expression panics. The helper "+
+		"answers with the zero value instead, which is what the original read. Where "+
+		"the element is known to be there, the plain index expression says so and is "+
+		"the better line.",
+		"slices-not-arrays")
 	return out
 }
 

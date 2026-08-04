@@ -66,6 +66,30 @@ func funcLit(params []ir.Param, results []*ir.Type, body *ir.Block) *ir.FuncLit 
 	return n
 }
 
+// plusOne is x + 1, folded when x is written out as a number.
+//
+// The generated code is read as well as run, and `grow(xs, 8)` says what
+// `grow(xs, 7+1)` only implies.
+func plusOne(x ir.Expr) ir.Expr {
+	if lit, ok := x.(*ir.Lit); ok && lit.Kind == ir.LitInt {
+		if n, ok := strconvAtoi(lit.Value); ok {
+			return ir.IntLit(itoa(n + 1))
+		}
+	}
+	return ir.Bin("+", x, ir.IntLit("1"), ir.TInt)
+}
+
+// atLeastZero is max(x, 0), left alone when x is written out as a number that
+// is already not negative.
+func atLeastZero(x ir.Expr) ir.Expr {
+	if lit, ok := x.(*ir.Lit); ok && lit.Kind == ir.LitInt {
+		if _, ok := strconvAtoi(lit.Value); ok {
+			return x
+		}
+	}
+	return ir.CallOf(ir.NewIdent("max", nil), ir.TInt, x, ir.IntLit("0"))
+}
+
 // lenOf builds len(x).
 func lenOf(x ir.Expr) *ir.Call {
 	return ir.CallOf(ir.NewIdent("len", nil), ir.TInt, x)

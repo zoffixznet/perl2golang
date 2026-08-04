@@ -86,6 +86,9 @@ type Quality struct {
 	// converted parts run, so this is the number that says whether a partial
 	// conversion is usable.
 	Crashes int `json:"crashes"`
+	// Panic is the panic line the program stopped on, for an entry that
+	// crashed. It is per entry: a tier's total has nowhere to put it.
+	Panic string `json:"panic,omitempty"`
 }
 
 // DynamicRate is the share of variables that stayed dynamic, in the range 0 to

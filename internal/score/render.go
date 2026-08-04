@@ -128,6 +128,24 @@ func renderQuality(w io.Writer, sc *Scorecard) {
 	fmt.Fprintf(w, "  constructs refused       %d\n", q.Refusals)
 	fmt.Fprintf(w, "  constructs approximated  %d\n", q.Approximations)
 	fmt.Fprintf(w, "  programs that panicked   %d\n", q.Crashes)
+	var crashed []EntryResult
+	for _, e := range sc.Entries {
+		if e.Quality.Crashes > 0 {
+			crashed = append(crashed, e)
+		}
+	}
+	if len(crashed) == 0 {
+		return
+	}
+	width := 0
+	for _, e := range crashed {
+		if n := len(e.ID()); n > width {
+			width = n
+		}
+	}
+	for _, e := range crashed {
+		fmt.Fprintf(w, "    %-*s  %s\n", width, e.ID(), truncate(e.Quality.Panic, 100))
+	}
 }
 
 func renderFailures(w io.Writer, sc *Scorecard, opts RenderOptions) {

@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T09:26:01Z",
+  "recorded": "2026-08-15T09:44:50Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -23,8 +23,8 @@
           "skip": 0
         },
         "equivalent": {
-          "pass": 34,
-          "fail": 11,
+          "pass": 35,
+          "fail": 10,
           "skip": 0
         },
         "translated": {
@@ -39,8 +39,8 @@
         }
       },
       "equivalent_annotated": {
-        "pass": 34,
-        "fail": 11,
+        "pass": 35,
+        "fail": 10,
         "skip": 0
       },
       "quality": {
@@ -48,51 +48,51 @@
         "symbols": 492,
         "symbols_typed": 456,
         "refusals": 0,
-        "approximations": 91,
-        "crashes": 2
+        "approximations": 87,
+        "crashes": 0
       }
     },
     {
       "tier": "tier2",
-      "entries": 72,
+      "entries": 74,
       "stages": {
         "compiled": {
-          "pass": 70,
-          "fail": 2,
+          "pass": 73,
+          "fail": 1,
           "skip": 0
         },
         "emitted": {
-          "pass": 72,
+          "pass": 74,
           "fail": 0,
           "skip": 0
         },
         "equivalent": {
-          "pass": 35,
-          "fail": 37,
+          "pass": 36,
+          "fail": 38,
           "skip": 0
         },
         "translated": {
-          "pass": 66,
+          "pass": 68,
           "fail": 6,
           "skip": 0
         },
         "typed": {
-          "pass": 30,
+          "pass": 32,
           "fail": 42,
           "skip": 0
         }
       },
       "equivalent_annotated": {
-        "pass": 35,
-        "fail": 37,
+        "pass": 36,
+        "fail": 38,
         "skip": 0
       },
       "quality": {
         "todos": 9,
-        "symbols": 1255,
-        "symbols_typed": 1075,
+        "symbols": 1267,
+        "symbols_typed": 1087,
         "refusals": 9,
-        "approximations": 452,
+        "approximations": 458,
         "crashes": 5
       }
     },
@@ -136,8 +136,8 @@
         "symbols": 863,
         "symbols_typed": 672,
         "refusals": 58,
-        "approximations": 313,
-        "crashes": 3
+        "approximations": 310,
+        "crashes": 1
       }
     },
     {
@@ -145,8 +145,8 @@
       "entries": 36,
       "stages": {
         "compiled": {
-          "pass": 30,
-          "fail": 6,
+          "pass": 31,
+          "fail": 5,
           "skip": 0
         },
         "emitted": {
@@ -155,8 +155,8 @@
           "skip": 0
         },
         "honest": {
-          "pass": 25,
-          "fail": 10,
+          "pass": 27,
+          "fail": 8,
           "skip": 1
         },
         "translated": {
@@ -181,7 +181,7 @@
         "symbols_typed": 110,
         "refusals": 36,
         "approximations": 64,
-        "crashes": 1
+        "crashes": 0
       }
     },
     {
@@ -189,8 +189,8 @@
       "entries": 25,
       "stages": {
         "compiled": {
-          "pass": 22,
-          "fail": 3,
+          "pass": 23,
+          "fail": 2,
           "skip": 0
         },
         "emitted": {
@@ -224,67 +224,67 @@
         "symbols": 928,
         "symbols_typed": 840,
         "refusals": 6,
-        "approximations": 193,
+        "approximations": 191,
         "crashes": 1
       }
     }
   ],
   "total": {
     "tier": "TOTAL",
-    "entries": 211,
+    "entries": 213,
     "stages": {
       "compiled": {
-        "pass": 194,
-        "fail": 17,
+        "pass": 199,
+        "fail": 14,
         "skip": 0
       },
       "emitted": {
-        "pass": 211,
+        "pass": 213,
         "fail": 0,
         "skip": 0
       },
       "equivalent": {
-        "pass": 83,
+        "pass": 85,
         "fail": 92,
         "skip": 0
       },
       "honest": {
-        "pass": 25,
-        "fail": 10,
+        "pass": 27,
+        "fail": 8,
         "skip": 1
       },
       "translated": {
-        "pass": 176,
+        "pass": 178,
         "fail": 35,
         "skip": 0
       },
       "typed": {
-        "pass": 90,
+        "pass": 92,
         "fail": 121,
         "skip": 0
       }
     },
     "equivalent_annotated": {
-      "pass": 83,
+      "pass": 85,
       "fail": 92,
       "skip": 0
     },
     "quality": {
       "todos": 105,
-      "symbols": 3697,
-      "symbols_typed": 3153,
+      "symbols": 3709,
+      "symbols_typed": 3165,
       "refusals": 109,
-      "approximations": 1113,
-      "crashes": 12
+      "approximations": 1110,
+      "crashes": 7
     }
   },
   "quality": {
     "todos": 105,
-    "symbols": 3697,
-    "symbols_typed": 3153,
+    "symbols": 3709,
+    "symbols_typed": 3165,
     "refusals": 109,
-    "approximations": 1113,
-    "crashes": 12
+    "approximations": 1110,
+    "crashes": 7
   },
   "entries": [
     {
@@ -636,8 +636,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "exit status 2, wanted 0; stdout differs: 119 byte(s) missing after line 16, expected \"after assigning index 6, count=7...\"; stderr differs: unexpected \"panic: runtime error: index out of range [6] with length 4 ...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -650,16 +649,15 @@
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "exit status 2, wanted 0; stdout differs: 119 byte(s) missing after line 16, expected \"after assigning index 6, count=7...\"; stderr differs: unexpected \"panic: runtime error: index out of range [6] with length 4 ...\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
         "symbols": 8,
         "symbols_typed": 8,
         "refusals": 0,
-        "approximations": 5,
-        "crashes": 1
+        "approximations": 3,
+        "crashes": 0
       }
     },
     {
@@ -1756,7 +1754,7 @@
         "symbols": 19,
         "symbols_typed": 18,
         "refusals": 0,
-        "approximations": 7,
+        "approximations": 6,
         "crashes": 0
       }
     },
@@ -1773,7 +1771,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "exit status 2, wanted 0; stdout differs: line 13, byte 351: got \"--- the same drain without the d...\", wanted \"item 0\\nitem 7\\n--- the same drain...\"; stderr differs: unexpected \"panic: runtime error: index out of range [9] with length 3 ...\""
+          "reason": "stdout differs: line 13, byte 351: got \"--- the same drain without the d...\", wanted \"item 0\\nitem 7\\n--- the same drain...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -1788,15 +1786,15 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "exit status 2, wanted 0; stdout differs: line 13, byte 351: got \"--- the same drain without the d...\", wanted \"item 0\\nitem 7\\n--- the same drain...\"; stderr differs: unexpected \"panic: runtime error: index out of range [9] with length 3 ...\""
+        "reason": "stdout differs: line 13, byte 351: got \"--- the same drain without the d...\", wanted \"item 0\\nitem 7\\n--- the same drain...\""
       },
       "quality": {
         "todos": 0,
         "symbols": 10,
         "symbols_typed": 9,
         "refusals": 0,
-        "approximations": 3,
-        "crashes": 1
+        "approximations": 2,
+        "crashes": 0
       }
     },
     {
@@ -2060,7 +2058,8 @@
         "symbols_typed": 14,
         "refusals": 0,
         "approximations": 7,
-        "crashes": 1
+        "crashes": 1,
+        "panic": "panic: runtime error: invalid memory address or nil pointer dereference"
       }
     },
     {
@@ -2138,7 +2137,8 @@
         "symbols_typed": 18,
         "refusals": 0,
         "approximations": 11,
-        "crashes": 1
+        "crashes": 1,
+        "panic": "panic: runtime error: index out of range [0] with length 0"
       }
     },
     {
@@ -2517,7 +2517,8 @@
         "symbols_typed": 18,
         "refusals": 0,
         "approximations": 23,
-        "crashes": 1
+        "crashes": 1,
+        "panic": "panic: regexp: Compile(`\\G(\\w+)=(\\w+)`): error parsing regexp: invalid escape sequence: `\\G`"
       }
     },
     {
@@ -3048,7 +3049,8 @@
         "symbols_typed": 22,
         "refusals": 0,
         "approximations": 12,
-        "crashes": 1
+        "crashes": 1,
+        "panic": "panic: regexp: Compile(`\\G(?:\"((?:[^\"]|\"\")*)\"|([^,]*))(?:,|$)`): error parsing regexp: invalid escape sequence: `\\G`"
       }
     },
     {
@@ -3218,7 +3220,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: line 13, byte 561: got \"0xADDR  SCALAR   SCALAR   -     ...\", wanted \"scalarref       SCALAR   SCALAR ...\"; stderr differs: unexpected \"TODO P2G7001: bless has no Go equivalent\""
+          "reason": "stdout differs: line 14, byte 623: got \"SCALAR   SCALAR   Widget   no\\nGa...\", wanted \"Widget   HASH     Widget   no\\nGa...\"; stderr differs: unexpected \"TODO P2G7001: bless has no Go equivalent\""
         },
         "honest": {
           "outcome": "n/a"
@@ -3234,7 +3236,7 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: line 13, byte 561: got \"0xADDR  SCALAR   SCALAR   -     ...\", wanted \"scalarref       SCALAR   SCALAR ...\"; stderr differs: unexpected \"TODO P2G7001: bless has no Go equivalent\""
+        "reason": "stdout differs: line 14, byte 623: got \"SCALAR   SCALAR   Widget   no\\nGa...\", wanted \"Widget   HASH     Widget   no\\nGa...\"; stderr differs: unexpected \"TODO P2G7001: bless has no Go equivalent\""
       },
       "quality": {
         "todos": 1,
@@ -3755,7 +3757,7 @@
         "symbols": 11,
         "symbols_typed": 11,
         "refusals": 0,
-        "approximations": 21,
+        "approximations": 22,
         "crashes": 0
       }
     },
@@ -3993,7 +3995,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "exit status 2, wanted 0; stdout differs: line 2, byte 31: got \"[alpha beta gamma]\\ncount: 1\\n-- t...\", wanted \"alpha|beta|gamma\\ncount: 3\\n-- the...\"; stderr differs: unexpected \"panic: runtime error: index out of range [0] with length 0 ...\""
+          "reason": "stdout differs: line 2, byte 31: got \"[alpha beta gamma]\\ncount: 1\\n-- t...\", wanted \"alpha|beta|gamma\\ncount: 3\\n-- the...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -4008,7 +4010,7 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "exit status 2, wanted 0; stdout differs: line 2, byte 31: got \"[alpha beta gamma]\\ncount: 1\\n-- t...\", wanted \"alpha|beta|gamma\\ncount: 3\\n-- the...\"; stderr differs: unexpected \"panic: runtime error: index out of range [0] with length 0 ...\""
+        "reason": "stdout differs: line 2, byte 31: got \"[alpha beta gamma]\\ncount: 1\\n-- t...\", wanted \"alpha|beta|gamma\\ncount: 3\\n-- the...\""
       },
       "quality": {
         "todos": 0,
@@ -4016,7 +4018,7 @@
         "symbols_typed": 2,
         "refusals": 0,
         "approximations": 7,
-        "crashes": 1
+        "crashes": 0
       }
     },
     {
@@ -4407,15 +4409,14 @@
       "kind": "convert",
       "stages": {
         "compiled": {
-          "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:61:4: invalid argument: index -1 (constant of type int) must not be negative"
+          "outcome": "pass"
         },
         "emitted": {
           "outcome": "pass"
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "the generated program did not compile"
+          "reason": "stdout differs: line 9, byte 206: got \"filled\\n-- negative indices --\\nla...\", wanted \"undef\\n-- negative indices --\\nlas...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -4430,14 +4431,14 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "the generated program did not compile"
+        "reason": "stdout differs: line 9, byte 206: got \"filled\\n-- negative indices --\\nla...\", wanted \"undef\\n-- negative indices --\\nlas...\""
       },
       "quality": {
         "todos": 0,
         "symbols": 4,
         "symbols_typed": 2,
         "refusals": 0,
-        "approximations": 3,
+        "approximations": 1,
         "crashes": 0
       }
     },
@@ -4669,6 +4670,81 @@
       }
     },
     {
+      "tier": "tier2",
+      "name": "73-growing-an-array-by-writing",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "pass"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "pass"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 4,
+        "symbols_typed": 4,
+        "refusals": 0,
+        "approximations": 4,
+        "crashes": 0
+      }
+    },
+    {
+      "tier": "tier2",
+      "name": "74-a-computed-index-past-the-end",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "exit status 2, wanted 0; stdout differs: line 2, byte 53: got \"0,4], length 5\\n  0 0\\n  1 1\\n  2 1...\", wanted \",4], length 5\\n  0 0\\n  1 1\\n  2 11...\"; stderr differs: unexpected \"panic: runtime error: index out of range [6] with length 3 ...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "exit status 2, wanted 0; stdout differs: line 2, byte 53: got \"0,4], length 5\\n  0 0\\n  1 1\\n  2 1...\", wanted \",4], length 5\\n  0 0\\n  1 1\\n  2 11...\"; stderr differs: unexpected \"panic: runtime error: index out of range [6] with length 3 ...\""
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 8,
+        "symbols_typed": 8,
+        "refusals": 0,
+        "approximations": 3,
+        "crashes": 1,
+        "panic": "panic: runtime error: index out of range [6] with length 3"
+      }
+    },
+    {
       "tier": "tier3",
       "name": "01-inventory-manager",
       "kind": "convert",
@@ -4797,7 +4873,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "exit status 2, wanted 0; stdout differs: 468 byte(s) missing after line 1, expected \"clean: [the quick brown fox jump...\"; stderr differs: unexpected \"panic: runtime error: index out of range [0] with length 0 ...\""
+          "reason": "stdout differs: line 2, byte 60: got \"the quick brown fox jumps over t...\", wanted \"The Quick Brown Fox Jumps Over T...\"; stderr differs: unexpected \"TODO P2G3599: the word_freq function is not implemented ...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -4813,7 +4889,7 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "exit status 2, wanted 0; stdout differs: 468 byte(s) missing after line 1, expected \"clean: [the quick brown fox jump...\"; stderr differs: unexpected \"panic: runtime error: index out of range [0] with length 0 ...\""
+        "reason": "stdout differs: line 2, byte 60: got \"the quick brown fox jumps over t...\", wanted \"The Quick Brown Fox Jumps Over T...\"; stderr differs: unexpected \"TODO P2G3599: the word_freq function is not implemented ...\""
       },
       "quality": {
         "todos": 3,
@@ -4821,7 +4897,7 @@
         "symbols_typed": 23,
         "refusals": 3,
         "approximations": 15,
-        "crashes": 1
+        "crashes": 0
       }
     },
     {
@@ -5153,7 +5229,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "exit status 2, wanted 0; stdout differs: line 1, byte 8: got \"6 dirs, 8 files, 240 bytes\\n\\nTREE...\", wanted \"5 dirs, 7 files, 221 bytes\\n\\nTREE...\"; stderr differs: unexpected \"panic: strings: negative Repeat count ...\""
+          "reason": "stdout differs: line 1, byte 8: got \"6 dirs, 8 files, 240 bytes\\n\\nTREE...\", wanted \"5 dirs, 7 files, 221 bytes\\n\\nTREE...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -5168,7 +5244,7 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "exit status 2, wanted 0; stdout differs: line 1, byte 8: got \"6 dirs, 8 files, 240 bytes\\n\\nTREE...\", wanted \"5 dirs, 7 files, 221 bytes\\n\\nTREE...\"; stderr differs: unexpected \"panic: strings: negative Repeat count ...\""
+        "reason": "stdout differs: line 1, byte 8: got \"6 dirs, 8 files, 240 bytes\\n\\nTREE...\", wanted \"5 dirs, 7 files, 221 bytes\\n\\nTREE...\""
       },
       "quality": {
         "todos": 1,
@@ -5176,7 +5252,7 @@
         "symbols_typed": 27,
         "refusals": 1,
         "approximations": 10,
-        "crashes": 1
+        "crashes": 0
       }
     },
     {
@@ -5385,7 +5461,7 @@
       "stages": {
         "compiled": {
           "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:203:25: undefined: item10"
+          "reason": "the generated Go does not compile: ./main.go:204:25: undefined: item10"
         },
         "emitted": {
           "outcome": "pass"
@@ -5653,8 +5729,9 @@
         "symbols": 36,
         "symbols_typed": 31,
         "refusals": 0,
-        "approximations": 6,
-        "crashes": 1
+        "approximations": 3,
+        "crashes": 1,
+        "panic": "panic: runtime error: index out of range [0] with length 0"
       }
     },
     {
@@ -6524,7 +6601,7 @@
         "symbols": 9,
         "symbols_typed": 7,
         "refusals": 0,
-        "approximations": 3,
+        "approximations": 6,
         "crashes": 0
       }
     },
@@ -7142,8 +7219,7 @@
       ],
       "stages": {
         "compiled": {
-          "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:13:4: invalid argument: index -1 (constant of type int) must not be negative"
+          "outcome": "pass"
         },
         "emitted": {
           "outcome": "pass"
@@ -7152,8 +7228,7 @@
           "outcome": "n/a"
         },
         "honest": {
-          "outcome": "fail",
-          "reason": "convert-verify: the generated program did not compile"
+          "outcome": "pass"
         },
         "translated": {
           "outcome": "pass"
@@ -7170,7 +7245,7 @@
         "symbols": 2,
         "symbols_typed": 2,
         "refusals": 0,
-        "approximations": 2,
+        "approximations": 1,
         "crashes": 0
       }
     },
@@ -7192,8 +7267,7 @@
           "outcome": "n/a"
         },
         "honest": {
-          "outcome": "fail",
-          "reason": "convert-verify: exit status 2, wanted 0; stdout differs: 97 byte(s) missing after line 1, expected \"len: 8\\ngap defined? no\\njoined: [...\"; stderr differs: unexpected \"panic: runtime error: index out of range [7] with length 3 ...\""
+          "outcome": "pass"
         },
         "translated": {
           "outcome": "pass"
@@ -7210,8 +7284,8 @@
         "symbols": 1,
         "symbols_typed": 1,
         "refusals": 0,
-        "approximations": 3,
-        "crashes": 1
+        "approximations": 1,
+        "crashes": 0
       }
     },
     {
@@ -7877,7 +7951,7 @@
         "symbols": 37,
         "symbols_typed": 21,
         "refusals": 1,
-        "approximations": 8,
+        "approximations": 7,
         "crashes": 0
       }
     },
@@ -7887,15 +7961,14 @@
       "kind": "convert",
       "stages": {
         "compiled": {
-          "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:74:13: invalid argument: index -1 (constant of type int) must not be negative"
+          "outcome": "pass"
         },
         "emitted": {
           "outcome": "pass"
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "the generated program did not compile"
+          "reason": "stdout differs: line 1, byte 29: got \" names, 0 unparseable)\\n\\nFrom:   ...\", wanted \"2 names, 0 unparseable)\\n\\nFrom:  ...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -7910,7 +7983,7 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "the generated program did not compile"
+        "reason": "stdout differs: line 1, byte 29: got \" names, 0 unparseable)\\n\\nFrom:   ...\", wanted \"2 names, 0 unparseable)\\n\\nFrom:  ...\""
       },
       "quality": {
         "todos": 0,
@@ -8183,7 +8256,7 @@
         "symbols": 42,
         "symbols_typed": 29,
         "refusals": 0,
-        "approximations": 7,
+        "approximations": 6,
         "crashes": 0
       }
     },
@@ -8371,7 +8444,8 @@
         "symbols_typed": 38,
         "refusals": 0,
         "approximations": 10,
-        "crashes": 1
+        "crashes": 1,
+        "panic": "panic: assignment to entry in nil map"
       }
     }
   ],

@@ -80,6 +80,68 @@ func main() {
 ./appenderr.go:5:2: append(s, 2) (value of type []int) is not used
 ```
 
+## Growing to fit a write, which Perl did without being asked
+
+`$a[5] = 'f'` on a three-element array is not an error in Perl: the array becomes six long and indices 3 and 4 hold undef. The equivalent Go line panics, because a slice's length is part of what it is and an index outside it is out of range. Making the room is a step of its own, and the same is true of `$#a = N`, which sets the length in both directions where reslicing alone can only reach as far as the capacity happens to go:
+
+```go
+package main
+
+import "fmt"
+
+// grow returns xs made at least n long, with anything it adds left at the
+// zero value of T.
+func grow[T any](xs []T, n int) []T {
+	if n <= len(xs) {
+		return xs
+	}
+	return append(xs, make([]T, n-len(xs))...)
+}
+
+// at reads xs[i], or the zero value of T when there is no such element.
+func at[T any](xs []T, i int) T {
+	if i < 0 || i >= len(xs) {
+		var missing T
+		return missing
+	}
+	return xs[i]
+}
+
+func main() {
+	slot := []string{"a", "b", "c"}
+
+	// $slot[5] = 'f' -- the room has to be made first.
+	slot = grow(slot, 6)
+	slot[5] = "f"
+	fmt.Println(len(slot), slot)
+
+	// $slot[20] -- out of range, and reading it changes nothing.
+	fmt.Printf("%q %d\n", at(slot, 20), len(slot))
+
+	// $slot[-1] -- a negative index is not an index at all here.
+	fmt.Println(slot[len(slot)-1])
+
+	// $#slot = 1 truncates; $#slot = 3 re-extends. One expression does both,
+	// because the growth runs first and the reslice then fixes the length.
+	slot = grow(slot, 2)[:2]
+	fmt.Println(len(slot), slot)
+	slot = grow(slot, 4)[:4]
+	fmt.Println(len(slot), slot)
+}
+```
+
+```
+6 [a b c   f]
+"" 6
+f
+2 [a b]
+4 [a b  ]
+```
+
+Three things in that sample are worth keeping. `at` exists because reading past the end is undef in Perl and a panic here, and a program that dies on a short line teaches nothing about the lines below it; where the element is known to be there, `xs[i]` says so and is the better line. A negative index is not a Perl-style count from the end but a compile error for a constant and a panic for a variable, so `xs[len(xs)-1]` is the spelling, on the left of an assignment as much as on the right. And the gaps a growth opens hold the zero value, which is 0 or the empty string and not "nothing": where the difference matters, the element type has to be `[]*T` so that a gap is nil (`nil-vs-undef`).
+
+The bigger question the growth raises is whether the data structure is right. An array written at arbitrary computed indices is a sparse table, and in Go that is usually `map[int]T`: no growth, no gaps, no panic, and the two-result read answers exactly what `defined` was asking (`comma-ok-idiom`).
+
 ## The mismatch
 
 The porting table: `push @a, $x` → `a = append(a, x)` (assignment mandatory — within capacity `append` writes in place and returns the same header; past capacity it copies everything to a bigger array and returns a *different* header, and code keeping the old one holds stale data); `pop` → `x := a[len(a)-1]; a = a[:len(a)-1]`; `shift`/`unshift` → re-slicing `a[1:]` or `append([]T{x}, a...)`, both of which should make you pause, because O(n) front operations that Perl hides are visible in Go — a genuine queue wants a different structure. `scalar @a` and `$#a` → `len(a)` and `len(a)-1`; there is no separate "last index" spelling and *negative indices do not exist* — `a[len(a)-1]`, never `a[-1]`, which is a compile error for constants and a runtime panic otherwise. `splice` has no single equivalent; the `slices` package (`slices.Insert`, `slices.Delete`) covers most uses. Pre-size with `make([]T, 0, n)` when you know `n` — the Perl habit of just pushing is fine, but this is the cheap optimisation Go reviewers expect in hot paths. Finally, when you see `[3]int` in real code it is usually deliberate value semantics or a fixed-size key (`maps-of-slices`); default to slices everywhere else.

@@ -1032,6 +1032,7 @@ func (l *Lowerer) popCall(n *ast.Call, front bool) ir.Expr {
 	}
 	var target ir.Expr
 	if targetNode != nil {
+		l.forgetLength(l.bindingOfTarget(targetNode))
 		target = l.assignTarget(targetNode)
 	}
 	if target == nil && l.curSub != nil && l.curSub.VarArgs != nil {
@@ -1107,6 +1108,7 @@ func (l *Lowerer) spliceCall(n *ast.Call) ir.Expr {
 	if len(args) == 0 {
 		return l.spliceRefused(n)
 	}
+	l.forgetLength(l.bindingOfTarget(args[0]))
 	target := l.assignTarget(args[0])
 	if target == nil || !assignableTarget(target) {
 		return l.spliceRefused(n)

@@ -438,6 +438,7 @@ func (r *runner) equivalence(ctx context.Context, e Entry, f *Fixture, compiled 
 		}
 		if sub == "clean" && panicked(out) {
 			res.Quality.Crashes++
+			res.Quality.Panic = panicLine(out)
 		}
 		o := opts
 		o.GotLabel = label
@@ -481,6 +482,17 @@ func (r *runner) runIn(ctx context.Context, root, sub string, f *Fixture, name s
 func panicked(out Output) bool {
 	s := string(out.Stderr)
 	return strings.HasPrefix(s, "panic: ") || strings.Contains(s, "\npanic: ")
+}
+
+// panicLine is the one line worth reporting out of a panic: the message,
+// without the goroutine dump under it.
+func panicLine(out Output) string {
+	for _, line := range strings.Split(string(out.Stderr), "\n") {
+		if strings.HasPrefix(line, "panic: ") {
+			return strings.TrimSpace(line)
+		}
+	}
+	return "the program stopped on a panic"
 }
 
 // driftNotes reports where live perl no longer agrees with what the entry

@@ -333,7 +333,9 @@ func (l *Lowerer) declareSingle(v *ast.Var, n *ast.Assign) []ir.Stmt {
 	l.markNilElemsFrom(b, n.RHS)
 	switch v.Sigil {
 	case '@':
-		value = l.copiedList(l.containerList(n.RHS), n.RHS)
+		listed := l.containerList(n.RHS)
+		l.noteLength(b, l.assignedLen(n.RHS, listed))
+		value = l.copiedList(listed, n.RHS)
 		l.observe(b, typeOrAny(value))
 	case '%':
 		// A hash an option block fills in is a struct, so its initialiser is
@@ -1058,7 +1060,9 @@ func (l *Lowerer) assignToVar(v *ast.Var, n *ast.Assign) []ir.Stmt {
 	l.markNilElemsFrom(b, n.RHS)
 	switch v.Sigil {
 	case '@':
-		value = l.copiedList(l.containerList(n.RHS), n.RHS)
+		listed := l.containerList(n.RHS)
+		l.noteLength(b, l.assignedLen(n.RHS, listed))
+		value = l.copiedList(listed, n.RHS)
 	case '%':
 		value = l.hashInit(n.RHS, elemOf(b.Type))
 	default:
@@ -1091,50 +1095,129 @@ func (l *Lowerer) writeTarget(b *Binding) ir.Expr {
 func (l *Lowerer) truncateArray(v *ast.Var, n *ast.Assign) []ir.Stmt {
 	b := l.lookup('@', v.Name, v)
 	b.Writes++
-	length := ir.Bin("+", l.toInt(l.expr(n.RHS), n.RHS), ir.IntLit("1"), ir.TInt)
+	// A written-out last index says exactly how long the array is from here
+	// on, which is a better answer than forgetting what was known.
+	if k, ok := staticIndex(n.RHS); ok {
+		l.noteLength(b, k+1)
+	} else {
+		l.forgetLength(b)
+	}
+	l.markNilElems(b)
+	name := l.tmp("length")
+	decl := assign(":=", []ir.Expr{ir.NewIdent(name, ir.TInt)},
+		[]ir.Expr{plusOne(l.toInt(l.expr(n.RHS), n.RHS))})
+	length := ir.NewIdent(name, ir.TInt)
 	target := ir.NewIdent(b.Go, b.Type)
-	st := assign("=", []ir.Expr{target}, []ir.Expr{slicing(target, nil, length, b.Type)})
+	grown := l.helperCall(hGrow, b.Type, target, length)
+	st := assign("=", []ir.Expr{target}, []ir.Expr{slicing(grown, nil, length, b.Type)})
 	l.setProv(st, n)
-	l.approximate(n, "P2G5560", "assigning to $#array",
-		"setting the last index only shortens here",
-		"Assigning to $#array sets the array's length: a smaller value throws "+
-			"elements away, a larger one pads with undef. Reslicing in Go shortens "+
-			"correctly, but it cannot grow past the slice's capacity the way Perl "+
-			"grows an array.",
-		"To grow, append the zero value the required number of times instead.",
+	l.note(st, "Assigning to $#array sets the array's length in both directions: a "+
+		"smaller value throws elements away and a larger one pads with undef. "+
+		"Reslicing shortens, and it can only lengthen as far as the capacity "+
+		"happens to reach, so the growth comes first and the reslice then says "+
+		"exactly how long the array is.",
 		"slices-not-arrays", "slice-aliasing-and-copy")
-	return []ir.Stmt{st}
+	return []ir.Stmt{decl, st}
 }
 
 // assignToIndex lowers `$a[i] = v`.
 func (l *Lowerer) assignToIndex(lhs *ast.Index, n *ast.Assign) []ir.Stmt {
-	base, idx, elem := l.indexParts(lhs)
-	if base == nil {
-		return nil
-	}
-	raw := l.scalar(n.RHS)
-	value := l.assignable(raw, elem, n.RHS)
 	if b := l.arrayBindingOf(lhs); b != nil {
 		b.Writes++
 		if isUndefLiteral(n.RHS) {
 			l.markNilElems(b)
 		}
+		l.markExtending(b, lhs.Idx)
+	}
+	place, pre, elem := l.arrayPlace(lhs)
+	if place == nil {
+		return nil
+	}
+	raw := l.scalar(n.RHS)
+	value := l.assignable(raw, elem, n.RHS)
+	if b := l.arrayBindingOf(lhs); b != nil {
 		l.observeElem(b, typeOrAny(raw))
 	} else if f, wrap, ok := l.fieldPlace(lhs.Base); ok {
 		l.observeField(f, wrap(ir.SliceOf(typeOrAny(raw))))
 	} else if b, wrap, ok := l.bindingPlace(lhs.Base, false); ok {
 		l.observe(b, wrap(ir.SliceOf(typeOrAny(raw))))
 	}
-	st := assign("=", []ir.Expr{index(base, idx, elem)}, []ir.Expr{value})
+	st := assign("=", []ir.Expr{place}, []ir.Expr{value})
 	l.setProv(st, n)
-	l.approximate(n, "P2G5561", "assigning past the end of an array",
-		"Go does not grow a slice on assignment",
-		"Assigning to an index beyond the end of a Perl array extends it, filling "+
-			"the gap with undef. Assigning past the end of a Go slice panics.",
-		"Use append to add elements, and index assignment only for positions that "+
-			"already exist.",
+	return append(pre, st)
+}
+
+// markExtending records what a write at this index says about the array.
+//
+// An index the array provably already has says nothing. Anything else means
+// the write may be extending it, and where the converter can see that it
+// certainly is, the gap the extension opens holds undef, which is why the
+// element type has to have room for one.
+func (l *Lowerer) markExtending(b *Binding, idx ast.Expr) {
+	if b == nil || l.pass != 1 || withinLength(b, idx) {
+		return
+	}
+	if k, ok := staticIndex(idx); ok && b.lenKnown && k > b.MinLen {
+		l.markNilElems(b)
+	}
+}
+
+// arrayPlace lowers the left side of an array element write: the Go expression
+// the value is stored into, and whatever has to run before it.
+//
+// Two things separate this from reading the same element. A negative index is
+// a compile error in Go rather than a count from the end, so the arithmetic is
+// written out. And a Perl array grows to fit a write past its end, filling the
+// gap with undef, where a Go slice panics, so an index the array is not known
+// to have already is preceded by a growth.
+func (l *Lowerer) arrayPlace(lhs *ast.Index) (ir.Expr, []ir.Stmt, *ir.Type) {
+	base, idx, elem := l.indexParts(lhs)
+	if base == nil {
+		return nil, nil, elem
+	}
+	if text, neg := negativeLiteral(lhs.Idx); neg {
+		off := ir.Bin("-", lenOf(base), ir.IntLit(text), ir.TInt)
+		out := index(base, off, elem)
+		l.note(out, "A negative Perl index counts back from the end, and a Go index "+
+			"expression will not take one at all: a negative constant is a compile "+
+			"error and a negative variable is a panic. The arithmetic is written out "+
+			"instead, which is what Go asks for.",
+			"slices-not-arrays")
+		return out, nil, elem
+	}
+	b := l.arrayBindingOf(lhs)
+	if b == nil || withinLength(b, lhs.Idx) || l.aliases[b] != nil {
+		return index(base, idx, elem), nil, elem
+	}
+	// The index is read into a name so the growth and the write agree about
+	// which element is meant even when working it out has a cost.
+	var pre []ir.Stmt
+	switch idx.(type) {
+	case *ir.Lit, *ir.Ident:
+	default:
+		name := l.tmp("at")
+		pre = append(pre, assign(":=", []ir.Expr{ir.NewIdent(name, ir.TInt)}, []ir.Expr{idx}))
+		idx = ir.NewIdent(name, ir.TInt)
+	}
+	target := l.writeTarget(b)
+	g := assign("=", []ir.Expr{target}, []ir.Expr{
+		l.helperCall(hGrow, b.Type, l.identFor(b), plusOne(idx)),
+	})
+	l.note(g, "Writing past the end of a Perl array extends it and fills the gap "+
+		"with undef. A Go slice has a length, and a write past that length panics "+
+		"rather than growing, so the room is made first and the growth is visible.",
 		"slices-not-arrays")
-	return []ir.Stmt{st}
+	l.approximate(lhs, "P2G5561", "assigning past the end of an array",
+		"the array is grown to fit the write",
+		"Assigning to an index beyond the end of a Perl array extends it, filling "+
+			"the gap with undef. A Go slice panics instead, so the generated code "+
+			"grows it first.",
+		"Where the index is always inside the array, the growth is dead weight and "+
+			"a plain index expression says so. Where the array is really a sparse "+
+			"table, a map keyed by the index is the better shape.",
+		"slices-not-arrays")
+	pre = append(pre, g)
+	return index(base, idx, elem), pre, elem
 }
 
 // arrayBindingOf finds the binding an array element access refers to, when it
@@ -1577,11 +1660,11 @@ func (l *Lowerer) assignTarget(e ast.Expr) ir.Expr {
 			return l.identFor(b)
 		}
 	case *ast.Index:
-		base, idx, elem := l.indexParts(n)
-		if base == nil {
-			return nil
+		place, pre, _ := l.arrayPlace(n)
+		for _, st := range pre {
+			l.emit(st)
 		}
-		return index(base, idx, elem)
+		return place
 	case *ast.HashIndex:
 		m, key, elem, field := l.hashPartsField(n)
 		if m == nil {

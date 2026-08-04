@@ -1,0 +1,12 @@
+--- writing at a computed index ---
+buckets: [0,1,11,,4], length 5
+  0 0
+  1 1
+  2 11
+  3 (gap)
+  4 4
+--- reading at a computed index past the end ---
+index 2: z
+index 6: undef
+index 10: undef
+the array is still 3 long

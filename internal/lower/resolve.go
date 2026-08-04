@@ -58,6 +58,15 @@ type Binding struct {
 	// Closed marks a filehandle the program closes explicitly, so the
 	// generated code does not also defer a close.
 	Closed bool
+	// MinLen is a lower bound on an array's length, taken from the literal
+	// lists assigned to it whole, and reset to zero by anything that can
+	// shorten it. It is what lets a write at a constant index be emitted as a
+	// plain index expression, which is the readable form, rather than as a
+	// growth the array does not need.
+	MinLen int
+	// lenKnown records that MinLen has been set at least once, so the first
+	// observation replaces the zero rather than being folded into it.
+	lenKnown bool
 	// NilElems marks a container the program stored undef into. Perl's undef
 	// is a value an element can hold, so such a container's element type has
 	// to have room for "nothing here", which for a Go scalar means a pointer.

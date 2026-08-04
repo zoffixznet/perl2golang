@@ -263,6 +263,80 @@ func (l *Lowerer) markNilElemsFrom(b *Binding, rhs ast.Expr) {
 	}
 }
 
+// noteLength records what a whole-array assignment says about how long the
+// array is from then on.
+//
+// The bound is a minimum and it is deliberately pessimistic: several
+// assignments keep the smallest, and anything the converter cannot count
+// wipes it out. Being wrong in that direction costs a growth call that turns
+// out to be unnecessary; being wrong in the other direction costs a panic.
+func (l *Lowerer) noteLength(b *Binding, n int) {
+	if b == nil || l.pass != 1 || b.Sigil != '@' {
+		return
+	}
+	if n < 0 {
+		// The length is only known while the program runs, so nothing about
+		// it can be relied on here.
+		l.forgetLength(b)
+		return
+	}
+	if !b.lenKnown || n < b.MinLen {
+		b.MinLen = n
+	}
+	b.lenKnown = true
+}
+
+// forgetLength says the array may now be shorter than anything seen before,
+// which pop, shift, splice and a write to $#a all make possible.
+func (l *Lowerer) forgetLength(b *Binding) {
+	if b == nil || l.pass != 1 || b.Sigil != '@' {
+		return
+	}
+	b.MinLen = 0
+	b.lenKnown = true
+}
+
+// assignedLen is what a whole-array assignment says about the new length: the
+// element count when the right side is written out as a list, and whatever is
+// known about the other array when one is copied into another.
+func (l *Lowerer) assignedLen(rhs ast.Expr, lowered ir.Expr) int {
+	if v, ok := rhs.(*ast.Var); ok && v.Sigil == '@' {
+		if src, found := l.scope.lookup(varKey('@', v.Name)); found && src.lenKnown {
+			return src.MinLen
+		}
+		return -1
+	}
+	return literalLen(lowered)
+}
+
+// literalLen is how many elements a lowered list has when it is written out as
+// one, and -1 when its length is only known while the program runs.
+func literalLen(x ir.Expr) int {
+	if c, ok := x.(*ir.CompositeLit); ok && c.LitType != nil && c.LitType.Kind == ir.Slice {
+		return len(c.Elems)
+	}
+	return -1
+}
+
+// staticIndex reads an index written as a plain non-negative number.
+func staticIndex(e ast.Expr) (int, bool) {
+	n, ok := e.(*ast.NumberLit)
+	if !ok {
+		return 0, false
+	}
+	return strconvAtoi(n.Text)
+}
+
+// withinLength reports whether an index is one the array provably already has,
+// which is the only case where a plain Go index expression is safe.
+func withinLength(b *Binding, idx ast.Expr) bool {
+	if b == nil {
+		return false
+	}
+	k, ok := staticIndex(idx)
+	return ok && k < b.MinLen
+}
+
 // ident builds a reference to a binding and counts the read.
 func (l *Lowerer) ident(b *Binding) ir.Expr {
 	if b == nil {

@@ -152,6 +152,12 @@ var notes = map[string]string{
 		"empty is usually what the original did, so the helper says that " +
 		"once rather than at every read.",
 
+	"grow": "Assigning past the end of a Perl array extends it and fills the " +
+		"gap with undef. A Go slice has a length and a write past it panics, " +
+		"so the growth is a step of its own. One append with a make of the " +
+		"right size does it in a single reallocation, where a loop appending " +
+		"one element at a time would do several.",
+
 	"at": "Reading past the end of a list is not an error, it is a missing " +
 		"value, so the helper answers with the zero value where a Go index " +
 		"expression would panic. A negative index counts back from the end, " +

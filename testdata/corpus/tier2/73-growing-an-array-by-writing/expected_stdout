@@ -1,0 +1,19 @@
+--- writing past the end stretches the array ---
+length 6, last index 5
+  0 a
+  1 b
+  2 c
+  3 (gap)
+  4 (gap)
+  5 f
+--- reading past the end changes nothing ---
+read index 20: undef, length still 6
+--- the last element by negative index ---
+last is now F
+second last is now !
+--- setting the length directly ---
+after truncating: [a,b]
+after re-extending: [a,b,,], length 4
+index 3 defined: no
+--- counting into a table nobody sized ---
+tally: [,,1,,1], length 5

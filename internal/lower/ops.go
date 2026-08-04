@@ -201,7 +201,10 @@ func (l *Lowerer) power(n *ast.BinOp) ir.Expr {
 // repeatOp lowers the x operator, which repeats a string or a list depending
 // on what is to its left.
 func (l *Lowerer) repeatOp(n *ast.BinOp) ir.Expr {
-	count := l.toInt(l.scalar(n.R), n.R)
+	// A count below zero repeats nothing in Perl and panics in Go, and a
+	// count worked out from a width or a remaining-space calculation goes
+	// negative more often than it looks like it will.
+	count := atLeastZero(l.toInt(l.scalar(n.R), n.R))
 	if isListish(n.L) {
 		src := l.list(n.L)
 		out := l.helperCall(hRepeatList, typeOrAny(src), src, count)
@@ -211,7 +214,14 @@ func (l *Lowerer) repeatOp(n *ast.BinOp) ir.Expr {
 	}
 	s := l.toStr(l.expr(n.L), n.L)
 	out := call("strings", "strings", "Repeat", ir.TString, s, count)
-	l.note(out, "strings.Repeat is Go's x operator for text.")
+	if _, folded := count.(*ir.Lit); folded {
+		l.note(out, "strings.Repeat is Go's x operator for text.")
+	} else {
+		l.note(out, "strings.Repeat is Go's x operator for text, with one difference "+
+			"that bites: a negative count repeats nothing in Perl and panics here. The "+
+			"max keeps the Perl behaviour, and it is worth a moment to ask whether a "+
+			"negative count means the calculation above went wrong.")
+	}
 	return out
 }
 
@@ -743,6 +753,12 @@ func (l *Lowerer) definedExpr(x ast.Expr, at ast.Node) ir.Expr {
 	case *ast.Index:
 		if base, idx, elem := l.indexParts(n); base != nil {
 			inRange := ir.Bin("<", idx, lenOf(base), ir.TBool)
+			if text, neg := negativeLiteral(n.Idx); neg {
+				// A negative Perl index counts back from the end, so being in
+				// range means the array is at least that long.
+				inRange = ir.Bin(">=", lenOf(base), ir.IntLit(text), ir.TBool)
+				idx = ir.Bin("-", lenOf(base), ir.IntLit(text), ir.TInt)
+			}
 			if !isNullable(elem) {
 				return inRange
 			}

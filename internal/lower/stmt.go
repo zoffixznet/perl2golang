@@ -329,6 +329,9 @@ func (l *Lowerer) declarationOnly(n *ast.My) []ir.Stmt {
 	var out []ir.Stmt
 	for _, v := range declaredVars(n) {
 		b := l.declare(v, KindLocal)
+		// An array declared with nothing in it starts empty, which is a
+		// length the converter knows exactly.
+		l.noteLength(b, 0)
 		if b.Kind == KindGlobal {
 			// Hoisted to package level, where the declaration already
 			// stands. Repeating it here would not compile.
