@@ -1,6 +1,6 @@
 # Tier 2 corpus - script-shaped Perl programs
 
-42 entries. Each is a self-contained, realistic Perl script of the kind a
+59 entries. Each is a self-contained, realistic Perl script of the kind a
 sysadmin or data wrangler actually writes, not a snippet.
 
 ## Layout of an entry
@@ -31,7 +31,7 @@ perl input.pl $(cat cmd) < stdin > got_stdout ; echo $?
 
 Every `expected_stdout` and `expected_exit` in this tier was produced by
 running the script with perl 5.42.2, not written by hand. Every entry was run
-twice and the two runs compared byte for byte. All 35 entries:
+twice and the two runs compared byte for byte. Every entry:
 
 - produce **nothing on stderr** under `use strict; use warnings;`
 - are **deterministic**: no timestamps (entry 34 pins a fixed epoch, UTC and
@@ -41,7 +41,7 @@ twice and the two runs compared byte for byte. All 35 entries:
 - leave the working tree unchanged (entry 20 writes a report file and unlinks
   it again as part of the script)
 
-Two entries exit non-zero on purpose: **27** (65) and **32** (1). The other 33 exit 0.
+Two entries exit non-zero on purpose: **27** (65) and **32** (1). The rest exit 0.
 
 ## Entries
 
@@ -89,6 +89,23 @@ Two entries exit non-zero on purpose: **27** (65) and **32** (1). The other 33 e
 | 40 | `40-flattened-arguments` | Argument lists that flatten arrays into `@_`, in every mixture | one array, single values, a value in front of an array, two arrays, interleaved, a fixed parameter plus a tail, an empty array |
 | 41 | `41-list-surgery` | A work queue edited with splice, hash slices and each | `splice` remove/insert/replace/truncate, negative offset and length, splice through a hashref, `@h{qw(...)} = (...)`, `each`, lvalue `substr`, a ternary as an assignment target |
 | 42 | `42-nested-structures` | Hash of arrays, hash of hashes, arrays of records, and a comparator taken out of a hash | autovivified `push @{ $h{$k} }`, `$h{$a}{$b} = $v`, per-key totals, records returned from a sub, `sort $cmp @list`, `(my $copy = $orig) =~ s///`, `scalar @{ $ref }` |
+| 43 | `43-portable-paths` | File::Spec's class methods and the Cwd pair, kept location-independent | `catfile`/`catdir` including `catfile(@parts)`, `splitpath` returning three values, `splitdir`, `canonpath` (which does **not** resolve `..`), `file_name_is_absolute`, `rel2abs`/`abs2rel`, `getcwd`, `basename` with literal suffixes |
+| 44 | `44-temp-trees` | File::Temp and File::Path, with the neighbours still refused | `tempdir(CLEANUP => 1)`, `tempfile(DIR/SUFFIX)` returning a handle **and** a name, `make_path` returning what it created, `remove_tree` returning a count, `opendir`/`readdir` |
+| 45 | `45-record-structs` | Hash references used as records, which become structs | a constructor sub returning a hashref, a field added after construction, `push @{ $r->{notes} }`, sorting by a field, `||= { ... }`, a record inside a record, `@{ $r }{qw(...)}`, a field named by a variable |
+| 46 | `46-record-tables` | The record shapes deliberately left as maps | a **named** `%hash` used as a record, `keys`/`values`/`exists`/`delete` asked of a record, copying key by key |
+| 47 | `47-time-formatting` | Taking a timestamp apart and formatting it, plus run-time type questions | `gmtime` in list context with its zero-based month and 1900-based year, an array slice flattened into `printf`, `strftime` formats that map onto a Go layout and ones that do not, `reftype`, `looks_like_number`, `blessed` |
+| 48 | `48-time-arithmetic` | Time as a quantity, which does not convert yet | `$end - $start` as a plain number, divmod into h/m/s, rounding down with `% 3600`, **`timegm`**, stepping a whole month by bumping the month field, comparing moments numerically |
+| 49 | `49-tree-walk` | Building, walking and removing a directory tree | `tempdir`/`tempfile`, `print {$fh}`, `make_path`, `File::Spec->catfile` with a list in the middle, `find(sub {...})` with `$File::Find::name`, `$File::Find::prune`, `remove_tree` |
+| 50 | `50-tree-permissions` | What a script asks about a file, which does not convert yet | `stat` read by position, `chmod 0640` and the mode read back with `& 07777`, `-r`/`-w`/`-x`/`-f`/`-l`/`-e`/`-s`, `symlink`/`readlink`, `utime`, `rename`, `unlink` |
+| 51 | `51-transliteration` | `tr///` and its four modifiers | plain replacement, `tr/ACGT//` counting, `c` complement, `d` delete, `s` squash, `r` non-destructive, ranges on both sides, `( my $copy = $orig ) =~ tr/.../.../` |
+| 52 | `52-json-and-digests` | JSON, checksums and base64: the three ways a script turns data into bytes | `JSON::PP->new->canonical(1)` reused, `JSON::PP::true` inside a structure, an encode/decode round trip, `md5_hex`/`md5_base64`, `Digest::MD5->new` with two `add` calls, `encode_base64` and its 76-column wrapping |
+| 53 | `53-json-into-shapes` | The JSON edges an untyped decode cannot keep | integers past 2**53, `undef` vs missing key, booleans, empty array vs empty object, pretty-printing |
+| 54 | `54-callback-tables` | The three shapes a script puts a function in a slot | a hash of anonymous subs with different arities and return kinds, calling through the table by literal key and by loop variable, an array of subs applied as a pipeline, a closure made inside a loop |
+| 55 | `55-callback-context` | The context a callback's caller cannot ask for | a callback returning a list, `wantarray` inside one, the same callback used for one value and for many |
+| 56 | `56-file-metadata` | Asking a file about itself, and changing the answers | `( stat $file )[2]` and `[8, 9]`, list slices of `stat`, `chmod` with an octal mode, `-f`/`-s`/`-w`/`-e`/`-l`, `utime` with `timegm`, `symlink`/`readlink`, `rename`, `unlink` |
+| 57 | `57-process-and-shell` | Running another program, which does not convert yet | `system`, backticks in scalar and list context, `open` on a pipe both ways, `$?` decoded into status and signal, an argument with a space in it |
+| 58 | `58-captures-in-list-context` | A match read for its captures rather than for its truth | `my ($x) = $s =~ /(...)/`, several groups at once, a failed match yielding undef, `/g` in list context, a match with no groups, the whole thing as an `if` condition |
+| 59 | `59-captures-through-a-sub` | Captures that leave the sub that made them, which does not convert yet | `return $text =~ /(..)(..)/`, the result taken as a list, as a count and as a truth value |
 
 ## Coverage map
 
@@ -109,4 +126,10 @@ Two entries exit non-zero on purpose: **27** (65) and **32** (1). The other 33 e
 - **Blocks as terms** - 38; the slurp form of it in 21
 - **Arithmetic and argument typing** - 39, 40
 - **List and string surgery** - 41; the whole of `splice` in tier1 12
-- **Nested data and its types** - 42; also 06, 07, 08
+- **Nested data and its types** - 42, 45, 46; also 06, 07, 08
+- **Paths and temporary trees** - 43, 44, 49, 50, 56
+- **Time** - 47, 48
+- **Serialisation** - 51, 52, 53
+- **Callbacks as values** - 54, 55; also 12, 25
+- **Processes** - 57
+- **Regex in list context** - 58, 59

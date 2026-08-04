@@ -1,0 +1,15 @@
+--- captures returned from a sub ---
+web1  8080
+db1   5432
+unparsed: malformed line
+--- the same sub asked for a count ---
+2 value(s)
+2 value(s)
+0 value(s)
+--- one capture, read as a truth value ---
+word=host
+  (that sub is also used as a test)
+word=host
+  (that sub is also used as a test)
+word=malformed
+  (that sub is also used as a test)

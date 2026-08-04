@@ -575,6 +575,21 @@ func (l *Lowerer) scanMatch(n *ast.Match) (ir.Expr, bool) {
 // slice, so the groups are read out of it by index; a failed match returns nil,
 // and reading past the end of nil is the one place where the tolerant index
 // helper earns its keep.
+// matchYieldsList reports whether a match hands back a list when it is read in
+// list context: /g collects every match, and capture groups come out one value
+// per group. A match with neither is a truth value wherever it appears.
+func (l *Lowerer) matchYieldsList(n *ast.Match) bool {
+	if n == nil || n.Negate {
+		return false
+	}
+	normalizeMatch(n)
+	if n.Pattern != nil && strings.Contains(n.Pattern.Mods, "g") {
+		return true
+	}
+	groups, _ := l.matchGroups(n)
+	return groups > 0
+}
+
 func (l *Lowerer) captureList(n *ast.Match) ([]ir.Expr, bool) {
 	normalizeMatch(n)
 	if n.Negate {
@@ -598,6 +613,14 @@ func (l *Lowerer) captureList(n *ast.Match) ([]ir.Expr, bool) {
 	for i := 1; i <= groups; i++ {
 		out = append(out, l.helperCall(hAt, ir.TString,
 			ir.NewIdent(frame.Name, ir.SliceOf(ir.TString)), ir.IntLit(itoa(i))))
+	}
+	if groups == 1 {
+		l.note(out[0], "The parentheses on the left of this assignment are what make the "+
+			"match yield its capture group rather than a yes or no. Written without "+
+			"them the same match is a truth value, and Go has to pick one of the two "+
+			"at the point of use: FindStringSubmatch for the group, MatchString for "+
+			"the question.",
+			"submatch-and-named-groups", "context-is-gone")
 	}
 	l.approximate(n, "P2G4510", "a match read for its captures",
 		"a failed match yields empty strings rather than nothing",

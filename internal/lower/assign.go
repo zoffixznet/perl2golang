@@ -596,73 +596,12 @@ func (l *Lowerer) listAssign(targets []ast.Expr, rhs ast.Expr, n *ast.Assign, de
 	// is not a one-to-one assignment: the right-hand side is in list context,
 	// and $first takes the list's first element. Pairing them here would put
 	// the source in scalar context and assign the count instead.
-	if len(sources) == len(targets) && allScalarTargets(targets) && !l.anyProducesList(sources) {
-		var lhsExprs, rhsExprs []ir.Expr
-		var binds []*Binding
-		var values []ir.Expr
-		dynamic := false
-		for i, t := range targets {
-			v := t.(*ast.Var)
-			value := l.scalar(sources[i])
-			b := l.bindingFor(v, declare)
-			b.Writes++
-			l.observe(b, typeOrAny(value))
-			if b.Type != nil && b.Type.Kind == ir.Any && typeOrAny(value).Kind != ir.Any {
-				dynamic = true
-			}
-			binds = append(binds, b)
-			values = append(values, value)
-			lhsExprs = append(lhsExprs, ir.NewIdent(b.Go, b.Type))
-			rhsExprs = append(rhsExprs, l.assignable(value, b.Type, sources[i]))
+	if len(sources) == len(targets) && allScalarTargets(targets) && !l.anyListSource(sources) {
+		values := make([]ir.Expr, len(targets))
+		for i := range targets {
+			values[i] = l.scalar(sources[i])
 		}
-		if declare && dynamic {
-			// The short form takes each variable's type from its initialiser,
-			// which would declare one of these narrower than the rest of the
-			// file needs it. Declaring them separately keeps the type the
-			// inference settled on.
-			var out []ir.Stmt
-			for i, b := range binds {
-				st := l.bindDecl(true, b, values[i])
-				l.setProv(st, n)
-				out = append(out, st)
-			}
-			for _, b := range binds {
-				out = append(out, l.discardIfUnused(b)...)
-			}
-			return out
-		}
-		if declare && anyHoisted(binds) {
-			// One of these lives at package level because a sub reads it, so
-			// the group cannot be declared in one statement: the hoisted ones
-			// are assigned and the rest are declared.
-			var out []ir.Stmt
-			for i, b := range binds {
-				st := l.bindDecl(true, b, values[i])
-				l.setProv(st, n)
-				out = append(out, st)
-			}
-			for _, b := range binds {
-				out = append(out, l.discardIfUnused(b)...)
-			}
-			return out
-		}
-		op := "="
-		if declare {
-			op = ":="
-		}
-		st := assign(op, lhsExprs, rhsExprs)
-		l.setProv(st, n)
-		l.note(st, "Go assigns several variables in one statement, evaluating every "+
-			"right-hand side before storing any of them. That is what makes a, b = b, a "+
-			"a working swap.",
-			"multiple-return-values")
-		out := []ir.Stmt{st}
-		if declare {
-			for _, t := range targets {
-				out = append(out, l.discardIfUnused(l.bindingFor(t.(*ast.Var), false))...)
-			}
-		}
-		return out
+		return l.bindScalarList(targets, values, sources, n, declare)
 	}
 
 	// A call that returns exactly as many values as there are targets.
@@ -701,11 +640,90 @@ func (l *Lowerer) listAssign(targets []ast.Expr, rhs ast.Expr, n *ast.Assign, de
 	return l.listAssignByIndex(targets, rhs, n, declare)
 }
 
+// bindScalarList stores one value in each of a list assignment's scalar
+// targets. Go's multiple assignment says exactly this, and it evaluates every
+// right-hand side before storing any of them, which is the rule Perl's list
+// assignment follows too.
+//
+// srcNodes, when it has an entry per target, is only used to place diagnostics
+// on the expression a value came from.
+func (l *Lowerer) bindScalarList(targets []ast.Expr, values []ir.Expr, srcNodes []ast.Expr, n *ast.Assign, declare bool) []ir.Stmt {
+	var lhsExprs, rhsExprs []ir.Expr
+	var binds []*Binding
+	dynamic := false
+	for i, t := range targets {
+		v := t.(*ast.Var)
+		at := ast.Expr(nil)
+		if i < len(srcNodes) {
+			at = srcNodes[i]
+		}
+		b := l.bindingFor(v, declare)
+		b.Writes++
+		l.observe(b, typeOrAny(values[i]))
+		if b.Type != nil && b.Type.Kind == ir.Any && typeOrAny(values[i]).Kind != ir.Any {
+			dynamic = true
+		}
+		binds = append(binds, b)
+		lhsExprs = append(lhsExprs, ir.NewIdent(b.Go, b.Type))
+		rhsExprs = append(rhsExprs, l.assignable(values[i], b.Type, at))
+	}
+	// A short declaration takes each variable's type from its initialiser,
+	// which would declare one of these narrower than the rest of the file
+	// needs it; and a binding that lives at package level because a sub reads
+	// it is declared already. Either way the group is written out one
+	// statement at a time.
+	if declare && (dynamic || anyHoisted(binds)) {
+		var out []ir.Stmt
+		for i, b := range binds {
+			st := l.bindDecl(true, b, values[i])
+			l.setProv(st, n)
+			out = append(out, st)
+		}
+		for _, b := range binds {
+			out = append(out, l.discardIfUnused(b)...)
+		}
+		return out
+	}
+	st := assign(declOp(declare), lhsExprs, rhsExprs)
+	l.setProv(st, n)
+	l.note(st, "Go assigns several variables in one statement, evaluating every "+
+		"right-hand side before storing any of them. That is what makes a, b = b, a "+
+		"a working swap.",
+		"multiple-return-values")
+	out := []ir.Stmt{st}
+	if declare {
+		for _, b := range binds {
+			out = append(out, l.discardIfUnused(b)...)
+		}
+	}
+	return out
+}
+
 // anyProducesList reports whether any of these expressions yields a list
 // rather than a single value when it is evaluated in list context.
 func (l *Lowerer) anyProducesList(es []ast.Expr) bool {
 	for _, e := range es {
 		if l.producesList(e) {
+			return true
+		}
+	}
+	return false
+}
+
+// anyListSource reports whether any right-hand side of a list assignment hands
+// back a list rather than one value.
+//
+// This is producesList plus the matches. A match is the one construct whose
+// shape depends entirely on where it is read: `$line =~ /(\w+)/` is a truth
+// value in an if and its capture groups on the right of a list assignment.
+// Parentheses on the left are that context made explicit, so a match is read
+// for its captures here and nowhere else.
+func (l *Lowerer) anyListSource(es []ast.Expr) bool {
+	for _, e := range es {
+		if l.producesList(e) {
+			return true
+		}
+		if m, ok := e.(*ast.Match); ok && l.matchYieldsList(m) {
 			return true
 		}
 	}
@@ -734,10 +752,31 @@ func (l *Lowerer) producesList(e ast.Expr) bool {
 	return false
 }
 
+// listAssignDirect fills the targets straight from a list whose elements are
+// already written out, which is what a match's capture groups and a literal
+// list are. Building a slice only to read it back by index says nothing the
+// direct assignment does not, and reads worse.
+func (l *Lowerer) listAssignDirect(targets []ast.Expr, src ir.Expr, n *ast.Assign, declare bool) ([]ir.Stmt, bool) {
+	lit, ok := src.(*ir.CompositeLit)
+	if !ok || len(targets) == 0 || !allScalarTargets(targets) {
+		return nil, false
+	}
+	// Only an exact fit. Where the list is longer, Perl drops the tail, and
+	// dropping it here would drop whatever evaluating it was there to do.
+	if lit.LitType == nil || lit.LitType.Kind != ir.Slice || len(lit.Keys) != 0 ||
+		len(lit.Elems) != len(targets) {
+		return nil, false
+	}
+	return l.bindScalarList(targets, lit.Elems, nil, n, declare), true
+}
+
 // listAssignByIndex fills targets from a slice, which is what Perl does when
 // the right side is an array.
 func (l *Lowerer) listAssignByIndex(targets []ast.Expr, rhs ast.Expr, n *ast.Assign, declare bool) []ir.Stmt {
 	src := l.list(rhs)
+	if out, ok := l.listAssignDirect(targets, src, n, declare); ok {
+		return out
+	}
 	elem := elemOf(typeOrAny(src))
 	tmp := l.tmp("values")
 	var out []ir.Stmt

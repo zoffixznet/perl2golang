@@ -1,0 +1,20 @@
+--- one group ---
+(none)   1: no-extension
+csv      2: report.csv archive/old.csv
+md       1: notes.md
+--- several groups ---
+report.csv         4821 shipped
+notes.md            317 draft
+archive/old.csv    9002 shipped
+no-extension         12 draft
+--- a failed match yields nothing ---
+missing is undef
+both undef: yes yes
+--- captures into an array ---
+pair holds 2: width 1024
+every holds 6: a 1 b 22 c 333
+--- no groups at all ---
+a match with no groups yields 1
+--- the same match as a condition ---
+state=draft
+state=draft
