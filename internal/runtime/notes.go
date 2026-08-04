@@ -152,6 +152,11 @@ var notes = map[string]string{
 		"empty is usually what the original did, so the helper says that " +
 		"once rather than at every read.",
 
+	"replaceFirstFunc": "The computed-replacement form of replaceFirst. The " +
+		"function is handed the matched text and nothing else, so a " +
+		"replacement that reads a capture group has to find the groups again " +
+		"inside it.",
+
 	"grow": "Assigning past the end of a Perl array extends it and fills the " +
 		"gap with undef. A Go slice has a length and a write past it panics, " +
 		"so the growth is a step of its own. One append with a make of the " +

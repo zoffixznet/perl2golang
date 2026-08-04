@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T09:44:50Z",
+  "recorded": "2026-08-15T10:11:21Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -23,8 +23,8 @@
           "skip": 0
         },
         "equivalent": {
-          "pass": 35,
-          "fail": 10,
+          "pass": 37,
+          "fail": 8,
           "skip": 0
         },
         "translated": {
@@ -39,8 +39,8 @@
         }
       },
       "equivalent_annotated": {
-        "pass": 35,
-        "fail": 10,
+        "pass": 37,
+        "fail": 8,
         "skip": 0
       },
       "quality": {
@@ -54,45 +54,45 @@
     },
     {
       "tier": "tier2",
-      "entries": 74,
+      "entries": 76,
       "stages": {
         "compiled": {
-          "pass": 73,
+          "pass": 75,
           "fail": 1,
           "skip": 0
         },
         "emitted": {
-          "pass": 74,
+          "pass": 76,
           "fail": 0,
           "skip": 0
         },
         "equivalent": {
-          "pass": 36,
-          "fail": 38,
+          "pass": 40,
+          "fail": 36,
           "skip": 0
         },
         "translated": {
-          "pass": 68,
-          "fail": 6,
+          "pass": 69,
+          "fail": 7,
           "skip": 0
         },
         "typed": {
-          "pass": 32,
+          "pass": 34,
           "fail": 42,
           "skip": 0
         }
       },
       "equivalent_annotated": {
-        "pass": 36,
-        "fail": 38,
+        "pass": 40,
+        "fail": 36,
         "skip": 0
       },
       "quality": {
-        "todos": 9,
-        "symbols": 1267,
-        "symbols_typed": 1087,
-        "refusals": 9,
-        "approximations": 458,
+        "todos": 14,
+        "symbols": 1284,
+        "symbols_typed": 1103,
+        "refusals": 14,
+        "approximations": 462,
         "crashes": 5
       }
     },
@@ -111,8 +111,8 @@
           "skip": 0
         },
         "equivalent": {
-          "pass": 6,
-          "fail": 27,
+          "pass": 7,
+          "fail": 26,
           "skip": 0
         },
         "translated": {
@@ -127,14 +127,14 @@
         }
       },
       "equivalent_annotated": {
-        "pass": 6,
-        "fail": 27,
+        "pass": 7,
+        "fail": 26,
         "skip": 0
       },
       "quality": {
         "todos": 55,
         "symbols": 863,
-        "symbols_typed": 672,
+        "symbols_typed": 679,
         "refusals": 58,
         "approximations": 310,
         "crashes": 1
@@ -165,8 +165,8 @@
           "skip": 0
         },
         "typed": {
-          "pass": 17,
-          "fail": 19,
+          "pass": 18,
+          "fail": 18,
           "skip": 0
         }
       },
@@ -177,7 +177,7 @@
       },
       "quality": {
         "todos": 35,
-        "symbols": 159,
+        "symbols": 158,
         "symbols_typed": 110,
         "refusals": 36,
         "approximations": 64,
@@ -199,8 +199,8 @@
           "skip": 0
         },
         "equivalent": {
-          "pass": 8,
-          "fail": 17,
+          "pass": 9,
+          "fail": 16,
           "skip": 0
         },
         "translated": {
@@ -209,43 +209,43 @@
           "skip": 0
         },
         "typed": {
-          "pass": 8,
-          "fail": 17,
+          "pass": 9,
+          "fail": 16,
           "skip": 0
         }
       },
       "equivalent_annotated": {
-        "pass": 8,
-        "fail": 17,
+        "pass": 9,
+        "fail": 16,
         "skip": 0
       },
       "quality": {
         "todos": 6,
-        "symbols": 928,
-        "symbols_typed": 840,
+        "symbols": 924,
+        "symbols_typed": 845,
         "refusals": 6,
-        "approximations": 191,
+        "approximations": 197,
         "crashes": 1
       }
     }
   ],
   "total": {
     "tier": "TOTAL",
-    "entries": 213,
+    "entries": 215,
     "stages": {
       "compiled": {
-        "pass": 199,
+        "pass": 201,
         "fail": 14,
         "skip": 0
       },
       "emitted": {
-        "pass": 213,
+        "pass": 215,
         "fail": 0,
         "skip": 0
       },
       "equivalent": {
-        "pass": 85,
-        "fail": 92,
+        "pass": 93,
+        "fail": 86,
         "skip": 0
       },
       "honest": {
@@ -254,36 +254,36 @@
         "skip": 1
       },
       "translated": {
-        "pass": 178,
-        "fail": 35,
+        "pass": 179,
+        "fail": 36,
         "skip": 0
       },
       "typed": {
-        "pass": 92,
-        "fail": 121,
+        "pass": 96,
+        "fail": 119,
         "skip": 0
       }
     },
     "equivalent_annotated": {
-      "pass": 85,
-      "fail": 92,
+      "pass": 93,
+      "fail": 86,
       "skip": 0
     },
     "quality": {
-      "todos": 105,
-      "symbols": 3709,
-      "symbols_typed": 3165,
-      "refusals": 109,
-      "approximations": 1110,
+      "todos": 110,
+      "symbols": 3721,
+      "symbols_typed": 3193,
+      "refusals": 114,
+      "approximations": 1120,
       "crashes": 7
     }
   },
   "quality": {
-    "todos": 105,
-    "symbols": 3709,
-    "symbols_typed": 3165,
-    "refusals": 109,
-    "approximations": 1110,
+    "todos": 110,
+    "symbols": 3721,
+    "symbols_typed": 3193,
+    "refusals": 114,
+    "approximations": 1120,
     "crashes": 7
   },
   "entries": [
@@ -1258,8 +1258,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 9, byte 225: got \"The lazy brown fox' with 'lazy' ...\", wanted \"quick' with 'lazy' -\u003e The lazy b...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -1272,8 +1271,7 @@
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 9, byte 225: got \"The lazy brown fox' with 'lazy' ...\", wanted \"quick' with 'lazy' -\u003e The lazy b...\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
@@ -1845,8 +1843,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 2, byte 54: got \"gRACE hopper WROTE compilers\\nupp...\", wanted \"Grace Hopper Wrote Compilers\\nupp...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -1859,8 +1856,7 @@
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 2, byte 54: got \"gRACE hopper WROTE compilers\\nupp...\", wanted \"Grace Hopper Wrote Compilers\\nupp...\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
@@ -2533,8 +2529,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 10, byte 337: got \"gRACE hopper WROTE compilers\\ncom...\", wanted \"Grace Hopper Wrote Compilers\\ncom...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -2548,8 +2543,7 @@
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 10, byte 337: got \"gRACE hopper WROTE compilers\\ncom...\", wanted \"Grace Hopper Wrote Compilers\\ncom...\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
@@ -2572,8 +2566,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 13, byte 341: got \"\\nlines starting uppercase: 2\\ntoo...\", wanted \"Quick Brown Jumps\\nlines starting...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -2582,20 +2575,18 @@
           "outcome": "pass"
         },
         "typed": {
-          "outcome": "fail",
-          "reason": "1 variable left dynamic out of 20"
+          "outcome": "pass"
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 13, byte 341: got \"\\nlines starting uppercase: 2\\ntoo...\", wanted \"Quick Brown Jumps\\nlines starting...\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
-        "symbols": 20,
+        "symbols": 19,
         "symbols_typed": 19,
         "refusals": 0,
-        "approximations": 4,
+        "approximations": 5,
         "crashes": 0
       }
     },
@@ -2796,8 +2787,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 1, byte 0: got \"-- 0/7 lines kept (232 bytes rea...\", wanted \"   2: 2023-11-14 ERROR db1 unrea...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -2811,15 +2801,14 @@
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 1, byte 0: got \"-- 0/7 lines kept (232 bytes rea...\", wanted \"   2: 2023-11-14 ERROR db1 unrea...\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
         "symbols": 17,
         "symbols_typed": 15,
         "refusals": 0,
-        "approximations": 2,
+        "approximations": 3,
         "crashes": 0
       }
     },
@@ -4745,6 +4734,82 @@
       }
     },
     {
+      "tier": "tier2",
+      "name": "75-case-folding-and-splicing",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "pass"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "pass"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 14,
+        "symbols_typed": 14,
+        "refusals": 0,
+        "approximations": 2,
+        "crashes": 0
+      }
+    },
+    {
+      "tier": "tier2",
+      "name": "76-captures-after-the-match",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "stdout differs: line 3, byte 64: got \"\\nwhole:   \\n--- a failed match le...\", wanted \"ada\\nwhole:   user=ada\\n--- a fail...\"; stderr differs: unexpected \"TODO P2G4110: this capture is read where no match is in scope\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "fail",
+          "reason": "5 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "2 variables left dynamic out of 4"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "stdout differs: line 3, byte 64: got \"\\nwhole:   \\n--- a failed match le...\", wanted \"ada\\nwhole:   user=ada\\n--- a fail...\"; stderr differs: unexpected \"TODO P2G4110: this capture is read where no match is in scope\""
+      },
+      "quality": {
+        "todos": 5,
+        "symbols": 4,
+        "symbols_typed": 2,
+        "refusals": 5,
+        "approximations": 0,
+        "crashes": 0
+      }
+    },
+    {
       "tier": "tier3",
       "name": "01-inventory-manager",
       "kind": "convert",
@@ -4873,7 +4938,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: line 2, byte 60: got \"the quick brown fox jumps over t...\", wanted \"The Quick Brown Fox Jumps Over T...\"; stderr differs: unexpected \"TODO P2G3599: the word_freq function is not implemented ...\""
+          "reason": "stdout differs: line 6, byte 173: got \"210 / 1234567\\nmodule: TextUtil (...\", wanted \",210 / 1,234,567\\nmodule: TextUti...\"; stderr differs: unexpected \"TODO P2G3599: the word_freq function is not implemented ...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -4889,7 +4954,7 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: line 2, byte 60: got \"the quick brown fox jumps over t...\", wanted \"The Quick Brown Fox Jumps Over T...\"; stderr differs: unexpected \"TODO P2G3599: the word_freq function is not implemented ...\""
+        "reason": "stdout differs: line 6, byte 173: got \"210 / 1234567\\nmodule: TextUtil (...\", wanted \",210 / 1,234,567\\nmodule: TextUti...\"; stderr differs: unexpected \"TODO P2G3599: the word_freq function is not implemented ...\""
       },
       "quality": {
         "todos": 3,
@@ -4992,8 +5057,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 21, byte 365: got \"1 (1)\\n  1 (1)\\n  1 (1)\\n\\nmalformed...\", wanted \"/api/v1/reports (20480)\\n  /index...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -5003,17 +5067,16 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "8 variables left dynamic out of 34"
+          "reason": "1 variable left dynamic out of 34"
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 21, byte 365: got \"1 (1)\\n  1 (1)\\n  1 (1)\\n\\nmalformed...\", wanted \"/api/v1/reports (20480)\\n  /index...\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
         "symbols": 34,
-        "symbols_typed": 26,
+        "symbols_typed": 33,
         "refusals": 0,
         "approximations": 12,
         "crashes": 0
@@ -6818,7 +6881,7 @@
       "stages": {
         "compiled": {
           "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:35:83: undefined: m"
+          "reason": "the generated Go does not compile: ./main.go:32:83: undefined: m"
         },
         "emitted": {
           "outcome": "pass"
@@ -6834,8 +6897,7 @@
           "outcome": "pass"
         },
         "typed": {
-          "outcome": "fail",
-          "reason": "1 variable left dynamic out of 5"
+          "outcome": "pass"
         }
       },
       "equivalent_annotated": {
@@ -6843,7 +6905,7 @@
       },
       "quality": {
         "todos": 0,
-        "symbols": 5,
+        "symbols": 4,
         "symbols_typed": 4,
         "refusals": 0,
         "approximations": 2,
@@ -7708,7 +7770,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "7 variables left dynamic out of 39"
+          "reason": "8 variables left dynamic out of 39"
         }
       },
       "equivalent_annotated": {
@@ -7718,7 +7780,7 @@
       "quality": {
         "todos": 2,
         "symbols": 39,
-        "symbols_typed": 32,
+        "symbols_typed": 31,
         "refusals": 2,
         "approximations": 15,
         "crashes": 0
@@ -7782,8 +7844,7 @@
           "outcome": "pass"
         },
         "typed": {
-          "outcome": "fail",
-          "reason": "1 variable left dynamic out of 21"
+          "outcome": "pass"
         }
       },
       "equivalent_annotated": {
@@ -7791,7 +7852,7 @@
       },
       "quality": {
         "todos": 0,
-        "symbols": 21,
+        "symbols": 20,
         "symbols_typed": 20,
         "refusals": 0,
         "approximations": 8,
@@ -7834,7 +7895,7 @@
         "symbols": 21,
         "symbols_typed": 17,
         "refusals": 3,
-        "approximations": 4,
+        "approximations": 6,
         "crashes": 0
       }
     },
@@ -7968,7 +8029,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: line 1, byte 29: got \" names, 0 unparseable)\\n\\nFrom:   ...\", wanted \"2 names, 0 unparseable)\\n\\nFrom:  ...\""
+          "reason": "stdout differs: line 5, byte 189: got \"_2026.08_=E2=80=93_now_with_20=2...\", wanted \" 2026.08 – now with 20% fewer ...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -7978,19 +8039,19 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "7 variables left dynamic out of 25"
+          "reason": "1 variable left dynamic out of 23"
         }
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: line 1, byte 29: got \" names, 0 unparseable)\\n\\nFrom:   ...\", wanted \"2 names, 0 unparseable)\\n\\nFrom:  ...\""
+        "reason": "stdout differs: line 5, byte 189: got \"_2026.08_=E2=80=93_now_with_20=2...\", wanted \" 2026.08 – now with 20% fewer ...\""
       },
       "quality": {
         "todos": 0,
-        "symbols": 25,
-        "symbols_typed": 18,
+        "symbols": 23,
+        "symbols_typed": 22,
         "refusals": 0,
-        "approximations": 3,
+        "approximations": 4,
         "crashes": 0
       }
     },
@@ -8006,8 +8067,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "exit status 255, wanted 1; stdout differs: 600 byte(s) missing after line 2, expected \" Welcome to WidgetWorks (staging...\"; stderr differs: unexpected \"line 2: expansion did not converge\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -8021,15 +8081,14 @@
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "exit status 255, wanted 1; stdout differs: 600 byte(s) missing after line 2, expected \" Welcome to WidgetWorks (staging...\"; stderr differs: unexpected \"line 2: expansion did not converge\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
         "symbols": 32,
         "symbols_typed": 30,
         "refusals": 0,
-        "approximations": 10,
+        "approximations": 12,
         "crashes": 0
       }
     },
@@ -8421,7 +8480,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "exit status 2, wanted 1; stdout differs: 1306 byte(s) missing after line 1, expected \"zone: 12 names, A=9, AAAA=1, CNA...\"; stderr differs: unexpected \"panic: assignment to entry in nil map ...\""
+          "reason": "exit status 2, wanted 1; stdout differs: 1306 byte(s) missing after line 1, expected \"zone: 12 names, A=9, AAAA=1, CNA...\"; stderr differs: unexpected \"panic: runtime error: index out of range [1] with length 0 ...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -8431,21 +8490,21 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "6 variables left dynamic out of 44"
+          "reason": "3 variables left dynamic out of 43"
         }
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "exit status 2, wanted 1; stdout differs: 1306 byte(s) missing after line 1, expected \"zone: 12 names, A=9, AAAA=1, CNA...\"; stderr differs: unexpected \"panic: assignment to entry in nil map ...\""
+        "reason": "exit status 2, wanted 1; stdout differs: 1306 byte(s) missing after line 1, expected \"zone: 12 names, A=9, AAAA=1, CNA...\"; stderr differs: unexpected \"panic: runtime error: index out of range [1] with length 0 ...\""
       },
       "quality": {
         "todos": 0,
-        "symbols": 44,
-        "symbols_typed": 38,
+        "symbols": 43,
+        "symbols_typed": 40,
         "refusals": 0,
-        "approximations": 10,
+        "approximations": 11,
         "crashes": 1,
-        "panic": "panic: assignment to entry in nil map"
+        "panic": "panic: runtime error: index out of range [1] with length 0"
       }
     }
   ],

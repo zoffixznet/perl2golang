@@ -38,6 +38,15 @@ func (l *Lowerer) patternOf(e ast.Expr) (ir.Expr, bool) {
 			if t := typeOrAny(x); t.Kind == ir.Named && t.Name == "*regexp.Regexp" {
 				return x, true
 			}
+			// A scalar holding pattern text is a pattern too: Perl reads the
+			// string as one wherever a pattern is wanted, so it is compiled
+			// here rather than treated as text to match literally.
+			out := l.runtimePattern(l.toStr(x, n), n)
+			l.note(out, "The pattern is in a variable as text, so it has to be compiled "+
+				"before it can be used. qr// in the original would have compiled it once, "+
+				"and a *regexp.Regexp kept in a variable is the Go equivalent of that.",
+				"mustcompile-pattern")
+			return out, true
 		}
 		return nil, false
 	default:
@@ -54,21 +63,7 @@ func (l *Lowerer) compiledPattern(rx *ast.Regex, at ast.Node) (ir.Expr, bool) {
 	if interpolated(rx) {
 		// The pattern is only known at run time, so it is compiled where it is
 		// used rather than once at start-up.
-		text := l.patternText(rx, at)
-		name := l.tmp("pattern")
-		st := assign(":=", []ir.Expr{ir.NewIdent(name, ir.NamedType("*regexp.Regexp", "regexp"))},
-			[]ir.Expr{call("regexp", "regexp", "MustCompile", ir.NamedType("*regexp.Regexp", "regexp"), text)})
-		l.setProv(st, at)
-		l.approximate(at, "P2G4080", "pattern built at run time",
-			"the pattern is compiled every time this runs",
-			"The pattern interpolates a variable, so it cannot be compiled once at "+
-				"start-up. MustCompile panics on a bad pattern, and a pattern built from "+
-				"input can be bad.",
-			"Compile it with regexp.Compile and check the error, and hoist the "+
-				"compilation out of any loop it sits in.",
-			"mustcompile-pattern", "errors-are-values")
-		l.emit(st)
-		return ir.NewIdent(name, ir.NamedType("*regexp.Regexp", "regexp")), true
+		return l.runtimePattern(l.patternText(rx, at), at), true
 	}
 
 	goPattern, ok := l.translatePattern(rx, at)
@@ -83,6 +78,26 @@ func (l *Lowerer) compiledPattern(rx *ast.Regex, at ast.Node) (ir.Expr, bool) {
 	l.patterns[goPattern] = p
 	l.patternOrd = append(l.patternOrd, goPattern)
 	return ir.NewIdent(name, ir.NamedType("*regexp.Regexp", "regexp")), true
+}
+
+// runtimePattern compiles pattern text the converter cannot see, at the point
+// where it is used.
+func (l *Lowerer) runtimePattern(text ir.Expr, at ast.Node) ir.Expr {
+	regexpT := ir.NamedType("*regexp.Regexp", "regexp")
+	name := l.tmp("pattern")
+	st := assign(":=", []ir.Expr{ir.NewIdent(name, regexpT)},
+		[]ir.Expr{call("regexp", "regexp", "MustCompile", regexpT, text)})
+	l.setProv(st, at)
+	l.approximate(at, "P2G4080", "pattern built at run time",
+		"the pattern is compiled every time this runs",
+		"The pattern comes from a variable, so it cannot be compiled once at "+
+			"start-up. MustCompile panics on a bad pattern, and a pattern built from "+
+			"input can be bad.",
+		"Compile it with regexp.Compile and check the error, and hoist the "+
+			"compilation out of any loop it sits in.",
+		"mustcompile-pattern", "errors-are-values")
+	l.emit(st)
+	return ir.NewIdent(name, regexpT)
 }
 
 // patternName invents a readable identifier for a hoisted pattern.
@@ -132,7 +147,11 @@ func firstWord(raw string) string {
 
 // interpolated reports whether a pattern embeds a variable.
 func interpolated(rx *ast.Regex) bool {
-	if len(rx.Parts) <= 1 {
+	// A pattern that is nothing but an interpolated variable has one part,
+	// and it is the part that makes the pattern unknown until the program
+	// runs. Counting parts rather than looking at them read `/$re/` as the
+	// two characters that spell the variable.
+	if len(rx.Parts) == 0 {
 		return false
 	}
 	for _, p := range rx.Parts {
@@ -733,6 +752,15 @@ func (l *Lowerer) captureVar(n int) (ir.Expr, bool) {
 	return index(ir.NewIdent(f.Name, ir.SliceOf(ir.TString)), ir.IntLit(itoa(n)), ir.TString), true
 }
 
+// wholeMatch resolves $&, which is group 0 of the innermost match in scope.
+func (l *Lowerer) wholeMatch() (ir.Expr, bool) {
+	if len(l.captureStack) == 0 {
+		return nil, false
+	}
+	f := l.captureStack[len(l.captureStack)-1]
+	return index(ir.NewIdent(f.Name, ir.SliceOf(ir.TString)), ir.IntLit("0"), ir.TString), true
+}
+
 // namedCapture resolves $+{name}.
 func (l *Lowerer) namedCapture(name string) (ir.Expr, bool) {
 	if len(l.captureStack) == 0 {
@@ -769,7 +797,7 @@ func (l *Lowerer) qrExpr(n *ast.QrExpr) ir.Expr {
 
 // substStmt lowers s/// in statement position.
 func (l *Lowerer) substStmt(n *ast.Subst) []ir.Stmt {
-	if n.EvalRepl {
+	if n.EvalRepl || !templateRepl(n.Repl) {
 		return l.substEval(n)
 	}
 
@@ -819,9 +847,26 @@ func (l *Lowerer) substEval(n *ast.Subst) []ir.Stmt {
 	if target == nil {
 		return nil
 	}
-	pattern, ok := l.patternOf(n.Pattern)
+	out, ok := l.substByFunc(n, target)
 	if !ok {
 		return nil
+	}
+	st := assign("=", []ir.Expr{target}, []ir.Expr{out})
+	l.setProv(st, n)
+	return []ir.Stmt{st}
+}
+
+// substByFunc builds the ReplaceAllStringFunc form of a substitution, which is
+// what a replacement that is not a template has to become.
+//
+// Two kinds of replacement need it. /e makes the replacement code rather than
+// text, and a replacement that folds case or otherwise transforms a capture
+// group is code too, however it was spelled: Go's replacement template can
+// name a group and can do nothing else with it.
+func (l *Lowerer) substByFunc(n *ast.Subst, target ir.Expr) (ir.Expr, bool) {
+	pattern, ok := l.patternOf(n.Pattern)
+	if !ok {
+		return nil, false
 	}
 
 	whole := l.tmp("match")
@@ -846,28 +891,90 @@ func (l *Lowerer) substEval(n *ast.Subst) []ir.Stmt {
 	l.pre = savedPre
 	l.restoreCaptures(depth - 1)
 
-	fn := funcLit([]ir.Param{{Name: whole, Type: ir.TString}}, []*ir.Type{ir.TString},
-		&ir.Block{Stmts: append([]ir.Stmt{find}, body...)})
-
-	out := ir.CallOf(selector(pattern, "ReplaceAllStringFunc", nil), ir.TString,
-		l.toStr(target, nil), fn)
-	st := assign("=", []ir.Expr{target}, []ir.Expr{out})
-	l.setProv(st, n)
-	l.note(st, "The /e modifier makes the replacement code rather than a template, "+
-		"and ReplaceAllStringFunc is the same idea: it calls a function for every "+
-		"match and uses what comes back. The function is handed the matched text "+
-		"only, so the capture groups are found again inside it.",
-		"replace-and-expansion", "submatch-and-named-groups")
-
-	if !strings.Contains(n.Pattern.Mods, "g") {
-		l.approximate(n, "P2G4040", "s///e without /g",
-			"every match is replaced, not only the first",
-			"ReplaceAllStringFunc has no first-only form, so a substitution with /e "+
-				"and without /g replaces every match here.",
-			"Where only the first match should change, keep a flag in the closure and "+
-				"return the match unchanged once it has fired.")
+	// The groups are only looked up when the replacement reads one. A
+	// replacement that only uses the whole match, or none of it, would
+	// otherwise declare a variable Go refuses to leave unread.
+	stmts := body
+	reads := map[string]int{}
+	for _, st := range body {
+		countReads(st, reads)
 	}
-	return []ir.Stmt{st}
+	if reads[matches] > 0 {
+		stmts = append([]ir.Stmt{find}, body...)
+	}
+	fn := funcLit([]ir.Param{{Name: whole, Type: ir.TString}}, []*ir.Type{ir.TString},
+		&ir.Block{Stmts: stmts})
+
+	global := strings.Contains(n.Pattern.Mods, "g")
+	var out ir.Expr
+	if global {
+		out = ir.CallOf(selector(pattern, "ReplaceAllStringFunc", nil), ir.TString,
+			l.toStr(target, nil), fn)
+	} else {
+		out = l.helperCall(hReplaceFirstFunc, ir.TString, pattern, l.toStr(target, nil), fn)
+	}
+	if n.EvalRepl {
+		l.note(out, "The /e modifier makes the replacement code rather than a template, "+
+			"and ReplaceAllStringFunc is the same idea: it calls a function for every "+
+			"match and uses what comes back. The function is handed the matched text "+
+			"only, so the capture groups are found again inside it.",
+			"replace-and-expansion", "submatch-and-named-groups")
+	} else {
+		l.note(out, "Go's replacement template can name a capture group and can do "+
+			"nothing else with it: there is no case folding and no arithmetic in it. "+
+			"A replacement that transforms what it captured is code, so it becomes a "+
+			"function called once per match, which is also where the groups have to "+
+			"be found again.",
+			"replace-and-expansion", "submatch-and-named-groups")
+	}
+
+	if !global {
+		l.note(out, "Without /g only the first match is replaced. The regexp package "+
+			"has no first-only form of either replacement call, so a small helper "+
+			"cuts the string at the match and puts the pieces back together.",
+			"replace-and-expansion")
+	}
+	return out, true
+}
+
+// templateRepl reports whether a replacement is something Go's replacement
+// template can say.
+//
+// The template understands literal text and ${n}, and nothing else. A part
+// that mentions a capture group without being one is a computation over the
+// match, which has to run per match rather than once before the replacement.
+func templateRepl(repl ast.Expr) bool {
+	switch r := repl.(type) {
+	case nil, *ast.StrLit:
+		return true
+	case *ast.InterpLit:
+		for _, p := range r.Parts {
+			if v, ok := p.(*ast.Var); ok && v.Sigil == '$' && isDigits(v.Name) {
+				continue
+			}
+			if _, ok := p.(*ast.StrLit); ok {
+				continue
+			}
+			if mentionsCapture(p) {
+				return false
+			}
+		}
+		return true
+	}
+	return !mentionsCapture(repl)
+}
+
+// mentionsCapture reports whether an expression reads a capture group, which
+// is what makes it belong inside the per-match function rather than in front
+// of the replacement.
+func mentionsCapture(e ast.Expr) bool {
+	found := false
+	walkExprs([]ast.Stmt{&ast.ExprStmt{X: e}}, func(x ast.Expr) {
+		if v, ok := x.(*ast.Var); ok && v.Sigil == '$' && (isDigits(v.Name) || v.Name == "&") {
+			found = true
+		}
+	})
+	return found
 }
 
 // substExpr lowers s/// used for its value, which is the number of
@@ -906,6 +1013,13 @@ func (l *Lowerer) substCopy(n *ast.Subst) (ir.Expr, bool) {
 	pattern, ok := l.patternOf(n.Pattern)
 	if !ok {
 		return nil, false
+	}
+	if n.EvalRepl || !templateRepl(n.Repl) {
+		out, ok := l.substByFunc(n, target)
+		if !ok {
+			return nil, false
+		}
+		return out, true
 	}
 	repl, ok := l.replacement(n)
 	if !ok {

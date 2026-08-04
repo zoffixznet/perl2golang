@@ -257,6 +257,8 @@ const (
 	RegexDollarAnchor Code = "P2G4060"
 	// RuntimePattern: the pattern text is only known at run time.
 	RuntimePattern Code = "P2G4080"
+	// StrayCapture: a capture variable is read where no match is in scope.
+	StrayCapture Code = "P2G4110"
 )
 
 // Regex and string-splitting semantics.
@@ -1209,6 +1211,14 @@ var catalogue = map[Code]Entry{
 		Advice:   "hoist the pattern to a package-level `regexp.MustCompile` wherever the text turns out to be constant",
 		Cost:     "`MustCompile` cannot be used, so the emitted code handles a compile error as a value on every call",
 		Concepts: []string{"mustcompile-pattern", "errors-are-values"},
+	},
+	StrayCapture: {
+		Severity: report.Refuse,
+		Message:  "`%s` is read where no match is in scope, and Go keeps no global copy of the last one",
+		Short:    "a capture read outside its match",
+		Advice:   "keep what the match found in a variable declared before the block that matches",
+		Cost:     "the emitted code yields an empty value there, where Perl yielded whatever the last successful match left behind",
+		Concepts: []string{"submatch-and-named-groups", "nil-vs-undef"},
 	},
 
 	// -- Regex and splitting semantics --------------------------------------

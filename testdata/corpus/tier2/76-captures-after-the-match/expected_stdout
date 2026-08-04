@@ -1,0 +1,10 @@
+--- read after the block that matched ---
+inside:  ada
+outside: ada
+whole:   user=ada
+--- a failed match leaves the last answer standing ---
+still:   ada
+--- and the next success replaces it ---
+last id: ada
+--- prematch and postmatch ---
+pre=[user=grace ] match=[id=] post=[9]

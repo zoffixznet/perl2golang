@@ -196,6 +196,14 @@ func (l *Lowerer) builtin(n *ast.Call) ir.Expr {
 		return l.helperCall(hUcFirst, ir.TString, l.argStr(n, 0))
 	case "lcfirst":
 		return l.helperCall(hLcFirst, ir.TString, l.argStr(n, 0))
+	case "quotemeta":
+		out := call("regexp", "regexp", "QuoteMeta", ir.TString, l.argStr(n, 0))
+		l.note(out, "quotemeta escapes every character a pattern would read as syntax, "+
+			"so that text taken from data matches itself. regexp.QuoteMeta does the "+
+			"same job and is what to reach for whenever a pattern is built out of "+
+			"something the program did not write.",
+			"regexp-is-re2", "mustcompile-pattern")
+		return out
 	case "substr":
 		return l.substrCall(n)
 	case "index":
@@ -1230,10 +1238,62 @@ func (l *Lowerer) substrCall(n *ast.Call) ir.Expr {
 			"strings-are-bytes")
 		return out
 	case 4:
+		return l.substrSplice(n)
+	}
+	return ir.Str(`""`)
+}
+
+// substrSplice lowers the four-argument substr, which is an edit and not a
+// question: it replaces the window in the variable it was handed and answers
+// with the text it took out.
+//
+// Both halves are easy to lose. Reading the call as though it returned the new
+// string leaves the variable untouched and hands back the wrong value, and
+// nothing about the generated Go would look wrong.
+func (l *Lowerer) substrSplice(n *ast.Call) ir.Expr {
+	args := flatten(argList(n))
+	target := l.assignTarget(args[0])
+	if target == nil || !assignableTarget(target) || typeOrAny(target).Kind != ir.String {
+		// Nothing to write back into, so the best that can be done is the
+		// new text, which is what the caller of a copy would have wanted.
 		return l.helperCall(hSubstrReplace, ir.TString,
 			l.argStr(n, 0), l.argInt(n, 1), l.argInt(n, 2), l.argStr(n, 3))
 	}
-	return ir.Str(`""`)
+	offset := l.toInt(l.expr(args[1]), args[1])
+	length := l.toInt(l.expr(args[2]), args[2])
+	value := l.toStr(l.scalar(args[3]), args[3])
+
+	var answer ir.Expr = ir.Str(`""`)
+	if !l.valueDiscarded(n) {
+		// The removed text has to be taken before the write, because after it
+		// there is nothing left to take.
+		name := l.tmp("removed")
+		decl := assign(":=", []ir.Expr{ir.NewIdent(name, ir.TString)},
+			[]ir.Expr{l.helperCall(hSubstr, ir.TString, target, offset, length)})
+		l.setProv(decl, n)
+		l.note(decl, "The four-argument substr answers with the text it removed, not "+
+			"with the string it produced, so the window is read before it is written "+
+			"over.",
+			"strings-are-bytes")
+		l.emit(decl)
+		answer = ir.NewIdent(name, ir.TString)
+	}
+	st := assign("=", []ir.Expr{target},
+		[]ir.Expr{l.helperCall(hSubstrReplace, ir.TString, target, offset, length, value)})
+	l.setProv(st, n)
+	l.note(st, "substr with a fourth argument edits the string where it stands. A Go "+
+		"string is immutable, so the replacement builds a new one and the variable "+
+		"is assigned the result.",
+		"strings-are-bytes", "explicit-conversions-no-coercion")
+	l.emit(st)
+	return answer
+}
+
+// valueDiscarded reports whether the expression being lowered is the whole of
+// the statement it sits in, so nothing will look at what it produces.
+func (l *Lowerer) valueDiscarded(e ast.Expr) bool {
+	st, ok := l.curStmt.(*ast.ExprStmt)
+	return ok && st.X == ast.Expr(e)
 }
 
 func (l *Lowerer) indexCall(n *ast.Call, last bool) ir.Expr {

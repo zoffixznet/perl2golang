@@ -3,6 +3,7 @@ package parser
 import (
 	"strconv"
 	"strings"
+	"unicode"
 
 	"perl2golang/internal/perl/ast"
 	"perl2golang/internal/perl/token"
@@ -30,14 +31,14 @@ func (p *parser) interpString(raw string, t token.Token) ast.Expr {
 // parts. When escapes is true, backslash escapes in literal segments are
 // resolved (double-quote semantics).
 func (p *parser) interpParts(raw string, t token.Token, escapes bool) []ast.Expr {
-	var parts []ast.Expr
+	var items []interpItem
 	var lit strings.Builder
 
 	flushLit := func() {
 		if lit.Len() > 0 {
 			n := &ast.StrLit{Value: lit.String()}
 			n.SetSpan(t.Pos, endOf(t))
-			parts = append(parts, n)
+			items = append(items, interpItem{expr: n})
 			lit.Reset()
 		}
 	}
@@ -47,6 +48,12 @@ func (p *parser) interpParts(raw string, t token.Token, escapes bool) []ast.Expr
 		c := raw[i]
 		if c == '\\' && i+1 < len(raw) {
 			if escapes {
+				if mark, ok := caseMark(raw[i+1]); ok {
+					flushLit()
+					items = append(items, interpItem{mark: mark})
+					i += 2
+					continue
+				}
 				consumed, text := decodeEscape(raw[i:])
 				lit.WriteString(text)
 				i += consumed
@@ -65,7 +72,7 @@ func (p *parser) interpParts(raw string, t token.Token, escapes bool) []ast.Expr
 				p.diags = append(p.diags, diags...)
 				if e != nil {
 					flushLit()
-					parts = append(parts, e)
+					items = append(items, interpItem{expr: e})
 				} else {
 					lit.WriteString(expr)
 				}
@@ -77,7 +84,151 @@ func (p *parser) interpParts(raw string, t token.Token, escapes bool) []ast.Expr
 		i++
 	}
 	flushLit()
-	return parts
+	return foldCase(items, t)
+}
+
+// interpItem is one piece of an interpolating string while it is being read:
+// either a part of the result, or one of the case-folding escapes, which is a
+// marker rather than a value.
+type interpItem struct {
+	expr ast.Expr
+	mark byte
+}
+
+// caseMark reports whether an escape is one of the case-folding markers.
+//
+// \U, \L and \Q run until \E or the end of the string; \u and \l apply to the
+// first character of everything after them. Perl treats them as instructions
+// about the text being built rather than as characters, which is why they
+// cannot stay in the literal.
+func caseMark(c byte) (byte, bool) {
+	switch c {
+	case 'U', 'L', 'Q', 'E', 'u', 'l':
+		return c, true
+	}
+	return 0, false
+}
+
+// foldCase turns the case-folding markers into the calls they stand for, so
+// that everything after this point sees ordinary Perl.
+//
+// \u\LFOO is ucfirst(lc("FOO")), which is exactly how Perl reads it: the
+// one-character marker applies to whatever the span markers produced.
+func foldCase(items []interpItem, t token.Token) []ast.Expr {
+	var out []ast.Expr
+	for i := 0; i < len(items); i++ {
+		if items[i].expr != nil {
+			out = append(out, items[i].expr)
+			continue
+		}
+		switch items[i].mark {
+		case 'E':
+			// An \E with nothing open closes nothing.
+		case 'u', 'l':
+			name := "ucfirst"
+			if items[i].mark == 'l' {
+				name = "lcfirst"
+			}
+			return append(out, foldCall(name, foldCase(items[i+1:], t), t))
+		default:
+			name := map[byte]string{'U': "uc", 'L': "lc", 'Q': "quotemeta"}[items[i].mark]
+			end := matchingEnd(items, i)
+			inner := items[i+1 : end]
+			// \L\uWORD is Ada and not ada: a one-character marker written
+			// just inside a span applies to the first character of what the
+			// span produced, so it wraps the span rather than sitting in it.
+			first := ""
+			if len(inner) > 0 && inner[0].expr == nil {
+				switch inner[0].mark {
+				case 'u':
+					first, inner = "ucfirst", inner[1:]
+				case 'l':
+					first, inner = "lcfirst", inner[1:]
+				}
+			}
+			folded := foldCall(name, foldCase(inner, t), t)
+			if first != "" {
+				folded = foldCall(first, []ast.Expr{folded}, t)
+			}
+			out = append(out, folded)
+			i = end
+		}
+	}
+	return out
+}
+
+// matchingEnd finds the \E that closes the span opened at i, or the end of the
+// string, which closes every span still open.
+func matchingEnd(items []interpItem, i int) int {
+	depth := 0
+	for j := i + 1; j < len(items); j++ {
+		if items[j].expr != nil {
+			continue
+		}
+		switch items[j].mark {
+		case 'U', 'L', 'Q':
+			depth++
+		case 'E':
+			if depth == 0 {
+				return j
+			}
+			depth--
+		}
+	}
+	return len(items)
+}
+
+// foldCall wraps the parts of a span in the call the marker asked for, folding
+// it away where the answer is already known.
+func foldCall(name string, parts []ast.Expr, t token.Token) ast.Expr {
+	var arg ast.Expr
+	switch len(parts) {
+	case 0:
+		lit := &ast.StrLit{Value: ""}
+		lit.SetSpan(t.Pos, endOf(t))
+		return lit
+	case 1:
+		arg = parts[0]
+	default:
+		inner := &ast.InterpLit{Parts: parts}
+		inner.SetSpan(t.Pos, endOf(t))
+		arg = inner
+	}
+	// Case folding a piece of text that is already written out has one
+	// answer, and writing it in reads better than a call the reader has to
+	// evaluate in their head.
+	if s, ok := arg.(*ast.StrLit); ok {
+		if folded, done := foldText(name, s.Value); done {
+			lit := &ast.StrLit{Value: folded}
+			lit.SetSpan(s.Pos(), s.End())
+			return lit
+		}
+	}
+	call := &ast.Call{Name: name, Args: []ast.Expr{arg}, Paren: true}
+	call.SetSpan(t.Pos, endOf(t))
+	return call
+}
+
+// foldText applies a case marker to text known at parse time.
+func foldText(name, s string) (string, bool) {
+	switch name {
+	case "uc":
+		return strings.ToUpper(s), true
+	case "lc":
+		return strings.ToLower(s), true
+	case "ucfirst", "lcfirst":
+		if s == "" {
+			return s, true
+		}
+		r := []rune(s)
+		if name == "ucfirst" {
+			r[0] = unicode.ToUpper(r[0])
+		} else {
+			r[0] = unicode.ToLower(r[0])
+		}
+		return string(r), true
+	}
+	return s, false
 }
 
 // regexParts splits a regex body into literal chunks and interpolated
@@ -386,8 +537,10 @@ func decodeEscape(s string) (int, string) {
 		}
 		return 2, ""
 	case 'Q', 'E', 'L', 'U', 'l', 'u':
-		// Case and quotemeta modifiers are dropped from the literal; the
-		// converter reports them via analysis when they matter.
+		// The case and quotemeta markers are handled before this point,
+		// because they describe the text being built rather than a character
+		// in it. Reaching here means a context that resolves escapes without
+		// building parts, where dropping them is the old behaviour.
 		return 2, ""
 	default:
 		return 2, s[1:2]

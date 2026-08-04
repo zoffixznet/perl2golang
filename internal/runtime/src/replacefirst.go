@@ -19,3 +19,17 @@ func replaceFirst(re *regexp.Regexp, s, repl string) string {
 	out = re.ExpandString(out, repl, s, loc)
 	return string(out) + s[loc[1]:]
 }
+
+// replaceFirstFunc replaces the first match of re in s with what repl makes of
+// it, leaving any later matches alone.
+//
+// It is replaceFirst for a replacement that has to be computed rather than
+// filled in from a template, and it exists for the same reason: the regexp
+// package offers only replace-every-match.
+func replaceFirstFunc(re *regexp.Regexp, s string, repl func(string) string) string {
+	loc := re.FindStringIndex(s)
+	if loc == nil {
+		return s
+	}
+	return s[:loc[0]] + repl(s[loc[0]:loc[1]]) + s[loc[1]:]
+}

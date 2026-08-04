@@ -408,6 +408,26 @@ func (l *Lowerer) specialVar(v *ast.Var) ir.Expr {
 		}
 	}
 
+	// $& is the whole of the innermost match, which Go returns as group 0 of
+	// the same submatch slice.
+	// A capture read where no match is in scope has nothing to name. Perl
+	// answers with whatever the last successful match anywhere left behind,
+	// which is a global the Go program does not have.
+	if v.Sigil == '$' && (v.Name == "&" || (isDigits(v.Name) && v.Name != "0")) &&
+		len(l.captureStack) == 0 {
+		return l.strayCapture(v)
+	}
+	if v.Sigil == '$' && v.Name == "&" {
+		if x, ok := l.wholeMatch(); ok {
+			l.note(x, "$& is the text the last successful match consumed, and like $1 it "+
+				"is global and lasts until the next match anywhere. Go returns it as the "+
+				"first element of this match's own submatch slice, so there is nothing "+
+				"global to leak.",
+				"submatch-and-named-groups")
+			return x
+		}
+	}
+
 	// $1, $2 and so on name the capture groups of the innermost match that is
 	// still in scope.
 	if v.Sigil == '$' && isDigits(v.Name) && v.Name != "0" {
@@ -555,6 +575,26 @@ func (l *Lowerer) specialVar(v *ast.Var) ir.Expr {
 		}
 	}
 	return nil
+}
+
+// strayCapture stands in for $1, $2 or $& read where no match is in scope.
+//
+// Perl's capture variables are globals that survive the match that filled
+// them, until the end of the enclosing block or the next successful match
+// anywhere in the program. Go has nowhere to keep that: the submatch slice
+// belongs to the call that produced it and is a local of the block that call
+// was in.
+func (l *Lowerer) strayCapture(v *ast.Var) ir.Expr {
+	return l.todoExpr(v, "P2G4110", "$"+v.Name+" outside its match",
+		"this capture is read where no match is in scope",
+		"Perl leaves the captures in globals that outlive the match, so $"+v.Name+
+			" can be read after the block that matched, and a failed match leaves the "+
+			"previous values standing. Go returns the groups from the call that made "+
+			"them, and that slice is a local of the block it was declared in.",
+		"Keep what the match found in a variable of your own, declared before the "+
+			"block that matches, and assign to it inside. That is what the original "+
+			"was relying on the interpreter to do.",
+		"submatch-and-named-groups", "nil-vs-undef")
 }
 
 // strconvAtoi is a tiny decimal parser, used where the input is known to be

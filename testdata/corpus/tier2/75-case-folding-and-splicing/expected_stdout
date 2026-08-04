@@ -1,0 +1,14 @@
+--- case markers in a string ---
+greeting:  Hello, Ada lovelace
+shouted:   ADA LOVELACE, quietly again: Ada
+--- case markers in a replacement ---
+title:     The Analytical Engine
+first only: THE ANALYTICAL engine
+tagged:    [ONE] [TWO]
+--- a replacement that reads a table ---
+filled:    ada is a engineer
+--- a pattern built from data ---
+quoted matches: 1, unquoted: 3
+--- substr with four arguments edits in place ---
+removed 'quick' -> The lazy brown fox
+framed:    >> The lazy brown fox <<

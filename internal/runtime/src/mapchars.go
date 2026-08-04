@@ -33,8 +33,14 @@ func mapChars(s, search, repl string, complement, del, squeeze bool) string {
 			last = -1
 			continue
 		case len(to) == 0:
+			// With nothing to replace with, the characters stand for
+			// themselves. That changes nothing on its own, and it is exactly
+			// what squeeze acts on: a run of them collapses to one.
+			if squeeze && r == last {
+				continue
+			}
 			b.WriteRune(r)
-			last = -1
+			last = r
 			continue
 		}
 		out := to[len(to)-1]

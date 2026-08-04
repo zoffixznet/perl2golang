@@ -43,8 +43,15 @@ func (l *Lowerer) stmts(list []ast.Stmt) []ir.Stmt {
 func (l *Lowerer) block(list []ast.Stmt) *ir.Block {
 	saved := l.scope
 	savedSeps := l.seps
+	// The submatch slice a match inside this block declared is a local of the
+	// Go block, so nothing after the block can name it. Perl scopes its
+	// capture variables to the enclosing block too, restoring the previous
+	// match's values on the way out, so dropping the frame here is both what
+	// compiles and what the original meant.
+	depth := l.captureDepth()
 	l.scope = newScope(saved)
 	b := l.markUnused(&ir.Block{Stmts: l.stmts(list)})
+	l.restoreCaptures(depth)
 	l.scope = saved
 	l.seps = savedSeps
 	return b
@@ -495,10 +502,14 @@ func (l *Lowerer) ifStmt(n *ast.If) ir.Stmt {
 // guardsTheRest reports whether an if is the early-exit shape: no else, and a
 // body that does nothing but leave.
 func guardsTheRest(n *ast.If, out *ir.If) bool {
-	if len(n.ElseIfs) > 0 || out.Else != nil || out.Then == nil || len(out.Then.Stmts) != 1 {
+	if len(n.ElseIfs) > 0 || out.Else != nil || out.Then == nil || len(out.Then.Stmts) == 0 {
 		return false
 	}
-	switch out.Then.Stmts[0].(type) {
+	// What makes it a guard is that control leaves, not that nothing else
+	// happens on the way out. `unless (/re/) { $bad++; next }` is the same
+	// shape as a bare next, and the lines below it are just as unreachable
+	// when it fires.
+	switch out.Then.Stmts[len(out.Then.Stmts)-1].(type) {
 	case *ir.Branch, *ir.Return:
 		return true
 	}

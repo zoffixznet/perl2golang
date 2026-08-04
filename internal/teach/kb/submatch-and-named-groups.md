@@ -144,6 +144,63 @@ The last two lines are why this matters more than a type error would. Both versi
 
 The other half of the difference is failure. Perl's failed match in list context yields **nothing**, so `my ($ext) = ...` leaves `$ext` undef and `defined $ext` is false. Go's failed match yields a `nil` slice, and reading a group out of it gives `""`, which is a real string that is merely empty. If your code needs to tell "matched but empty" from "did not match", keep the slice and test `m == nil` rather than testing the group.
 
+## The captures do not outlive the match
+
+`$1` is a global. It survives the `if` that filled it, it survives a *failed* match afterwards, and it is restored to its previous value when the enclosing block ends. Perl code leans on all three, usually without saying so:
+
+```perl
+if ($line =~ /user=(\w+)/) { ... }
+print "user was $1\n";          # still there
+if ($line =~ /never/) { ... }    # this failing does not clear it
+print "still $1\n";             # and it is still there
+```
+
+Go has nothing of the kind. `FindStringSubmatch` returns the groups, and what it returns is an ordinary local with an ordinary scope: name it inside the `if` and it is gone at the closing brace. The translation is to declare the variable where you want it to live, which is a line of extra code and a considerable gain in clarity, because it forces the question Perl let you skip: what should this hold when the match fails?
+
+```go
+package main
+
+import (
+	"fmt"
+	"regexp"
+)
+
+var user = regexp.MustCompile(`user=(\w+)`)
+
+func main() {
+	lines := []string{"user=ada id=7", "nothing here"}
+
+	// Declared before the block, so it is still here after it. That is the
+	// whole of what Perl's global $1 was giving you.
+	name := ""
+	if m := user.FindStringSubmatch(lines[0]); m != nil {
+		name = m[1]
+	}
+	fmt.Printf("after the block: %q\n", name)
+
+	// A failed match leaves the variable alone, which is the Perl behaviour
+	// too, and here it is visible rather than implied.
+	if m := user.FindStringSubmatch(lines[1]); m != nil {
+		name = m[1]
+	}
+	fmt.Printf("after a miss:    %q\n", name)
+
+	// Prematch and postmatch are offsets, not variables.
+	if loc := user.FindStringIndex(lines[0]); loc != nil {
+		fmt.Printf("pre=%q match=%q post=%q\n",
+			lines[0][:loc[0]], lines[0][loc[0]:loc[1]], lines[0][loc[1]:])
+	}
+}
+```
+
+```
+after the block: "ada"
+after a miss:    "ada"
+pre="" match="user=ada" post=" id=7"
+```
+
+`` $` `` and `$'` have no counterpart at all, and they do not need one: `FindStringIndex` gives the two offsets, and the pieces either side are slices of the original string, which allocate nothing.
+
 ## The mismatch
 
 Decoding the method-name grammar unlocks the whole package: `Find` + optional `All` (`//g`) + optional `String` (else `[]byte`) + optional `Submatch` (captures) + optional `Index` (byte offsets, the `@-`/`@+` replacement). So `FindAllStringSubmatch(s, -1)` is `while (/.../g)` collecting captures — the `-1` means unlimited; a positive n caps the count. Gotchas in the details: a group that participated but matched empty and a group that did not participate at all *both* appear as `""` in the submatch slice (use the `Index` variants, where non-participation is `-1`, when the distinction matters — Perl distinguishes via `defined $1`); `MatchString` is unanchored like Perl's bare `//`, so anchor explicitly with `^...$` when you mean whole-string (there is no `\z`/`\A` — `\z` is spelled `$` with no multiline flag, and `(?m)` changes `^$` to per-line exactly as `/m` did); and boolean-only tests should use `MatchString` rather than a discarded `Find`, both for clarity and speed. Named groups: `(?P<name>...)` (Go also accepts `(?<name>...)` since Go 1.22, but `P` remains the dominant style you will read), retrieved via `SubexpIndex("name")` as shown — there is no `%+` hash; if you want one, build `map[string]string` by zipping `re.SubexpNames()` with the match slice, a four-line helper worth writing once.
