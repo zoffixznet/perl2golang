@@ -1432,6 +1432,11 @@ func (l *Lowerer) structLit(c *Class, h *ast.AnonHash) ir.Expr {
 			continue
 		}
 		f := l.declareField(c, key, flat[i])
+		if isUndefLiteral(flat[i+1]) && l.pass == 1 {
+			// undef in a field says the field can be absent, and says nothing
+			// about what a present value is.
+			f.Nil = true
+		}
 		value := l.scalar(flat[i+1])
 		l.observeField(f, typeOrAny(value))
 		keys = append(keys, ir.NewIdent(f.Go, nil))

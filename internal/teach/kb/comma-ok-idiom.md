@@ -65,6 +65,60 @@ false
 
 `delete(m, k)` is the `delete $h{k}` equivalent — a no-op on missing keys, no return value worth having. The `if _, ok := ...; !ok` line shows the idiomatic one-statement scoping from `var-vs-short-declaration`.
 
+## Carrying "there was nothing" out of a function
+
+Inside one function the comma-ok form answers the question. The harder case is a lookup wrapped in a sub, because Perl's answer travels out on its own: `return $port{$name}` hands back undef for a key that is not there, and the caller's `defined` test picks it up. A Go signature has to say so, and if it does not, the information is gone at the boundary and no care at the call site can recover it.
+
+There are two spellings, and the choice is a design decision rather than a mechanical one:
+
+```go
+package main
+
+import "fmt"
+
+var port = map[string]int{"http": 80, "https": 443, "echo": 0}
+
+// portOf is the comma-ok shape, and it composes with the map read that
+// produced it: the second result travels all the way out to the caller.
+func portOf(name string) (int, bool) {
+	p, ok := port[name]
+	return p, ok
+}
+
+// portPtr is the other spelling. One value, nil for absent, and a dereference
+// at every use. It reads better when the answer is passed on rather than
+// tested here.
+func portPtr(name string) *int {
+	p, ok := port[name]
+	if !ok {
+		return nil
+	}
+	return &p
+}
+
+func main() {
+	for _, name := range []string{"http", "echo", "gopher"} {
+		if p, ok := portOf(name); ok {
+			fmt.Printf("%-7s port %d\n", name, p)
+		} else {
+			fmt.Printf("%-7s not listed\n", name)
+		}
+	}
+	fmt.Println(portPtr("echo") != nil, portPtr("gopher") != nil)
+}
+```
+
+```
+http    port 80
+echo    port 0
+gopher  not listed
+true false
+```
+
+Notice what the entry with a real 0 in it is doing there. `echo` has port 0, and every version of this that returns a bare `int` reports it as missing. That is the bug the comma-ok form exists to prevent, and it is invisible until the day a legitimate zero turns up in the data.
+
+Prefer `(T, bool)` when the caller will test the answer immediately, which is most of the time: it is what the standard library does, it costs no allocation, and the `if v, ok := f(); ok` line reads as one thought. Prefer `*T` when the value is going to be stored or passed along still-maybe-absent, because a pair does not fit in a struct field or a slice element without inventing a type for it. And prefer `(T, error)` over both when the caller deserves to know *why* there was no answer.
+
 ## The mismatch
 
 Mappings to retrain: `exists $h{k}` → `_, ok := m[k]`; `defined $h{k}` → *does not exist*; `$h{k} // $default` → `if v, ok := m[k]; ok { use v } else { use default }` (there is no `//` operator, and no `||`-returns-value either — Go's `||` yields only bool, so the entire `$x || $y` default-value idiom is dead; write the if-statement). When Perl code genuinely uses all three states — a config hash where `key => undef` means "explicitly disabled" as distinct from "not mentioned" — the honest Go translation is `map[string]*string` (nil value = present-but-valueless) or a small struct value with a validity flag. The comma-ok shape is not map-specific; it is a language-wide convention you will meet three more times: type assertions `v, ok := x.(T)` (`type-assertions-and-switches`), channel receives `v, ok := <-ch` (`channels-and-select`), and it is deliberately echoed by `v, err :=` returns. One caution: comma-ok is a special *assignment form*, not an expression — you cannot pass `m[k]`'s ok-ness inline to a function; it must land in variables first.

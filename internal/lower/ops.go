@@ -633,6 +633,11 @@ func (l *Lowerer) unop(n *ast.UnOp) ir.Expr {
 // in Go they are statements. The statement layer handles the common case, so
 // reaching here means the value was wanted.
 func (l *Lowerer) incDecExpr(n *ast.UnOp) ir.Expr {
+	// Counting through a slot says the slot holds a number, whether the step
+	// is a statement or is being read for its value. `grep { !$seen{$_}++ }`
+	// is the second shape, and it is the commonest counting idiom there is:
+	// without this the hash it counts into is left holding `any`.
+	l.observeTargetValue(n.X, ir.TInt)
 	target := l.expr(n.X)
 	step := "++"
 	if n.Op == "--" {

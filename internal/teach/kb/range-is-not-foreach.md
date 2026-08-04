@@ -87,6 +87,56 @@ func main() {
 0 1 2 
 ```
 
+## Draining a list, which is not a range loop at all
+
+`while (defined(my $job = shift @queue))` looks like iteration and is not: it empties the list as it goes, and the `defined` is what keeps a queue holding a 0 from stopping early. Go writes it with the length as the condition, and taking the element becomes two plain statements at the top of the body:
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	// while (defined(my $job = shift @queue)) -- the question is whether
+	// there was an element, so a queue holding a 0 does not stop it.
+	queue := []int{3, 0, 7}
+	for len(queue) > 0 {
+		job := queue[0]
+		queue = queue[1:]
+		fmt.Printf("took %d, %d left\n", job, len(queue))
+	}
+
+	// A worklist that grows while it drains. range cannot do this: it fixes
+	// the length before the first iteration.
+	work := []string{"a"}
+	children := map[string][]string{"a": {"b", "c"}, "b": {"d"}}
+	seen := map[string]bool{}
+	var order []string
+	for len(work) > 0 {
+		node := work[0]
+		work = work[1:]
+		if seen[node] {
+			continue
+		}
+		seen[node] = true
+		order = append(order, node)
+		work = append(work, children[node]...)
+	}
+	fmt.Println(order)
+}
+```
+
+```
+took 3, 2 left
+took 0, 1 left
+took 7, 0 left
+[a b c d]
+```
+
+The second loop is why the idiom exists and why `range` cannot replace it: `range` evaluates the length once, before the first iteration, so appending to the slice inside the loop has no effect on how many times it runs. A worklist that grows as it is walked needs the length checked every time round, which is what `for len(work) > 0` does.
+
+`queue = queue[1:]` moves the window forward without copying anything, so draining from the front is as cheap as draining from the back. What it does not do is release the elements already passed: the backing array is still reachable through the original allocation until the whole slice goes, which only matters when the elements are large and the queue is long-lived.
+
 ## The mismatch
 
 The mechanical translations: `for my $f (@list)` → `for _, f := range list` (the `_` discards the index you did not ask for — writing `for f := range list` is the classic conversion bug); `for my $i (0..$#list)` → `for i := range list`; `for (1..10)` → `for i := 1; i <= 10; i++` or `for range 10` when the counter is unused (Go's only loop keyword is `for`; it plays `while` as `for cond {}` and `until`/`loop` as `for {}`). Mutation in place is always by index: `fruits[i] = ...`. For `grep`/`map`/`first`, the append-loop above is the culturally accepted answer — Go deliberately shipped no map/grep over slices even after generics made it possible, though `slices.ContainsFunc`, `slices.IndexFunc`, and `slices.DeleteFunc` cover common `grep`-adjacent cases; chains of transformations become sequential loops, more lines and measurably clearer stack traces. Ranging over a map gives key (one variable) or key, value (two) in random order (`map-iteration-order`); over a string, byte-offset and rune (`strings-are-bytes`); there is no `each`-style stateful iterator to leak state between loops.

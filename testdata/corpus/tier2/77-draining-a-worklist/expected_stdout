@@ -1,0 +1,13 @@
+--- a queue with a zero in it ---
+took 3, 2 left
+took 0, 1 left
+took 7, 0 left
+--- the same list, tested for truth instead ---
+took 3, 2 left
+stopped with 1 still queued
+--- a stack of names, one of them empty ---
+popped [omega]
+popped []
+popped [alpha]
+--- a worklist that grows while it drains ---
+visited: a,b,c,d

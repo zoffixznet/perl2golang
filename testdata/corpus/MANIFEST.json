@@ -2752,5 +2752,29 @@
     "expected_exit": 0,
     "deterministic": true,
     "kind": "convert"
+  },
+  {
+    "tier": "tier2",
+    "name": "77-draining-a-worklist",
+    "path": "testdata/corpus/tier2/77-draining-a-worklist",
+    "args": [],
+    "has_stdin": false,
+    "has_files": false,
+    "allow_stderr": false,
+    "expected_exit": 0,
+    "deterministic": true,
+    "kind": "convert"
+  },
+  {
+    "tier": "tier2",
+    "name": "78-a-lookup-that-finds-nothing",
+    "path": "testdata/corpus/tier2/78-a-lookup-that-finds-nothing",
+    "args": [],
+    "has_stdin": false,
+    "has_files": false,
+    "allow_stderr": false,
+    "expected_exit": 0,
+    "deterministic": true,
+    "kind": "convert"
   }
 ]

@@ -527,6 +527,9 @@ func (l *Lowerer) whileStmt(n *ast.While) []ir.Stmt {
 	if st, ok := l.eachLoop(n); ok {
 		return st
 	}
+	if st, ok := l.drainLoop(n); ok {
+		return st
+	}
 
 	depth := l.captureDepth()
 	defer l.restoreCaptures(depth)
@@ -555,6 +558,132 @@ func (l *Lowerer) whileStmt(n *ast.While) []ir.Stmt {
 		}), body.Stmts...)}
 	}
 	return []ir.Stmt{out}
+}
+
+// drainLoop lowers `while (defined(my $x = shift @queue))`, which is how Perl
+// empties a list one element at a time.
+//
+// The test is about whether there was an element to take, not about what it
+// was, so a queue holding a 0 or an empty string keeps going. Lowering the
+// pieces separately loses exactly that: shift on an empty Go slice has to hand
+// back something, whatever it hands back is the element type's zero value, and
+// the defined test then reads as a truth test. Taking the loop as a whole
+// gives the shape a Go developer writes, where the length is the condition.
+func (l *Lowerer) drainLoop(n *ast.While) ([]ir.Stmt, bool) {
+	if n.Until || n.DoWhile {
+		return nil, false
+	}
+	declNode, arr, front, ok := drainShape(n.Cond)
+	if !ok {
+		return nil, false
+	}
+
+	saved := l.scope
+	l.scope = newScope(saved)
+	defer func() { l.scope = saved }()
+
+	b := l.lookup('@', arr.Name, arr)
+	b.Reads++
+	b.Writes++
+	list := l.identFor(b)
+	elem := elemOf(typeOrAny(list))
+
+	var item *Binding
+	switch t := declNode.(type) {
+	case *ast.My:
+		vars := declaredVars(t)
+		if len(vars) != 1 || vars[0].Sigil != '$' {
+			return nil, false
+		}
+		item = l.declare(vars[0], KindLocal)
+	case *ast.Var:
+		if t.Sigil != '$' {
+			return nil, false
+		}
+		item = l.lookup('$', t.Name, t)
+	default:
+		return nil, false
+	}
+	item.Writes++
+	l.observe(item, elem)
+	if l.pass == 2 {
+		elem = item.Type
+	}
+
+	var pick, rest ir.Expr
+	if front {
+		pick = index(list, ir.IntLit("0"), elem)
+		rest = slicing(list, ir.IntLit("1"), nil, typeOrAny(list))
+	} else {
+		last := ir.Bin("-", lenOf(list), ir.IntLit("1"), ir.TInt)
+		pick = index(list, last, elem)
+		rest = slicing(list, nil, last, typeOrAny(list))
+	}
+	take := assign(":=", []ir.Expr{ir.NewIdent(item.Go, elem)}, []ir.Expr{pick})
+	shrink := assign("=", []ir.Expr{l.writeTarget(b)}, []ir.Expr{rest})
+
+	body, label := l.loopBody(n.Body, l.label(n.Label))
+	body.Stmts = append([]ir.Stmt{take, shrink}, body.Stmts...)
+
+	out := &ir.For{Cond: ir.Bin(">", lenOf(list), ir.IntLit("0"), ir.TBool), Body: body, Label: label}
+	l.setProv(out, n)
+	l.note(out, "The loop asks whether there was an element to take, not whether the "+
+		"element was true, which is why a queue holding a 0 does not stop it early. "+
+		"Go asks that question with the length, and taking the element is then two "+
+		"plain statements at the top of the body.",
+		"slices-not-arrays", "nil-vs-undef")
+	return []ir.Stmt{out}, true
+}
+
+// drainShape reads `defined(my $x = shift @a)` and its relatives, reporting
+// what is being declared, which array is being emptied, and from which end.
+func drainShape(cond ast.Expr) (declNode ast.Expr, arr *ast.Var, front, ok bool) {
+	var inner ast.Expr
+	switch c := cond.(type) {
+	case *ast.Call:
+		if c.Name != "defined" || len(c.Args) != 1 {
+			return nil, nil, false, false
+		}
+		inner = c.Args[0]
+	case *ast.UnOp:
+		if c.Op != "defined" {
+			return nil, nil, false, false
+		}
+		inner = c.X
+	default:
+		return nil, nil, false, false
+	}
+	for {
+		p, isParen := inner.(*ast.List)
+		if !isParen || len(p.Elems) != 1 {
+			break
+		}
+		inner = p.Elems[0]
+	}
+	a, isAssign := inner.(*ast.Assign)
+	if !isAssign || a.Op != "=" {
+		return nil, nil, false, false
+	}
+	call, isCall := a.RHS.(*ast.Call)
+	if !isCall || len(call.Args) != 1 {
+		return nil, nil, false, false
+	}
+	switch call.Name {
+	case "shift":
+		front = true
+	case "pop":
+	default:
+		return nil, nil, false, false
+	}
+	src := flatten(call.Args[0])
+	if len(src) != 1 {
+		return nil, nil, false, false
+	}
+	v, isVar := src[0].(*ast.Var)
+	if !isVar || v.Sigil != '@' || v.Name == "_" {
+		return nil, nil, false, false
+	}
+	return a.LHS, v, front, true
 }
 
 // doWhile lowers `do { ... } while COND`, which Go has no form of.
@@ -808,7 +937,12 @@ func (l *Lowerer) returnStmt(n *ast.Return) []ir.Stmt {
 			}
 		} else {
 			for _, e := range flat {
-				x := l.scalar(e)
+				// A sub that hands back a container element the file has put
+				// undef into is handing back the absence too, and its Go
+				// signature is the only place that can be said. Reading the
+				// value out here would turn a missing key into a 0 at the
+				// boundary, where nothing downstream can tell the two apart.
+				x := l.scalarKeepingNil(e)
 				results = append(results, x)
 				kinds = append(kinds, typeOrAny(x))
 			}

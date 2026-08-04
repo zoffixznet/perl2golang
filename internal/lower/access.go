@@ -355,8 +355,15 @@ func (l *Lowerer) hashExpr(n *ast.HashIndex) ir.Expr {
 // which is a different one. Keeping the pointer keeps the question exact, and
 // every use of the variable in an operator reads through it.
 func (l *Lowerer) scalarKeepingNil(e ast.Expr) ir.Expr {
+	// The container's own type decides this, and it is read before anything
+	// is lowered: taking the ordinary path afterwards would lower the
+	// expression a second time, and `$items[$i++]` would step twice.
 	switch n := e.(type) {
 	case *ast.HashIndex:
+		b := l.hashBindingOf(n)
+		if b == nil || !isNullable(elemOf(b.Type)) {
+			break
+		}
 		if m, key, elem, field := l.hashPartsField(n); m != nil && key != nil &&
 			field == nil && isNullable(elem) {
 			out := index(m, key, elem)
@@ -368,6 +375,10 @@ func (l *Lowerer) scalarKeepingNil(e ast.Expr) ir.Expr {
 			return out
 		}
 	case *ast.Index:
+		b := l.arrayBindingOf(n)
+		if b == nil || !isNullable(elemOf(b.Type)) {
+			break
+		}
 		if base, idx, elem := l.indexParts(n); base != nil && isNullable(elem) {
 			out := l.helperCall(hAt, elem, base, idx)
 			l.note(out, "The slice holds pointers because the program put undef in it. "+

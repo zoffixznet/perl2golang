@@ -1,0 +1,10 @@
+--- a numeric lookup with a real zero in it ---
+http    port 80
+echo    port 0
+gopher  not listed
+--- a text lookup where the answer can be empty ---
+http    owned by web
+gopher  unowned
+--- the caller can ask a different question ---
+echo    exists=yes defined=yes
+gopher  exists=no defined=no

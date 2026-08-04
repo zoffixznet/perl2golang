@@ -107,6 +107,9 @@ type ClassField struct {
 	// Fixed marks a field whose type is known from a declaration rather than
 	// inferred from use, which is what an option specification gives.
 	Fixed bool
+	// Nil marks a field the program has put undef in, so its Go type needs
+	// room for "nothing here" the way a container's element type does.
+	Nil bool
 	// Owner is the class that declares it, which matters once a parent is
 	// embedded and its fields are reachable through promotion.
 	Owner *Class
@@ -536,6 +539,9 @@ func (l *Lowerer) settleFields() {
 			t := joinAll(f.Evidence)
 			if t == nil {
 				t = ir.TAny
+			}
+			if f.Nil {
+				t = nullable(t)
 			}
 			f.Type = t
 		}
