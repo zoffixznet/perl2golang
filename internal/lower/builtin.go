@@ -163,7 +163,9 @@ func (l *Lowerer) builtin(n *ast.Call) ir.Expr {
 		if len(n.Args) == 1 {
 			return l.definedExpr(n.Args[0], n)
 		}
-		return l.definedExpr(nil, n)
+		// `defined` with nothing after it asks about $_, which is what
+		// `grep { defined } @list` is doing.
+		return l.definedExpr(&ast.Var{Sigil: '$', Name: "_"}, n)
 	case "exists":
 		if len(n.Args) == 1 {
 			return l.existsExpr(n.Args[0], n)

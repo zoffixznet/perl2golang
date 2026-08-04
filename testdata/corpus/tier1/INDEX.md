@@ -1,6 +1,6 @@
 # Tier 1 corpus -- fundamentals
 
-43 self-contained Perl programs covering the core of the language: scalars,
+45 self-contained Perl programs covering the core of the language: scalars,
 numbers, comparison, booleans, arrays, hashes, control flow, sorting, strings,
 and output. Every entry runs clean under `use strict; use warnings;` with no
 output on stderr (except the two entries marked below, which write to stderr on
@@ -74,6 +74,8 @@ sensitive formatting, or unsorted hash iteration order.
 | 41 | `41-undef-and-range` | `undef` in a typed container, and reading past the end of an array |
 | 42 | `42-what-an-operator-yields` | `&&` and `\|\|` yielding an operand, `push` and `unshift` yielding the new length, `chop` versus `chomp`, `chomp` wrapping a declaration, `s///` yielding a count and `s///r` yielding the copy |
 | 43 | `43-case-folding-and-squeeze` | `\u` `\L` `\U` inside a replacement and `tr///s`, neither of which converts yet, with the counting form of `tr` as the contrast |
+| 44 | `44-defined-and-defaults` | `//` against `\|\|` over 0 and the empty string, `defined` on a variable that always has a value, and `//` on a hash key that is missing, zero or empty |
+| 45 | `45-undef-inside-a-container` | `undef` stored as a value in a hash and an array, `grep { defined }`, and a chain of defaults over a stored 0, none of which converts yet |
 
 ## Entries with non-zero exit status
 

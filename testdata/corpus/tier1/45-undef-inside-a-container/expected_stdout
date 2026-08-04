@@ -1,0 +1,12 @@
+--- undef as a value in a hash ---
+alice  exists=1 defined=1 true=1
+frank  exists=1 defined=0 true=0
+zed    exists=0 defined=0 true=0
+--- undef in an array ---
+length 3, slot 1 defined: no
+filled slots: 2
+--- a chain of defaults ---
+retries=0 tries=0
+--- undef through a variable ---
+copied out: undef
+after = 0:  defined

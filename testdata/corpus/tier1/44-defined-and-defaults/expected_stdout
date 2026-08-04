@@ -1,0 +1,13 @@
+--- // keeps a false value ---
+0     // 'dflt' = '0'
+0     || 'dflt' = 'dflt'
+''    // 'dflt' = ''
+''    || 'dflt' = 'dflt'
+'set' // 'dflt' = 'set'
+--- a variable that always has one ---
+count defined: yes, label defined: yes
+--- a hash key that is missing, present, or zero ---
+host     exists=1 // gives 'localhost' || gives 'localhost'
+port     exists=1 // gives '0' || gives 'DEFAULT'
+name     exists=1 // gives '' || gives 'DEFAULT'
+timeout  exists=0 // gives 'DEFAULT' || gives 'DEFAULT'

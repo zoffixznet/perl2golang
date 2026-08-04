@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T08:51:00Z",
+  "recorded": "2026-08-15T08:58:14Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -10,45 +10,45 @@
   "tiers": [
     {
       "tier": "tier1",
-      "entries": 43,
+      "entries": 45,
       "stages": {
         "compiled": {
-          "pass": 43,
+          "pass": 45,
           "fail": 0,
           "skip": 0
         },
         "emitted": {
-          "pass": 43,
+          "pass": 45,
           "fail": 0,
           "skip": 0
         },
         "equivalent": {
-          "pass": 30,
+          "pass": 32,
           "fail": 13,
           "skip": 0
         },
         "translated": {
-          "pass": 43,
+          "pass": 45,
           "fail": 0,
           "skip": 0
         },
         "typed": {
-          "pass": 27,
-          "fail": 16,
+          "pass": 28,
+          "fail": 17,
           "skip": 0
         }
       },
       "equivalent_annotated": {
-        "pass": 30,
+        "pass": 32,
         "fail": 13,
         "skip": 0
       },
       "quality": {
         "todos": 0,
-        "symbols": 477,
-        "symbols_typed": 443,
+        "symbols": 492,
+        "symbols_typed": 456,
         "refusals": 0,
-        "approximations": 91,
+        "approximations": 93,
         "crashes": 2
       }
     },
@@ -134,7 +134,7 @@
       "quality": {
         "todos": 55,
         "symbols": 863,
-        "symbols_typed": 672,
+        "symbols_typed": 671,
         "refusals": 58,
         "approximations": 291,
         "crashes": 3
@@ -222,7 +222,7 @@
       "quality": {
         "todos": 6,
         "symbols": 928,
-        "symbols_typed": 840,
+        "symbols_typed": 837,
         "refusals": 6,
         "approximations": 179,
         "crashes": 1
@@ -231,20 +231,20 @@
   ],
   "total": {
     "tier": "TOTAL",
-    "entries": 207,
+    "entries": 209,
     "stages": {
       "compiled": {
-        "pass": 190,
+        "pass": 192,
         "fail": 17,
         "skip": 0
       },
       "emitted": {
-        "pass": 207,
+        "pass": 209,
         "fail": 0,
         "skip": 0
       },
       "equivalent": {
-        "pass": 78,
+        "pass": 80,
         "fail": 93,
         "skip": 0
       },
@@ -254,36 +254,36 @@
         "skip": 1
       },
       "translated": {
-        "pass": 172,
+        "pass": 174,
         "fail": 35,
         "skip": 0
       },
       "typed": {
-        "pass": 87,
-        "fail": 120,
+        "pass": 88,
+        "fail": 121,
         "skip": 0
       }
     },
     "equivalent_annotated": {
-      "pass": 78,
+      "pass": 80,
       "fail": 93,
       "skip": 0
     },
     "quality": {
       "todos": 105,
-      "symbols": 3665,
-      "symbols_typed": 3123,
+      "symbols": 3680,
+      "symbols_typed": 3132,
       "refusals": 109,
-      "approximations": 1074,
+      "approximations": 1076,
       "crashes": 12
     }
   },
   "quality": {
     "todos": 105,
-    "symbols": 3665,
-    "symbols_typed": 3123,
+    "symbols": 3680,
+    "symbols_typed": 3132,
     "refusals": 109,
-    "approximations": 1074,
+    "approximations": 1076,
     "crashes": 12
   },
   "entries": [
@@ -374,8 +374,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 3, byte 26: got \"dflt  logical-or=dflt\\nempty // :...\", wanted \"0  logical-or=dflt\\nempty // : \\ne...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -385,17 +384,16 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "1 variable left dynamic out of 13"
+          "reason": "2 variables left dynamic out of 13"
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 3, byte 26: got \"dflt  logical-or=dflt\\nempty // :...\", wanted \"0  logical-or=dflt\\nempty // : \\ne...\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
         "symbols": 13,
-        "symbols_typed": 12,
+        "symbols_typed": 11,
         "refusals": 0,
         "approximations": 4,
         "crashes": 0
@@ -1799,7 +1797,7 @@
         "symbols": 10,
         "symbols_typed": 9,
         "refusals": 0,
-        "approximations": 4,
+        "approximations": 3,
         "crashes": 1
       }
     },
@@ -1874,6 +1872,81 @@
         "symbols_typed": 10,
         "refusals": 0,
         "approximations": 2,
+        "crashes": 0
+      }
+    },
+    {
+      "tier": "tier1",
+      "name": "44-defined-and-defaults",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "pass"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "1 variable left dynamic out of 7"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "pass"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 7,
+        "symbols_typed": 6,
+        "refusals": 0,
+        "approximations": 0,
+        "crashes": 0
+      }
+    },
+    {
+      "tier": "tier1",
+      "name": "45-undef-inside-a-container",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "stdout differs: line 3, byte 92: got \"1 true=0\\nzed    exists=0 defined...\", wanted \"0 true=0\\nzed    exists=0 defined...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "stdout differs: line 3, byte 92: got \"1 true=0\\nzed    exists=0 defined...\", wanted \"0 true=0\\nzed    exists=0 defined...\""
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 8,
+        "symbols_typed": 8,
+        "refusals": 0,
+        "approximations": 3,
         "crashes": 0
       }
     },
@@ -4902,7 +4975,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "4 variables left dynamic out of 34"
+          "reason": "5 variables left dynamic out of 34"
         }
       },
       "equivalent_annotated": {
@@ -4912,7 +4985,7 @@
       "quality": {
         "todos": 0,
         "symbols": 34,
-        "symbols_typed": 30,
+        "symbols_typed": 29,
         "refusals": 0,
         "approximations": 14,
         "crashes": 0
@@ -5242,7 +5315,7 @@
       "stages": {
         "compiled": {
           "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:198:29: undefined: item10"
+          "reason": "the generated Go does not compile: ./main.go:198:22: undefined: item10"
         },
         "emitted": {
           "outcome": "pass"
@@ -7415,7 +7488,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "3 variables left dynamic out of 43"
+          "reason": "5 variables left dynamic out of 43"
         }
       },
       "equivalent_annotated": {
@@ -7425,7 +7498,7 @@
       "quality": {
         "todos": 0,
         "symbols": 43,
-        "symbols_typed": 40,
+        "symbols_typed": 38,
         "refusals": 0,
         "approximations": 9,
         "crashes": 0
@@ -7952,7 +8025,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "6 variables left dynamic out of 56"
+          "reason": "7 variables left dynamic out of 56"
         }
       },
       "equivalent_annotated": {
@@ -7962,7 +8035,7 @@
       "quality": {
         "todos": 0,
         "symbols": 56,
-        "symbols_typed": 50,
+        "symbols_typed": 49,
         "refusals": 0,
         "approximations": 12,
         "crashes": 0

@@ -240,6 +240,39 @@ func (l *Lowerer) orValue(n *ast.BinOp, definedOr bool) ir.Expr {
 			return out
 		}
 	}
+	if definedOr {
+		// A left side that cannot be undef makes the default unreachable, and
+		// that includes another // whose own default is a value: `$a // $b //
+		// 5` always ends with something.
+		if definiteValue(n.L) {
+			out := l.expr(n.L)
+			l.note(out, "The left side always has a value, so // can never reach its "+
+				"right side and the default is dropped.",
+				"nil-vs-undef", "static-types-and-zero-values")
+			return out
+		}
+		// `$h{k} // $default` asks whether the hash has that key, which is the
+		// two-result index form and not a truth test: a stored 0 keeps its
+		// place.
+		if h, ok := n.L.(*ast.HashIndex); ok {
+			if out, done := l.definedOrKey(h, n); done {
+				return out
+			}
+		}
+		// `$x // $default` asks whether the left side has a value, and a
+		// variable that always has one makes the default unreachable. Writing
+		// the test out would compare against the zero value and take the
+		// default for a stored 0, which is the wrong answer rather than an
+		// approximate one.
+		if _, ok := l.alwaysDefined(n.L, n); ok {
+			out := l.expr(n.L)
+			l.note(out, "The left side always has a value, so // can never reach its "+
+				"right side and the default is dropped. Perl's undef is a state a Go "+
+				"variable of this type does not have.",
+				"nil-vs-undef", "static-types-and-zero-values")
+			return out
+		}
+	}
 	lx := l.expr(n.L)
 	rx := l.expr(n.R)
 	t := join(typeOrAny(lx), typeOrAny(rx))
@@ -524,6 +557,9 @@ func (l *Lowerer) definedExpr(x ast.Expr, at ast.Node) ir.Expr {
 	if out, ok := l.optionGiven(x, at); ok {
 		return out
 	}
+	if out, ok := l.alwaysDefined(x, at); ok {
+		return out
+	}
 	switch n := x.(type) {
 	case *ast.HashIndex:
 		m, key, _, field := l.hashPartsField(n)
@@ -555,8 +591,77 @@ func (l *Lowerer) definedExpr(x ast.Expr, at ast.Node) ir.Expr {
 	return l.definedValue(l.expr(x), at)
 }
 
+// definedOrKey lowers `$h{k} // $default`, where the question is whether the
+// hash holds the key at all.
+func (l *Lowerer) definedOrKey(h *ast.HashIndex, n *ast.BinOp) (ir.Expr, bool) {
+	m, key, elem, field := l.hashPartsField(h)
+	if m == nil || key == nil || field != nil {
+		return nil, false
+	}
+	name := l.tmp(defaultName(h))
+	okName := l.tmp("ok")
+	decl := assign(":=", []ir.Expr{ir.NewIdent(name, elem), ir.NewIdent(okName, ir.TBool)},
+		[]ir.Expr{indexComma(m, key, elem)})
+	target := ir.NewIdent(name, elem)
+	guard := &ir.If{
+		Cond: negated(ir.NewIdent(okName, ir.TBool)),
+		Then: &ir.Block{Stmts: []ir.Stmt{
+			assign("=", []ir.Expr{target}, []ir.Expr{l.assignable(l.scalar(n.R), elem, n.R)}),
+		}},
+	}
+	l.setProv(decl, n)
+	l.note(decl, "// asks whether the key is there, not whether its value is true, so "+
+		"a stored 0 or empty string keeps its place. The two-result form of the index "+
+		"expression is that question, and it is the only way to ask it: reading a "+
+		"missing key on its own gives the value type's zero value, which is "+
+		"indistinguishable from a stored one.",
+		"comma-ok-idiom", "nil-vs-undef")
+	l.emit(decl)
+	l.emit(guard)
+	return target, true
+}
+
+// alwaysDefined answers `defined` for a variable that can never hold nothing.
+//
+// A scalar declared with an initialiser and never assigned undef always has a
+// value, in Perl as much as in Go, so the question has one answer and it can
+// be written in. This matters because the fallback is a zero-value test, and
+// that test says a variable holding 0 or the empty string is undefined, which
+// is a different and wrong answer rather than an approximate one.
+func (l *Lowerer) alwaysDefined(x ast.Expr, at ast.Node) (ir.Expr, bool) {
+	v, ok := x.(*ast.Var)
+	if !ok || v.Sigil != '$' {
+		return nil, false
+	}
+	b, found := l.scope.lookup(varKey('$', v.Name))
+	if !found || !b.Definite || b.Kind == KindParam {
+		return nil, false
+	}
+	switch typeOrAny(l.identFor(b)).Kind {
+	case ir.Int, ir.Float, ir.String, ir.Bool:
+	default:
+		return nil, false
+	}
+	out := ir.BoolLit(true)
+	l.note(out, "This variable is given a value where it is declared and never set "+
+		"to undef, so it always has one and the test has a single answer. Testing "+
+		"against the zero value instead would call a variable holding 0 or the empty "+
+		"string undefined, which is a different question.",
+		"nil-vs-undef", "static-types-and-zero-values")
+	return out, true
+}
+
 // definedValue answers `defined` for a value whose type is already known.
 func (l *Lowerer) definedValue(e ir.Expr, at ast.Node) ir.Expr {
+	// An untyped nil is undef written out, and Go will not compare one with
+	// anything, so the answer is written in instead.
+	if lit, ok := e.(*ir.Lit); ok && lit.Kind == ir.LitNil {
+		out := ir.BoolLit(false)
+		l.note(out, "This is undef itself rather than a variable that might hold it, "+
+			"so the answer is no and it is written in.",
+			"nil-vs-undef")
+		return out
+	}
 	t := typeOrAny(e)
 	switch t.Kind {
 	case ir.Any, ir.Pointer, ir.Slice, ir.Map, ir.Error:
@@ -702,4 +807,54 @@ func (l *Lowerer) peek(e ast.Expr) ir.Expr {
 		}
 	}
 	return nil
+}
+
+// markIndefinite records that a scalar was given a value that may be undef,
+// which makes a later `defined` test a real question again.
+func (l *Lowerer) markIndefinite(e ast.Expr) {
+	v, ok := e.(*ast.Var)
+	if !ok || v.Sigil != '$' {
+		return
+	}
+	if b, found := l.scope.lookup(varKey('$', v.Name)); found {
+		b.Definite = false
+	}
+}
+
+// definiteValue reports whether an expression can be relied on to produce a
+// value rather than undef.
+//
+// The list is deliberately short. A hash read, a capture group, a sub call and
+// a list assignment can all leave undef behind, so none of them is here, and
+// anything not recognised is treated as though it could.
+func definiteValue(e ast.Expr) bool {
+	switch n := e.(type) {
+	case *ast.NumberLit, *ast.StrLit, *ast.InterpLit, *ast.QwLit:
+		return true
+	case *ast.UnOp:
+		switch n.Op {
+		case "-", "+", "!", "not":
+			return definiteValue(n.X)
+		}
+	case *ast.BinOp:
+		switch n.Op {
+		case "+", "-", "*", "/", "%", "**", ".", "x",
+			"==", "!=", "<", ">", "<=", ">=",
+			"eq", "ne", "lt", "gt", "le", "ge", "<=>", "cmp":
+			return true
+		case "//", "||", "or":
+			// A default chain is worth exactly as much as its last term.
+			return definiteValue(n.R)
+		}
+	case *ast.Ternary:
+		return definiteValue(n.A) && definiteValue(n.B)
+	case *ast.Call:
+		switch n.Name {
+		case "length", "scalar", "int", "abs", "sqrt", "uc", "lc", "ucfirst",
+			"lcfirst", "join", "sprintf", "time", "index", "rindex", "keys",
+			"values", "exists", "defined", "ord", "chr", "hex", "oct":
+			return true
+		}
+	}
+	return false
 }

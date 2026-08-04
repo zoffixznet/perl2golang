@@ -58,6 +58,12 @@ type Binding struct {
 	// Closed marks a filehandle the program closes explicitly, so the
 	// generated code does not also defer a close.
 	Closed bool
+	// Definite marks a scalar every assignment to which gives it a value
+	// that cannot be undef: a literal, some arithmetic, a length. It is what
+	// separates a variable whose `defined` test has a real answer from one
+	// whose answer is always yes, and the test is deliberately conservative,
+	// because saying yes wrongly turns an approximation into a wrong answer.
+	Definite bool
 	// Init is the value a package-level binding is declared with, used where
 	// one of Perl's own variables has to become a real Go variable.
 	Init ir.Expr

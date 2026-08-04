@@ -107,6 +107,7 @@ func (l *Lowerer) undefCall(n *ast.Call) ir.Expr {
 	}
 
 	// `undef $x` clears the variable, which in Go is assigning its zero value.
+	l.markIndefinite(args[0])
 	target := l.expr(args[0])
 	t := typeOrAny(target)
 	st := assign("=", []ir.Expr{target}, []ir.Expr{zeroOf(t)})

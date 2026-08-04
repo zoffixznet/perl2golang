@@ -88,6 +88,67 @@ map[a:map[b:1]]
 1
 ```
 
+## // is a different question from ||, and Go can only answer one of them
+
+`$port || 8080` and `$port // 8080` differ on exactly one input, and it is the one a configuration file is most likely to contain: a zero. `||` asks whether the value is true and replaces a port of 0; `//` asks whether it has a value at all and keeps it. Perl grew the second operator because the first kept getting this wrong.
+
+Go can answer the second question in one place and nowhere else. A map read has a two-result form, and that form is the question:
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	conf := map[string]int{"port": 0}
+
+	// $conf{port} // 8080 -- the question is whether the key is there.
+	port, ok := conf["port"]
+	if !ok {
+		port = 8080
+	}
+
+	// $conf{port} || 8080 -- the question is whether the value is true.
+	loud := conf["port"]
+	if loud == 0 {
+		loud = 8080
+	}
+	fmt.Println(port, loud)
+
+	// A key that is present and one that is absent read the same way on
+	// their own, which is why the comma-ok form exists at all.
+	fmt.Println(conf["port"], conf["timeout"])
+
+	// Where a value really can be absent, the type says so.
+	timeout := map[string]*int{"idle": nil, "read": intp(30)}
+	for _, k := range []string{"idle", "read", "write"} {
+		if v, found := timeout[k]; found && v != nil {
+			fmt.Printf("%s=%d\n", k, *v)
+		} else if found {
+			fmt.Printf("%s is there and empty\n", k)
+		} else {
+			fmt.Printf("%s is not there\n", k)
+		}
+	}
+}
+
+func intp(n int) *int { return &n }
+```
+
+```
+0 8080
+0 0
+idle is there and empty
+read=30
+write is not there
+```
+
+For a plain variable there is no such form, and there is no way to add one: `var n int` holds 0 from the moment it exists, and nothing distinguishes that from a 0 someone stored. Two consequences follow, and they are worth taking seriously rather than working around.
+
+The first is that a `defined` test on an ordinary variable usually has one answer. A variable given a value where it is declared and never set to undef always has one, so the test is a constant and writing it out as a zero-value comparison would be worse than useless: it would answer a different question, and answer it wrongly for exactly the values that matter.
+
+The second is that where a value genuinely can be absent, the type has to say so. `*int` is Go's undef, and it is a real declaration with real costs: a dereference at every read, and a nil check before each one. The loop at the end of the sample shows the three states a `map[string]*int` can be in -- absent, present and empty, present with a value -- which is precisely what a Perl hash gives you for free and what a `map[string]int` cannot express at all.
+
 ## The mismatch
 
 Translate the concept, not the word: where Perl code means "no value yet" for a whole record, Go uses a nil *pointer* (`*Config`), and every dereference of it must be guarded or provably preceded by initialisation — there is no warn-and-continue mode. Where Perl means "this field might be absent as opposed to zero", Go uses a pointer field or comma-ok lookup (`comma-ok-idiom`); plain `int`/`string` fields cannot express absence at all (`static-types-and-zero-values`). And notice the read/write asymmetry demonstrated above, because it is exactly inverted from Perl: Go reads through missing nested keys safely *without* creating anything (no `exists`-vivifies gotcha), but writes need the path built explicitly. When porting a Perl structure-builder, the `if m[k] == nil { m[k] = ... }` dance is the honest translation of autovivification — or restructure to a flat map with a struct key and skip nesting entirely (`maps-of-slices`). Finally, nil compares only against nilable types: `x == nil` on an `int` is a compile error, so "is it defined?" is frequently a question Go makes unaskable — by design.

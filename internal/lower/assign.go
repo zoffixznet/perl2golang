@@ -304,6 +304,13 @@ func varExprs(vs []*ast.Var) []ast.Expr {
 func (l *Lowerer) declareSingle(v *ast.Var, n *ast.Assign) []ir.Stmt {
 	b := l.declare(v, KindLocal)
 	b.Writes++
+	// A declaration whose value cannot be undef makes a later `defined` test
+	// a question with one answer. Anything else leaves it a real question.
+	if v.Sigil == '$' && definiteValue(n.RHS) {
+		b.Definite = true
+	} else {
+		b.Definite = false
+	}
 
 	// The hash reference a constructor is about to bless is the object
 	// itself, so it is built as the struct rather than as a map.
@@ -1008,6 +1015,9 @@ func allScalarTargets(targets []ast.Expr) bool {
 
 // assignToVar lowers `$x = ...`, `@a = ...`, `%h = ...`.
 func (l *Lowerer) assignToVar(v *ast.Var, n *ast.Assign) []ir.Stmt {
+	if v.Sigil == '$' && !definiteValue(n.RHS) {
+		l.markIndefinite(v)
+	}
 	// Assigning to a glob replaces an entry in the symbol table, so every
 	// call already written against that name starts running the new code.
 	// Nothing in Go can be reached through a name at run time.
