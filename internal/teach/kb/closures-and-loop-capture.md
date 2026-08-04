@@ -74,6 +74,66 @@ Under pre-1.22 semantics that last line printed `3 3 3`, and the ritual fix was 
 
 Functions are ordinary typed values — `var cb func(int) error` declares a nil callback, invocable only after assignment (calling a nil func panics), passable and returnable like any Perl coderef, minus the `->()` arrow: `cb(5)`, not `&$cb(5)`. What Perl's coderef culture has that Go's does not: no string `eval` to build code, no closures over *package* state via `local`, no `AUTOLOAD`-style late binding — a closure captures lexical variables and that is the entire mechanism. Watch one Perl-specific hazard in reverse: because closures capture *variables*, a closure and its surrounding code share mutable state, and handing such a closure to a goroutine creates a data race unless synchronised (`race-detector`) — Perl's threadless daily life never made you think about that. Also note methods can be captured as values too: `f := buf.WriteString` binds receiver and method into a plain function value (a "method value"), the Go answer to `$obj->can('method')` handles.
 
+## Calling one, and getting the arguments there
+
+`$code->(@args)` is one character of Perl and two decisions in Go.
+
+The first is what the reference's type is. A closure whose signature the compiler can see is called like any other function, with no arrow and no assertion, and a factory that hands several of them back says so in its result list. Writing the result types out is worth doing even when Go would infer them, because the caller reads the signature and not the body:
+
+```go
+package main
+
+import (
+	"fmt"
+	"strings"
+)
+
+// makeCounter is a Perl closure factory with its signatures written down. Both
+// closures share `start`, and the caller can see from the result types which
+// one takes an argument.
+func makeCounter(start int) (bump func(int) int, peek func() int) {
+	bump = func(by int) int {
+		start += by
+		return start
+	}
+	peek = func() int { return start }
+	return bump, peek
+}
+
+func main() {
+	bump, peek := makeCounter(100)
+	fmt.Println(bump(5), bump(20), peek())
+
+	// $joiner->(@parts) has to spread: Go passes one slice to a variadic
+	// parameter, and only with the three dots.
+	joiner := func(parts ...string) string { return strings.Join(parts, "|") }
+	parts := []string{"alpha", "beta", "gamma"}
+	fmt.Println(joiner(parts...))
+
+	// Perl flattens every array in the call into one list. Go spreads exactly
+	// one slice and will not mix it with other arguments, so the list is
+	// built first.
+	all := []string{"first"}
+	all = append(all, parts...)
+	all = append(all, parts...)
+	fmt.Println(joiner(all...))
+	fmt.Printf("[%s]\n", joiner())
+}
+```
+
+```
+105 125 125
+alpha|beta|gamma
+first|alpha|beta|gamma|alpha|beta|gamma
+[]
+```
+
+Both closures in the factory read and write `start`, and neither of them copied it: a Go closure captures the variable, not its value, which is the behaviour Perl's `my` gives you and the reason a counter written this way works in either language.
+
+The second decision is the arguments. Perl flattens every array in a call into one flat `@_`, so `$code->($x, @rest)` and `$code->(@rest)` are both just lists. Go spreads exactly one slice into a variadic parameter, it must be the last argument, and it cannot be mixed with others: `f(x, rest...)` is a compile error when `x` is also meant for the variadic part. So a mixed call becomes a slice built first and spread as a whole, which is what the third line above shows.
+
+Two smaller traps live here. `f(parts...)` passes the *same backing array*, so a variadic function that writes to its parameter writes through to the caller's slice; Perl's `@_` aliases its arguments too, so this one is familiar. And a variadic function called with no arguments gets a nil slice rather than an empty one, which `strings.Join` and `range` both handle without complaint.
+
 ## The dispatch table, and why it costs something
 
 The hash of subs is one of Perl's best idioms and one of the hardest things to bring across, because a Go map has one value type and the handlers in a real table do not agree about their signatures:

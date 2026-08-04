@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T07:41:19Z",
+  "recorded": "2026-08-15T07:54:51Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -53,45 +53,45 @@
     },
     {
       "tier": "tier2",
-      "entries": 63,
+      "entries": 65,
       "stages": {
         "compiled": {
-          "pass": 59,
-          "fail": 4,
+          "pass": 64,
+          "fail": 1,
           "skip": 0
         },
         "emitted": {
-          "pass": 63,
+          "pass": 65,
           "fail": 0,
           "skip": 0
         },
         "equivalent": {
-          "pass": 28,
-          "fail": 35,
+          "pass": 29,
+          "fail": 36,
           "skip": 0
         },
         "translated": {
-          "pass": 59,
+          "pass": 61,
           "fail": 4,
           "skip": 0
         },
         "typed": {
           "pass": 27,
-          "fail": 36,
+          "fail": 38,
           "skip": 0
         }
       },
       "equivalent_annotated": {
-        "pass": 28,
-        "fail": 35,
+        "pass": 29,
+        "fail": 36,
         "skip": 0
       },
       "quality": {
         "todos": 10,
-        "symbols": 1166,
-        "symbols_typed": 988,
+        "symbols": 1195,
+        "symbols_typed": 1019,
         "refusals": 10,
-        "approximations": 436
+        "approximations": 442
       }
     },
     {
@@ -132,9 +132,9 @@
       "quality": {
         "todos": 64,
         "symbols": 831,
-        "symbols_typed": 631,
+        "symbols_typed": 634,
         "refusals": 67,
-        "approximations": 294
+        "approximations": 290
       }
     },
     {
@@ -226,21 +226,21 @@
   ],
   "total": {
     "tier": "TOTAL",
-    "entries": 195,
+    "entries": 197,
     "stages": {
       "compiled": {
-        "pass": 176,
-        "fail": 19,
+        "pass": 181,
+        "fail": 16,
         "skip": 0
       },
       "emitted": {
-        "pass": 195,
+        "pass": 197,
         "fail": 0,
         "skip": 0
       },
       "equivalent": {
-        "pass": 65,
-        "fail": 95,
+        "pass": 66,
+        "fail": 96,
         "skip": 0
       },
       "honest": {
@@ -249,35 +249,35 @@
         "skip": 1
       },
       "translated": {
-        "pass": 162,
+        "pass": 164,
         "fail": 33,
         "skip": 0
       },
       "typed": {
         "pass": 82,
-        "fail": 113,
+        "fail": 115,
         "skip": 0
       }
     },
     "equivalent_annotated": {
-      "pass": 65,
-      "fail": 95,
+      "pass": 66,
+      "fail": 96,
       "skip": 0
     },
     "quality": {
       "todos": 115,
-      "symbols": 3526,
-      "symbols_typed": 2980,
+      "symbols": 3555,
+      "symbols_typed": 3014,
       "refusals": 119,
-      "approximations": 1054
+      "approximations": 1056
     }
   },
   "quality": {
     "todos": 115,
-    "symbols": 3526,
-    "symbols_typed": 2980,
+    "symbols": 3555,
+    "symbols_typed": 3014,
     "refusals": 119,
-    "approximations": 1054
+    "approximations": 1056
   },
   "entries": [
     {
@@ -2140,15 +2140,14 @@
       "kind": "convert",
       "stages": {
         "compiled": {
-          "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:27:37: invalid operation: cannot call dep (variable of interface type any): any is not a function"
+          "outcome": "pass"
         },
         "emitted": {
           "outcome": "pass"
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "the generated program did not compile"
+          "reason": "stdout differs: line 11, byte 188: got \"0 1 2\\ncolour: red\\ncolour: green\\n...\", wanted \"3 3 3\\ncolour: red\\ncolour: green\\n...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -2158,19 +2157,19 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "15 variables left dynamic out of 33"
+          "reason": "4 variables left dynamic out of 33"
         }
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "the generated program did not compile"
+        "reason": "stdout differs: line 11, byte 188: got \"0 1 2\\ncolour: red\\ncolour: green\\n...\", wanted \"3 3 3\\ncolour: red\\ncolour: green\\n...\""
       },
       "quality": {
         "todos": 0,
         "symbols": 33,
-        "symbols_typed": 18,
+        "symbols_typed": 29,
         "refusals": 0,
-        "approximations": 11
+        "approximations": 7
       }
     },
     {
@@ -2179,15 +2178,14 @@
       "kind": "convert",
       "stages": {
         "compiled": {
-          "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:134:38: too many arguments in call to opFor(\"mul\")"
+          "outcome": "pass"
         },
         "emitted": {
           "outcome": "pass"
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "the generated program did not compile"
+          "reason": "exit status 2, wanted 0; stdout differs: 102 byte(s) missing after line 11, expected \"arrays=2 hashes=2 leaves=report|...\"; stderr differs: unexpected \"panic: interface conversion: interface {} is string, not map[string]i...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -2202,14 +2200,14 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "the generated program did not compile"
+        "reason": "exit status 2, wanted 0; stdout differs: 102 byte(s) missing after line 11, expected \"arrays=2 hashes=2 leaves=report|...\"; stderr differs: unexpected \"panic: interface conversion: interface {} is string, not map[string]i...\""
       },
       "quality": {
         "todos": 0,
         "symbols": 41,
         "symbols_typed": 16,
         "refusals": 0,
-        "approximations": 12
+        "approximations": 15
       }
     },
     {
@@ -2665,15 +2663,14 @@
       "kind": "convert",
       "stages": {
         "compiled": {
-          "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:149:14: too many arguments in call to cmp"
+          "outcome": "pass"
         },
         "emitted": {
           "outcome": "pass"
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "the generated program did not compile"
+          "reason": "exit status 2, wanted 0; stdout differs: 75 byte(s) missing after line 3, expected \"cherry          30\\nelderberry   ...\"; stderr differs: unexpected \"panic: interface conversion: interface {} is *main.V, not map[string]...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -2683,16 +2680,16 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "2 variables left dynamic out of 19"
+          "reason": "3 variables left dynamic out of 20"
         }
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "the generated program did not compile"
+        "reason": "exit status 2, wanted 0; stdout differs: 75 byte(s) missing after line 3, expected \"cherry          30\\nelderberry   ...\"; stderr differs: unexpected \"panic: interface conversion: interface {} is *main.V, not map[string]...\""
       },
       "quality": {
         "todos": 0,
-        "symbols": 19,
+        "symbols": 20,
         "symbols_typed": 17,
         "refusals": 0,
         "approximations": 6
@@ -2768,7 +2765,7 @@
         "symbols": 17,
         "symbols_typed": 10,
         "refusals": 0,
-        "approximations": 6
+        "approximations": 8
       }
     },
     {
@@ -3737,7 +3734,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "17 variables left dynamic out of 24"
+          "reason": "16 variables left dynamic out of 24"
         }
       },
       "equivalent_annotated": {
@@ -3746,9 +3743,9 @@
       "quality": {
         "todos": 0,
         "symbols": 24,
-        "symbols_typed": 7,
+        "symbols_typed": 8,
         "refusals": 0,
-        "approximations": 6
+        "approximations": 1
       }
     },
     {
@@ -4085,6 +4082,80 @@
         "symbols_typed": 8,
         "refusals": 0,
         "approximations": 10
+      }
+    },
+    {
+      "tier": "tier2",
+      "name": "64-code-refs-called",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "pass"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "4 variables left dynamic out of 14"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "pass"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 14,
+        "symbols_typed": 10,
+        "refusals": 0,
+        "approximations": 4
+      }
+    },
+    {
+      "tier": "tier2",
+      "name": "65-recursive-closures",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "exit status 2, wanted 0; stdout differs: 110 byte(s) missing after line 1, expected \"by name: apple/3 fig/9 pear/3\\nby...\"; stderr differs: unexpected \"panic: interface conversion: interface {} is *main.Row, not map[strin...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "5 variables left dynamic out of 14"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "exit status 2, wanted 0; stdout differs: 110 byte(s) missing after line 1, expected \"by name: apple/3 fig/9 pear/3\\nby...\"; stderr differs: unexpected \"panic: interface conversion: interface {} is *main.Row, not map[strin...\""
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 14,
+        "symbols_typed": 9,
+        "refusals": 0,
+        "approximations": 6
       }
     },
     {
@@ -5036,7 +5107,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "8 variables left dynamic out of 36"
+          "reason": "5 variables left dynamic out of 36"
         }
       },
       "equivalent_annotated": {
@@ -5046,9 +5117,9 @@
       "quality": {
         "todos": 0,
         "symbols": 36,
-        "symbols_typed": 28,
+        "symbols_typed": 31,
         "refusals": 0,
-        "approximations": 10
+        "approximations": 6
       }
     },
     {

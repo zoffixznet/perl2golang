@@ -24,11 +24,17 @@ func callFn(v any, args ...any) any {
 	}
 	in := make([]reflect.Value, 0, len(args))
 	for i, a := range args {
+		// One of the functions in a table of callbacks usually takes fewer
+		// arguments than the others: the fallback that answers "n/a" takes
+		// none at all. Extras are dropped rather than passed on, because
+		// passing them on is a panic inside reflection, a long way from the
+		// line that caused it.
+		if !t.IsVariadic() && i >= fixed {
+			break
+		}
 		want := t.In(min(i, t.NumIn()-1))
 		if t.IsVariadic() && i >= fixed {
 			want = t.In(t.NumIn() - 1).Elem()
-		} else if i >= t.NumIn() {
-			break
 		}
 		in = append(in, fitTo(a, want))
 	}

@@ -1,0 +1,13 @@
+-- a closure factory --
+bump 5  -> 105
+bump 20 -> 125
+peek    -> 125
+-- an array flattened into the call --
+list only:   alpha|beta|gamma
+one in front: first|alpha|beta|gamma
+two lists:    alpha|beta|gamma|alpha|beta|gamma
+no arguments: []
+-- a table with a fallback --
+add(6,7) = 13
+mul(6,7) = 42
+nope(6,7) = n/a

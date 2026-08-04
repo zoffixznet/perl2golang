@@ -96,22 +96,63 @@ func join(a, b *ir.Type) *ir.Type {
 		return ir.PointerTo(elem)
 	}
 
-	// Two function types whose parameters agree and where only one of them has
-	// a result are the same function seen at two moments, not two functions.
-	// A sub's result is discovered from the returns in its body, so an earlier
-	// round of inference can see it as returning nothing and a later one as
-	// returning something, and calling that a conflict throws away everything
-	// the later round worked out.
-	if a.Kind == ir.Func && b.Kind == ir.Func && sameParams(a, b) {
-		switch {
-		case len(a.Results) == 0 && len(b.Results) > 0:
-			return b
-		case len(b.Results) == 0 && len(a.Results) > 0:
-			return a
+	// Two function types of the same shape are the same function seen at two
+	// moments, not two functions. A sub's signature is discovered from its
+	// body, so an earlier round of inference can see it as returning nothing,
+	// or as taking and returning values whose own types had not settled, and a
+	// later round can see the answer. Calling that a conflict throws away
+	// everything the later round worked out, and leaves whatever holds the
+	// closure as `any`, which does not compile at the call.
+	if a.Kind == ir.Func && b.Kind == ir.Func {
+		if t := joinFunc(a, b); t != nil {
+			return t
 		}
 	}
 
 	return unresolved
+}
+
+// joinFunc reconciles two function types, or reports that it cannot.
+//
+// Every position is joined on its own, with the same rule the top level uses:
+// an `any` on one side is an unfinished answer rather than an observation, so
+// the other side wins. Two unfinished answers stay unfinished.
+func joinFunc(a, b *ir.Type) *ir.Type {
+	if a.Variadic != b.Variadic || len(a.Params) != len(b.Params) {
+		return nil
+	}
+	switch {
+	case len(a.Results) == 0 && len(b.Results) > 0:
+		return b
+	case len(b.Results) == 0 && len(a.Results) > 0:
+		return a
+	case len(a.Results) != len(b.Results):
+		return nil
+	}
+	fold := func(as, bs []*ir.Type) ([]*ir.Type, bool) {
+		out := make([]*ir.Type, len(as))
+		for i := range as {
+			t := join(as[i], bs[i])
+			switch {
+			case t == nil:
+				// Neither side had anything to say about this position.
+				t = ir.TAny
+			case isUnresolved(t):
+				return nil, false
+			}
+			out[i] = t
+		}
+		return out, true
+	}
+	params, ok := fold(a.Params, b.Params)
+	if !ok {
+		return nil
+	}
+	results, ok := fold(a.Results, b.Results)
+	if !ok {
+		return nil
+	}
+	return &ir.Type{Kind: ir.Func, Params: params, Results: results, Variadic: a.Variadic}
 }
 
 // sameParams reports whether two function types take the same arguments.

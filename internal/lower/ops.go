@@ -243,6 +243,21 @@ func (l *Lowerer) orValue(n *ast.BinOp, definedOr bool) ir.Expr {
 	lx := l.expr(n.L)
 	rx := l.expr(n.R)
 	t := join(typeOrAny(lx), typeOrAny(rx))
+	// Evidence about one variable treats `any` as an absence of information,
+	// because a later observation can still settle it. The two sides of a
+	// default are not that: both are values this expression can hand back, so
+	// a side whose type did not resolve is a value of unknown type, and the
+	// slot has to hold it as well as the other side.
+	//
+	// It only matters where the other side is a function, because that is the
+	// case where the wrong answer does not compile: the unresolved side would
+	// be asserted into a signature invented from the fallback's body, and the
+	// caller would then be checked against a signature the real value never
+	// had. `$x || 0` keeps its int, which is what the reader wants to see.
+	if lt, rt := typeOrAny(lx), typeOrAny(rx); (isDynamic(lt) && rt.Kind == ir.Func) ||
+		(isDynamic(rt) && lt.Kind == ir.Func) {
+		t = ir.TAny
+	}
 
 	name := l.tmp(defaultName(n.L))
 	decl := &ir.DeclStmt{Names: []string{name}, Type: t, Values: []ir.Expr{l.assignable(lx, t, n.L)}}
@@ -571,8 +586,15 @@ func (l *Lowerer) cond(e ast.Expr) ir.Expr {
 // language designers left it out on purpose, so the generated form is the
 // idiomatic one rather than a workaround.
 func (l *Lowerer) ternary(n *ast.Ternary) ir.Expr {
+	// Two function literals as the arms of a ternary share one slot, exactly
+	// as two in a list or a table do, so they take the uniform closure
+	// signature: `my $cmp = $by_count ? sub {...} : sub {...}` is one variable
+	// and Go gives it one type.
+	saved := l.uniformFn
+	l.uniformFn = l.uniformFn || closureList([]ast.Expr{n.A, n.B})
 	a := l.expr(n.A)
 	b := l.expr(n.B)
+	l.uniformFn = saved
 	t := join(typeOrAny(a), typeOrAny(b))
 
 	name := l.tmp(defaultName(n.A))

@@ -590,11 +590,10 @@ func (l *Lowerer) callRef(n *ast.FuncCallRef) ir.Expr {
 		// signature, which is exactly what a table of callbacks does not
 		// have in common. Asking the value what it takes is the only thing
 		// that works for all of them.
-		call := []ir.Expr{l.assignable(fn, ir.TAny, n)}
-		for _, a := range args {
-			call = append(call, l.assignable(a, ir.TAny, n))
-		}
-		out := l.helperCall(hCallFn, ir.TAny, call...)
+		spread, ellipsis := l.spreadArgs(args, ir.TAny, n)
+		out := l.helperCall(hCallFn, ir.TAny,
+			append([]ir.Expr{l.assignable(fn, ir.TAny, n)}, spread...)...)
+		out.Ellipsis = ellipsis
 		l.approximate(n, "P2G7030", "call through a code reference",
 			"the call goes through reflection because the signature is not known",
 			"Nothing in the file pinned down what this reference points at, so it is "+
@@ -612,16 +611,47 @@ func (l *Lowerer) callRef(n *ast.FuncCallRef) ir.Expr {
 		return out
 	}
 
-	ret := ir.Expr(nil)
-	_ = ret
 	result := ir.TVoid
 	if len(t.Results) == 1 {
 		result = t.Results[0]
 	}
+	ellipsis := false
+	if t.Variadic && len(t.Params) > 0 {
+		args, ellipsis = l.spreadArgs(args, t.Params[len(t.Params)-1], n)
+	}
 	out := ir.CallOf(fn, result, args...)
+	out.Ellipsis = ellipsis
 	l.note(out, "Calling through a code reference needs no arrow in Go: a variable "+
 		"holding a function is called like any other function.")
 	return out
+}
+
+// spreadArgs prepares an argument list for a call whose target takes its
+// arguments as one variadic slice, which every code reference does.
+//
+// Perl flattens every array in an argument list into @_ before the sub sees
+// it. Go spreads exactly one slice and will not mix that with other arguments,
+// so `$code->(@args)` becomes a spread, `$code->($x, @rest)` has its list
+// built first, and a call with no arrays in it is passed as it stands.
+func (l *Lowerer) spreadArgs(args []ir.Expr, elem *ir.Type, at ast.Node) ([]ir.Expr, bool) {
+	lists := 0
+	for _, a := range args {
+		if typeOrAny(a).Kind == ir.Slice {
+			lists++
+		}
+	}
+	switch {
+	case lists == 0:
+		out := make([]ir.Expr, len(args))
+		for i, a := range args {
+			out[i] = l.assignable(a, elem, at)
+		}
+		return out, false
+	case len(args) == 1:
+		return []ir.Expr{l.assignable(args[0], ir.SliceOf(elem), at)}, true
+	default:
+		return []ir.Expr{l.flattenTail(args, elem, at)}, true
+	}
 }
 
 // argTypes reads the types of an argument list, for building the function type

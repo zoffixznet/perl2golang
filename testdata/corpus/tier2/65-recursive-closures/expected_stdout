@@ -1,0 +1,5 @@
+by name: apple/3 fig/9 pear/3
+by count: apple/3 pear/3 fig/9
+fib(10) = 55
+levels memo-visited: 9
+quad(5) = 20

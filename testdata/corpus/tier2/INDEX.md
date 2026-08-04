@@ -1,6 +1,6 @@
 # Tier 2 corpus - script-shaped Perl programs
 
-63 entries. Each is a self-contained, realistic Perl script of the kind a
+65 entries. Each is a self-contained, realistic Perl script of the kind a
 sysadmin or data wrangler actually writes, not a snippet.
 
 ## Layout of an entry
@@ -110,6 +110,8 @@ Two entries exit non-zero on purpose: **27** (65) and **32** (1). The rest exit 
 | 61 | `61-option-callbacks-and-abbrev` | Option callbacks and abbreviation, which do not convert yet | a `sub` as a destination, the `<>` operand catch-all, unique-prefix abbreviation, a mixed block where only some destinations are hash elements |
 | 62 | `62-counting-hashes` | The counting hash, at one, two and three levels | `$h{$a}{$b}{$c}++`, `+=` on a fractional leaf, `keys %{ $h{$k} }`, `scalar keys` of an inner hash, `push @{ $h{$k} }` beside it, sorted walks at every level |
 | 63 | `63-nested-mixed-and-read-autoviv` | Nested hashes that are records, and read-autovivification, neither of which converts yet | literal keys with mixed value kinds under one key, `push` into a nested list field, a nested read that creates the level above it |
+| 64 | `64-code-refs-called` | Calling through a code reference, in every shape a script does it | a factory returning several closures over one variable, `$code->(@array)` and the mixed forms, a hash of code refs read by variable key, `$h{$k} \|\| sub {...}` as a fallback |
+| 65 | `65-recursive-closures` | Closures that take records and closures that call themselves, neither of which converts yet | a ternary of comparators reading `$_[0]{field}`, `my $f; $f = sub { ... $f->(...) }`, a table whose members call each other through it |
 
 ## Coverage map
 
@@ -117,7 +119,7 @@ Two entries exit non-zero on purpose: **27** (65) and **32** (1). The rest exit 
 - **References, all deref syntaxes** - 04, 05
 - **Nested data structures** - 06, 07, 08, 29, 30
 - **Autovivification (load-bearing)** - **09, 10, 62, 63**; incidental in 07, 22, 24, 29
-- **Closures** - 11, 12, 25; complex `map`/`grep`/`sort` blocks in 13
+- **Closures** - 11, 12, 25, 54, 55, 64, 65; complex `map`/`grep`/`sort` blocks in 13
 - **Regex** - 14, 15, 16, 17, 18; applied in 23, 28, 29, 30
 - **File I/O** - 19, 20, 21, 22; STDIN in 23 and 28; `<>` in 24
 - **Command line** - 23, 24, 25, 26, 27
