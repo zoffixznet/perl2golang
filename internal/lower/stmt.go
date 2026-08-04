@@ -360,17 +360,11 @@ func (l *Lowerer) declarationOnly(n *ast.My) []ir.Stmt {
 // incDecStmt lowers ++ and -- in statement position, which is where Go allows
 // them.
 func (l *Lowerer) incDecStmt(n *ast.UnOp) []ir.Stmt {
-	if b := l.bindingOfTarget(n.X); b != nil {
-		// Incrementing $h{k} says the values are numbers, not that the hash
-		// itself is one, which is what makes a counting hash come out as
-		// map[string]int rather than map[string]any.
-		switch n.X.(type) {
-		case *ast.HashIndex, *ast.Index:
-			l.observeElem(b, ir.TInt)
-		default:
-			l.observe(b, ir.TInt)
-		}
-	}
+	// Incrementing $h{k} says the values are numbers, not that the hash itself
+	// is one, which is what makes a counting hash come out as map[string]int
+	// rather than map[string]any. The same holds however deep the counter is:
+	// $h{a}{b}++ says the outer hash holds hashes of numbers.
+	l.observeTargetValue(n.X, ir.TInt)
 	l.autovivifyTarget(n.X)
 	target := l.assignTarget(n.X)
 	if target == nil {

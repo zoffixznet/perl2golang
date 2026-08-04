@@ -1,0 +1,5 @@
+db1   count=1 last=200 tags=fast
+web1  count=2 last=500 tags=fast,slow
+before: 1 key(s)
+after reading tree{beta}{two}: 2 key(s): alpha,beta
+beta exists: yes, two under it: no

@@ -1163,9 +1163,13 @@ func (l *Lowerer) autovivify(lhs *ast.HashIndex) []ir.Stmt {
 	if !ok {
 		return nil
 	}
+	// Perl creates every level on the way down, not just the last one, so
+	// `$m{a}{b}{c}++` has to make `$m{a}` before it can make `$m{a}{b}`. The
+	// outer levels come first because the inner check reads through them.
+	out := l.autovivify(inner)
 	m, key, elem := l.hashParts(inner)
 	if m == nil || key == nil || elem == nil {
-		return nil
+		return out
 	}
 	// made is what goes in when the key is missing. Where inference settled on
 	// a map, that is the map. Where it did not, the outer map holds `any` and
@@ -1177,23 +1181,37 @@ func (l *Lowerer) autovivify(lhs *ast.HashIndex) []ir.Stmt {
 	case ir.Any:
 		made = ir.MapOf(ir.TAny)
 	default:
-		return nil
+		return out
+	}
+	fill := assign("=", []ir.Expr{index(m, key, elem)}, []ir.Expr{composite(made, nil, nil)})
+	if elem.Kind == ir.Map {
+		// A missing key and a key holding a nil map are the same thing to
+		// write into, and a nil test says so in one line where the two-result
+		// index form takes three.
+		create := &ir.If{
+			Cond: ir.Bin("==", index(m, key, elem), ir.Nil(elem), ir.TBool),
+			Then: &ir.Block{Stmts: []ir.Stmt{fill}},
+		}
+		l.note(create, "Perl creates the inner hash on the way through, which is called "+
+			"autovivification. Go does not: reading a missing key gives the value type's "+
+			"zero value, a nil map, and writing to a nil map panics. This line is what "+
+			"Perl was doing invisibly.",
+			"nil-slices-vs-nil-maps")
+		return append(out, create)
 	}
 	okName := l.tmp("ok")
 	check := assign(":=", []ir.Expr{ir.NewIdent("_", nil), ir.NewIdent(okName, ir.TBool)},
 		[]ir.Expr{indexComma(m, key, elem)})
 	create := &ir.If{
 		Cond: negated(ir.NewIdent(okName, ir.TBool)),
-		Then: &ir.Block{Stmts: []ir.Stmt{
-			assign("=", []ir.Expr{index(m, key, elem)}, []ir.Expr{composite(made, nil, nil)}),
-		}},
+		Then: &ir.Block{Stmts: []ir.Stmt{fill}},
 	}
 	l.note(check, "Perl creates the inner hash on the way through, which is called "+
 		"autovivification. Go does not: the inner map is nil until something makes "+
 		"it, and writing to a nil map panics. The check and the make are what Perl "+
 		"was doing invisibly.",
 		"nil-slices-vs-nil-maps", "comma-ok-idiom")
-	return []ir.Stmt{check, create}
+	return append(out, check, create)
 }
 
 // autovivifyTarget emits the map creation Perl would have done implicitly
@@ -1220,16 +1238,63 @@ func (l *Lowerer) autovivifyTarget(e ast.Expr) {
 // `$h{k} ||= { ... }` fills the hash exactly as a plain assignment would, and
 // without this the hash would learn nothing from the only line that ever puts
 // anything in it.
+// It is deliberately about containers only. `$k ||= 8` on a scalar that came
+// out of @ARGV puts a number where a string was, which Perl does not mind and
+// which says nothing useful about the variable: recording it would widen a
+// perfectly good string to `any`.
 func (l *Lowerer) observeElemOfTarget(lhs ast.Expr, t *ir.Type) {
+	switch lhs.(type) {
+	case *ast.HashIndex, *ast.Index:
+		l.observeTargetValue(lhs, t)
+	}
+}
+
+// observeTargetValue records what a write puts into an assignment target,
+// through however many levels of map and slice lie between that target and
+// the variable or struct field it lives in.
+//
+// `$total{$host}{$disk} += $n` says two things at once: %total holds maps, and
+// those maps hold numbers. Reading only the outermost level leaves the inner
+// one dynamic, and a dynamic inner level is what turns a counting hash into
+// `map[string]any`, every step into a type assertion, and `keys %{ $h{$k} }`
+// into a question the generated code cannot answer at all. A plain assignment
+// has always looked all the way down; the counting and accumulating forms are
+// how a hash of hashes is actually written, and they now do too.
+func (l *Lowerer) observeTargetValue(lhs ast.Expr, t *ir.Type) {
+	if t == nil {
+		return
+	}
+	var wrapper func(*ir.Type) *ir.Type
+	var base ast.Expr
 	switch n := lhs.(type) {
+	case *ast.Var:
+		if b := l.bindingOfTarget(n); b != nil {
+			l.observe(b, t)
+		}
+		return
 	case *ast.HashIndex:
 		if b := l.hashBindingOf(n); b != nil {
 			l.observeElem(b, t)
+			return
 		}
+		wrapper, base = ir.MapOf, n.Base
 	case *ast.Index:
-		if v, ok := n.Base.(*ast.Var); ok && !n.Arrow && v.Sigil == '$' {
-			l.observeElem(l.lookup('@', v.Name, v), t)
+		if b := l.arrayBindingOf(n); b != nil {
+			l.observeElem(b, t)
+			return
 		}
+		wrapper, base = ir.SliceOf, n.Base
+	default:
+		return
+	}
+	if f, fwrap, ok := l.fieldPlace(base); ok {
+		// The container is a struct field rather than a variable, however many
+		// levels of map and slice lie between the two.
+		l.observeField(f, fwrap(wrapper(t)))
+		return
+	}
+	if b, wrap, ok := l.bindingPlace(base, false); ok {
+		l.observe(b, wrap(wrapper(t)))
 	}
 }
 
@@ -1277,9 +1342,7 @@ func (l *Lowerer) compoundAssign(n *ast.Assign) []ir.Stmt {
 
 	case ".":
 		value := l.toStr(l.scalar(n.RHS), n.RHS)
-		if b := l.bindingOfTarget(n.LHS); b != nil {
-			l.observe(b, ir.TString)
-		}
+		l.observeTargetValue(n.LHS, ir.TString)
 		if t.Kind != ir.String {
 			// The target's type did not resolve to text, and Go will not add a
 			// string to anything else, so the concatenation is written out
@@ -1310,29 +1373,23 @@ func (l *Lowerer) compoundAssign(n *ast.Assign) []ir.Stmt {
 
 	case "**":
 		power := l.power(&ast.BinOp{Op: "**", L: n.LHS, R: n.RHS})
-		if b := l.bindingOfTarget(n.LHS); b != nil {
-			l.observe(b, arithmeticResult(typeOrAny(power)))
-		}
+		l.observeTargetValue(n.LHS, arithmeticResult(typeOrAny(power)))
 		st := assign("=", []ir.Expr{target}, []ir.Expr{l.assignable(power, t, n.RHS)})
 		l.setProv(st, n)
 		return []ir.Stmt{st}
 
 	case "%":
-		if b := l.bindingOfTarget(n.LHS); b != nil {
-			l.observe(b, ir.TInt)
-		}
+		l.observeTargetValue(n.LHS, ir.TInt)
 		st := assign("=", []ir.Expr{target},
 			[]ir.Expr{l.assignable(l.modulo(&ast.BinOp{Op: "%", L: n.LHS, R: n.RHS}), t, n.RHS)})
 		l.setProv(st, n)
 		return []ir.Stmt{st}
 
 	case "/":
-		if b := l.bindingOfTarget(n.LHS); b != nil {
-			// Division is the one arithmetic operator that produces a
-			// fraction from two whole numbers, so what it leaves behind is a
-			// floating-point number whatever went in.
-			l.observe(b, ir.TFloat)
-		}
+		// Division is the one arithmetic operator that produces a fraction
+		// from two whole numbers, so what it leaves behind is a
+		// floating-point number whatever went in.
+		l.observeTargetValue(n.LHS, ir.TFloat)
 		st := assign("=", []ir.Expr{target},
 			[]ir.Expr{l.assignable(l.binop(&ast.BinOp{Op: "/", L: n.LHS, R: n.RHS}), t, n.RHS)})
 		l.setProv(st, n)
@@ -1342,9 +1399,7 @@ func (l *Lowerer) compoundAssign(n *ast.Assign) []ir.Stmt {
 		// The right side is lowered once: lowering it twice would run any
 		// setup it needed twice as well.
 		value := l.scalar(n.RHS)
-		if b := l.bindingOfTarget(n.LHS); b != nil {
-			l.observe(b, arithmeticResult(typeOrAny(value)))
-		}
+		l.observeTargetValue(n.LHS, arithmeticResult(typeOrAny(value)))
 		switch t.Kind {
 		case ir.Float:
 			value = l.toFloat(value, n.RHS)

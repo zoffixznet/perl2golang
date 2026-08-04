@@ -1,6 +1,6 @@
 # Tier 2 corpus - script-shaped Perl programs
 
-61 entries. Each is a self-contained, realistic Perl script of the kind a
+63 entries. Each is a self-contained, realistic Perl script of the kind a
 sysadmin or data wrangler actually writes, not a snippet.
 
 ## Layout of an entry
@@ -108,13 +108,15 @@ Two entries exit non-zero on purpose: **27** (65) and **32** (1). The rest exit 
 | 59 | `59-captures-through-a-sub` | Captures that leave the sub that made them, which does not convert yet | `return $text =~ /(..)(..)/`, the result taken as a list, as a count and as a truth value |
 | 60 | `60-option-pairs-and-bundling` | An option block written as pairs, with bundling and pass-through | `GetOptions` in pair form where the hash key is the destination's, `Configure('bundling', 'pass_through')`, `+` `=i` `:s` `=s@` `=s%`, `defined` on an option, `@ARGV` after the block |
 | 61 | `61-option-callbacks-and-abbrev` | Option callbacks and abbreviation, which do not convert yet | a `sub` as a destination, the `<>` operand catch-all, unique-prefix abbreviation, a mixed block where only some destinations are hash elements |
+| 62 | `62-counting-hashes` | The counting hash, at one, two and three levels | `$h{$a}{$b}{$c}++`, `+=` on a fractional leaf, `keys %{ $h{$k} }`, `scalar keys` of an inner hash, `push @{ $h{$k} }` beside it, sorted walks at every level |
+| 63 | `63-nested-mixed-and-read-autoviv` | Nested hashes that are records, and read-autovivification, neither of which converts yet | literal keys with mixed value kinds under one key, `push` into a nested list field, a nested read that creates the level above it |
 
 ## Coverage map
 
 - **Subroutines** - 01, 02, 03 (also 12, 25, 27 for code refs as values)
 - **References, all deref syntaxes** - 04, 05
 - **Nested data structures** - 06, 07, 08, 29, 30
-- **Autovivification (load-bearing)** - **09, 10**; incidental in 07, 22, 24, 29
+- **Autovivification (load-bearing)** - **09, 10, 62, 63**; incidental in 07, 22, 24, 29
 - **Closures** - 11, 12, 25; complex `map`/`grep`/`sort` blocks in 13
 - **Regex** - 14, 15, 16, 17, 18; applied in 23, 28, 29, 30
 - **File I/O** - 19, 20, 21, 22; STDIN in 23 and 28; `<>` in 24

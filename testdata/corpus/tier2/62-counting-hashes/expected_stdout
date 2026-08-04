@@ -1,0 +1,24 @@
+-- hits by status --
+200 5
+302 1
+404 1
+500 1
+-- methods per host --
+db1   GET=2
+web1  GET=3 POST=1
+web2  GET=2
+-- bytes per host and status --
+db1   total=88 statuses=2
+web1  total=2828 statuses=2
+web2  total=197 statuses=2
+-- three levels deep --
+db1   /health          200:1,500:1
+web1  /index.html      200:2
+web1  /login           302:1
+web1  /style.css       200:1
+web2  /api/v1/status   200:1
+web2  /index.html      404:1
+-- lists under keys --
+db1   2 request(s), 1 distinct
+web1  4 request(s), 3 distinct
+web2  2 request(s), 2 distinct
