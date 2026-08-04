@@ -540,6 +540,7 @@ func (l *Lowerer) run() *Result {
 			continue
 		}
 		file.Decls = append(file.Decls, l.classDecl(c))
+		file.Decls = append(file.Decls, l.virtualDecls(c)...)
 		for _, s := range c.Subs {
 			emitted[s] = true
 			if s.Inherited != nil {
@@ -952,6 +953,7 @@ func (l *Lowerer) resolveTypes() {
 		}
 	}
 	l.settleSubs()
+	l.unifyOverrides()
 	for _, b := range l.decls {
 		once(b)
 	}

@@ -128,7 +128,22 @@ rect with area 12.00
 wheel with area 19.63
 ```
 
-`base.self` is what `$self` was doing all along, written down. The constructor is the one place that can set it, which is why each type needs one — a bare `Rectangle{}` literal would leave `self` nil and `Describe` would panic, and that is the cost of the pattern.
+`base.self` is what `$self` was doing all along, written down. The constructor is the one place that can set it, which is why each type needs one.
+
+There is one loose end, and it is worth closing. A bare `Rectangle{}` literal leaves `self` nil, and `Describe` then panics on a nil interface, which is a poor way for a struct literal to fail. Reading the field through a one-line accessor removes it:
+
+```
+func (b *base) whole() Shaper {
+	if b.self != nil {
+		return b.self
+	}
+	return b
+}
+```
+
+and `Describe` calls `b.whole().Area()`. A value that went through a constructor dispatches to its real class; a value that did not falls back to the base's own method, which is exactly what plain embedding would have done. The pattern stops being a trap and starts being a strict improvement on embedding.
+
+Two things to keep in mind about it. The back-pointer makes the object self-referential, so copying it by value copies a pointer to the *original*: `other := *rect` leaves `other.self` pointing at `rect`, and `other.Describe()` describes `rect`. If your type is copied, reset the field after the copy or hand out pointers only. And the field is genuinely a cost: it is one interface word per object, it shows up in `%+v` output and in anything that reflects over the struct, and it exists only because Perl's dispatch rule had to be carried across. Where a hierarchy has no template method — no base method that calls something a subclass replaces — you do not need any of this, and plain embedding is the whole answer.
 
 ## The other half: embedding is not subtyping
 

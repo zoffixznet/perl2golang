@@ -1,0 +1,17 @@
+QUARTERLY
+north | widget, large | 12
+south | gizmo | 7
+2 row(s), style plain
+---
+[ QUARTERLY ]
+north | widget, large | 12
+south | gizmo | 7
+2 row(s), style boxed
+---
+QUARTERLY
+north,"widget, large",12
+south,gizmo,7
+2 row(s), style csv
+---
+style of a bare Report: plain
+title through the accessor: plain

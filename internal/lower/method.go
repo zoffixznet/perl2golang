@@ -123,14 +123,27 @@ func (l *Lowerer) inheritedCtorDecl(s *Sub) *ir.FuncDecl {
 	if lit == nil {
 		lit = composite(c.Value, nil, nil)
 	}
+	body := &ir.Block{Stmts: []ir.Stmt{
+		&ir.Return{Results: []ir.Expr{ir.Un("&", lit, c.Ptr)}},
+	}}
+	if root := virtualRoot(c); root != nil && root.Virtual != nil {
+		// The ancestor's constructor stored itself in the back-pointer, and
+		// the copy taken into the embedded field carries that stale value, so
+		// the finished object has to overwrite it with itself.
+		name := l.receiverName(c)
+		target := ir.NewIdent(name, c.Ptr)
+		body = &ir.Block{Stmts: []ir.Stmt{
+			assign(":=", []ir.Expr{target}, []ir.Expr{ir.Un("&", lit, c.Ptr)}),
+			l.storeSelf(c, target),
+			&ir.Return{Results: []ir.Expr{target}},
+		}}
+	}
 	fn := &ir.FuncDecl{
 		Name:    s.Go,
 		Params:  params,
 		Results: []*ir.Type{c.Ptr},
-		Body: &ir.Block{Stmts: []ir.Stmt{
-			&ir.Return{Results: []ir.Expr{ir.Un("&", lit, c.Ptr)}},
-		}},
-		Doc: []string{s.Go + " builds " + article(c.Go) + " " + c.Go + " on top of " + parent.Class.Go + "'s constructor."},
+		Body:    body,
+		Doc:     []string{s.Go + " builds " + article(c.Go) + " " + c.Go + " on top of " + parent.Class.Go + "'s constructor."},
 	}
 	s.Results = fn.Results
 	if l.pass == 2 {
@@ -946,7 +959,14 @@ func (l *Lowerer) dispatch(n *ast.MethodCall, c *Class, method string, super boo
 	if s.Named != nil {
 		args = l.namedArgs(s, n)
 	}
-	l.noteLateBinding(n, s, super, recv)
+	if l.selfDispatched(s, super, recv) {
+		if l.markVirtual(s) {
+			if through, ok := l.selfCall(s, recv); ok {
+				return l.invoke(s, through, args, n)
+			}
+		}
+		l.noteLateBinding(n, s, super, recv)
+	}
 	return l.invoke(s, recv, args, n)
 }
 
@@ -1250,19 +1270,10 @@ func (l *Lowerer) canCall(n *ast.MethodCall, c *Class) ir.Expr {
 // version. Go resolves it against the type the receiver is declared as, which
 // inside a base method is always the base, and the override is never reached.
 func (l *Lowerer) noteLateBinding(n *ast.MethodCall, s *Sub, super bool, recv ir.Expr) {
-	if l.pass != 2 || super || l.curSub == nil || l.curSub.Recv == nil || s.Class == nil {
-		return
-	}
-	// Only a call the method makes on its own object is at risk: a call from
-	// outside has the concrete type in hand and finds the override.
-	id, ok := recv.(*ir.Ident)
-	if !ok || id.Name != l.curSub.Recv.Go {
+	if l.pass != 2 {
 		return
 	}
 	overriders := l.overriders(s)
-	if len(overriders) == 0 {
-		return
-	}
 	l.approximate(n, "P2G7046", "->"+n.Method+" on this method's own object",
 		"an override will not be reached from here",
 		"Perl looks a method up on the object's real class every time it is called, "+
@@ -1277,6 +1288,23 @@ func (l *Lowerer) noteLateBinding(n *ast.MethodCall, s *Sub, super bool, recv ir
 			"and the override is reached. That is composition plus an interface, which "+
 			"is how Go expresses a template method.",
 		"late-binding-vs-embedding", "implicit-interfaces", "structs-and-embedding")
+}
+
+// selfDispatched reports whether a method call is one a base method makes on
+// its own object where a descendant overrides the method being called.
+//
+// Only a call the method makes on its own object is at risk: a call from
+// outside has the concrete type in hand and finds the override. A SUPER:: call
+// is asking for the parent's version by name and is not at risk either.
+func (l *Lowerer) selfDispatched(s *Sub, super bool, recv ir.Expr) bool {
+	if super || l.curSub == nil || l.curSub.Recv == nil || s.Class == nil {
+		return false
+	}
+	id, ok := recv.(*ir.Ident)
+	if !ok || id.Name != l.curSub.Recv.Go {
+		return false
+	}
+	return len(l.overriders(s)) > 0
 }
 
 // overriders names the classes that declare their own version of a method.
@@ -1431,7 +1459,23 @@ func (l *Lowerer) blessCall(n *ast.Call) (ir.Expr, bool) {
 	}
 	switch arg := n.Args[0].(type) {
 	case *ast.AnonHash:
-		return l.structLit(c, arg), true
+		lit := l.structLit(c, arg)
+		if root := virtualRoot(c); root != nil && root.Virtual != nil {
+			// The object has to know what it really is, because a method of
+			// its base class will ask. That cannot be written inside the
+			// literal, so the value is named first.
+			name := l.tmp(l.receiverName(c))
+			target := ir.NewIdent(name, c.Ptr)
+			decl := assign(":=", []ir.Expr{target}, []ir.Expr{lit})
+			l.setProv(decl, n)
+			l.emit(decl)
+			if st := l.storeSelf(c, target); st != nil {
+				l.setProv(st, n)
+				l.emit(st)
+			}
+			return target, true
+		}
+		return lit, true
 	case *ast.Var:
 		x := l.expr(arg)
 		if l.classOf(typeOrAny(x)) == c {

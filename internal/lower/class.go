@@ -71,6 +71,22 @@ type Class struct {
 	// Ptr and Value are the two spellings of the generated type.
 	Ptr   *ir.Type
 	Value *ir.Type
+	// Virtual are the methods of this class that one of its own methods calls
+	// on its own object and that a descendant overrides, keyed by Perl name.
+	//
+	// Go resolves such a call against the type the receiver is declared as,
+	// which inside a method of this class is this class, so the override is
+	// never reached. Where the class is the top of its hierarchy, the struct
+	// grows a field holding the finished object as an interface, and the
+	// calls go through that instead. This is the one place the
+	// struct-and-embedding mapping needs help.
+	Virtual map[string]*Sub
+	// SelfField, SelfIface and SelfMethod are the names of that field, the
+	// interface it holds, and the accessor that falls back to the base value
+	// when nothing set it.
+	SelfField  string
+	SelfIface  string
+	SelfMethod string
 	// Doc is the comment block above the package statement.
 	Doc []string
 	// recv is the receiver identifier its methods use.
@@ -534,6 +550,14 @@ func (l *Lowerer) classDecl(c *Class) ir.Decl {
 			Type: c.Parent.Value,
 			Doc: c.Parent.Go + " is embedded, so its fields and its methods are " +
 				"reachable directly on a " + c.Go + ".",
+		})
+	}
+	if c.Virtual != nil {
+		d.Fields = append(d.Fields, ir.Field{
+			Name: c.SelfField,
+			Type: c.selfType(),
+			Doc: "whole is the object this " + c.Go + " is part of, which is what a " +
+				"method here calls through to reach a replacement of one of its own.",
 		})
 	}
 	for _, f := range c.Fields {

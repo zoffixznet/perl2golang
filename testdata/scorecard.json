@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T08:06:10Z",
+  "recorded": "2026-08-15T08:18:37Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -98,45 +98,45 @@
     },
     {
       "tier": "tier3",
-      "entries": 31,
+      "entries": 33,
       "stages": {
         "compiled": {
-          "pass": 25,
+          "pass": 27,
           "fail": 6,
           "skip": 0
         },
         "emitted": {
-          "pass": 31,
+          "pass": 33,
           "fail": 0,
           "skip": 0
         },
         "equivalent": {
-          "pass": 3,
-          "fail": 28,
+          "pass": 6,
+          "fail": 27,
           "skip": 0
         },
         "translated": {
-          "pass": 18,
+          "pass": 20,
           "fail": 13,
           "skip": 0
         },
         "typed": {
-          "pass": 6,
-          "fail": 25,
+          "pass": 7,
+          "fail": 26,
           "skip": 0
         }
       },
       "equivalent_annotated": {
-        "pass": 3,
-        "fail": 28,
+        "pass": 6,
+        "fail": 27,
         "skip": 0
       },
       "quality": {
         "todos": 64,
-        "symbols": 831,
-        "symbols_typed": 634,
+        "symbols": 864,
+        "symbols_typed": 664,
         "refusals": 67,
-        "approximations": 290,
+        "approximations": 289,
         "crashes": 3
       }
     },
@@ -231,21 +231,21 @@
   ],
   "total": {
     "tier": "TOTAL",
-    "entries": 199,
+    "entries": 201,
     "stages": {
       "compiled": {
-        "pass": 182,
+        "pass": 184,
         "fail": 17,
         "skip": 0
       },
       "emitted": {
-        "pass": 199,
+        "pass": 201,
         "fail": 0,
         "skip": 0
       },
       "equivalent": {
-        "pass": 66,
-        "fail": 97,
+        "pass": 69,
+        "fail": 96,
         "skip": 0
       },
       "honest": {
@@ -254,36 +254,36 @@
         "skip": 1
       },
       "translated": {
-        "pass": 166,
+        "pass": 168,
         "fail": 33,
         "skip": 0
       },
       "typed": {
-        "pass": 82,
-        "fail": 117,
+        "pass": 83,
+        "fail": 118,
         "skip": 0
       }
     },
     "equivalent_annotated": {
-      "pass": 66,
-      "fail": 97,
+      "pass": 69,
+      "fail": 96,
       "skip": 0
     },
     "quality": {
       "todos": 115,
-      "symbols": 3566,
-      "symbols_typed": 3019,
+      "symbols": 3599,
+      "symbols_typed": 3049,
       "refusals": 119,
-      "approximations": 1067,
+      "approximations": 1066,
       "crashes": 12
     }
   },
   "quality": {
     "todos": 115,
-    "symbols": 3566,
-    "symbols_typed": 3019,
+    "symbols": 3599,
+    "symbols_typed": 3049,
     "refusals": 119,
-    "approximations": 1067,
+    "approximations": 1066,
     "crashes": 12
   },
   "entries": [
@@ -4360,7 +4360,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "exit status 255, wanted 0; stdout differs: 577 byte(s) missing after line 2, expected \"#1 rectangle  area=  12.000 peri...\"; stderr differs: unexpected \"Shape does not implement area()\""
+          "reason": "stdout differs: line 2, byte 39: got \" 0.000 perimeter=   0.000\\n#2 whe...\", wanted \"12.000 perimeter=  14.000\\n#2 whe...\"; stderr differs: unexpected \"TODO P2G3599: the PI function is not implemented ...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -4376,14 +4376,14 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "exit status 255, wanted 0; stdout differs: 577 byte(s) missing after line 2, expected \"#1 rectangle  area=  12.000 peri...\"; stderr differs: unexpected \"Shape does not implement area()\""
+        "reason": "stdout differs: line 2, byte 39: got \" 0.000 perimeter=   0.000\\n#2 whe...\", wanted \"12.000 perimeter=  14.000\\n#2 whe...\"; stderr differs: unexpected \"TODO P2G3599: the PI function is not implemented ...\""
       },
       "quality": {
         "todos": 4,
         "symbols": 41,
         "symbols_typed": 35,
         "refusals": 4,
-        "approximations": 11,
+        "approximations": 9,
         "crashes": 0
       }
     },
@@ -5312,8 +5312,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 5, byte 91: got \"nothing to do\\nbackup: nothing to...\", wanted \"copied archive\\nbackup: copied ba...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -5326,15 +5325,14 @@
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 5, byte 91: got \"nothing to do\\nbackup: nothing to...\", wanted \"copied archive\\nbackup: copied ba...\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
         "symbols": 8,
         "symbols_typed": 8,
         "refusals": 0,
-        "approximations": 4,
+        "approximations": 3,
         "crashes": 0
       }
     },
@@ -5461,8 +5459,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 3, byte 79: got \"failure(61): connection refused\\n...\", wanted \"network(61): connection refused\\n...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -5476,15 +5473,14 @@
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 3, byte 79: got \"failure(61): connection refused\\n...\", wanted \"network(61): connection refused\\n...\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
         "symbols": 16,
         "symbols_typed": 14,
         "refusals": 0,
-        "approximations": 13,
+        "approximations": 12,
         "crashes": 0
       }
     },
@@ -5522,6 +5518,81 @@
         "todos": 0,
         "symbols": 16,
         "symbols_typed": 4,
+        "refusals": 0,
+        "approximations": 3,
+        "crashes": 0
+      }
+    },
+    {
+      "tier": "tier3",
+      "name": "32-template-method",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "pass"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "3 variables left dynamic out of 19"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "pass"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 19,
+        "symbols_typed": 16,
+        "refusals": 0,
+        "approximations": 0,
+        "crashes": 0
+      }
+    },
+    {
+      "tier": "tier3",
+      "name": "33-dispatch-below-the-root",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "stdout differs: line 2, byte 39: got \"container(box) holds 3: pear,app...\", wanted \"sorted(box) holds 3: apple,fig,p...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "stdout differs: line 2, byte 39: got \"container(box) holds 3: pear,app...\", wanted \"sorted(box) holds 3: apple,fig,p...\""
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 14,
+        "symbols_typed": 14,
         "refusals": 0,
         "approximations": 3,
         "crashes": 0

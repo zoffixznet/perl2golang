@@ -2560,5 +2560,29 @@
     "expected_exit": 0,
     "deterministic": true,
     "kind": "convert"
+  },
+  {
+    "tier": "tier3",
+    "name": "32-template-method",
+    "path": "testdata/corpus/tier3/32-template-method",
+    "args": [],
+    "has_stdin": false,
+    "has_files": false,
+    "allow_stderr": false,
+    "expected_exit": 0,
+    "deterministic": true,
+    "kind": "convert"
+  },
+  {
+    "tier": "tier3",
+    "name": "33-dispatch-below-the-root",
+    "path": "testdata/corpus/tier3/33-dispatch-below-the-root",
+    "args": [],
+    "has_stdin": false,
+    "has_files": false,
+    "allow_stderr": false,
+    "expected_exit": 0,
+    "deterministic": true,
+    "kind": "convert"
   }
 ]

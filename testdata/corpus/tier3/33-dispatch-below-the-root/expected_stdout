@@ -1,0 +1,4 @@
+container(box) holds 3: pear,apple,fig
+sorted(box) holds 3: apple,fig,pear
+LOUD(BOX) HOLDS 3: PEAR,APPLE,FIG
+node(leaf)
