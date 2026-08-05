@@ -45,6 +45,8 @@ const (
 	hReadLines        = "readLines"        // reading a whole handle as a list of lines
 	hReadAll          = "readAll"          // reading a whole handle as one string
 	hReadRecords      = "readRecords"      // reading a whole handle split on a separator
+	hReadChunk        = "readChunk"        // an exact-length read through io.ReadFull
+	hTellPos          = "tellPos"          // the handle's position, by a zero-byte seek
 	hRefKind          = "refKind"          // Perl ref(), answered from the runtime type
 	hIsDir            = "isDir"            // -d
 	hIsFile           = "isFile"           // -f

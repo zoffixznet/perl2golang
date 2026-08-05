@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T12:40:05Z",
+  "recorded": "2026-08-15T12:50:50Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -54,45 +54,45 @@
     },
     {
       "tier": "tier2",
-      "entries": 87,
+      "entries": 89,
       "stages": {
         "compiled": {
-          "pass": 86,
+          "pass": 88,
           "fail": 1,
           "skip": 0
         },
         "emitted": {
-          "pass": 87,
+          "pass": 89,
           "fail": 0,
           "skip": 0
         },
         "equivalent": {
-          "pass": 51,
-          "fail": 36,
+          "pass": 52,
+          "fail": 37,
           "skip": 0
         },
         "translated": {
-          "pass": 79,
-          "fail": 8,
+          "pass": 80,
+          "fail": 9,
           "skip": 0
         },
         "typed": {
-          "pass": 44,
+          "pass": 46,
           "fail": 43,
           "skip": 0
         }
       },
       "equivalent_annotated": {
-        "pass": 51,
-        "fail": 36,
+        "pass": 52,
+        "fail": 37,
         "skip": 0
       },
       "quality": {
-        "todos": 17,
-        "symbols": 1410,
-        "symbols_typed": 1226,
-        "refusals": 17,
-        "approximations": 508,
+        "todos": 18,
+        "symbols": 1424,
+        "symbols_typed": 1240,
+        "refusals": 18,
+        "approximations": 514,
         "crashes": 2
       }
     },
@@ -199,13 +199,13 @@
           "skip": 0
         },
         "equivalent": {
-          "pass": 9,
-          "fail": 16,
+          "pass": 10,
+          "fail": 15,
           "skip": 0
         },
         "translated": {
-          "pass": 22,
-          "fail": 3,
+          "pass": 23,
+          "fail": 2,
           "skip": 0
         },
         "typed": {
@@ -215,36 +215,36 @@
         }
       },
       "equivalent_annotated": {
-        "pass": 9,
-        "fail": 16,
+        "pass": 10,
+        "fail": 15,
         "skip": 0
       },
       "quality": {
-        "todos": 6,
+        "todos": 3,
         "symbols": 924,
-        "symbols_typed": 841,
-        "refusals": 6,
-        "approximations": 201,
+        "symbols_typed": 842,
+        "refusals": 3,
+        "approximations": 203,
         "crashes": 0
       }
     }
   ],
   "total": {
     "tier": "TOTAL",
-    "entries": 231,
+    "entries": 233,
     "stages": {
       "compiled": {
-        "pass": 221,
+        "pass": 223,
         "fail": 10,
         "skip": 0
       },
       "emitted": {
-        "pass": 231,
+        "pass": 233,
         "fail": 0,
         "skip": 0
       },
       "equivalent": {
-        "pass": 111,
+        "pass": 113,
         "fail": 83,
         "skip": 0
       },
@@ -254,36 +254,36 @@
         "skip": 1
       },
       "translated": {
-        "pass": 192,
+        "pass": 194,
         "fail": 39,
         "skip": 0
       },
       "typed": {
-        "pass": 107,
+        "pass": 109,
         "fail": 124,
         "skip": 0
       }
     },
     "equivalent_annotated": {
-      "pass": 111,
+      "pass": 113,
       "fail": 83,
       "skip": 0
     },
     "quality": {
-      "todos": 111,
-      "symbols": 3904,
-      "symbols_typed": 3353,
-      "refusals": 114,
-      "approximations": 1174,
+      "todos": 109,
+      "symbols": 3918,
+      "symbols_typed": 3368,
+      "refusals": 112,
+      "approximations": 1182,
       "crashes": 3
     }
   },
   "quality": {
-    "todos": 111,
-    "symbols": 3904,
-    "symbols_typed": 3353,
-    "refusals": 114,
-    "approximations": 1174,
+    "todos": 109,
+    "symbols": 3918,
+    "symbols_typed": 3368,
+    "refusals": 112,
+    "approximations": 1182,
     "crashes": 3
   },
   "entries": [
@@ -2835,7 +2835,7 @@
         "symbols": 17,
         "symbols_typed": 16,
         "refusals": 0,
-        "approximations": 6,
+        "approximations": 7,
         "crashes": 0
       }
     },
@@ -5193,6 +5193,81 @@
         "symbols_typed": 12,
         "refusals": 0,
         "approximations": 1,
+        "crashes": 0
+      }
+    },
+    {
+      "tier": "tier2",
+      "name": "88-a-header-then-the-rest",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "pass"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "pass"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 10,
+        "symbols_typed": 10,
+        "refusals": 0,
+        "approximations": 5,
+        "crashes": 0
+      }
+    },
+    {
+      "tier": "tier2",
+      "name": "89-a-position-under-a-line-reader",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "stdout differs: line 1, byte 13: got \"34 beta@34 gamma@34\\npatched: XXX...\", wanted \"8 beta@16 gamma@26\\npatched: XXXa...\"; stderr differs: unexpected \"TODO P2G3599: the read function is not implemented\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "fail",
+          "reason": "1 untranslated construct"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "stdout differs: line 1, byte 13: got \"34 beta@34 gamma@34\\npatched: XXX...\", wanted \"8 beta@16 gamma@26\\npatched: XXXa...\"; stderr differs: unexpected \"TODO P2G3599: the read function is not implemented\""
+      },
+      "quality": {
+        "todos": 1,
+        "symbols": 4,
+        "symbols_typed": 4,
+        "refusals": 1,
+        "approximations": 0,
         "crashes": 0
       }
     },
@@ -8443,31 +8518,28 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "exit status 255, wanted 1; stdout differs: line 1, byte 42: got \"otation detected (header changed...\", wanted \"esuming at byte 234\\nnew matches ...\"; stderr differs: unexpected \"TODO P2G3599: the read function is not implemented ...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
         },
         "translated": {
-          "outcome": "fail",
-          "reason": "3 untranslated constructs"
+          "outcome": "pass"
         },
         "typed": {
           "outcome": "fail",
-          "reason": "4 variables left dynamic out of 21"
+          "reason": "3 variables left dynamic out of 21"
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "exit status 255, wanted 1; stdout differs: line 1, byte 42: got \"otation detected (header changed...\", wanted \"esuming at byte 234\\nnew matches ...\"; stderr differs: unexpected \"TODO P2G3599: the read function is not implemented ...\""
+        "outcome": "pass"
       },
       "quality": {
-        "todos": 3,
+        "todos": 0,
         "symbols": 21,
-        "symbols_typed": 17,
-        "refusals": 3,
-        "approximations": 6,
+        "symbols_typed": 18,
+        "refusals": 0,
+        "approximations": 8,
         "crashes": 0
       }
     },

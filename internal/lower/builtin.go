@@ -87,6 +87,10 @@ func (l *Lowerer) statementFormOK(n *ast.Call) ([]ir.Stmt, bool) {
 			return []ir.Stmt{st}, true
 		}
 		return nil, false
+	case "seek":
+		return l.seekStatement(n)
+	case "read":
+		return l.readStatement(n)
 	}
 	return nil, false
 }
@@ -286,7 +290,34 @@ func (l *Lowerer) builtin(n *ast.Call) ir.Expr {
 		return ir.BoolLit(true)
 
 	case "eof":
+		l.approximate(n, "P2G6083", "eof",
+			"the test was emitted as false",
+			"Go has no way to ask a handle whether it is at the end without "+
+				"reading: the read itself answers, by returning io.EOF or a short "+
+				"line. This test is emitted as false, which is right for the usual "+
+				"read-until-done loop and wrong anywhere eof carried the decision.",
+			"Restructure around the read: a bufio.Scanner's Scan returning false "+
+				"is the eof test, in the place Go asks it.",
+			"io-reader-writer", "bufio-scanner-limit")
 		return ir.BoolLit(false)
+	case "tell":
+		if out := l.tellCall(n); out != nil {
+			return out
+		}
+	case "read":
+		if out := l.readValue(n); out != nil {
+			return out
+		}
+	case "seek":
+		// Reached in expression position through an idiom the guarded and
+		// statement forms did not claim; the statements run and the value
+		// reads as success, the same shape open takes here.
+		if sts, ok := l.seekStatement(n); ok {
+			for _, st := range sts {
+				l.emit(st)
+			}
+			return ir.BoolLit(true)
+		}
 
 	case "sleep":
 		if argCount(n) > 0 {

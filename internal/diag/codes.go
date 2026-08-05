@@ -399,6 +399,14 @@ const (
 	// EnvAssignment: writing to `%ENV` becomes os.Setenv, which returns an
 	// error the assignment had nowhere to put.
 	EnvAssignment Code = "P2G6070"
+	// Seek: `seek` became os.File.Seek with a named whence constant.
+	Seek Code = "P2G6080"
+	// ReadChunk: `read` became an exact-length read through io.ReadFull.
+	ReadChunk Code = "P2G6081"
+	// Tell: `tell` became a zero-byte seek from the current position.
+	Tell Code = "P2G6082"
+	// EofFalse: `eof` was emitted as false, because Go answers it by reading.
+	EofFalse Code = "P2G6083"
 )
 
 // Processes, signals, and the environment.
@@ -1380,6 +1388,38 @@ var catalogue = map[Code]Entry{
 		Advice:    "check the returned error where the setting matters",
 		Converted: "the emitted code calls `os.Setenv` and drops the error",
 		Concepts:  []string{"errors-are-values"},
+	},
+	Seek: {
+		Severity:  report.Note,
+		Message:   "`seek` is a method on the file in Go, and its whence argument is a named constant",
+		Short:     "seek became os.File.Seek",
+		Advice:    "io.SeekStart, io.SeekCurrent and io.SeekEnd are what 0, 1 and 2 meant; use the names",
+		Converted: "the emitted code calls Seek on the handle, with the whence constant written out",
+		Concepts:  []string{"io-reader-writer", "errors-are-values"},
+	},
+	ReadChunk: {
+		Severity:  report.Warn,
+		Message:   "`read` became an exact-length read through io.ReadFull, with the error folded into a short answer",
+		Short:     "read became io.ReadFull",
+		Advice:    "call io.ReadFull directly and look at the error where a closed pipe must be told from a short file",
+		Cost:      "a read error looks like a short file rather than like undef",
+		Converted: "the emitted helper reads exactly the asked-for bytes when they are there, fewer when the input ends",
+		Concepts:  []string{"io-reader-writer", "errors-are-values"},
+	},
+	Tell: {
+		Severity: report.Note,
+		Message:  "`tell` became a seek of zero bytes from the current position, which moves nothing and reports where it stayed",
+		Short:    "tell became Seek(0, io.SeekCurrent)",
+		Advice:   "nothing to change; there is no Tell in the os package and this is how Go asks",
+		Concepts: []string{"io-reader-writer"},
+	},
+	EofFalse: {
+		Severity: report.Warn,
+		Message:  "`eof` asks a handle whether it is finished without reading, and Go answers that by reading",
+		Short:    "eof was emitted as false",
+		Advice:   "restructure around the read: a Scan that returns false or a read that returns io.EOF is the eof test",
+		Cost:     "the emitted false is right for a read-until-done loop and wrong anywhere eof carried the decision",
+		Concepts: []string{"io-reader-writer", "bufio-scanner-limit"},
 	},
 	ListUtilFirst: {
 		Severity:  report.Warn,

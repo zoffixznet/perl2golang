@@ -514,6 +514,17 @@ var notes = map[string]string{
 		"assertion and the same choice to keep going past a value that does " +
 		"not fit.",
 
+	"readChunk": "Reading an exact number of bytes is io.ReadFull, not Read: " +
+		"a plain Read may hand back fewer bytes than the buffer holds with no " +
+		"error, which works on a file and quietly breaks on a pipe. The " +
+		"original's read returned undef on failure and nearly nothing checked " +
+		"it, so a failure here comes back as the same thing a short file " +
+		"gives.",
+
+	"tellPos": "tell has no direct counterpart: the position is asked for by " +
+		"seeking zero bytes from where the handle already is. The -1 for a " +
+		"handle that cannot say is the same answer tell gave.",
+
 	"readAll": "Reading a whole handle in one piece is one call here, and it " +
 		"leaves nothing set behind it. The mode this replaces was a global, so " +
 		"forgetting to put it back changed how a later read behaved somewhere " +

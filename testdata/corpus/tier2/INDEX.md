@@ -134,6 +134,8 @@ Two entries exit non-zero on purpose: **27** (65) and **32** (1). The rest exit 
 | 85 | `85-a-record-split-into-slices` | A header row zipped against a data row, which is what a hash slice is for | `@rec{@header} = @fields` with a run-time key list and a short value list, a slice on both sides, `delete @h{@keys}` read for its value |
 | 86 | `86-an-array-slice-as-a-place` | The same construct over an array, which does not convert | computed indices on the left, a write past the end through a slice, holes at named and unnamed indices, a swap through overlapping slices |
 | 87 | `87-whole-number-arithmetic` | Dividing bytes into pages, with and without `use integer` | the pragma over a loop and a nested block, `/` and `%` on the same operands inside and outside it, the round-up idiom, `int($n/$d)` with a negative numerator |
+| 88 | `88-a-header-then-the-rest` | A journal with a fixed header, a line body, and a footer read from the end | `read` into a `my` scalar, `tell` between reads, `seek` with whence 2 and a negative offset, `seek ... or die "...: $!"`, a line loop after the seek back |
+| 89 | `89-a-position-under-a-line-reader` | The positioning corners that do not convert yet | `tell` between line reads, where a buffered reader has walked ahead, and four-argument `read`, which patches bytes into the middle of its target |
 
 ## Coverage map
 
