@@ -297,6 +297,25 @@ func (l *Lowerer) orValue(n *ast.BinOp, definedOr bool) ir.Expr {
 	if definedOr {
 		return l.definedOrChain(n)
 	}
+	// `my $x = f() || die ...` never reads a value from the right side: the
+	// die is what happens when there is no value. Lowering it as a value
+	// would run it before the test, so it becomes the body of the guard.
+	if sts, diverts := l.divertingStmts(n.R); diverts {
+		lx := l.expr(n.L)
+		t := typeOrAny(lx)
+		name := l.tmp(defaultName(n.L))
+		decl := &ir.DeclStmt{Names: []string{name}, Type: t, Values: []ir.Expr{lx}}
+		l.setProv(decl, n)
+		target := ir.NewIdent(name, t)
+		guard := &ir.If{Cond: negated(l.toBool(target, n.L)), Then: &ir.Block{Stmts: sts}}
+		l.note(decl, "Perl's || hands back the first true operand, and the right side "+
+			"here never produces one: it is what runs when the left side is false. "+
+			"Written as an if, the order of events is on the page.",
+			"static-types-and-zero-values")
+		l.emit(decl)
+		l.emit(guard)
+		return target
+	}
 	lx := l.expr(n.L)
 	rx := l.expr(n.R)
 	t := join(typeOrAny(lx), typeOrAny(rx))
@@ -356,8 +375,16 @@ func (l *Lowerer) definedOrChain(n *ast.BinOp) ir.Expr {
 	operands := flattenDefinedOr(n)
 	var probes []definedProbe
 	var fallback ir.Expr
+	var fallbackStmts []ir.Stmt
 	for i, x := range operands {
 		if i == len(operands)-1 {
+			// `$h{k} // die ...` reads no value from its last operand: the
+			// die is what happens when nothing else answered. It has to run
+			// inside the ladder's final else, never before the ladder.
+			if sts, diverts := l.divertingStmts(x); diverts {
+				fallbackStmts = sts
+				break
+			}
 			fallback = l.expr(x)
 			break
 		}
@@ -374,20 +401,42 @@ func (l *Lowerer) definedOrChain(n *ast.BinOp) ir.Expr {
 		}
 		probes = append(probes, p)
 	}
-	return l.buildDefinedOr(probes, fallback, n)
+	return l.buildDefinedOr(probes, fallback, fallbackStmts, n)
+}
+
+// divertingStmts recognises an operand that can never yield a value because
+// it leaves instead: a die or an exit. It comes back as the statements to run
+// at the point the chain would have read it.
+func (l *Lowerer) divertingStmts(e ast.Expr) ([]ir.Stmt, bool) {
+	c, ok := e.(*ast.Call)
+	if !ok || (c.Name != "die" && c.Name != "exit") {
+		return nil, false
+	}
+	return l.statementForm(c), true
 }
 
 // buildDefinedOr writes the ladder out: one if per operand that might be
-// undefined, and the last operand as the else that always runs.
-func (l *Lowerer) buildDefinedOr(probes []definedProbe, fallback ir.Expr, n *ast.BinOp) ir.Expr {
+// undefined, and the last operand as the else that always runs. A last
+// operand that leaves instead of answering, a die or an exit, arrives as
+// fallbackStmts and becomes the body of that else.
+func (l *Lowerer) buildDefinedOr(probes []definedProbe, fallback ir.Expr, fallbackStmts []ir.Stmt, n *ast.BinOp) ir.Expr {
 	if len(probes) == 0 {
+		if fallbackStmts != nil {
+			// Nothing before the die could miss, so the chain is just it.
+			for _, st := range fallbackStmts {
+				l.emit(st)
+			}
+			return ir.Nil(ir.TAny)
+		}
 		return fallback
 	}
 	types := make([]*ir.Type, 0, len(probes)+1)
 	for _, p := range probes {
 		types = append(types, typeOrAny(p.val))
 	}
-	types = append(types, typeOrAny(fallback))
+	if fallbackStmts == nil {
+		types = append(types, typeOrAny(fallback))
+	}
 	t := joinAll(types)
 	if t == nil || isUnresolved(t) {
 		t = ir.TAny
@@ -403,9 +452,11 @@ func (l *Lowerer) buildDefinedOr(probes []definedProbe, fallback ir.Expr, n *ast
 		"nil-vs-undef", "comma-ok-idiom")
 	target := ir.NewIdent(name, t)
 
-	var chain ir.Stmt = &ir.Block{Stmts: []ir.Stmt{
-		assign("=", []ir.Expr{target}, []ir.Expr{l.assignable(fallback, t, n.R)}),
-	}}
+	base := []ir.Stmt{assign("=", []ir.Expr{target}, []ir.Expr{l.assignable(fallback, t, n.R)})}
+	if fallbackStmts != nil {
+		base = fallbackStmts
+	}
+	var chain ir.Stmt = &ir.Block{Stmts: base}
 	for i := len(probes) - 1; i >= 0; i-- {
 		p := probes[i]
 		step := &ir.If{
