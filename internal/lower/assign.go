@@ -136,6 +136,12 @@ func (l *Lowerer) substrAssign(lhs *ast.Call, n *ast.Assign) ([]ir.Stmt, bool) {
 // exactly Perl's rule, and it is what makes `@_[0, 1] = @_[1, 0]` a swap rather
 // than two copies of one element.
 func (l *Lowerer) assignToSlice(lhs *ast.Slice, n *ast.Assign) []ir.Stmt {
+	// `@h{@keys} = @vals` names as many places as `@keys` has elements, which
+	// is not known until the program runs, so there is no fixed list of
+	// targets to assign to. Go writes that as a loop.
+	if sts, ok := l.sliceAssignLoop(lhs, n, l.dynamicSliceKeys(lhs)); ok {
+		return sts
+	}
 	targets := l.sliceElements(lhs)
 	if len(targets) == 0 {
 		return []ir.Stmt{l.todoStmt(n, "P2G2530", "slice assignment",
@@ -158,9 +164,12 @@ func (l *Lowerer) assignToSlice(lhs *ast.Slice, n *ast.Assign) []ir.Stmt {
 		values = append(values, parts...)
 	}
 	if len(values) != len(targets) {
-		// Perl pads a short list with undef and drops a long one. Writing that
-		// out would take a temporary slice and a length check, and a mismatch
-		// is nearly always a mistake rather than an intention.
+		// Perl pads a short list with undef and drops a long one, which is
+		// what the loop form does, so the two sides not lining up is a reason
+		// to use it rather than a reason to give up.
+		if sts, ok := l.sliceAssignLoop(lhs, n, true); ok {
+			return sts
+		}
 		return []ir.Stmt{l.todoStmt(n, "P2G2530", "slice assignment",
 			"the two sides of this slice assignment are different lengths",
 			"Perl fills the extra targets with undef when the right side is shorter "+
@@ -2007,4 +2016,184 @@ func unwrapTernary(e ast.Expr) (*ast.Ternary, bool) {
 			return nil, false
 		}
 	}
+}
+
+// sliceKeyExprs is a slice's key or index list, taken apart into one
+// expression per key. A qw() list is its words rather than one value.
+func sliceKeyExprs(n *ast.Slice) []ast.Expr {
+	var out []ast.Expr
+	for _, ie := range n.Idx {
+		out = append(out, flattenWords(ie)...)
+	}
+	return out
+}
+
+// sliceContainer resolves the hash or array a slice reaches into. The sigil in
+// front of a slice describes what comes out of it, not what it reaches into,
+// so `@h{...}` is a lookup in `%h`.
+func (l *Lowerer) sliceContainer(n *ast.Slice) ir.Expr {
+	v, ok := n.Base.(*ast.Var)
+	if !ok {
+		return l.expr(n.Base)
+	}
+	sig := '@'
+	if n.Hash {
+		sig = '%'
+	}
+	return l.identFor(l.lookup(sig, v.Name, v))
+}
+
+// dynamicSliceKeys reports whether a slice's keys are a list whose length is
+// only known while the program runs, which is what `@h{@wanted}` is and what
+// `@h{'a','b'}` is not.
+func (l *Lowerer) dynamicSliceKeys(n *ast.Slice) bool {
+	for _, k := range sliceKeyExprs(n) {
+		if l.producesList(k) {
+			return true
+		}
+	}
+	return false
+}
+
+// sliceKeyList lowers a slice's keys into one Go slice of them.
+func (l *Lowerer) sliceKeyList(n *ast.Slice, want *ir.Type) ir.Expr {
+	parts, _ := l.listParts(sliceKeyExprs(n))
+	if len(parts) == 1 && typeOrAny(parts[0]).Kind == ir.Slice {
+		return l.assignable(parts[0], ir.SliceOf(want), nil)
+	}
+	for i := range parts {
+		parts[i] = l.assignable(parts[i], want, nil)
+	}
+	return composite(ir.SliceOf(want), nil, parts)
+}
+
+// sliceValuesCoverKeys reports whether a slice assignment provably has a
+// value for every key it names, which is the only case where nothing is left
+// undef.
+func (l *Lowerer) sliceValuesCoverKeys(lhs *ast.Slice, values ir.Expr) bool {
+	have := literalLen(values)
+	if have < 0 {
+		return false
+	}
+	want := 0
+	for _, k := range sliceKeyExprs(lhs) {
+		if l.producesList(k) {
+			return false
+		}
+		want++
+	}
+	return have >= want
+}
+
+// sliceAssignLoop lowers `@h{@keys} = @vals`, the hash slice as a place.
+//
+// Perl assigns to as many elements as the key list has, pairing them with the
+// values by position and leaving undef wherever the values run out. Go has no
+// syntax for assigning to several map entries at once, and no way to write a
+// list of places whose length is decided while the program runs, so the whole
+// construct becomes a loop over the keys. That loop is also where Perl's
+// padding rule becomes visible: reading past the end of the value list is the
+// element type's zero value, which is what undef became.
+func (l *Lowerer) sliceAssignLoop(lhs *ast.Slice, n *ast.Assign, wanted bool) ([]ir.Stmt, bool) {
+	if !lhs.Hash || !wanted {
+		return nil, false
+	}
+	// The values are lowered before the hash is looked at, because what they
+	// hold is the evidence that decides the hash's value type. Asking the hash
+	// first would read a type nothing had told it yet.
+	raw := l.list(n.RHS)
+	if v, ok := lhs.Base.(*ast.Var); ok {
+		if b := l.lookup('%', v.Name, v); b != nil {
+			b.Writes++
+			l.observe(b, ir.MapOf(elemOf(typeOrAny(raw))))
+			// Perl pads with undef where the values run out, and the keys are
+			// all there either way, so a short right-hand side puts a real
+			// absence into the hash. Nothing here says the values reach as far
+			// as the keys, so the value type has to have room for one.
+			if !l.sliceValuesCoverKeys(lhs, raw) {
+				l.markNilElems(b)
+			}
+		}
+	}
+	m := l.sliceContainer(lhs)
+	if m == nil || typeOrAny(m).Kind != ir.Map {
+		return nil, false
+	}
+	elem := elemOf(typeOrAny(m))
+	keyT := ir.TString
+	if kt := typeOrAny(m).Key; kt != nil {
+		keyT = kt
+	}
+
+	keys := l.sliceKeyList(lhs, keyT)
+	// Where the hash has room for undef its values are pointers, and the list
+	// on the right does not hold pointers: it holds the values. Coercing the
+	// whole list would turn a missing element into a pointer to the zero
+	// value, which is exactly the distinction the pointer was there to keep,
+	// so the coercion happens per element inside the loop instead.
+	values := raw
+	if !isNullable(elem) {
+		values = l.assignable(raw, ir.SliceOf(elem), n.RHS)
+	}
+	srcElem := elemOf(typeOrAny(values))
+
+	keyName := l.tmp("keys")
+	valName := l.tmp("values")
+	var out []ir.Stmt
+	kDecl := assign(":=", []ir.Expr{ir.NewIdent(keyName, ir.SliceOf(keyT))}, []ir.Expr{keys})
+	vDecl := assign(":=", []ir.Expr{ir.NewIdent(valName, ir.SliceOf(srcElem))}, []ir.Expr{values})
+	l.setProv(kDecl, n)
+	l.setProv(vDecl, n)
+	out = append(out, kDecl, vDecl)
+
+	i := l.tmp("i")
+	k := l.tmp("k")
+	src := ir.NewIdent(valName, ir.SliceOf(srcElem))
+	var body []ir.Stmt
+	if isNullable(elem) {
+		// The keys are all set either way; the ones the values did not reach
+		// are set to nothing, which is what undef was.
+		v := l.tmp("value")
+		body = []ir.Stmt{
+			&ir.DeclStmt{Names: []string{v}, Type: elem},
+			&ir.If{
+				Cond: ir.Bin("<", ir.NewIdent(i, ir.TInt), lenOf(src), ir.TBool),
+				Then: &ir.Block{Stmts: []ir.Stmt{
+					assign("=", []ir.Expr{ir.NewIdent(v, elem)},
+						[]ir.Expr{l.assignable(index(src, ir.NewIdent(i, ir.TInt), srcElem), elem, nil)}),
+				}},
+			},
+			assign("=", []ir.Expr{index(m, ir.NewIdent(k, keyT), elem)},
+				[]ir.Expr{ir.NewIdent(v, elem)}),
+		}
+	} else {
+		body = []ir.Stmt{
+			assign("=",
+				[]ir.Expr{index(m, ir.NewIdent(k, keyT), elem)},
+				[]ir.Expr{l.helperCall(hAt, elem, src, ir.NewIdent(i, ir.TInt))}),
+		}
+	}
+	loop := &ir.Range{
+		Key:    ir.NewIdent(i, ir.TInt),
+		Value:  ir.NewIdent(k, keyT),
+		X:      ir.NewIdent(keyName, ir.SliceOf(keyT)),
+		Define: true,
+		Body:   &ir.Block{Stmts: body},
+	}
+	l.setProv(loop, n)
+	l.note(loop, "A hash slice on the left of an assignment sets one element per "+
+		"key, pairing the two lists by position. Go has no syntax for a list of "+
+		"places, so the pairing is a loop. Perl leaves an element undef where the "+
+		"values run out, which the tolerant read answers with the zero value.",
+		"nil-slices-vs-nil-maps", "nil-vs-undef")
+	l.approximate(n, "P2G2531", "a hash slice as a place",
+		"the slice becomes a loop over the keys",
+		"Perl assigns to as many elements as the key list has and pads with undef "+
+			"when the value list is shorter. Go has no syntax for assigning to several "+
+			"map entries at once, so the pairing is written as a loop.",
+		"Where the keys are written out, one assignment per key is shorter and says "+
+			"more; the loop is for a key list that is only known while the program runs.",
+		"nil-slices-vs-nil-maps")
+	out = append(out, loop)
+	return out, true
 }

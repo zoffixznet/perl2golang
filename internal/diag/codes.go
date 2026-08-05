@@ -170,6 +170,12 @@ const (
 	Autovivification Code = "P2G2510"
 	// SliceAssignment: an assignment writes several elements through a slice.
 	SliceAssignment Code = "P2G2530"
+	// HashSliceAsPlace: a hash slice on the left of an assignment becomes a
+	// loop over its keys.
+	HashSliceAsPlace Code = "P2G2531"
+	// HashSliceDelete: `delete @h{...}` removes several keys and answers with
+	// the values it removed.
+	HashSliceDelete Code = "P2G2532"
 	// AssignTargetShape: the left side of an assignment has no lowering rule.
 	AssignTargetShape Code = "P2G2540"
 	// MutateWhileIterating: a collection is modified inside its own loop.
@@ -918,6 +924,24 @@ var catalogue = map[Code]Entry{
 		Advice:    "write one assignment per element, or a loop over the index and value pairs",
 		Converted: "the assignment is not converted; the statement panics with the original Perl text",
 		Concepts:  []string{"slices-not-arrays"},
+	},
+	HashSliceAsPlace: {
+		Severity:  report.Warn,
+		Message:   "a hash slice on the left of an assignment sets one element per key, and Go has no syntax for a list of places",
+		Short:     "a hash slice as a place",
+		Advice:    "where the keys are written out, one assignment per key is shorter and says more",
+		Cost:      "the pairing runs as a loop rather than as one statement",
+		Converted: "the emitted code loops over the keys and reads the values by position, with the zero value where they run out",
+		Concepts:  []string{"nil-slices-vs-nil-maps", "nil-vs-undef"},
+	},
+	HashSliceDelete: {
+		Severity:  report.Warn,
+		Message:   "`delete` on a hash slice removes several keys and answers with the values it removed",
+		Short:     "deleting a hash slice",
+		Advice:    "nothing to change: the loop is what the one-line Perl was doing",
+		Cost:      "the removal is a loop, because Go's delete takes one key and returns nothing",
+		Converted: "the emitted code reads each value out before deleting its key",
+		Concepts:  []string{"nil-slices-vs-nil-maps"},
 	},
 	AssignTargetShape: {
 		Severity:  report.Refuse,

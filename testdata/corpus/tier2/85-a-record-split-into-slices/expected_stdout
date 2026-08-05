@@ -1,0 +1,15 @@
+--- records ---
+E001  Jane Doe  dept=D10 city=lisbon
+E002  Bo Li     dept=D20 city=osaka
+E003  Ada Byron dept=? city=?
+--- only the required columns ---
+  id=E001,name=Jane Doe
+  id=E002,name=Bo Li
+  id=E003,name=Ada Byron
+--- dropping columns ---
+dropped 2 value(s): D10,lisbon
+left: id,name
+--- a lookup table built from two lists ---
+  D10 => Design
+  D20 => Delivery
+  D30 => (unnamed)

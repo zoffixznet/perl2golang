@@ -1,0 +1,11 @@
+-- reading an array slice --
+picked: a,c
+reordered: c,a
+-- writing an array slice --
+after a literal slice: A,B,c
+after a computed slice: A,x,c,y of 4
+-- a short right-hand side --
+sparse: [only,,,,] of 5
+index 2 is undef
+-- swapping through a slice --
+swapped: right,left

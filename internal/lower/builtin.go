@@ -1675,6 +1675,16 @@ func (l *Lowerer) deleteValue(n *ast.Call) (ir.Expr, bool) {
 	if len(args) != 1 {
 		return nil, false
 	}
+	if sl, isSlice := args[0].(*ast.Slice); isSlice {
+		sts, removed, ok := l.deleteSlice(sl, n, true)
+		if !ok {
+			return nil, false
+		}
+		for _, st := range sts {
+			l.emit(st)
+		}
+		return removed, true
+	}
 	hi, ok := args[0].(*ast.HashIndex)
 	if !ok {
 		return nil, false
@@ -1702,6 +1712,10 @@ func (l *Lowerer) deleteCall(n *ast.Call) []ir.Stmt {
 	if len(args) != 1 {
 		return nil
 	}
+	if sl, isSlice := args[0].(*ast.Slice); isSlice {
+		sts, _, _ := l.deleteSlice(sl, n, false)
+		return sts
+	}
 	hi, ok := args[0].(*ast.HashIndex)
 	if !ok {
 		return nil
@@ -1716,6 +1730,72 @@ func (l *Lowerer) deleteCall(n *ast.Call) []ir.Stmt {
 		"that is not there is not an error, and delete returns nothing, where Perl's "+
 		"returns the removed value.")
 	return []ir.Stmt{st}
+}
+
+// deleteSlice lowers `delete @h{...}`, which removes several keys at once and
+// answers with the values it removed.
+//
+// Go's delete takes one key and returns nothing, so both halves become a loop.
+// Keeping the removed values is a separate slice, and it is only built where
+// something reads them, because a Go program with a variable nothing looks at
+// does not compile.
+func (l *Lowerer) deleteSlice(sl *ast.Slice, n *ast.Call, wantValue bool) ([]ir.Stmt, ir.Expr, bool) {
+	if !sl.Hash {
+		return nil, nil, false
+	}
+	m := l.sliceContainer(sl)
+	if m == nil || typeOrAny(m).Kind != ir.Map {
+		return nil, nil, false
+	}
+	elem := elemOf(typeOrAny(m))
+	keyT := ir.TString
+	if kt := typeOrAny(m).Key; kt != nil {
+		keyT = kt
+	}
+
+	keyName := l.tmp("keys")
+	var out []ir.Stmt
+	kDecl := assign(":=", []ir.Expr{ir.NewIdent(keyName, ir.SliceOf(keyT))},
+		[]ir.Expr{l.sliceKeyList(sl, keyT)})
+	l.setProv(kDecl, n)
+	out = append(out, kDecl)
+
+	k := l.tmp("k")
+	var body []ir.Stmt
+	var removed ir.Expr
+	if wantValue {
+		name := l.tmp("removed")
+		removed = ir.NewIdent(name, ir.SliceOf(elem))
+		decl := &ir.DeclStmt{Names: []string{name}, Type: ir.SliceOf(elem)}
+		l.setProv(decl, n)
+		out = append(out, decl)
+		body = append(body, assign("=", []ir.Expr{removed},
+			[]ir.Expr{appendTo(removed, index(m, ir.NewIdent(k, keyT), elem))}))
+	}
+	body = append(body, exprStmt(ir.CallOf(ir.NewIdent("delete", nil), ir.TVoid,
+		m, ir.NewIdent(k, keyT))))
+	loop := &ir.Range{
+		Key:    ir.NewIdent("_", ir.TInt),
+		Value:  ir.NewIdent(k, keyT),
+		X:      ir.NewIdent(keyName, ir.SliceOf(keyT)),
+		Define: true,
+		Body:   &ir.Block{Stmts: body},
+	}
+	l.setProv(loop, n)
+	l.note(loop, "Go's delete takes one key and answers with nothing, where Perl's "+
+		"takes a slice of them and answers with what it removed. Both halves are "+
+		"the loop: the values are read out before the keys go, because afterwards "+
+		"there is nothing left to read.",
+		"nil-slices-vs-nil-maps")
+	l.approximate(n, "P2G2532", "deleting a hash slice",
+		"the slice becomes a loop over the keys",
+		"Perl's delete takes several keys at once and hands back the values it "+
+			"removed. Go's built-in takes one key and returns nothing, so the removal "+
+			"and the values it produced are written out.",
+		"Nothing to change: the loop is what the one-line Perl was doing.",
+		"nil-slices-vs-nil-maps")
+	out = append(out, loop)
+	return out, removed, true
 }
 
 // ---------------------------------------------------------------------------

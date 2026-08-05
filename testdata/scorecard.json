@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T11:34:24Z",
+  "recorded": "2026-08-15T11:49:23Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -23,8 +23,8 @@
           "skip": 0
         },
         "equivalent": {
-          "pass": 39,
-          "fail": 6,
+          "pass": 40,
+          "fail": 5,
           "skip": 0
         },
         "translated": {
@@ -39,60 +39,60 @@
         }
       },
       "equivalent_annotated": {
-        "pass": 39,
-        "fail": 6,
+        "pass": 40,
+        "fail": 5,
         "skip": 0
       },
       "quality": {
         "todos": 0,
         "symbols": 492,
-        "symbols_typed": 456,
+        "symbols_typed": 457,
         "refusals": 0,
-        "approximations": 84,
+        "approximations": 86,
         "crashes": 0
       }
     },
     {
       "tier": "tier2",
-      "entries": 84,
+      "entries": 86,
       "stages": {
         "compiled": {
-          "pass": 83,
+          "pass": 85,
           "fail": 1,
           "skip": 0
         },
         "emitted": {
-          "pass": 84,
+          "pass": 86,
           "fail": 0,
           "skip": 0
         },
         "equivalent": {
-          "pass": 48,
+          "pass": 50,
           "fail": 36,
           "skip": 0
         },
         "translated": {
-          "pass": 76,
+          "pass": 78,
           "fail": 8,
           "skip": 0
         },
         "typed": {
-          "pass": 42,
-          "fail": 42,
+          "pass": 43,
+          "fail": 43,
           "skip": 0
         }
       },
       "equivalent_annotated": {
-        "pass": 48,
+        "pass": 50,
         "fail": 36,
         "skip": 0
       },
       "quality": {
-        "todos": 16,
-        "symbols": 1375,
-        "symbols_typed": 1190,
-        "refusals": 16,
-        "approximations": 499,
+        "todos": 17,
+        "symbols": 1398,
+        "symbols_typed": 1214,
+        "refusals": 17,
+        "approximations": 507,
         "crashes": 2
       }
     },
@@ -134,9 +134,9 @@
       "quality": {
         "todos": 53,
         "symbols": 888,
-        "symbols_typed": 703,
+        "symbols_typed": 704,
         "refusals": 56,
-        "approximations": 320,
+        "approximations": 323,
         "crashes": 1
       }
     },
@@ -231,21 +231,21 @@
   ],
   "total": {
     "tier": "TOTAL",
-    "entries": 225,
+    "entries": 227,
     "stages": {
       "compiled": {
-        "pass": 214,
+        "pass": 216,
         "fail": 11,
         "skip": 0
       },
       "emitted": {
-        "pass": 225,
+        "pass": 227,
         "fail": 0,
         "skip": 0
       },
       "equivalent": {
-        "pass": 103,
-        "fail": 86,
+        "pass": 106,
+        "fail": 85,
         "skip": 0
       },
       "honest": {
@@ -254,36 +254,36 @@
         "skip": 1
       },
       "translated": {
-        "pass": 187,
+        "pass": 189,
         "fail": 38,
         "skip": 0
       },
       "typed": {
-        "pass": 105,
-        "fail": 120,
+        "pass": 106,
+        "fail": 121,
         "skip": 0
       }
     },
     "equivalent_annotated": {
-      "pass": 103,
-      "fail": 86,
+      "pass": 106,
+      "fail": 85,
       "skip": 0
     },
     "quality": {
-      "todos": 113,
-      "symbols": 3838,
-      "symbols_typed": 3300,
-      "refusals": 116,
-      "approximations": 1166,
+      "todos": 114,
+      "symbols": 3861,
+      "symbols_typed": 3326,
+      "refusals": 117,
+      "approximations": 1179,
       "crashes": 3
     }
   },
   "quality": {
-    "todos": 113,
-    "symbols": 3838,
-    "symbols_typed": 3300,
-    "refusals": 116,
-    "approximations": 1166,
+    "todos": 114,
+    "symbols": 3861,
+    "symbols_typed": 3326,
+    "refusals": 117,
+    "approximations": 1179,
     "crashes": 3
   },
   "entries": [
@@ -855,8 +855,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 6, byte 160: got \"debug,host,name,pass,port,user\\n-...\", wanted \"host,name,port,user\\n--- hash in ...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -866,19 +865,18 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "11 variables left dynamic out of 18"
+          "reason": "10 variables left dynamic out of 18"
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 6, byte 160: got \"debug,host,name,pass,port,user\\n-...\", wanted \"host,name,port,user\\n--- hash in ...\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
         "symbols": 18,
-        "symbols_typed": 7,
+        "symbols_typed": 8,
         "refusals": 0,
-        "approximations": 1,
+        "approximations": 3,
         "crashes": 0
       }
     },
@@ -4543,31 +4541,28 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 4, byte 65: got \"1 key(s): alpha beta gamma=[1 2 ...\", wanted \"3 key(s): alpha=1 beta=2 gamma=3...\"; stderr differs: unexpected \"TODO P2G2530: the two sides of this slice assignment are different le...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
         },
         "translated": {
-          "outcome": "fail",
-          "reason": "1 untranslated construct"
+          "outcome": "pass"
         },
         "typed": {
           "outcome": "fail",
-          "reason": "4 variables left dynamic out of 7"
+          "reason": "2 variables left dynamic out of 7"
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 4, byte 65: got \"1 key(s): alpha beta gamma=[1 2 ...\", wanted \"3 key(s): alpha=1 beta=2 gamma=3...\"; stderr differs: unexpected \"TODO P2G2530: the two sides of this slice assignment are different le...\""
+        "outcome": "pass"
       },
       "quality": {
-        "todos": 1,
+        "todos": 0,
         "symbols": 7,
-        "symbols_typed": 3,
-        "refusals": 1,
-        "approximations": 0,
+        "symbols_typed": 5,
+        "refusals": 0,
+        "approximations": 4,
         "crashes": 0
       }
     },
@@ -5092,6 +5087,82 @@
       }
     },
     {
+      "tier": "tier2",
+      "name": "85-a-record-split-into-slices",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "pass"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "pass"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 16,
+        "symbols_typed": 16,
+        "refusals": 0,
+        "approximations": 4,
+        "crashes": 0
+      }
+    },
+    {
+      "tier": "tier2",
+      "name": "86-an-array-slice-as-a-place",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "stdout differs: line 6, byte 140: got \"B,c of 3\\n-- a short right-hand s...\", wanted \"x,c,y of 4\\n-- a short right-hand...\"; stderr differs: unexpected \"TODO P2G2530: the two sides of this slice assignment are different le...\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "fail",
+          "reason": "2 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "1 variable left dynamic out of 7"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "stdout differs: line 6, byte 140: got \"B,c of 3\\n-- a short right-hand s...\", wanted \"x,c,y of 4\\n-- a short right-hand...\"; stderr differs: unexpected \"TODO P2G2530: the two sides of this slice assignment are different le...\""
+      },
+      "quality": {
+        "todos": 2,
+        "symbols": 7,
+        "symbols_typed": 6,
+        "refusals": 2,
+        "approximations": 0,
+        "crashes": 0
+      }
+    },
+    {
       "tier": "tier3",
       "name": "01-inventory-manager",
       "kind": "convert",
@@ -5371,7 +5442,7 @@
       "stages": {
         "compiled": {
           "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:117:43: cannot use rows2 (variable of type [][]string) as []string value in array or slice literal"
+          "reason": "the generated Go does not compile: ./main.go:125:43: cannot use rows2 (variable of type [][]string) as []string value in array or slice literal"
         },
         "emitted": {
           "outcome": "pass"
@@ -5388,7 +5459,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "10 variables left dynamic out of 32"
+          "reason": "9 variables left dynamic out of 32"
         }
       },
       "equivalent_annotated": {
@@ -5398,9 +5469,9 @@
       "quality": {
         "todos": 0,
         "symbols": 32,
-        "symbols_typed": 22,
+        "symbols_typed": 23,
         "refusals": 0,
-        "approximations": 3,
+        "approximations": 5,
         "crashes": 0
       }
     },
@@ -5715,7 +5786,7 @@
         "symbols": 18,
         "symbols_typed": 10,
         "refusals": 3,
-        "approximations": 12,
+        "approximations": 13,
         "crashes": 0
       }
     },
