@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T12:01:04Z",
+  "recorded": "2026-08-15T12:40:05Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -98,75 +98,75 @@
     },
     {
       "tier": "tier3",
-      "entries": 36,
+      "entries": 37,
       "stages": {
         "compiled": {
-          "pass": 30,
+          "pass": 31,
           "fail": 6,
           "skip": 0
         },
         "emitted": {
-          "pass": 36,
+          "pass": 37,
           "fail": 0,
           "skip": 0
         },
         "equivalent": {
-          "pass": 7,
-          "fail": 29,
+          "pass": 10,
+          "fail": 27,
           "skip": 0
         },
         "translated": {
-          "pass": 22,
-          "fail": 14,
+          "pass": 24,
+          "fail": 13,
           "skip": 0
         },
         "typed": {
           "pass": 8,
-          "fail": 28,
+          "fail": 29,
           "skip": 0
         }
       },
       "equivalent_annotated": {
-        "pass": 7,
-        "fail": 29,
+        "pass": 10,
+        "fail": 27,
         "skip": 0
       },
       "quality": {
-        "todos": 54,
-        "symbols": 893,
-        "symbols_typed": 708,
-        "refusals": 57,
-        "approximations": 323,
+        "todos": 47,
+        "symbols": 915,
+        "symbols_typed": 718,
+        "refusals": 50,
+        "approximations": 320,
         "crashes": 1
       }
     },
     {
       "tier": "tier4",
-      "entries": 36,
+      "entries": 37,
       "stages": {
         "compiled": {
-          "pass": 35,
+          "pass": 36,
           "fail": 1,
           "skip": 0
         },
         "emitted": {
-          "pass": 36,
+          "pass": 37,
           "fail": 0,
           "skip": 0
         },
         "honest": {
-          "pass": 29,
+          "pass": 30,
           "fail": 6,
           "skip": 1
         },
         "translated": {
           "pass": 22,
-          "fail": 14,
+          "fail": 15,
           "skip": 0
         },
         "typed": {
           "pass": 18,
-          "fail": 18,
+          "fail": 19,
           "skip": 0
         }
       },
@@ -176,10 +176,10 @@
         "skip": 0
       },
       "quality": {
-        "todos": 38,
-        "symbols": 159,
-        "symbols_typed": 110,
-        "refusals": 38,
+        "todos": 41,
+        "symbols": 163,
+        "symbols_typed": 111,
+        "refusals": 41,
         "approximations": 61,
         "crashes": 0
       }
@@ -231,59 +231,59 @@
   ],
   "total": {
     "tier": "TOTAL",
-    "entries": 229,
+    "entries": 231,
     "stages": {
       "compiled": {
-        "pass": 219,
+        "pass": 221,
         "fail": 10,
         "skip": 0
       },
       "emitted": {
-        "pass": 229,
+        "pass": 231,
         "fail": 0,
         "skip": 0
       },
       "equivalent": {
-        "pass": 108,
-        "fail": 85,
+        "pass": 111,
+        "fail": 83,
         "skip": 0
       },
       "honest": {
-        "pass": 29,
+        "pass": 30,
         "fail": 6,
         "skip": 1
       },
       "translated": {
-        "pass": 190,
+        "pass": 192,
         "fail": 39,
         "skip": 0
       },
       "typed": {
         "pass": 107,
-        "fail": 122,
+        "fail": 124,
         "skip": 0
       }
     },
     "equivalent_annotated": {
-      "pass": 108,
-      "fail": 85,
+      "pass": 111,
+      "fail": 83,
       "skip": 0
     },
     "quality": {
-      "todos": 115,
-      "symbols": 3878,
-      "symbols_typed": 3342,
-      "refusals": 118,
-      "approximations": 1177,
+      "todos": 111,
+      "symbols": 3904,
+      "symbols_typed": 3353,
+      "refusals": 114,
+      "approximations": 1174,
       "crashes": 3
     }
   },
   "quality": {
-    "todos": 115,
-    "symbols": 3878,
-    "symbols_typed": 3342,
-    "refusals": 118,
-    "approximations": 1177,
+    "todos": 111,
+    "symbols": 3904,
+    "symbols_typed": 3353,
+    "refusals": 114,
+    "approximations": 1174,
     "crashes": 3
   },
   "entries": [
@@ -5560,8 +5560,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "exit status 255, wanted 0; stdout differs: 282 byte(s) missing after line 36, expected \"web capacity: 240 slots\\nworker i...\"; stderr differs: unexpected \"missing key workers\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -5571,17 +5570,16 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "4 variables left dynamic out of 34"
+          "reason": "5 variables left dynamic out of 34"
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "exit status 255, wanted 0; stdout differs: 282 byte(s) missing after line 36, expected \"web capacity: 240 slots\\nworker i...\"; stderr differs: unexpected \"missing key workers\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
         "symbols": 34,
-        "symbols_typed": 30,
+        "symbols_typed": 29,
         "refusals": 0,
         "approximations": 15,
         "crashes": 0
@@ -5599,15 +5597,13 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "exit status 255, wanted 0; stdout differs: 751 byte(s) missing after line 1, expected \"ledger for BRANCH-042 on 2024-06...\"; stderr differs: unexpected \"TODO P2G3599: the unpack function is not implemented ...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
         },
         "translated": {
-          "outcome": "fail",
-          "reason": "7 untranslated constructs"
+          "outcome": "pass"
         },
         "typed": {
           "outcome": "fail",
@@ -5615,15 +5611,14 @@
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "exit status 255, wanted 0; stdout differs: 751 byte(s) missing after line 1, expected \"ledger for BRANCH-042 on 2024-06...\"; stderr differs: unexpected \"TODO P2G3599: the unpack function is not implemented ...\""
+        "outcome": "pass"
       },
       "quality": {
-        "todos": 7,
+        "todos": 0,
         "symbols": 33,
         "symbols_typed": 19,
-        "refusals": 7,
-        "approximations": 9,
+        "refusals": 0,
+        "approximations": 5,
         "crashes": 0
       }
     },
@@ -6596,6 +6591,43 @@
         "symbols_typed": 4,
         "refusals": 1,
         "approximations": 0,
+        "crashes": 0
+      }
+    },
+    {
+      "tier": "tier3",
+      "name": "37-binary-records",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "pass"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "11 variables left dynamic out of 22"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "pass"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 22,
+        "symbols_typed": 11,
+        "refusals": 0,
+        "approximations": 1,
         "crashes": 0
       }
     },
@@ -8049,6 +8081,47 @@
         "symbols_typed": 3,
         "refusals": 0,
         "approximations": 8,
+        "crashes": 0
+      }
+    },
+    {
+      "tier": "tier4",
+      "name": "37-pack-esoteric",
+      "kind": "honest-failure",
+      "categories": [
+        "todo"
+      ],
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "n/a"
+        },
+        "honest": {
+          "outcome": "pass"
+        },
+        "translated": {
+          "outcome": "fail",
+          "reason": "3 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "3 variables left dynamic out of 4"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "n/a"
+      },
+      "quality": {
+        "todos": 3,
+        "symbols": 4,
+        "symbols_typed": 1,
+        "refusals": 3,
+        "approximations": 0,
         "crashes": 0
       }
     },

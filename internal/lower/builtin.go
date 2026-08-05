@@ -134,6 +134,10 @@ func (l *Lowerer) builtin(n *ast.Call) ir.Expr {
 	switch n.Name {
 	case "sprintf":
 		return l.sprintfCall(n)
+	case "unpack":
+		return l.unpackCall(n)
+	case "pack":
+		return l.packCall(n)
 	case "join":
 		return l.joinCall(n)
 	case "split":

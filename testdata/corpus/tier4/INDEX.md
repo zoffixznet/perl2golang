@@ -79,6 +79,7 @@ notes and checked by replaying the program under `2>&1`.
 | 34-open-unchecked | open failure ignored, exit 0 | convert faithfully (no inserted fatal, no nil-handle panic, errno text preserved) AND warn that the failure is unhandled. |
 | 35-buffering | stdout buffered, stderr not, under 2>&1 | declare its I/O model; reproduce merged-stream order (err before out) or report the interleaving change; never lose unflushed output. |
 | 36-untyped-nesting | a structure whose shape only the data knows | say the element types did not resolve, and still run to the last line: a wrong guess about a value leaves an empty collection rather than a stack trace. |
+| 37-pack-esoteric | `%` checksum fold, BER `w`, `l>` byte-order modifier | refuse at each call, at conversion time, naming the template code; the statements around the templates keep converting. |
 
 ## Priority ranking — what matters for real scripts
 

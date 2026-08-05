@@ -1,0 +1,9 @@
+journal is 83 bytes
+first header: 455600640300000012
+trailer: 3 record(s) declared, 3 decoded
+#100 crit disk /var 91% full
+#101 info rotated access.log
+#102 warn slow query: 2.4s
+worst severity: crit
+index: slot=7 ttl=3600 sentinel=-1
+tag byte sum mod 251: 155

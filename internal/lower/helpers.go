@@ -67,6 +67,9 @@ const (
 	hStrList          = "strList"          // []T -> []string, for a dynamic list of keys
 	hFloatList        = "floatList"        // []T -> []float64, when the elements have to carry fractions
 
+	hUnpackTemplate = "unpackTemplate" // unpack, interpreting the template at run time
+	hPackTemplate   = "packTemplate"   // pack, the writing half of the same interpreter
+
 	hDumpValues = "dumpValues" // a structure rendered as Go source
 	hScalarOf   = "scalarOf"   // one value wanted where a list may be
 	hFlatPairs  = "flatPairs"  // a keyed collection read where a list is wanted

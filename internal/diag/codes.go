@@ -302,6 +302,12 @@ const (
 	SprintfFormat Code = "P2G5040"
 	// HexOctParseError: `hex` and `oct` answer 0 where Go returns an error.
 	HexOctParseError Code = "P2G5050"
+	// PackTemplate: a `pack` or `unpack` template is interpreted at run time.
+	PackTemplate Code = "P2G5060"
+	// PackTemplateCode: a template carries a code the emitted interpreter lacks.
+	PackTemplateCode Code = "P2G5061"
+	// PackTemplateComputed: a template is built while the program runs.
+	PackTemplateComputed Code = "P2G5062"
 )
 
 // Numbers, sort, and comparison.
@@ -1474,6 +1480,29 @@ var catalogue = map[Code]Entry{
 		Advice:   "check the second result and decide what unreadable text means, rather than taking 0",
 		Cost:     "the emitted code discards the error, so text that is not a number still becomes 0",
 		Concepts: []string{"errors-are-values", "strconv-parsing"},
+	},
+	PackTemplate: {
+		Severity:  report.Note,
+		Message:   "`%s` reads a template language Go does not have, so the template is interpreted at run time",
+		Short:     "the template is interpreted at run time",
+		Advice:    "where the layout is stable, encoding/binary and slice expressions say the same thing one field at a time",
+		Converted: "the emitted program carries a documented template interpreter and hands it the template unchanged",
+		Concepts:  []string{"encoding-binary", "strings-are-bytes"},
+	},
+	PackTemplateCode: {
+		Severity: report.Refuse,
+		Message:  "the `%s` template code is not in the interpreter emitted with converted programs",
+		Short:    "a template code with no rule",
+		Advice:   "translate the field by hand with encoding/binary, which reads and writes every integer shape",
+		Concepts: []string{"encoding-binary", "strings-are-bytes"},
+	},
+	PackTemplateComputed: {
+		Severity: report.Warn,
+		Message:  "this template is built while the program runs, so nothing can check its codes before then",
+		Short:    "a computed pack template",
+		Advice:   "write the template out at the call, or check it against the codes the emitted interpreter documents",
+		Cost:     "a code outside the interpreter's set stops the program at this call rather than at conversion",
+		Concepts: []string{"encoding-binary"},
 	},
 
 	// -- Numbers and sort ---------------------------------------------------

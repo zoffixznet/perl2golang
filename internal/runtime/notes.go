@@ -553,6 +553,42 @@ var notes = map[string]string{
 		"written from two of them at once is a crash rather than a race the " +
 		"program survives.",
 
+	"unpackTemplate": "Perl's unpack is a whole binary-and-fixed-width parser " +
+		"driven by a template string, and Go has no counterpart to the " +
+		"template: encoding/binary reads integers one at a time with the byte " +
+		"order written at the call, and a fixed-width text field is a slice " +
+		"expression. The helper interprets the template the records were " +
+		"designed around, and a code outside the set it documents stops the " +
+		"program at the call that used it, naming the template.",
+
+	"packTemplate": "The writing half of unpackTemplate, for the same reason: " +
+		"the record layout lives in a template string the program was built " +
+		"around. New Go code writes binary data with encoding/binary and " +
+		"fixed-width text with fmt's width flags, %-10s and %08d.",
+
+	"packItem": "One code of a template, held as data so both directions " +
+		"interpret the template the same way.",
+
+	"packItems": "The template scanner both directions share. Refusing an " +
+		"unknown code up front is what keeps a typo in a template from " +
+		"quietly producing a record with the wrong shape.",
+
+	"packSize": "How wide each integer code is, written once rather than in " +
+		"every case of both switches.",
+
+	"unpackInt": "The integer codes differ in two ways only, width and byte " +
+		"order, so one function decodes them all. The signed codes " +
+		"sign-extend from their own width, which is why int8 and int16 appear " +
+		"before the widening.",
+
+	"packInt": "The encoding half of unpackInt. encoding/binary's Append " +
+		"functions take the integer already narrowed, so the wrap a too-wide " +
+		"value gets is the conversion to uint16 or uint32, visible in the " +
+		"code.",
+
+	"hexNibble": "One hex digit to its value. strconv wants a whole string " +
+		"and an error path, which is more machinery than a digit needs here.",
+
 	"mod": "Go's % takes its sign from the left operand and Perl's takes it " +
 		"from the right one, so -7 % 3 is -1 in Go and 2 in Perl. Negative " +
 		"operands are common in wrap-around arithmetic, which is exactly " +
