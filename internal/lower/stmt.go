@@ -43,6 +43,10 @@ func (l *Lowerer) stmts(list []ast.Stmt) []ir.Stmt {
 func (l *Lowerer) block(list []ast.Stmt) *ir.Block {
 	saved := l.scope
 	savedSeps := l.seps
+	// `use integer` is lexical: it changes what / and % mean until the end of
+	// the enclosing block and no further, which is exactly what makes the
+	// pragma usable at all.
+	savedInteger := l.integerPragma
 	// The submatch slice a match inside this block declared is a local of the
 	// Go block, so nothing after the block can name it. Perl scopes its
 	// capture variables to the enclosing block too, restoring the previous
@@ -54,6 +58,7 @@ func (l *Lowerer) block(list []ast.Stmt) *ir.Block {
 	l.restoreCaptures(depth)
 	l.scope = saved
 	l.seps = savedSeps
+	l.integerPragma = savedInteger
 	return b
 }
 

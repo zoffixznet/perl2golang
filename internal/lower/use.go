@@ -34,7 +34,28 @@ func (l *Lowerer) useStmt(n *ast.Use) []ir.Stmt {
 		}
 		return nil
 
-	case "strict", "warnings", "utf8", "feature", "vars", "lib", "integer",
+	case "integer":
+		// The one pragma in this group that changes what the code means.
+		// Inside its scope Perl stops promoting to floating point: / truncates
+		// and % follows C's sign rule, which is what Go's operators do on ints
+		// without being asked.
+		l.integerPragma = !n.No
+		if l.pass == 2 {
+			what := "use integer"
+			if n.No {
+				what = "no integer"
+			}
+			l.inform(n, "P2G7556", what,
+				"`use integer` switches arithmetic in this scope to whole numbers: / "+
+					"truncates towards zero instead of producing a fraction, and % takes "+
+					"its sign from the left operand rather than the right. Go's operators "+
+					"on int values already do both, so inside this scope the arithmetic "+
+					"is written plainly and the conversions around it disappear.",
+				"explicit-conversions-no-coercion")
+		}
+		return nil
+
+	case "strict", "warnings", "utf8", "feature", "vars", "lib",
 		"diagnostics", "open", "bytes", "less", "sigtrap", "subs":
 		if n.Module == "strict" && l.pass == 2 {
 			l.inform(n, "P2G7555", "use strict",

@@ -225,6 +225,10 @@ type Lowerer struct {
 	// captureStack tracks the identifier holding the current regex
 	// submatch slice, so $1 and friends resolve.
 	captureStack []*captureFrame
+	// integerPragma records that `use integer` is in force here. It changes
+	// what / and % mean for the rest of the enclosing block, and it is
+	// lexically scoped, so the block lowering saves and restores it.
+	integerPragma bool
 	// usedExit records that the program calls os.Exit somewhere.
 	usedExit bool
 	// errVar names the error variable in scope, so $! resolves to the error

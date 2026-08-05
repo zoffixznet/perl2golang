@@ -512,6 +512,8 @@ const (
 	ParentEmbedded Code = "P2G7552"
 	// StrictWarnings: `use strict` and `use warnings` have no counterpart.
 	StrictWarnings Code = "P2G7555"
+	// IntegerPragma: `use integer` changes what / and % mean in its scope.
+	IntegerPragma Code = "P2G7556"
 	// PosixFloor: POSIX::floor maps to math.Floor.
 	PosixFloor Code = "P2G7560"
 	// ListUtilMapped: List::Util maps to slices and to explicit loops.
@@ -2135,6 +2137,14 @@ var catalogue = map[Code]Entry{
 		Cost:      "the stubs compile and return zero values, so the program builds and does not do this work",
 		Converted: "the emitted code declares a stub for each function the script calls, each carrying a TODO",
 		Concepts:  []string{"go-mod-vs-cpan", "small-stdlib-philosophy"},
+	},
+	IntegerPragma: {
+		Severity:  report.Note,
+		Message:   "`use integer` switches / and %% in this scope to whole-number arithmetic",
+		Short:     "use integer changes the arithmetic",
+		Advice:    "nothing to change: Go's operators on int values already follow both rules",
+		Converted: "the emitted code divides and takes the remainder with Go's own operators, and the float conversions disappear",
+		Concepts:  []string{"explicit-conversions-no-coercion"},
 	},
 	StrictWarnings: {
 		Severity: report.Note,

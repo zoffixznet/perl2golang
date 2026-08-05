@@ -1,0 +1,25 @@
+--- floating point, which is what Perl does by default ---
+  8192 / 4096 = 2
+  5000 / 4096 = 1.220703125
+     1 / 4096 = 0.000244140625
+     0 / 4096 = 0
+ 40960 / 4096 = 10
+--- whole numbers, inside the pragma ---
+  8192 = 2 full page(s) + 0 byte(s)
+  5000 = 1 full page(s) + 904 byte(s)
+     1 = 0 full page(s) + 1 byte(s)
+     0 = 0 full page(s) + 0 byte(s)
+ 40960 = 10 full page(s) + 0 byte(s)
+  8192 needs 2 page(s)
+  5000 needs 2 page(s)
+     1 needs 1 page(s)
+     0 needs 0 page(s)
+ 40960 needs 10 page(s)
+--- and the pragma is over ---
+5000 / 4096 is 1.220703125 again
+--- the sign rule, which the pragma also changes ---
+ -7 % 3    perl=  2  integer= -1
+  7 % -3   perl= -2  integer=  1
+ -7 % -3   perl= -1  integer= -1
+--- int() truncates towards zero either way ---
+int(-7/2) = -3, int(7/2) = 3

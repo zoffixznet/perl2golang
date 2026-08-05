@@ -24,6 +24,16 @@ func (l *Lowerer) binop(n *ast.BinOp) ir.Expr {
 		return ir.Bin(n.Op, lx, rx, t)
 
 	case "/":
+		if l.integerPragma {
+			// `use integer` is in force, so the division truncates towards
+			// zero, which is what Go's / on two ints already does.
+			out := ir.Bin("/", l.toInt(l.scalar(n.L), n.L), l.toInt(l.scalar(n.R), n.R), ir.TInt)
+			l.note(out, "`use integer` is in force here, so this division truncates "+
+				"towards zero rather than producing a fraction. Go's / on two int "+
+				"values is that division, so no conversion is needed and none appears.",
+				"explicit-conversions-no-coercion")
+			return out
+		}
 		lx := l.toFloat(l.scalar(n.L), n.L)
 		rx := l.toFloat(l.scalar(n.R), n.R)
 		out := ir.Bin("/", lx, rx, ir.TFloat)
@@ -125,6 +135,12 @@ func (l *Lowerer) binop(n *ast.BinOp) ir.Expr {
 func (l *Lowerer) numPair(a, b ast.Expr) (ir.Expr, ir.Expr, *ir.Type) {
 	lx := l.scalar(a)
 	rx := l.scalar(b)
+	if l.integerPragma {
+		// `use integer` takes both operands as whole numbers before the
+		// operator runs, so 7.9 + 0.2 is 7 rather than 8.1. It is not only
+		// the result that is truncated.
+		return l.toInt(lx, a), l.toInt(rx, b), ir.TInt
+	}
 	lt, rt := typeOrAny(lx), typeOrAny(rx)
 	if lt.Kind == ir.Int && rt.Kind == ir.Int {
 		return lx, rx, ir.TInt
@@ -159,6 +175,18 @@ func isNilLit(x ir.Expr) bool {
 func (l *Lowerer) modulo(n *ast.BinOp) ir.Expr {
 	lx := l.toInt(l.scalar(n.L), n.L)
 	rx := l.toInt(l.scalar(n.R), n.R)
+	if l.integerPragma {
+		// `use integer` puts C's rule in force, where the remainder takes its
+		// sign from the left operand. That is Go's rule too, so % is % here
+		// and the helper that reproduces Perl's rule is not wanted.
+		out := ir.Bin("%", lx, rx, ir.TInt)
+		l.note(out, "`use integer` is in force here, so % takes its sign from the "+
+			"left operand, which is C's rule and Go's. Outside this scope Perl takes "+
+			"the sign from the right operand instead, and the two disagree on every "+
+			"negative operand.",
+			"explicit-conversions-no-coercion")
+		return out
+	}
 	if mayBeNegative(n.L) || mayBeNegative(n.R) {
 		out := l.helperCall(hMod, ir.TInt, lx, rx)
 		l.approximate(n, "P2G5520", "% with a possibly negative operand",

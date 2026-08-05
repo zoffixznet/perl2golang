@@ -1,6 +1,6 @@
 # Tier 2 corpus - script-shaped Perl programs
 
-86 entries. Each is a self-contained, realistic Perl script of the kind a
+87 entries. Each is a self-contained, realistic Perl script of the kind a
 sysadmin or data wrangler actually writes, not a snippet.
 
 ## Layout of an entry
@@ -133,6 +133,7 @@ Two entries exit non-zero on purpose: **27** (65) and **32** (1). The rest exit 
 | 84 | `84-captures-in-the-caller-s-context` | The same sub read in three contexts, and one that asks which, neither of which fully converts | a sub returning a match read as a list, as a test and as a scalar, `wantarray ? @got : scalar @got` |
 | 85 | `85-a-record-split-into-slices` | A header row zipped against a data row, which is what a hash slice is for | `@rec{@header} = @fields` with a run-time key list and a short value list, a slice on both sides, `delete @h{@keys}` read for its value |
 | 86 | `86-an-array-slice-as-a-place` | The same construct over an array, which does not convert | computed indices on the left, a write past the end through a slice, holes at named and unnamed indices, a swap through overlapping slices |
+| 87 | `87-whole-number-arithmetic` | Dividing bytes into pages, with and without `use integer` | the pragma over a loop and a nested block, `/` and `%` on the same operands inside and outside it, the round-up idiom, `int($n/$d)` with a negative numerator |
 
 ## Coverage map
 
@@ -151,7 +152,7 @@ Two entries exit non-zero on purpose: **27** (65) and **32** (1). The rest exit 
   (Getopt::Long), 32 (Scalar::Util)
 - **Object shapes** - 36
 - **Blocks as terms** - 38; the slurp form of it in 21
-- **Arithmetic and argument typing** - 39, 40
+- **Arithmetic and argument typing** - 39, 40, 87; how far the pragma reaches in tier3 36
 - **List and string surgery** - 41, 66, 69, 70, 85, 86; the whole of `splice` in tier1 12
 - **Nested data and its types** - 42, 45, 46; also 06, 07, 08
 - **Paths and temporary trees** - 43, 44, 49, 50, 56

@@ -125,6 +125,9 @@ func (l *Lowerer) lowerSubDecl(sd *ast.SubDecl) {
 	}
 
 	savedScope, savedSub, savedClass, savedFile := l.scope, l.curSub, l.curClass, l.curFile
+	// A sub body is a lexical scope like any other, so `use integer` inside
+	// one stops at the closing brace and does not reach the code after it.
+	savedInteger := l.integerPragma
 	l.scope = newScope(nil)
 	l.scope.fn = s
 	l.curSub = s
@@ -132,6 +135,7 @@ func (l *Lowerer) lowerSubDecl(sd *ast.SubDecl) {
 	l.setFile(s.File)
 	defer func() {
 		l.scope, l.curSub, l.curClass = savedScope, savedSub, savedClass
+		l.integerPragma = savedInteger
 		l.setFile(savedFile)
 	}()
 

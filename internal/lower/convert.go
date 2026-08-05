@@ -170,12 +170,12 @@ func (l *Lowerer) toInt(x ir.Expr, n ast.Node) ir.Expr {
 	case t.Kind == ir.Slice, t.Kind == ir.Map:
 		return l.elementCount(x)
 	case t.Kind == ir.Float:
-		// Go refuses to convert an untyped float constant to int, because the
-		// truncation would be silent. Doing it here is the same answer.
-		if text, ok := floatConstant(x); ok {
-			if f, err := strconv.ParseFloat(text, 64); err == nil {
-				return ir.IntLit(strconv.FormatInt(int64(f), 10))
-			}
+		// Go refuses to convert a constant with a fractional part to int at
+		// all, because the truncation would be silent, and `int(-7 / 2)` is
+		// exactly that once Perl's / has made the division floating point.
+		// Working the constant out here is the same answer and a better line.
+		if f, ok := constFloat(x); ok {
+			return ir.IntLit(strconv.FormatInt(int64(f), 10))
 		}
 		out := conversion(ir.TInt, x)
 		l.note(out, "Converting a float to an int in Go truncates towards zero, which "+
@@ -187,22 +187,55 @@ func (l *Lowerer) toInt(x ir.Expr, n ast.Node) ir.Expr {
 	return conversion(ir.TInt, l.helperCall(hToNum, ir.TFloat, x))
 }
 
-// floatConstant reports whether an expression is a floating-point constant,
-// possibly negated, and returns its text.
-func floatConstant(x ir.Expr) (string, bool) {
+// constFloat evaluates an expression the Go compiler would treat as a
+// constant.
+//
+// It exists for one line: `int($n / $d)` with numbers on both sides. Perl's /
+// is always floating point, so the division comes out as a float constant, and
+// Go rejects converting a constant with a fractional part to int outright
+// rather than truncating it. Working the value out here gives the number Perl
+// would have printed, written as a number.
+func constFloat(x ir.Expr) (float64, bool) {
 	switch n := x.(type) {
 	case *ir.Lit:
-		if n.Kind == ir.LitFloat {
-			return n.Value, true
+		if n.Kind != ir.LitInt && n.Kind != ir.LitFloat {
+			return 0, false
+		}
+		f, err := strconv.ParseFloat(n.Value, 64)
+		return f, err == nil
+	case *ir.Paren:
+		return constFloat(n.X)
+	case *ir.Conversion:
+		if n.To != nil && (n.To.Kind == ir.Float || n.To.Kind == ir.Int) {
+			return constFloat(n.X)
 		}
 	case *ir.Unary:
 		if n.Op == "-" {
-			if text, ok := floatConstant(n.X); ok {
-				return "-" + text, true
+			if f, ok := constFloat(n.X); ok {
+				return -f, true
 			}
 		}
+	case *ir.Binary:
+		a, aok := constFloat(n.L)
+		b, bok := constFloat(n.R)
+		if !aok || !bok {
+			return 0, false
+		}
+		switch n.Op {
+		case "+":
+			return a + b, true
+		case "-":
+			return a - b, true
+		case "*":
+			return a * b, true
+		case "/":
+			if b == 0 {
+				return 0, false
+			}
+			return a / b, true
+		}
 	}
-	return "", false
+	return 0, false
 }
 
 // toNum renders an expression as whatever numeric type suits it: int when the

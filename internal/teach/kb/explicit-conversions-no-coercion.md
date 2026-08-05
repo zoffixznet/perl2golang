@@ -95,6 +95,66 @@ func main() {
 true
 ```
 
+## `use integer`, where Go is already what Perl had to ask for
+
+There is one Perl pragma whose whole purpose is to switch off the behaviour this lesson is about, and it is worth knowing because the Go it becomes is *shorter* than the Perl rather than longer:
+
+```perl
+{
+    use integer;
+    my $full = $n / $page;          # truncates, no fraction
+    my $rest = $n % $page;          # sign of the LEFT operand, C's rule
+}
+```
+
+Two operators change at once inside that scope. `/` stops promoting to floating point and truncates towards zero. And `%` stops taking its sign from the right operand, which is Perl's rule, and takes it from the left, which is C's. Go's operators on `int` values do both of those without being asked, so inside the pragma every conversion this lesson has been inserting disappears:
+
+```go
+package main
+
+import "fmt"
+
+// perlMod reproduces Perl's %, whose result takes the sign of the right
+// operand. Go's % takes the sign of the left one, which is C's rule.
+func perlMod(a, b int) int {
+	if b == 0 {
+		return 0
+	}
+	m := a % b
+	if m != 0 && (m < 0) != (b < 0) {
+		m += b
+	}
+	return m
+}
+
+func main() {
+	const page = 4096
+	sizes := []int{8192, 5000, 1}
+
+	for _, n := range sizes {
+		// use integer: / truncates, % follows C's rule.
+		fmt.Printf("%6d = %d full page(s) + %d byte(s), %d page(s) in all\n",
+			n, n/page, n%page, (n+page-1)/page)
+	}
+
+	// Outside the pragma, / is floating point and % is Perl's rule.
+	fmt.Println(float64(5000)/page, perlMod(-7, 3), -7%3)
+}
+```
+
+```
+  8192 = 2 full page(s) + 0 byte(s), 2 page(s) in all
+  5000 = 1 full page(s) + 904 byte(s), 2 page(s) in all
+     1 = 0 full page(s) + 1 byte(s), 1 page(s) in all
+1.220703125 2 -1
+```
+
+`(n + page - 1) / page` is the round-up idiom, and it only reads correctly when the division truncates; written with floating-point division it needs a `math.Ceil` and a conversion back. That is the whole reason the pragma exists, and it is the shape to reach for in Go whenever a count of fixed-size chunks is wanted.
+
+The pragma is lexical, which means it governs the text it encloses and not the calls that text makes: a sub declared outside it keeps floating-point arithmetic even when called from inside. Go has nothing that changes an operator's meaning over a region of source, and does not need it — the operand types say what the operator does, once, at the declaration, and every line downstream follows. `use integer` is Perl asking for the thing Go gives by default.
+
+One trap on the way across, and it is a compile error rather than a wrong answer. Perl's `int($n / $d)` is floating-point division followed by truncation, and where both operands are constants the Go that comes out is `int(-7.0 / 2.0)` — which Go rejects outright, because a constant with a fractional part cannot be converted to `int` at all. The fix is to work the constant out and write the number: `int(-7 / 2)` in Go, with both operands untyped integer constants, is `-3` and compiles.
+
 ## The mismatch
 
 Four rules replace the coercion instinct. One: `T(v)` is the universal conversion syntax, and *even `int` to `int64` requires it* — same-shaped integer types are still distinct types, which matters constantly because `len()` returns `int` while `time.Duration` and file sizes are `int64`. Prefer plain `int` (64-bit on modern platforms) unless an API or a serialisation format dictates otherwise. Two: `/` on two integers is integer division — `7 / 2` is `3`, and Perl's answer needs `float64(a) / float64(b)`; this is the single most common numeric porting bug. Three: string-to-number never happens implicitly and never partially — `strconv.Atoi("10 apples")` returns an *error*, not `10` (see `strconv-parsing`), and `==` works for both numbers and strings because types, not operators, disambiguate — the `==`/`eq` split is gone. Four: untyped *constants* are the one place Go feels Perl-flexible — `7.0 / 2` works, and `const k = 1 << 20` can initialise an `int64` or a `float64` — but a constant that cannot be represented exactly is a compile error (`int(2.99)` with a constant literal refuses to compile), so the flexibility never becomes coercion.

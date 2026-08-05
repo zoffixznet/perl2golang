@@ -1,0 +1,20 @@
+--- the same call, from both sides of the pragma ---
+outside, called outside: 3.5
+inside,  called outside: 3
+outside, called inside:  3.5
+inside,  called inside:  3
+--- the pragma reaches the whole rest of its block ---
+half of 9 is 4
+and a third is 3
+--- a named sub declared inside the pragma's block ---
+outer_half(7) = 3.5
+inner_half(7) = 3
+--- the pragma also truncates the operands of + - * ---
+7.9 + 0.2   = 7
+2.5 * 3.5   = 6
+10.9 - 0.5  = 10
+and outside:  7.9 + 0.2 = 8.1
+--- no integer turns it back off ---
+with:    4
+without: 4.5
+with:    4
