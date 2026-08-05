@@ -733,7 +733,7 @@ func (l *Lowerer) locate(n ast.Node) ast.Node {
 	if l.curStmt == nil {
 		return n
 	}
-	if n.Pos().Offset < l.curStmt.Pos().Offset || n.Pos().Line < 1 {
+	if n.Pos().Offset < l.curStmt.Pos().Offset || n.Pos().Line < l.curStmt.Pos().Line {
 		return l.curStmt
 	}
 	return n

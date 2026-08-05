@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T12:50:50Z",
+  "recorded": "2026-08-15T13:00:13Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -142,31 +142,31 @@
     },
     {
       "tier": "tier4",
-      "entries": 37,
+      "entries": 38,
       "stages": {
         "compiled": {
-          "pass": 36,
+          "pass": 37,
           "fail": 1,
           "skip": 0
         },
         "emitted": {
-          "pass": 37,
+          "pass": 38,
           "fail": 0,
           "skip": 0
         },
         "honest": {
-          "pass": 30,
+          "pass": 31,
           "fail": 6,
           "skip": 1
         },
         "translated": {
           "pass": 22,
-          "fail": 15,
+          "fail": 16,
           "skip": 0
         },
         "typed": {
           "pass": 18,
-          "fail": 19,
+          "fail": 20,
           "skip": 0
         }
       },
@@ -176,10 +176,10 @@
         "skip": 0
       },
       "quality": {
-        "todos": 41,
-        "symbols": 163,
-        "symbols_typed": 111,
-        "refusals": 41,
+        "todos": 47,
+        "symbols": 167,
+        "symbols_typed": 113,
+        "refusals": 47,
         "approximations": 61,
         "crashes": 0
       }
@@ -224,22 +224,22 @@
         "symbols": 924,
         "symbols_typed": 842,
         "refusals": 3,
-        "approximations": 203,
+        "approximations": 205,
         "crashes": 0
       }
     }
   ],
   "total": {
     "tier": "TOTAL",
-    "entries": 233,
+    "entries": 234,
     "stages": {
       "compiled": {
-        "pass": 223,
+        "pass": 224,
         "fail": 10,
         "skip": 0
       },
       "emitted": {
-        "pass": 233,
+        "pass": 234,
         "fail": 0,
         "skip": 0
       },
@@ -249,18 +249,18 @@
         "skip": 0
       },
       "honest": {
-        "pass": 30,
+        "pass": 31,
         "fail": 6,
         "skip": 1
       },
       "translated": {
         "pass": 194,
-        "fail": 39,
+        "fail": 40,
         "skip": 0
       },
       "typed": {
         "pass": 109,
-        "fail": 124,
+        "fail": 125,
         "skip": 0
       }
     },
@@ -270,20 +270,20 @@
       "skip": 0
     },
     "quality": {
-      "todos": 109,
-      "symbols": 3918,
-      "symbols_typed": 3368,
-      "refusals": 112,
-      "approximations": 1182,
+      "todos": 115,
+      "symbols": 3922,
+      "symbols_typed": 3370,
+      "refusals": 118,
+      "approximations": 1184,
       "crashes": 3
     }
   },
   "quality": {
-    "todos": 109,
-    "symbols": 3918,
-    "symbols_typed": 3368,
-    "refusals": 112,
-    "approximations": 1182,
+    "todos": 115,
+    "symbols": 3922,
+    "symbols_typed": 3370,
+    "refusals": 118,
+    "approximations": 1184,
     "crashes": 3
   },
   "entries": [
@@ -4463,7 +4463,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "exit status 255, wanted 0; stdout differs: line 3, byte 97: got \"0\\n-- keeping the two streams apa...\", wanted \"7\\n-- keeping the two streams apa...\"; stderr differs: unexpected \"TODO P2G3599: the fork function is not implemented ...\""
+          "reason": "exit status 255, wanted 0; stdout differs: line 3, byte 97: got \"0\\n-- keeping the two streams apa...\", wanted \"7\\n-- keeping the two streams apa...\"; stderr differs: unexpected \"TODO P2G6520: fork has no Go counterpart ...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -4479,7 +4479,7 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "exit status 255, wanted 0; stdout differs: line 3, byte 97: got \"0\\n-- keeping the two streams apa...\", wanted \"7\\n-- keeping the two streams apa...\"; stderr differs: unexpected \"TODO P2G3599: the fork function is not implemented ...\""
+        "reason": "exit status 255, wanted 0; stdout differs: line 3, byte 97: got \"0\\n-- keeping the two streams apa...\", wanted \"7\\n-- keeping the two streams apa...\"; stderr differs: unexpected \"TODO P2G6520: fork has no Go counterpart ...\""
       },
       "quality": {
         "todos": 4,
@@ -8201,6 +8201,47 @@
       }
     },
     {
+      "tier": "tier4",
+      "name": "38-fork-and-reap",
+      "kind": "honest-failure",
+      "categories": [
+        "todo"
+      ],
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "n/a"
+        },
+        "honest": {
+          "outcome": "pass"
+        },
+        "translated": {
+          "outcome": "fail",
+          "reason": "6 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "2 variables left dynamic out of 4"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "n/a"
+      },
+      "quality": {
+        "todos": 6,
+        "symbols": 4,
+        "symbols_typed": 2,
+        "refusals": 6,
+        "approximations": 0,
+        "crashes": 0
+      }
+    },
+    {
       "tier": "domain",
       "name": "01-logrotate-check",
       "kind": "convert",
@@ -8578,7 +8619,7 @@
         "symbols": 32,
         "symbols_typed": 29,
         "refusals": 0,
-        "approximations": 5,
+        "approximations": 6,
         "crashes": 0
       }
     },
@@ -8806,7 +8847,7 @@
         "symbols": 28,
         "symbols_typed": 28,
         "refusals": 0,
-        "approximations": 3,
+        "approximations": 4,
         "crashes": 0
       }
     },

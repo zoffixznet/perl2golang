@@ -282,6 +282,45 @@ func (l *Lowerer) builtin(n *ast.Call) ir.Expr {
 		}
 		return ir.BoolLit(true)
 
+	case "fork":
+		// A refusal rather than a guess, and a considered one: Go's runtime is
+		// threaded, so a bare fork without an exec is not survivable, and the
+		// two tools Go offers instead pull in different directions. A goroutine
+		// runs the child block in this program but cannot exit with its own
+		// status; an exec'd child has a real status but does not share the
+		// block's code. Which one the original wanted is a decision, not a
+		// translation. The zero value this leaves behind reads as undef, so
+		// the `defined` check that follows a real fork call fails and the
+		// program stops at the fork the way it would have stopped had fork
+		// itself failed.
+		return l.todoExpr(n, "P2G6520", "fork",
+			"fork has no Go counterpart",
+			"fork copies the whole process: the child continues from this same line "+
+				"with its own copy of every variable, and can exit with its own status. "+
+				"Go's runtime runs threads even before main starts, and a forked copy "+
+				"of a threaded program is broken by design, so the language offers two "+
+				"different tools instead of one: a goroutine, which runs a function "+
+				"concurrently inside this program, and exec.Command, which runs a real "+
+				"child process.",
+			"Where the child block computes something for this program, move the "+
+				"block into a function and start it with `go`, joined by a "+
+				"sync.WaitGroup. Where the child exited with a status the parent read, "+
+				"run the work as a program of its own under exec.Command and take the "+
+				"status from cmd.Wait.",
+			"goroutines-not-fork", "os-exec", "waitgroup-and-mutex")
+
+	case "waitpid", "wait":
+		return l.todoExpr(n, "P2G6520", n.Name,
+			"there is no forked child to wait for",
+			"waitpid collects a child created by fork, and the fork above it did "+
+				"not convert. Go waits for each of its two kinds of child by name: "+
+				"cmd.Wait for a process started with exec.Command, and a "+
+				"sync.WaitGroup for goroutines.",
+			"Rework the fork first; the wait then falls out of the model chosen "+
+				"there, and $? >> 8 becomes the ExitCode of the error cmd.Wait "+
+				"returns.",
+			"goroutines-not-fork", "os-exec", "waitgroup-and-mutex")
+
 	case "binmode":
 		l.inform(n, "P2G6060", "binmode",
 			"binmode sets the encoding layer on a handle. Go reads and writes bytes "+
@@ -1618,7 +1657,7 @@ func (l *Lowerer) dieMessage(n *ast.Call) ir.Expr {
 	if text, ok := staticString(args[0]); ok && len(args) == 1 {
 		if !strings.HasSuffix(text, "\n") {
 			text += " at " + l.opts.File + " line " + itoa(posLine(n)) + ".\n"
-			l.approximate(n, "P2G6520", "die without a trailing newline",
+			l.approximate(n, "P2G6515", "die without a trailing newline",
 				"the file and line suffix is fixed at conversion time",
 				"When a die message does not end in a newline, Perl appends \" at FILE "+
 					"line N.\" using the line the die is on. The generated code has that "+

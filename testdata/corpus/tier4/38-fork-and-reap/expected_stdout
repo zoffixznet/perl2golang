@@ -1,0 +1,3 @@
+child exited 7
+parent still sees 'parent value'
+both children reaped

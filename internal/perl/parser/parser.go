@@ -673,6 +673,10 @@ func (p *parser) parseExprStatement() ast.Stmt {
 
 	st := ast.Stmt(nil)
 	es := &ast.ExprStmt{X: x}
+	// The span goes on before any modifier wraps the statement, or the inner
+	// statement of `EXPR if COND` is left with no position at all and every
+	// diagnostic inside it falls back to nowhere.
+	setSpan(es, start, p.prevEnd())
 	st = es
 	st = p.applyStatementModifiers(st, start)
 	p.accept(token.Semi)

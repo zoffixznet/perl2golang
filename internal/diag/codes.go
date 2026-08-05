@@ -422,7 +422,9 @@ const (
 	SystemCall Code = "P2G6505"
 	// ExitStatusShift: `$? >> 8` decodes a wait status.
 	ExitStatusShift Code = "P2G6510"
-	// Fork: `fork` copies the process.
+	// DieLocationSuffix: a die message with no newline gets " at FILE line N."
+	DieLocationSuffix Code = "P2G6515"
+	// Fork: `fork` and `waitpid` belong to a process model Go does not have.
 	Fork Code = "P2G6520"
 	// SignalHandler: a %SIG handler became a channel.
 	SignalHandler Code = "P2G6530"
@@ -1862,13 +1864,20 @@ var catalogue = map[Code]Entry{
 		Concepts:  []string{"os-exec", "errors-are-values"},
 	},
 	Fork: {
-		Severity:  report.Warn,
-		Message:   "`fork` copies the process, and a goroutine shares memory with the rest of the program",
-		Short:     "fork became a goroutine",
-		Advice:    "guard the shared state with `sync.Mutex`, or re-exec the program with `exec.Command` for real isolation",
-		Cost:      "a child that mutated its own copy of a variable now mutates the parent's",
-		Converted: "the emitted code starts a goroutine and waits for it with `sync.WaitGroup`",
-		Concepts:  []string{"goroutines-not-fork", "waitgroup-and-mutex", "race-detector"},
+		Severity:  report.Refuse,
+		Message:   "`%s` belongs to the fork model of processes, and a Go program cannot fork itself",
+		Short:     "fork has no Go counterpart",
+		Advice:    "run concurrent work in this program as a goroutine joined by a `sync.WaitGroup`, or run a real child process with `exec.Command` and read its exit status from `cmd.Wait`",
+		Converted: "not converted: neither of Go's two models, a goroutine or an exec'd child, can stand in without deciding which one the block wanted",
+		Concepts:  []string{"goroutines-not-fork", "os-exec", "waitgroup-and-mutex"},
+	},
+	DieLocationSuffix: {
+		Severity: report.Warn,
+		Message:  "a die message with no trailing newline gets \" at FILE line N.\" appended, using the line the die is on",
+		Short:    "the file and line suffix is fixed",
+		Advice:   "end the message with a newline to suppress the suffix, which is also how Perl suppresses it",
+		Cost:     "the baked-in text will not follow the Go source if it moves",
+		Concepts: []string{"errors-are-values"},
 	},
 	SignalHandler: {
 		Severity: report.Warn,
