@@ -347,6 +347,20 @@ func (l *Lowerer) declareSingle(v *ast.Var, n *ast.Assign) []ir.Stmt {
 		value = l.copiedList(listed, n.RHS)
 		l.observe(b, typeOrAny(value))
 	case '%':
+		// A named hash whose keys are written out and whose values differ in
+		// kind is as much a record as the hash references recordFor already
+		// converts, provided the rest of the file never asks it a question
+		// only a map can answer. That was decided before the first pass.
+		if c, isRecord := l.namedRecords[v]; isRecord {
+			if _, h, ok := l.recordHash(n.RHS, v.Name); ok {
+				b.Type = c.Value
+				l.observe(b, c.Value)
+				st := assign(":=", []ir.Expr{ir.NewIdent(b.Go, b.Type)},
+					[]ir.Expr{l.recordLit(c, h)})
+				l.setProv(st, n)
+				return []ir.Stmt{st}
+			}
+		}
 		// A hash an option block fills in is a struct, so its initialiser is
 		// a struct literal rather than a map one.
 		if c := l.classOf(b.Type); c != nil {
@@ -1416,10 +1430,13 @@ func (l *Lowerer) assignToHash(lhs *ast.HashIndex, n *ast.Assign) []ir.Stmt {
 	if field != nil {
 		// A struct field: the place is the whole expression rather than a
 		// lookup inside a container, and the value says what the field holds.
+		// The right side is lowered once; a second lowering would also run
+		// its setup twice, and a `shift` on the right would eat two elements.
+		raw := l.scalar(n.RHS)
 		if !selfReferential(lhs, n.RHS) {
-			l.observeField(field, typeOrAny(l.scalar(n.RHS)))
+			l.observeField(field, typeOrAny(raw))
 		}
-		st := assign("=", []ir.Expr{m}, []ir.Expr{l.assignable(l.scalar(n.RHS), field.Type, n.RHS)})
+		st := assign("=", []ir.Expr{m}, []ir.Expr{l.assignable(raw, field.Type, n.RHS)})
 		l.setProv(st, n)
 		return append(out, st)
 	}

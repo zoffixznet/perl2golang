@@ -69,6 +69,187 @@ func (l *Lowerer) withHint(name string, f func()) {
 	l.hints = l.hints[:len(l.hints)-1]
 }
 
+// collectRecordHashes runs before the first pass and decides which named
+// hashes are records: `my %conf = (host => 'db1', port => 5432)` is the same
+// shape as the hash references recordFor already turns into structs, and the
+// reader deserves `conf.Port` for it just as much.
+//
+// The decision needs the whole file, because a named hash is also where the
+// collection operations live. Any use that needs a map disqualifies every
+// hash of that name: deleting a key, a key computed at run time on the left
+// of an assignment, a hash slice, exists, or the hash used whole, in a merge,
+// a bool test, a reference, or an argument list. So does any use that needs
+// undef: a struct field always holds a value, so an element read through
+// `defined` or `//`, or a read of a key the file never puts in, would turn
+// a stored zero into "absent". keys and values stay fine, because a record
+// answers them with its field list written out, and a key computed on the
+// right of an assignment stays fine too, through the generated
+// field-by-name switch.
+func (l *Lowerer) collectRecordHashes() {
+	var stmts []ast.Stmt
+	for _, f := range l.files {
+		stmts = append(stmts, f.Prog.Stmts...)
+	}
+
+	// The declarations shaped like a record: one bare `my %h` with a written-
+	// out pair list on the right.
+	type site struct {
+		v   *ast.Var
+		rhs ast.Expr
+	}
+	sites := map[string][]site{}
+	declared := map[*ast.Var]bool{}
+	keysIn := map[string]map[string]bool{} // keys the file puts in, per name
+	walkExprs(stmts, func(e ast.Expr) {
+		a, ok := e.(*ast.Assign)
+		if !ok || a.Op != "=" {
+			return
+		}
+		my, ok := a.LHS.(*ast.My)
+		if !ok || my.Keyword != "my" || my.Paren {
+			return
+		}
+		vars := declaredVars(my)
+		if len(vars) != 1 || vars[0].Sigil != '%' {
+			return
+		}
+		if _, isOption := l.optionHash[varKey('%', vars[0].Name)]; isOption {
+			return
+		}
+		flat, ok := hashPairs(a.RHS)
+		if !ok {
+			return
+		}
+		name := vars[0].Name
+		sites[name] = append(sites[name], site{vars[0], a.RHS})
+		declared[vars[0]] = true
+		if keysIn[name] == nil {
+			keysIn[name] = map[string]bool{}
+		}
+		for i := 0; i+1 < len(flat); i += 2 {
+			if k, ok := staticString(flat[i]); ok {
+				keysIn[name][k] = true
+			}
+		}
+	})
+	if len(sites) == 0 {
+		return
+	}
+
+	// The uses only a map can answer. keys and values reach the hash through
+	// a call, so the bare %h under one of those is fine; the allowed set
+	// remembers which.
+	banned := map[string]bool{}
+	allowed := map[ast.Expr]bool{}
+	candidate := func(name string) bool { _, ok := sites[name]; return ok }
+	baseName := func(e ast.Expr) (string, bool) {
+		v, ok := e.(*ast.Var)
+		if !ok || !candidate(v.Name) {
+			return "", false
+		}
+		return v.Name, true
+	}
+	reads := map[string]map[string]bool{} // static keys read, per name
+	walkExprs(stmts, func(e ast.Expr) {
+		switch n := e.(type) {
+		case *ast.Call:
+			switch n.Name {
+			case "keys", "values":
+				for _, a := range flatten(argList(n)) {
+					if v, ok := a.(*ast.Var); ok && v.Sigil == '%' {
+						allowed[v] = true
+					}
+				}
+			case "delete", "exists", "defined":
+				for _, a := range flatten(argList(n)) {
+					switch t := a.(type) {
+					case *ast.HashIndex:
+						if name, ok := baseName(t.Base); ok {
+							banned[name] = true
+						}
+					case *ast.Slice:
+						if name, ok := baseName(t.Base); ok {
+							banned[name] = true
+						}
+					}
+				}
+			}
+		case *ast.Slice:
+			if !n.Hash {
+				return
+			}
+			if name, ok := baseName(n.Base); ok {
+				banned[name] = true
+			}
+		case *ast.BinOp:
+			// An element read through // is a question about undef, and a
+			// struct field has no undef to be asked about: a stored zero
+			// would read as absent and take the default.
+			if n.Op == "//" {
+				if h, ok := n.L.(*ast.HashIndex); ok {
+					if name, ok := baseName(h.Base); ok {
+						banned[name] = true
+					}
+				}
+			}
+		case *ast.Assign:
+			if h, ok := n.LHS.(*ast.HashIndex); ok {
+				if name, ok := baseName(h.Base); ok {
+					if n.Op == "//=" {
+						banned[name] = true
+					}
+					k, static := staticString(h.Key)
+					if !static {
+						// A key worked out at run time on the left means the
+						// keys are data, and data lives in a map.
+						banned[name] = true
+					} else if keysIn[name] != nil {
+						keysIn[name][k] = true
+					}
+				}
+			}
+		case *ast.HashIndex:
+			if name, ok := baseName(n.Base); ok {
+				if k, static := staticString(n.Key); static {
+					if reads[name] == nil {
+						reads[name] = map[string]bool{}
+					}
+					reads[name][k] = true
+				}
+			}
+		case *ast.Var:
+			if n.Sigil == '%' && candidate(n.Name) && !declared[n] && !allowed[n] {
+				banned[n.Name] = true
+			}
+		}
+	})
+
+	// A read of a key the file never puts in is a read that expected undef,
+	// which a struct field cannot hold.
+	for name, rd := range reads {
+		for k := range rd {
+			if !keysIn[name][k] {
+				banned[name] = true
+				break
+			}
+		}
+	}
+
+	for name, list := range sites {
+		if banned[name] {
+			continue
+		}
+		for _, s := range list {
+			if c, _, ok := l.recordHash(s.rhs, name); ok {
+				if l.namedRecords == nil {
+					l.namedRecords = map[*ast.Var]*Class{}
+				}
+				l.namedRecords[s.v] = c
+			}
+		}
+	}
+}
+
 // recordHash decides whether a `my %h = (...)` initialiser is a record. The
 // list of pairs is the same shape a hash literal has, so it is looked at as
 // one.
@@ -223,10 +404,11 @@ func (l *Lowerer) recordLit(c *Class, h *ast.AnonHash) ir.Expr {
 		"structs-and-embedding", "collections-hold-one-type")
 	if l.pass == 2 {
 		l.inform(h, "P2G3070", "a hash used as a record",
-			"Perl carries records in hash references, so the field names live in the "+
-				"data and every read of one costs a lookup and a conversion. Go writes "+
-				"them down once as a struct, which is why `job.Secs` is an int here where "+
-				"`$job->{secs}` was whatever happened to be in the hash.",
+			"Perl carries records in hashes, named or behind a reference, so the "+
+				"field names live in the data and every read of one costs a lookup and "+
+				"a conversion. Go writes them down once as a struct, which is why "+
+				"`job.Secs` is an int here where `$job->{secs}` was whatever happened "+
+				"to be in the hash.",
 			"structs-and-embedding", "collections-hold-one-type")
 	}
 	return out

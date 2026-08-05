@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T13:00:13Z",
+  "recorded": "2026-08-15T13:17:07Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -46,53 +46,53 @@
       "quality": {
         "todos": 0,
         "symbols": 492,
-        "symbols_typed": 457,
+        "symbols_typed": 458,
         "refusals": 0,
-        "approximations": 84,
+        "approximations": 86,
         "crashes": 0
       }
     },
     {
       "tier": "tier2",
-      "entries": 89,
+      "entries": 91,
       "stages": {
         "compiled": {
-          "pass": 88,
+          "pass": 90,
           "fail": 1,
           "skip": 0
         },
         "emitted": {
-          "pass": 89,
+          "pass": 91,
           "fail": 0,
           "skip": 0
         },
         "equivalent": {
-          "pass": 52,
+          "pass": 54,
           "fail": 37,
           "skip": 0
         },
         "translated": {
-          "pass": 80,
+          "pass": 82,
           "fail": 9,
           "skip": 0
         },
         "typed": {
-          "pass": 46,
-          "fail": 43,
+          "pass": 47,
+          "fail": 44,
           "skip": 0
         }
       },
       "equivalent_annotated": {
-        "pass": 52,
+        "pass": 54,
         "fail": 37,
         "skip": 0
       },
       "quality": {
         "todos": 18,
-        "symbols": 1424,
-        "symbols_typed": 1240,
+        "symbols": 1429,
+        "symbols_typed": 1245,
         "refusals": 18,
-        "approximations": 514,
+        "approximations": 520,
         "crashes": 2
       }
     },
@@ -121,8 +121,8 @@
           "skip": 0
         },
         "typed": {
-          "pass": 8,
-          "fail": 29,
+          "pass": 9,
+          "fail": 28,
           "skip": 0
         }
       },
@@ -134,9 +134,9 @@
       "quality": {
         "todos": 47,
         "symbols": 915,
-        "symbols_typed": 718,
+        "symbols_typed": 720,
         "refusals": 50,
-        "approximations": 320,
+        "approximations": 322,
         "crashes": 1
       }
     },
@@ -178,9 +178,9 @@
       "quality": {
         "todos": 47,
         "symbols": 167,
-        "symbols_typed": 113,
+        "symbols_typed": 115,
         "refusals": 47,
-        "approximations": 61,
+        "approximations": 63,
         "crashes": 0
       }
     },
@@ -222,29 +222,29 @@
       "quality": {
         "todos": 3,
         "symbols": 924,
-        "symbols_typed": 842,
+        "symbols_typed": 844,
         "refusals": 3,
-        "approximations": 205,
+        "approximations": 207,
         "crashes": 0
       }
     }
   ],
   "total": {
     "tier": "TOTAL",
-    "entries": 234,
+    "entries": 236,
     "stages": {
       "compiled": {
-        "pass": 224,
+        "pass": 226,
         "fail": 10,
         "skip": 0
       },
       "emitted": {
-        "pass": 234,
+        "pass": 236,
         "fail": 0,
         "skip": 0
       },
       "equivalent": {
-        "pass": 113,
+        "pass": 115,
         "fail": 83,
         "skip": 0
       },
@@ -254,36 +254,36 @@
         "skip": 1
       },
       "translated": {
-        "pass": 194,
+        "pass": 196,
         "fail": 40,
         "skip": 0
       },
       "typed": {
-        "pass": 109,
+        "pass": 111,
         "fail": 125,
         "skip": 0
       }
     },
     "equivalent_annotated": {
-      "pass": 113,
+      "pass": 115,
       "fail": 83,
       "skip": 0
     },
     "quality": {
       "todos": 115,
-      "symbols": 3922,
-      "symbols_typed": 3370,
+      "symbols": 3927,
+      "symbols_typed": 3382,
       "refusals": 118,
-      "approximations": 1184,
+      "approximations": 1198,
       "crashes": 3
     }
   },
   "quality": {
     "todos": 115,
-    "symbols": 3922,
-    "symbols_typed": 3370,
+    "symbols": 3927,
+    "symbols_typed": 3382,
     "refusals": 118,
-    "approximations": 1184,
+    "approximations": 1198,
     "crashes": 3
   },
   "entries": [
@@ -1481,7 +1481,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "2 variables left dynamic out of 10"
+          "reason": "1 variable left dynamic out of 10"
         }
       },
       "equivalent_annotated": {
@@ -1490,9 +1490,9 @@
       "quality": {
         "todos": 0,
         "symbols": 10,
-        "symbols_typed": 8,
+        "symbols_typed": 9,
         "refusals": 0,
-        "approximations": 3,
+        "approximations": 5,
         "crashes": 0
       }
     },
@@ -2599,8 +2599,7 @@
           "outcome": "pass"
         },
         "typed": {
-          "outcome": "fail",
-          "reason": "1 variable left dynamic out of 31"
+          "outcome": "pass"
         }
       },
       "equivalent_annotated": {
@@ -2609,9 +2608,9 @@
       "quality": {
         "todos": 0,
         "symbols": 31,
-        "symbols_typed": 30,
+        "symbols_typed": 31,
         "refusals": 0,
-        "approximations": 1,
+        "approximations": 5,
         "crashes": 0
       }
     },
@@ -4206,7 +4205,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "2 variables left dynamic out of 3"
+          "reason": "1 variable left dynamic out of 3"
         }
       },
       "equivalent_annotated": {
@@ -4216,7 +4215,7 @@
       "quality": {
         "todos": 1,
         "symbols": 3,
-        "symbols_typed": 1,
+        "symbols_typed": 2,
         "refusals": 1,
         "approximations": 5,
         "crashes": 0
@@ -4585,7 +4584,8 @@
           "outcome": "pass"
         },
         "typed": {
-          "outcome": "pass"
+          "outcome": "fail",
+          "reason": "1 variable left dynamic out of 8"
         }
       },
       "equivalent_annotated": {
@@ -4594,7 +4594,7 @@
       "quality": {
         "todos": 0,
         "symbols": 8,
-        "symbols_typed": 8,
+        "symbols_typed": 7,
         "refusals": 0,
         "approximations": 0,
         "crashes": 0
@@ -5272,6 +5272,79 @@
       }
     },
     {
+      "tier": "tier2",
+      "name": "90-a-config-hash-is-a-record",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "pass"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "pass"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 3,
+        "symbols_typed": 3,
+        "refusals": 0,
+        "approximations": 2,
+        "crashes": 0
+      }
+    },
+    {
+      "tier": "tier2",
+      "name": "91-a-config-hash-with-defaults",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "pass"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "1 variable left dynamic out of 2"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "pass"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 2,
+        "symbols_typed": 1,
+        "refusals": 0,
+        "approximations": 0,
+        "crashes": 0
+      }
+    },
+    {
       "tier": "tier3",
       "name": "01-inventory-manager",
       "kind": "convert",
@@ -5878,7 +5951,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "8 variables left dynamic out of 18"
+          "reason": "7 variables left dynamic out of 18"
         }
       },
       "equivalent_annotated": {
@@ -5888,9 +5961,9 @@
       "quality": {
         "todos": 3,
         "symbols": 18,
-        "symbols_typed": 10,
+        "symbols_typed": 11,
         "refusals": 3,
-        "approximations": 13,
+        "approximations": 15,
         "crashes": 0
       }
     },
@@ -6383,8 +6456,7 @@
           "outcome": "pass"
         },
         "typed": {
-          "outcome": "fail",
-          "reason": "1 variable left dynamic out of 10"
+          "outcome": "pass"
         }
       },
       "equivalent_annotated": {
@@ -6393,7 +6465,7 @@
       "quality": {
         "todos": 0,
         "symbols": 10,
-        "symbols_typed": 9,
+        "symbols_typed": 10,
         "refusals": 0,
         "approximations": 3,
         "crashes": 0
@@ -8024,7 +8096,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "6 variables left dynamic out of 6"
+          "reason": "4 variables left dynamic out of 6"
         }
       },
       "equivalent_annotated": {
@@ -8033,9 +8105,9 @@
       "quality": {
         "todos": 0,
         "symbols": 6,
-        "symbols_typed": 0,
+        "symbols_typed": 2,
         "refusals": 0,
-        "approximations": 5,
+        "approximations": 7,
         "crashes": 0
       }
     },
@@ -8569,7 +8641,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "3 variables left dynamic out of 21"
+          "reason": "2 variables left dynamic out of 21"
         }
       },
       "equivalent_annotated": {
@@ -8578,9 +8650,9 @@
       "quality": {
         "todos": 0,
         "symbols": 21,
-        "symbols_typed": 18,
+        "symbols_typed": 19,
         "refusals": 0,
-        "approximations": 8,
+        "approximations": 9,
         "crashes": 0
       }
     },
@@ -8685,7 +8757,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "16 variables left dynamic out of 37"
+          "reason": "15 variables left dynamic out of 37"
         }
       },
       "equivalent_annotated": {
@@ -8695,9 +8767,9 @@
       "quality": {
         "todos": 1,
         "symbols": 37,
-        "symbols_typed": 21,
+        "symbols_typed": 22,
         "refusals": 1,
-        "approximations": 7,
+        "approximations": 8,
         "crashes": 0
       }
     },

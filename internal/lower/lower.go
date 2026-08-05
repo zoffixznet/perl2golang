@@ -155,6 +155,9 @@ type Lowerer struct {
 	// recordUsed marks the record types a literal was actually built for, so
 	// that a shape considered and rejected leaves no dead type behind.
 	recordUsed map[*Class]bool
+	// namedRecords maps a `my %h` declaration to the record type its
+	// initialiser earns, decided before the first pass from the whole file.
+	namedRecords map[*ast.Var]*Class
 	// hints is the stack of names in scope for a synthesised type, innermost
 	// last: the variable a literal is being stored in, mostly.
 	hints []string
@@ -368,6 +371,7 @@ func Lower(res parser.Result, src []byte, opts Options) *Result {
 
 	l.collectClasses()
 	l.collectOptions()
+	l.collectRecordHashes()
 	l.markShared()
 	l.hoistSubs()
 

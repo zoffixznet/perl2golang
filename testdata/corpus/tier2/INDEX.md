@@ -136,6 +136,8 @@ Two entries exit non-zero on purpose: **27** (65) and **32** (1). The rest exit 
 | 87 | `87-whole-number-arithmetic` | Dividing bytes into pages, with and without `use integer` | the pragma over a loop and a nested block, `/` and `%` on the same operands inside and outside it, the round-up idiom, `int($n/$d)` with a negative numerator |
 | 88 | `88-a-header-then-the-rest` | A journal with a fixed header, a line body, and a footer read from the end | `read` into a `my` scalar, `tell` between reads, `seek` with whence 2 and a negative offset, `seek ... or die "...: $!"`, a line loop after the seek back |
 | 89 | `89-a-position-under-a-line-reader` | The positioning corners that do not convert yet | `tell` between line reads, where a buffered reader has walked ahead, and four-argument `read`, which patches bytes into the middle of its target |
+| 90 | `90-a-config-hash-is-a-record` | A named hash whose keys are written out and whose values differ in kind | static reads and writes, a key added after the initialiser, `sort keys`, a field picked from a written-out set at run time, an arrayref field |
+| 91 | `91-a-config-hash-with-defaults` | The same shape leaning on undef, which keeps it a map | `//` defaults over a stored 0, `defined` and `exists` probes, a key that is only sometimes there |
 
 ## Coverage map
 

@@ -1,0 +1,7 @@
+job nightly-backup (90 min)
+targets: db1+files
+stretched to 120, late=1
+fields: dry_run,late,minutes,name,targets
+  name     = nightly-backup
+  dry_run  = 0
+headline: NIGHTLY BACKUP

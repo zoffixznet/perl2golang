@@ -1,0 +1,6 @@
+host: db1
+port: 0
+user: anonymous
+label set: yes
+has region: no
+region now: (unset)
