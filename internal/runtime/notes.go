@@ -514,6 +514,12 @@ var notes = map[string]string{
 		"assertion and the same choice to keep going past a value that does " +
 		"not fit.",
 
+	"flipFlop": "The scalar range operator is a stateful toggle, not a " +
+		"range: it remembers, across evaluations, whether an earlier one " +
+		"turned it on. Go has no expression with a memory, so the state is a " +
+		"variable declared next to the code, one per written occurrence of " +
+		"the operator, which also makes the hidden state visible.",
+
 	"hexNum": "hex takes the longest run of hex digits and never fails: " +
 		"\"1g\" is 1 and \"g\" is 0. strconv.ParseInt would reject both with " +
 		"an error, which is the better behaviour to move to once the inputs " +

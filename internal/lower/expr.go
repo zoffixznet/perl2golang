@@ -23,6 +23,7 @@ func (l *Lowerer) exprInner(e ast.Expr) ir.Expr {
 	case nil:
 		return nil
 	case *ast.NumberLit:
+		l.noteNumericEdge(n)
 		return numberLit(n.Text)
 	case *ast.StrLit:
 		return ir.Str(strconv.Quote(n.Value))
@@ -526,6 +527,43 @@ func numberLit(text string) ir.Expr {
 		return ir.FloatLit(strconv.FormatFloat(f, 'g', -1, 64))
 	}
 	return ir.IntLit("0")
+}
+
+// noteNumericEdge reports a whole-number literal at or past the edge of what
+// int64 holds. Perl walks a number through signed, unsigned and double
+// representations as it grows, silently and without wrapping; Go's int stays
+// 64-bit and wraps, so arithmetic on a value this size behaves differently
+// and the reader deserves to hear it where the number is written.
+func (l *Lowerer) noteNumericEdge(n *ast.NumberLit) {
+	clean := strings.ReplaceAll(n.Text, "_", "")
+	if strings.ContainsAny(clean, ".eE") && !strings.HasPrefix(strings.ToLower(clean), "0x") {
+		return
+	}
+	if v, err := strconv.ParseInt(clean, 0, 64); err == nil {
+		if v >= 1<<62 || v <= -(1<<62) {
+			l.approximate(n, "P2G3020", "a whole number at int64's edge",
+				"arithmetic near this size wraps in Go",
+				"Perl promotes a growing number through unsigned and then float "+
+					"representations, so adding 1 to the largest signed value stays "+
+					"exact. Go's int is 64-bit and wraps: the same addition lands at "+
+					"the most negative value, silently.",
+				"Where values genuinely reach this size, use math/big.Int, or "+
+					"uint64 when the range is one bit short.",
+				"explicit-conversions-no-coercion", "static-types-and-zero-values")
+		}
+		return
+	}
+	if _, err := strconv.ParseFloat(clean, 64); err == nil {
+		l.approximate(n, "P2G3020", "a whole number past int64",
+			"the number became a float64",
+			"This whole number does not fit in 64 signed bits, which is where Perl "+
+				"silently switches to a double and starts rounding: past 2^53 a "+
+				"float64 cannot hold every whole number, so nearby values collapse "+
+				"into one.",
+			"Where the exact value matters, use math/big.Int; a float64 here keeps "+
+				"the original's behaviour, rounding included.",
+			"explicit-conversions-no-coercion")
+	}
 }
 
 // listLit lowers a parenthesised list.

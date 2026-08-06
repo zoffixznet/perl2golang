@@ -105,6 +105,12 @@ func (l *Lowerer) binop(n *ast.BinOp) ir.Expr {
 		return ir.Bin(n.Op, lx, rx, ir.TInt)
 
 	case "..", "...":
+		// A range whose ends are conditions is the scalar-context flip-flop
+		// whichever path reached it: nothing numeric could sit in a range
+		// between two matches.
+		if x, ok := l.flipFlopExpr(n); ok {
+			return x
+		}
 		return l.rangeExpr(n)
 
 	case ",", "=>":
@@ -125,6 +131,57 @@ func (l *Lowerer) binop(n *ast.BinOp) ir.Expr {
 		"the "+n.Op+" operator is not implemented",
 		"The converter has no rule for the "+n.Op+" operator.",
 		"Translate the expression by hand.")
+}
+
+// flipFlopExpr lowers the scalar-context range operator, which is not a
+// range at all: it is a toggle with hidden per-occurrence state, on from the
+// evaluation where its left condition first holds to the one where its right
+// condition holds. The state becomes a package-level variable declared for
+// this occurrence alone, and the operator becomes a method call on it, so
+// what Perl kept invisible is a named thing the reader can find.
+//
+// It fires only when a side is a match, which is the shape the operator is
+// actually written in; a range between two numbers stays a range.
+func (l *Lowerer) flipFlopExpr(n *ast.BinOp) (ir.Expr, bool) {
+	if n.Op != ".." && n.Op != "..." {
+		return nil, false
+	}
+	isMatch := func(e ast.Expr) bool {
+		_, ok := e.(*ast.Match)
+		return ok
+	}
+	if !isMatch(n.L) && !isMatch(n.R) {
+		return nil, false
+	}
+
+	line, col := posOf(n)
+	key := "flipflop@" + itoa(line) + ":" + itoa(col)
+	b := l.special(key, '$', "span", n)
+	t := ir.NamedType(l.use("flipFlop"), "")
+	b.Type = t
+	method := "next"
+	if n.Op == "..." {
+		method = "nextWait"
+	}
+	out := ir.CallOf(selector(ir.NewIdent(b.Go, t), method, nil), ir.TString,
+		l.cond(n.L), l.cond(n.R))
+	l.note(out, "The scalar range operator is a flip-flop: a toggle that stays on "+
+		"between the line matching its left side and the line matching its right, "+
+		"with state that belongs to this occurrence of the operator itself. Go has "+
+		"no expression with a memory, so the state is the package variable this "+
+		"method is called on, one per occurrence.",
+		"context-is-gone", "statements-vs-expressions")
+	l.approximate(n, "P2G3560", "the scalar range flip-flop",
+		"the operator's hidden state became a package variable",
+		"In scalar context `..` is a stateful flip-flop, not a range: it turns on "+
+			"at the left condition, counts evaluations, and turns off after the right "+
+			"one, keeping that state invisibly per occurrence. The emitted code keeps "+
+			"the same state in a declared variable and the same sequence values, "+
+			"\"1\" up to the final one with \"E0\" appended.",
+		"Where the toggle guarded a block of lines, a plain bool you set and clear "+
+			"reads better than the operator ever did.",
+		"context-is-gone")
+	return out, true
 }
 
 // numPair lowers both sides of an arithmetic operator and agrees on a result

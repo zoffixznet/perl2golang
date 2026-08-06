@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T13:49:26Z",
+  "recorded": "2026-08-15T13:57:24Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -155,8 +155,8 @@
           "skip": 0
         },
         "honest": {
-          "pass": 32,
-          "fail": 5,
+          "pass": 34,
+          "fail": 3,
           "skip": 1
         },
         "translated": {
@@ -177,10 +177,10 @@
       },
       "quality": {
         "todos": 47,
-        "symbols": 167,
-        "symbols_typed": 113,
+        "symbols": 169,
+        "symbols_typed": 115,
         "refusals": 47,
-        "approximations": 67,
+        "approximations": 71,
         "crashes": 0
       }
     },
@@ -249,8 +249,8 @@
         "skip": 0
       },
       "honest": {
-        "pass": 32,
-        "fail": 5,
+        "pass": 34,
+        "fail": 3,
         "skip": 1
       },
       "translated": {
@@ -271,19 +271,19 @@
     },
     "quality": {
       "todos": 116,
-      "symbols": 3933,
-      "symbols_typed": 3379,
+      "symbols": 3935,
+      "symbols_typed": 3381,
       "refusals": 118,
-      "approximations": 1197,
+      "approximations": 1201,
       "crashes": 2
     }
   },
   "quality": {
     "todos": 116,
-    "symbols": 3933,
-    "symbols_typed": 3379,
+    "symbols": 3935,
+    "symbols_typed": 3381,
     "refusals": 118,
-    "approximations": 1197,
+    "approximations": 1201,
     "crashes": 2
   },
   "entries": [
@@ -4173,10 +4173,7 @@
         "refusals": 0,
         "approximations": 2,
         "crashes": 0
-      },
-      "notes": [
-        "cmd holds [\"-vvq\" \"-j4\" \"--format=csv\" \"-D\" \"env=prod\" \"-D\" \"tier=gold\" \"-o\" \"cpu\" \"--keep-going\" \"build\" \"test\"], the manifest says []"
-      ]
+      }
     },
     {
       "tier": "tier2",
@@ -4216,10 +4213,7 @@
         "refusals": 1,
         "approximations": 5,
         "crashes": 0
-      },
-      "notes": [
-        "cmd holds [\"--lev\" \"warn\" \"--dry\" \"--trace\" \"a=1\" \"--trace\" \"b=2\" \"--loud\" \"extra\"], the manifest says []"
-      ]
+      }
     },
     {
       "tier": "tier2",
@@ -7680,8 +7674,7 @@
           "outcome": "n/a"
         },
         "honest": {
-          "outcome": "fail",
-          "reason": "approximate: the conversion reported nothing about the construct; shim: the conversion reported nothing about the construct"
+          "outcome": "pass"
         },
         "translated": {
           "outcome": "pass"
@@ -7698,7 +7691,7 @@
         "symbols": 3,
         "symbols_typed": 3,
         "refusals": 0,
-        "approximations": 0,
+        "approximations": 2,
         "crashes": 0
       }
     },
@@ -7759,8 +7752,7 @@
           "outcome": "n/a"
         },
         "honest": {
-          "outcome": "fail",
-          "reason": "shim: the conversion reported nothing about the construct"
+          "outcome": "pass"
         },
         "translated": {
           "outcome": "pass"
@@ -7774,10 +7766,10 @@
       },
       "quality": {
         "todos": 0,
-        "symbols": 4,
-        "symbols_typed": 4,
+        "symbols": 6,
+        "symbols_typed": 6,
         "refusals": 0,
-        "approximations": 0,
+        "approximations": 2,
         "crashes": 0
       }
     },
@@ -9290,9 +9282,5 @@
         "crashes": 0
       }
     }
-  ],
-  "notes": [
-    "tier2/60-option-pairs-and-bundling: cmd holds [\"-vvq\" \"-j4\" \"--format=csv\" \"-D\" \"env=prod\" \"-D\" \"tier=gold\" \"-o\" \"cpu\" \"--keep-going\" \"build\" \"test\"], the manifest says []",
-    "tier2/61-option-callbacks-and-abbrev: cmd holds [\"--lev\" \"warn\" \"--dry\" \"--trace\" \"a=1\" \"--trace\" \"b=2\" \"--loud\" \"extra\"], the manifest says []"
   ]
 }

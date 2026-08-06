@@ -236,6 +236,9 @@ const (
 	DoBlockNoValue Code = "P2G3540"
 	// DoFile: `do FILE` compiles and runs another Perl file at run time.
 	DoFile Code = "P2G3541"
+	// FlipFlopState: the scalar range operator's hidden state became a
+	// declared variable.
+	FlipFlopState Code = "P2G3560"
 	// ConstructNoRule: a construct has no lowering rule in the converter.
 	ConstructNoRule Code = "P2G3599"
 )
@@ -1163,6 +1166,15 @@ var catalogue = map[Code]Entry{
 		Advice:    "compile the second file into the program, or read it as data if it holds configuration",
 		Converted: "the call is not converted; the stub names the file it would have run",
 		Concepts:  []string{"packages-and-exported-names"},
+	},
+	FlipFlopState: {
+		Severity:  report.Warn,
+		Message:   "in scalar context `..` is a stateful flip-flop, and its hidden per-occurrence state became a declared variable",
+		Short:     "the flip-flop's state is a variable",
+		Advice:    "where the toggle guarded a block of lines, a plain bool you set and clear reads better",
+		Cost:      "the state is now visible and shared the way a package variable is, rather than attached to the operator",
+		Converted: "the emitted code calls a method on a per-occurrence state variable and keeps the sequence values, \"1\" up to the final \"NE0\"",
+		Concepts:  []string{"context-is-gone"},
 	},
 	ConstructNoRule: {
 		Severity:  report.Refuse,
