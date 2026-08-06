@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T15:36:29Z",
+  "recorded": "2026-08-15T15:39:00Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -54,45 +54,45 @@
     },
     {
       "tier": "tier2",
-      "entries": 94,
+      "entries": 95,
       "stages": {
         "compiled": {
-          "pass": 93,
+          "pass": 94,
           "fail": 1,
           "skip": 0
         },
         "emitted": {
-          "pass": 94,
+          "pass": 95,
           "fail": 0,
           "skip": 0
         },
         "equivalent": {
-          "pass": 58,
+          "pass": 59,
           "fail": 36,
           "skip": 0
         },
         "translated": {
-          "pass": 86,
+          "pass": 87,
           "fail": 8,
           "skip": 0
         },
         "typed": {
-          "pass": 49,
+          "pass": 50,
           "fail": 45,
           "skip": 0
         }
       },
       "equivalent_annotated": {
-        "pass": 58,
+        "pass": 59,
         "fail": 36,
         "skip": 0
       },
       "quality": {
         "todos": 17,
-        "symbols": 1482,
-        "symbols_typed": 1296,
+        "symbols": 1492,
+        "symbols_typed": 1306,
         "refusals": 17,
-        "approximations": 537,
+        "approximations": 542,
         "crashes": 1
       }
     },
@@ -231,20 +231,20 @@
   ],
   "total": {
     "tier": "TOTAL",
-    "entries": 241,
+    "entries": 242,
     "stages": {
       "compiled": {
-        "pass": 235,
+        "pass": 236,
         "fail": 6,
         "skip": 0
       },
       "emitted": {
-        "pass": 241,
+        "pass": 242,
         "fail": 0,
         "skip": 0
       },
       "equivalent": {
-        "pass": 129,
+        "pass": 130,
         "fail": 72,
         "skip": 0
       },
@@ -254,36 +254,36 @@
         "skip": 1
       },
       "translated": {
-        "pass": 208,
+        "pass": 209,
         "fail": 33,
         "skip": 0
       },
       "typed": {
-        "pass": 113,
+        "pass": 114,
         "fail": 128,
         "skip": 0
       }
     },
     "equivalent_annotated": {
-      "pass": 129,
+      "pass": 130,
       "fail": 72,
       "skip": 0
     },
     "quality": {
       "todos": 109,
-      "symbols": 3990,
-      "symbols_typed": 3430,
+      "symbols": 4000,
+      "symbols_typed": 3440,
       "refusals": 110,
-      "approximations": 1227,
+      "approximations": 1232,
       "crashes": 2
     }
   },
   "quality": {
     "todos": 109,
-    "symbols": 3990,
-    "symbols_typed": 3430,
+    "symbols": 4000,
+    "symbols_typed": 3440,
     "refusals": 110,
-    "approximations": 1227,
+    "approximations": 1232,
     "crashes": 2
   },
   "entries": [
@@ -5438,6 +5438,42 @@
         "symbols_typed": 18,
         "refusals": 0,
         "approximations": 7,
+        "crashes": 0
+      }
+    },
+    {
+      "tier": "tier2",
+      "name": "95-lookahead-at-the-tail",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "pass"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "pass"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 10,
+        "symbols_typed": 10,
+        "refusals": 0,
+        "approximations": 5,
         "crashes": 0
       }
     },

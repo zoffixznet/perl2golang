@@ -145,6 +145,92 @@ Three things are worth taking from that. `expr[pos:]` costs nothing: a string sl
 
 Where `\G` is not at the start of the pattern, there is no equivalent. `(?:\G|,)\s*(\w+)` asks for "at the cursor, or after a comma" in the middle of a pattern, and a Go pattern cannot refer to a position the engine was never told about. That one has to become the explicit loop above, which is more code and code whose behaviour you can see.
 
+## A lookaround at the tail is two patterns and a scan
+
+One family of lookarounds converts exactly, and it is the family real
+scripts lean on hardest: the assertion as the last thing in the pattern.
+`s/(\d{3})(?=\d)/$1,/g` is the canonical citizen, the commify idiom, and
+its whole trick is that the digit the assertion saw is not consumed, so the
+next match is allowed to start on it. Two ordinary RE2 patterns and a scan
+say the same thing: match the first, test the second against what follows
+the match, and when the test fails slide one position past where the match
+started, which is what the backtracking engine was doing before giving up
+on a position.
+
+```go
+package main
+
+import (
+	"fmt"
+	"regexp"
+)
+
+var (
+	group = regexp.MustCompile(`\d{3}`)
+	digit = regexp.MustCompile(`\A\d`)
+)
+
+// commify inserts thousands separators the way s/(\d{3})(?=\d)/$1,/g did on
+// the reversed string: replace each three-digit run that has another digit
+// after it, without consuming that digit.
+func commify(s string) string {
+	var out []byte
+	pos := 0
+	for pos < len(s) {
+		loc := group.FindStringIndex(s[pos:])
+		if loc == nil {
+			break
+		}
+		start, end := pos+loc[0], pos+loc[1]
+		if digit.MatchString(s[end:]) { // the (?=\d), tested by hand
+			out = append(out, s[pos:end]...)
+			out = append(out, ',')
+			pos = end // the digit stays for the next match to use
+			continue
+		}
+		// The assertion failed: this run does not count. Move one past
+		// where it started and look again.
+		out = append(out, s[pos:start+1]...)
+		pos = start + 1
+	}
+	return string(out) + s[pos:]
+}
+
+func reverse(s string) string {
+	b := []byte(s)
+	for i, j := 0, len(b)-1; i < j; i, j = i+1, j-1 {
+		b[i], b[j] = b[j], b[i]
+	}
+	return string(b)
+}
+
+func main() {
+	for _, n := range []string{"90210", "1234567", "100"} {
+		fmt.Println(reverse(commify(reverse(n))))
+	}
+}
+```
+
+```
+90,210
+1,234,567
+100
+```
+
+The `\A` on the assertion pattern matters: it pins the test to the exact
+position after the match, where the lookahead lived, rather than letting it
+match anywhere in the rest of the string. A negative lookahead is the same
+scan with the test flipped, and a leading lookbehind is the mirror image,
+tested with `\z` against the text before the match. The one thing this scan
+does not reproduce is a backtracking engine shrinking the match itself
+until the assertion holds: `/\d+(?=9)/` on `1299` matches `129` in Perl and
+nothing here, because `\d+` greedily takes all four digits and the scan
+never retries it shorter. That only bites when what the match consumes and
+what the assertion expects overlap; keep the two disjoint, as every pattern
+above is, and the scan is exact. A lookaround in the middle of a pattern
+has no such decomposition, which is why it stays on the untranslatable
+list.
+
 ## The mismatch
 
 Translation strategy, in order of preference. First, check whether the lookaround was only *positioning*: `(?=\d)` used to avoid consuming translates to capturing the wider match and taking the group, as above — this covers a large majority of real-world uses. Second, split one clever pattern into two dumb ones plus Go logic: match candidates broadly, then filter/compare in code (the backreference example) — more lines, plainly debuggable, still linear-time. Third, restructure: lookbehind for "preceded by X" is often better as matching `X(\d+)` and taking group 1; anchored alternation replaces conditionals. Fourth and only then: the third-party `github.com/dlclark/regexp2` package implements full backtracking semantics — honest cost disclosure: it is a port of .NET's engine, loses the linear-time guarantee (bringing ReDoS exposure back with it), and marks your code as unusual to Go readers; treat it as a migration crutch, not a destination. Also gone with backtracking: `(?{...})` code blocks (that is just Go code now), `pos()`-style iterative matching (use `FindAllStringSubmatchIndex` and slice offsets), and possessive quantifiers/atomic groups (unneeded — RE2 cannot catastrophically backtrack, which was their whole purpose). Syntax that *does* carry over cleanly: character classes, `(?i)` flags, non-greedy `?`, non-capturing `(?:`, `\b`, and Unicode classes `\p{L}`.
