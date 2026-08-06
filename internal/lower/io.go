@@ -719,6 +719,12 @@ func targetVar(e ast.Expr) *ast.Var {
 // followed by a look at the FileInfo. The helpers keep the question at the call
 // site, where the Perl had it, rather than spreading a stat and an error check
 // through the middle of an expression.
+// isTopicVar reports whether an expression is $_ itself.
+func isTopicVar(e ast.Expr) bool {
+	v, ok := e.(*ast.Var)
+	return ok && v.Sigil == '$' && v.Name == "_"
+}
+
 func (l *Lowerer) fileTest(n *ast.FileTest) ir.Expr {
 	node := n.Arg
 	if isStatReuse(node) {
@@ -744,13 +750,20 @@ func (l *Lowerer) fileTest(n *ast.FileTest) ir.Expr {
 	}
 
 	var arg ir.Expr
-	if node == nil {
+	switch {
+	case l.findWalk != nil && (node == nil || isTopicVar(node)):
+		// Inside a directory walk $_ is the entry's bare name, because find
+		// changed into each directory before calling the block. WalkDir
+		// changes nothing, so a test against the bare name would look in
+		// the wrong directory; the full path is what reaches the entry.
+		arg = ir.NewIdent(l.findWalk.path, ir.TString)
+	case node == nil:
 		if len(l.topicStack) > 0 {
 			arg = l.toStr(l.topicStack[len(l.topicStack)-1], nil)
 		} else {
 			arg = ir.Str(`""`)
 		}
-	} else {
+	default:
 		arg = l.toStr(l.expr(node), node)
 	}
 

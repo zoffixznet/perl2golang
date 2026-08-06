@@ -284,6 +284,29 @@ var notes = map[string]string{
 		"exists only for values whose type did not resolve, where the choice " +
 		"between a collection and its length cannot be made at compile time.",
 
+	"matchAhead": "A lookaround asserts what comes next without consuming " +
+		"it, and this regexp engine traded that feature for a guarantee that " +
+		"matching takes linear time. Two patterns and a scan say the same " +
+		"thing: match the first, test the second against what follows, and " +
+		"move on by one when the test fails.",
+
+	"anchoredPattern": "A pattern tied to the start of the text has exactly " +
+		"one place to match, so a failed assertion there ends the scan " +
+		"instead of sliding forward past the anchor.",
+
+	"countAhead": "The counting form of the same scan, for a substitution " +
+		"whose value something reads: a substitution answers with how many " +
+		"matches it replaced.",
+
+	"replaceAhead": "The replacing form of the same idea. What the " +
+		"assertion looked at is not consumed, so the next match is allowed " +
+		"to start inside it, which is what makes s/(\\d{3})(?=\\d)/$1,/g " +
+		"put a comma every three digits rather than every four.",
+
+	"canonPath": "filepath.Clean resolves a/../b to b, which changes where " +
+		"the path points when a is a symbolic link. This cleanup stops short " +
+		"of that on purpose: slashes and dots are textual, dot-dot is not.",
+
 	"asList": "A list in this program is flat: a slice written into one " +
 		"contributes its elements, not itself. When the value's type is only " +
 		"known while the program runs, whether it has elements to contribute " +

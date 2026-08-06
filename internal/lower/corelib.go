@@ -45,6 +45,21 @@ func (l *Lowerer) fileSpecCall(n ast.Node, method string, argNodes []ast.Expr) (
 
 	switch method {
 	case "catfile", "catdir", "join", "catpath":
+		// catdir keeps a `..` where it was written; filepath.Join resolves it
+		// away as it builds. The two only differ when a component is dot-dot,
+		// so the updir idiom takes the faithful join and everything else takes
+		// the stdlib one.
+		if hasUpdirArg(args) {
+			joined := call("strings", "strings", "Join", ir.TString,
+				composite(ir.SliceOf(ir.TString), nil, strParts(l, args, n)), ir.Str(`"/"`))
+			out := l.helperCall(hCanonPath, ir.TString, joined)
+			l.note(out, "filepath.Join would also resolve the `..` here, textually, "+
+				"which changes where the path points when the directory above it is a "+
+				"symbolic link. catdir keeps the `..` as written, so the components are "+
+				"joined plainly and tidied without touching it.",
+				"filepath-and-paths")
+			return out, true
+		}
 		out := l.joinPath(args, n)
 		l.note(out, "filepath.Join is both catfile and catdir, and it cleans the "+
 			"result as it builds it: an empty component disappears and `..` is "+
@@ -54,11 +69,13 @@ func (l *Lowerer) fileSpecCall(n ast.Node, method string, argNodes []ast.Expr) (
 		return out, true
 
 	case "canonpath":
-		out := call("path/filepath", "filepath", "Clean", ir.TString, str(0))
-		l.note(out, "filepath.Clean is textual: it resolves `..` without asking the "+
-			"filesystem, so a path that walks up out of a symlinked directory lands "+
-			"somewhere else than following the links would. filepath.EvalSymlinks is "+
-			"the version that touches the disk.",
+		out := l.helperCall(hCanonPath, ir.TString, str(0))
+		l.note(out, "The near-miss here is filepath.Clean, which also resolves "+
+			"`a/../b` to `b`. canonpath deliberately does not: `a` could be a "+
+			"symbolic link, and then the two paths name different places. The "+
+			"helper does the safe cleanup, doubled slashes and dots, and leaves "+
+			"`..` where it was written; filepath.EvalSymlinks is the version that "+
+			"asks the filesystem.",
 			"filepath-and-paths")
 		return out, true
 
@@ -267,4 +284,24 @@ func (l *Lowerer) suffixPattern(e ast.Expr, quote bool) ir.Expr {
 	}
 	return call("regexp", "regexp", "MustCompile",
 		ir.NamedType("*regexp.Regexp", "regexp"), text)
+}
+
+// hasUpdirArg reports whether one of a path join's components is a literal
+// "..", which is the one component filepath.Join would rewrite away.
+func hasUpdirArg(args []ir.Expr) bool {
+	for _, a := range args {
+		if lit, ok := a.(*ir.Lit); ok && lit.Kind == ir.LitString && lit.Value == `".."` {
+			return true
+		}
+	}
+	return false
+}
+
+// strParts renders each join component as a string expression.
+func strParts(l *Lowerer, args []ir.Expr, n ast.Node) []ir.Expr {
+	parts := make([]ir.Expr, len(args))
+	for i, a := range args {
+		parts[i] = l.toStr(a, n)
+	}
+	return parts
 }

@@ -81,14 +81,130 @@ func (l *Lowerer) compiledPattern(rx *ast.Regex, at ast.Node) (ir.Expr, bool) {
 	if !ok {
 		return nil, false
 	}
+	return l.hoistedPattern(goPattern, rx.Raw, at), true
+}
+
+// hoistedPattern names one translated pattern at package level, reusing the
+// declaration when the same pattern was hoisted before.
+func (l *Lowerer) hoistedPattern(goPattern, perlRaw string, at ast.Node) ir.Expr {
 	if p, seen := l.patterns[goPattern]; seen {
-		return ir.NewIdent(p.Name, ir.NamedType("*regexp.Regexp", "regexp")), true
+		return ir.NewIdent(p.Name, ir.NamedType("*regexp.Regexp", "regexp"))
 	}
-	name := l.names.take(patternName(rx.Raw, len(l.patternOrd)))
-	p := &patternVar{Name: name, GoRegex: goPattern, Perl: rx.Raw, Line: posLine(at)}
+	name := l.names.take(patternName(perlRaw, len(l.patternOrd)))
+	p := &patternVar{Name: name, GoRegex: goPattern, Perl: perlRaw, Line: posLine(at)}
 	l.patterns[goPattern] = p
 	l.patternOrd = append(l.patternOrd, goPattern)
-	return ir.NewIdent(name, ir.NamedType("*regexp.Regexp", "regexp")), true
+	return ir.NewIdent(name, ir.NamedType("*regexp.Regexp", "regexp"))
+}
+
+// splitTrailingLook takes apart a pattern of the shape MAIN(?=LOOK) or
+// MAIN(?!LOOK): a lookaround as the very last thing in the pattern, at the
+// top nesting level, with something before it to match. That shape has a
+// faithful two-pattern translation; a lookaround anywhere else does not.
+func splitTrailingLook(raw string) (main, look string, negate, ok bool) {
+	if len(raw) < 5 || raw[len(raw)-1] != ')' {
+		return "", "", false, false
+	}
+	depth := 0
+	inClass := false
+	for i := 0; i < len(raw); i++ {
+		c := raw[i]
+		switch {
+		case c == '\\':
+			i++
+		case inClass:
+			if c == ']' {
+				inClass = false
+			}
+		case c == '[':
+			inClass = true
+		case c == '(':
+			if depth == 0 && i > 0 &&
+				(strings.HasPrefix(raw[i:], "(?=") || strings.HasPrefix(raw[i:], "(?!")) &&
+				closingParen(raw, i) == len(raw)-1 {
+				return raw[:i], raw[i+3 : len(raw)-1], raw[i+2] == '!', true
+			}
+			depth++
+		case c == ')':
+			depth--
+		}
+	}
+	return "", "", false, false
+}
+
+// closingParen finds the index of the parenthesis closing the group that
+// opens at index open, or -1 when the pattern is unbalanced.
+func closingParen(raw string, open int) int {
+	depth := 0
+	inClass := false
+	for i := open; i < len(raw); i++ {
+		c := raw[i]
+		switch {
+		case c == '\\':
+			i++
+		case inClass:
+			if c == ']' {
+				inClass = false
+			}
+		case c == '[':
+			inClass = true
+		case c == '(':
+			depth++
+		case c == ')':
+			depth--
+			if depth == 0 {
+				return i
+			}
+		}
+	}
+	return -1
+}
+
+// lookAheadPair translates a pattern whose one backtracking feature is a
+// trailing lookaround into its two halves, hoisted as ordinary patterns:
+// the part that matches, and the assertion tested just after it, anchored
+// so it can be run against the tail of the text.
+func (l *Lowerer) lookAheadPair(rx *ast.Regex, at ast.Node) (mainPat, lookPat ir.Expr, negate, ok bool) {
+	if rx == nil || interpolated(rx) {
+		return nil, nil, false, false
+	}
+	mainRaw, lookRaw, neg, split := splitTrailingLook(rx.Raw)
+	if !split {
+		return nil, nil, false, false
+	}
+	// Either half needing a feature of its own that the engine lacks means
+	// the whole pattern is refused in one piece, with that feature named.
+	if _, bad := unsupportedFeature(mainRaw); bad {
+		return nil, nil, false, false
+	}
+	if _, bad := unsupportedFeature(lookRaw); bad {
+		return nil, nil, false, false
+	}
+	mainGo, okMain := l.translatePattern(&ast.Regex{Raw: mainRaw, Mods: rx.Mods}, at)
+	if !okMain {
+		return nil, nil, false, false
+	}
+	lookGo, okLook := l.translatePattern(&ast.Regex{Raw: lookRaw, Mods: strings.ReplaceAll(rx.Mods, "g", "")}, at)
+	if !okLook {
+		return nil, nil, false, false
+	}
+	mainPat = l.hoistedPattern(mainGo, mainRaw, at)
+	lookPat = l.hoistedPattern(`\A(?:`+lookGo+`)`, "(?="+lookRaw+")", at)
+	l.approximate(at, "P2G4004", "a trailing lookaround",
+		"the assertion is tested after the match, by a scan",
+		"A lookaround asserts what follows without consuming it, and Go's regexp "+
+			"traded that feature for a guarantee that matching takes linear time. A "+
+			"lookaround at the end of a pattern has a faithful two-pattern form: "+
+			"match the first, test the second against what follows, and move on by "+
+			"one when the test fails. One difference remains: a backtracking engine "+
+			"can shrink the match itself until the assertion holds, and this scan "+
+			"never retries a match shorter. The two agree whenever what the match "+
+			"consumes and what the assertion expects do not overlap, which is the "+
+			"common case and the case here.",
+		"Where the overlap is real, restructure the pattern so the assertion's "+
+			"text is matched and put back, or check it in code beside the match.",
+		"regexp-is-re2")
+	return mainPat, lookPat, neg, true
 }
 
 // runtimePattern compiles pattern text the converter cannot see, at the point
@@ -552,6 +668,20 @@ func (l *Lowerer) matchExpr(n *ast.Match, forceBool bool) ir.Expr {
 		return x
 	}
 	subject := l.matchSubject(n.Bound)
+	if g, _ := l.matchGroups(n); g == 0 && n.Pattern != nil {
+		if mainPat, lookPat, neg, ok := l.lookAheadPair(n.Pattern, n); ok {
+			out := l.helperCall(hMatchAhead, ir.TBool, mainPat, lookPat,
+				ir.BoolLit(neg), l.toStr(subject, n))
+			l.note(out, "The pattern ends in a lookaround, which Go's regexp does not "+
+				"have, so it runs as two patterns: the helper matches the first and "+
+				"tests the second against what follows the match, consuming nothing.",
+				"regexp-is-re2")
+			if n.Negate {
+				return negated(out)
+			}
+			return out
+		}
+	}
 	pattern, ok := l.patternOf(matchPattern(n))
 	if !ok {
 		return l.markRefusedPattern(ir.BoolLit(false))
@@ -875,6 +1005,23 @@ func (l *Lowerer) substStmt(n *ast.Subst) []ir.Stmt {
 	if target == nil {
 		return l.refusedStmtMarker(n)
 	}
+	if mainPat, lookPat, neg, ok := l.lookAheadPair(n.Pattern, n); ok {
+		repl, replOK := l.replacement(n)
+		if !replOK {
+			return l.refusedStmtMarker(n)
+		}
+		out := l.helperCall(hReplaceAhead, ir.TString, mainPat, lookPat,
+			ir.BoolLit(neg), ir.BoolLit(strings.Contains(n.Pattern.Mods, "g")),
+			l.toStr(target, nil), repl)
+		st := assign("=", []ir.Expr{target}, []ir.Expr{out})
+		l.setProv(st, n)
+		l.note(st, "The pattern ends in a lookaround, which Go's regexp does not "+
+			"have, so the substitution runs as two patterns: the helper replaces "+
+			"each match of the first whose tail satisfies the second, and what the "+
+			"assertion looked at stays in the text for the next match to use.",
+			"regexp-is-re2", "replace-and-expansion")
+		return []ir.Stmt{st}
+	}
 	pattern, ok := l.patternOf(n.Pattern)
 	if !ok {
 		return l.refusedStmtMarker(n)
@@ -1080,6 +1227,22 @@ func (l *Lowerer) substCopy(n *ast.Subst) (ir.Expr, bool) {
 	if target == nil {
 		return nil, false
 	}
+	if !n.EvalRepl && templateRepl(n.Repl) {
+		if mainPat, lookPat, neg, ok := l.lookAheadPair(n.Pattern, n); ok {
+			repl, replOK := l.replacement(n)
+			if !replOK {
+				return nil, false
+			}
+			out := l.helperCall(hReplaceAhead, ir.TString, mainPat, lookPat,
+				ir.BoolLit(neg), ir.BoolLit(strings.Contains(n.Pattern.Mods, "g")),
+				l.toStr(target, n), repl)
+			l.note(out, "The pattern ends in a lookaround, so the substitution runs "+
+				"as two patterns; /r hands back the edited copy, which is the only "+
+				"form Go has anyway.",
+				"regexp-is-re2", "replace-and-expansion")
+			return out, true
+		}
+	}
 	pattern, ok := l.patternOf(n.Pattern)
 	if !ok {
 		return nil, false
@@ -1114,6 +1277,24 @@ func (l *Lowerer) substCopy(n *ast.Subst) (ir.Expr, bool) {
 func (l *Lowerer) substCount(n *ast.Subst) ir.Expr {
 	if n.Pattern == nil {
 		return nil
+	}
+	if mainPat, lookPat, neg, ok := l.lookAheadPair(n.Pattern, n); ok {
+		target := l.peekSubstTarget(n)
+		if target == nil {
+			return nil
+		}
+		name := l.tmp("replaced")
+		st := assign(":=", []ir.Expr{ir.NewIdent(name, ir.TInt)},
+			[]ir.Expr{l.helperCall(hCountAhead, ir.TInt, mainPat, lookPat,
+				ir.BoolLit(neg), ir.BoolLit(strings.Contains(n.Pattern.Mods, "g")),
+				l.toStr(target, n))})
+		l.setProv(st, n)
+		l.note(st, "A substitution answers with how many matches it replaced, so "+
+			"they are counted before the replacement removes them, by the same "+
+			"two-pattern scan the replacement itself uses.",
+			"replace-and-expansion", "regexp-is-re2")
+		l.emit(st)
+		return ir.NewIdent(name, ir.TInt)
 	}
 	pattern, ok := l.patternOf(n.Pattern)
 	if !ok {

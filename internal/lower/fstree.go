@@ -221,7 +221,13 @@ func (l *Lowerer) findCall(n *ast.Call) (ir.Expr, bool) {
 
 	saved := l.scope
 	l.scope = newScope(saved)
-	l.topicStack = append(l.topicStack, ir.NewIdent(path, ir.TString))
+	// find changes into each directory as it walks, which is why $_ holds
+	// the bare name inside the callback. WalkDir changes nothing, so $_
+	// becomes the entry's name; the file tests are the one place that must
+	// keep the full path instead, because there is no chdir to make a bare
+	// name reachable, and they resolve it through the walk record below.
+	l.topicStack = append(l.topicStack,
+		ir.CallOf(selector(ir.NewIdent(entry, entryT), "Name", nil), ir.TString))
 	savedFind := l.findWalk
 	l.findWalk = &findWalk{path: path, entry: entry, entryType: entryT}
 	savedPre := l.pre

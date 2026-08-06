@@ -59,6 +59,9 @@ const (
 	hIsExecutable     = "isExecutable"     // -x
 	hDirNames         = "dirNames"         // opendir plus readdir, as a list of names
 	hNextMatch        = "nextMatch"        // one step of a scalar-context //g scan
+	hMatchAhead       = "matchAhead"       // a match with a trailing lookaround
+	hReplaceAhead     = "replaceAhead"     // a substitution with a trailing lookaround
+	hCountAhead       = "countAhead"       // how many such matches there are
 	hAnyList          = "anyList"          // []T -> []any
 	hAnyMap           = "anyMap"           // map[K]V -> map[K]any
 	hTypedList        = "typedList"        // []any -> []T, asserting each element
@@ -110,6 +113,7 @@ const (
 	hRemoveTree    = "removeTree"    // a directory and everything under it
 	hTempDir       = "tempDir"       // a directory nothing else is using
 	hTempFile      = "tempFile"      // a file nothing else is using
+	hCanonPath     = "canonPath"     // File::Spec canonpath, which keeps .. intact
 	hSplitPath     = "splitPath"     // volume, directory and final component
 	hPathParts     = "pathParts"     // a path broken into its components
 	hRelPath       = "relPath"       // one path expressed relative to another
