@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T14:38:46Z",
+  "recorded": "2026-08-15T14:46:06Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -101,8 +101,8 @@
       "entries": 37,
       "stages": {
         "compiled": {
-          "pass": 34,
-          "fail": 3,
+          "pass": 35,
+          "fail": 2,
           "skip": 0
         },
         "emitted": {
@@ -111,8 +111,8 @@
           "skip": 0
         },
         "equivalent": {
-          "pass": 15,
-          "fail": 22,
+          "pass": 17,
+          "fail": 20,
           "skip": 0
         },
         "translated": {
@@ -127,16 +127,16 @@
         }
       },
       "equivalent_annotated": {
-        "pass": 15,
-        "fail": 22,
+        "pass": 17,
+        "fail": 20,
         "skip": 0
       },
       "quality": {
-        "todos": 48,
+        "todos": 49,
         "symbols": 910,
         "symbols_typed": 709,
         "refusals": 50,
-        "approximations": 319,
+        "approximations": 314,
         "crashes": 1
       }
     },
@@ -180,7 +180,7 @@
         "symbols": 169,
         "symbols_typed": 115,
         "refusals": 47,
-        "approximations": 71,
+        "approximations": 70,
         "crashes": 0
       }
     },
@@ -224,7 +224,7 @@
         "symbols": 924,
         "symbols_typed": 843,
         "refusals": 3,
-        "approximations": 208,
+        "approximations": 209,
         "crashes": 0
       }
     }
@@ -234,8 +234,8 @@
     "entries": 237,
     "stages": {
       "compiled": {
-        "pass": 230,
-        "fail": 7,
+        "pass": 231,
+        "fail": 6,
         "skip": 0
       },
       "emitted": {
@@ -244,8 +244,8 @@
         "skip": 0
       },
       "equivalent": {
-        "pass": 123,
-        "fail": 76,
+        "pass": 125,
+        "fail": 74,
         "skip": 0
       },
       "honest": {
@@ -265,25 +265,25 @@
       }
     },
     "equivalent_annotated": {
-      "pass": 123,
-      "fail": 76,
+      "pass": 125,
+      "fail": 74,
       "skip": 0
     },
     "quality": {
-      "todos": 116,
+      "todos": 117,
       "symbols": 3935,
       "symbols_typed": 3381,
       "refusals": 118,
-      "approximations": 1207,
+      "approximations": 1202,
       "crashes": 2
     }
   },
   "quality": {
-    "todos": 116,
+    "todos": 117,
     "symbols": 3935,
     "symbols_typed": 3381,
     "refusals": 118,
-    "approximations": 1207,
+    "approximations": 1202,
     "crashes": 2
   },
   "entries": [
@@ -6081,8 +6081,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 21, byte 535: got \"0 units (ends at compile-cli)\\nco...\", wanted \"22 units (ends at publish)\\ncorru...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -6096,15 +6095,14 @@
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 21, byte 535: got \"0 units (ends at compile-cli)\\nco...\", wanted \"22 units (ends at publish)\\ncorru...\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
         "symbols": 44,
         "symbols_typed": 42,
         "refusals": 0,
-        "approximations": 14,
+        "approximations": 9,
         "crashes": 0
       }
     },
@@ -6228,15 +6226,14 @@
       "kind": "convert",
       "stages": {
         "compiled": {
-          "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:67:29: self(toNum(k) - 1.0) (no value) used as value"
+          "outcome": "pass"
         },
         "emitted": {
           "outcome": "pass"
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "the generated program did not compile"
+          "reason": "exit status 2, wanted 0; stdout differs: line 5, byte 66: got \"  leave root.2\\n  leave root\\nafte...\", wanted \"leave root.2\\nleave root\\nafter al...\"; stderr differs: unexpected \"TODO P2G3599: the goto function is not implemented ...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -6252,10 +6249,10 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "the generated program did not compile"
+        "reason": "exit status 2, wanted 0; stdout differs: line 5, byte 66: got \"  leave root.2\\n  leave root\\nafte...\", wanted \"leave root.2\\nleave root\\nafter al...\"; stderr differs: unexpected \"TODO P2G3599: the goto function is not implemented ...\""
       },
       "quality": {
-        "todos": 0,
+        "todos": 1,
         "symbols": 41,
         "symbols_typed": 30,
         "refusals": 1,
@@ -6535,8 +6532,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 15, byte 253: got \"[x y]\\ncomputed: hello, again\\n\", wanted \"2\\ncomputed: hello, again\\n\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -6550,8 +6546,7 @@
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 15, byte 253: got \"[x y]\\ncomputed: hello, again\\n\", wanted \"2\\ncomputed: hello, again\\n\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
@@ -7360,7 +7355,7 @@
         "symbols": 9,
         "symbols_typed": 7,
         "refusals": 0,
-        "approximations": 10,
+        "approximations": 9,
         "crashes": 0
       }
     },
@@ -9194,7 +9189,7 @@
         "symbols": 37,
         "symbols_typed": 34,
         "refusals": 0,
-        "approximations": 11,
+        "approximations": 12,
         "crashes": 0
       }
     },

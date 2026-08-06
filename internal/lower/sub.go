@@ -158,7 +158,7 @@ func (l *Lowerer) lowerSubDecl(sd *ast.SubDecl) {
 		fn.Doc = l.subDoc(s)
 	}
 	fn.Body = l.markUnused(&ir.Block{Stmts: l.stmts(rest)})
-	l.addImplicitReturn(s, fn)
+	l.addImplicitReturn(s, fn, rest)
 	l.ensureReturn(s, fn.Body)
 	l.setProv(fn, sd)
 	l.explainSub(fn, s, sd)
@@ -382,44 +382,109 @@ func (l *Lowerer) recoverParams(s *Sub, body []ast.Stmt) ([]ir.Param, []ast.Stmt
 
 // addImplicitReturn makes Perl's "the last expression is the return value"
 // explicit, which Go requires.
-func (l *Lowerer) addImplicitReturn(s *Sub, fn *ir.FuncDecl) {
-	l.implicitReturn(s, fn.Body)
+func (l *Lowerer) addImplicitReturn(s *Sub, fn *ir.FuncDecl, body []ast.Stmt) {
+	l.implicitReturn(s, fn.Body, body)
 }
 
 // implicitReturn is addImplicitReturn over a block, so that a function literal
 // gets the same treatment a declared function does.
-func (l *Lowerer) implicitReturn(s *Sub, block *ir.Block) {
+func (l *Lowerer) implicitReturn(s *Sub, block *ir.Block, body []ast.Stmt) {
 	if block == nil || len(block.Stmts) == 0 {
 		return
 	}
 	last := block.Stmts[len(block.Stmts)-1]
-	es, ok := last.(*ir.ExprStmt)
-	if !ok {
+	if es, ok := last.(*ir.ExprStmt); ok {
+		// A sub whose last statement throws or exits produces no value at
+		// all, and returning the result of a call that never returns is not
+		// Go.
+		if terminatingCall(es.X) {
+			return
+		}
+		// Nor does a statement that produces nothing, or one whose Go form
+		// hands back several values, such as a print.
+		if t := es.X.Type(); t == nil || t.Kind == ir.Void || t.Kind == ir.Invalid {
+			return
+		}
+		if l.pass == 1 {
+			s.ResultEvidence = append(s.ResultEvidence, []*ir.Type{typeOrAny(es.X)})
+			return
+		}
+		if len(s.Results) == 0 {
+			return
+		}
+		ret := &ir.Return{Results: []ir.Expr{l.assignable(es.X, s.Results[0], nil)}}
+		ret.Meta = es.Meta
+		l.note(ret, "A Perl sub with no return statement yields the value of the last "+
+			"expression it evaluated. Go requires the return to be written, which is "+
+			"one fewer thing to remember when reading the code.")
+		block.Stmts[len(block.Stmts)-1] = ret
 		return
 	}
-	// A sub whose last statement throws or exits produces no value at all,
-	// and returning the result of a call that never returns is not Go.
-	if terminatingCall(es.X) {
+	if _, isRet := last.(*ir.Return); isRet {
 		return
 	}
-	// Nor does a statement that produces nothing, or one whose Go form hands
-	// back several values, such as a print.
-	if t := es.X.Type(); t == nil || t.Kind == ir.Void || t.Kind == ir.Invalid {
+	// A sub ending in an assignment yields a value too: `$memo{$t} //= ...`
+	// hands back what $memo{$t} holds once the statement has run. The
+	// assignment lowers to statements rather than to one expression, an if
+	// around a store for //=, a plain store otherwise, so the value is read
+	// back out of the place after the last of them.
+	target := assignedPlace(body)
+	if target == nil {
+		return
+	}
+	x := l.expr(target)
+	if x == nil {
+		return
+	}
+	if t := x.Type(); t == nil || t.Kind == ir.Void || t.Kind == ir.Invalid {
 		return
 	}
 	if l.pass == 1 {
-		s.ResultEvidence = append(s.ResultEvidence, []*ir.Type{typeOrAny(es.X)})
+		s.ResultEvidence = append(s.ResultEvidence, []*ir.Type{typeOrAny(x)})
 		return
 	}
 	if len(s.Results) == 0 {
 		return
 	}
-	ret := &ir.Return{Results: []ir.Expr{l.assignable(es.X, s.Results[0], nil)}}
-	ret.Meta = es.Meta
-	l.note(ret, "A Perl sub with no return statement yields the value of the last "+
-		"expression it evaluated. Go requires the return to be written, which is "+
-		"one fewer thing to remember when reading the code.")
-	block.Stmts[len(block.Stmts)-1] = ret
+	ret := &ir.Return{Results: []ir.Expr{l.assignable(x, s.Results[0], nil)}}
+	l.note(ret, "A Perl sub with no return statement yields its last expression, "+
+		"and an assignment is an expression there: its value is what was stored. "+
+		"The Go form stores first and then reads the place back, which says the "+
+		"same thing in statements.")
+	block.Stmts = append(block.Stmts, ret)
+}
+
+// assignedPlace reports the scalar place a body's final statement assigns to,
+// when there is one to read a return value back out of.
+func assignedPlace(body []ast.Stmt) ast.Expr {
+	if len(body) == 0 {
+		return nil
+	}
+	es, ok := body[len(body)-1].(*ast.ExprStmt)
+	if !ok {
+		return nil
+	}
+	as, ok := es.X.(*ast.Assign)
+	if !ok {
+		return nil
+	}
+	lhs := as.LHS
+	if my, isMy := lhs.(*ast.My); isMy && len(my.Vars) == 1 {
+		lhs = my.Vars[0]
+	}
+	switch n := lhs.(type) {
+	case *ast.Var:
+		if n.Sigil == '$' {
+			return n
+		}
+	case *ast.Index, *ast.HashIndex:
+		return lhs
+	case *ast.Deref:
+		if n.Sigil == '$' {
+			return lhs
+		}
+	}
+	return nil
 }
 
 // ensureReturn appends a return of zero values when a function that promises

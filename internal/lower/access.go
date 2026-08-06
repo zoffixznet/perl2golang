@@ -728,7 +728,7 @@ func (l *Lowerer) anonSub(n *ast.AnonSub) ir.Expr {
 		s.Results = []*ir.Type{ir.TAny}
 	}
 	body := l.markUnused(&ir.Block{Stmts: l.stmts(rest)})
-	l.implicitReturn(s, body)
+	l.implicitReturn(s, body, rest)
 	l.ensureReturn(s, body)
 	l.scope, l.curSub = savedScope, savedSub
 	l.uniformFn = savedUniform

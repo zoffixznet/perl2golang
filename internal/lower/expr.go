@@ -196,6 +196,25 @@ func (l *Lowerer) scalar(e ast.Expr) ir.Expr {
 			l.evalForEffect(el)
 		}
 		return l.scalar(n.Elems[len(n.Elems)-1])
+	case *ast.FuncCallRef:
+		// A sub called through a reference where one value is wanted: Perl
+		// hands the context into the sub, so a body ending in split answers
+		// with how many pieces there were. Which sub runs is only known when
+		// the program does, so when the result's type is unresolved the
+		// choice between a value and a count is made at run time too.
+		x := l.expr(e)
+		if typeOrAny(x).Kind == ir.Any {
+			out := l.helperCall(hScalarOf, ir.TAny, x)
+			l.note(out, "This call reaches its sub through a value, so which sub "+
+				"answers is decided while the program runs, and so is what its "+
+				"result is worth as one value: a list answers with its length, "+
+				"anything else is already one value. Perl decides this by handing "+
+				"the caller's context into the sub; Go has no context, so the "+
+				"helper asks the value instead.",
+				"context-is-gone")
+			return out
+		}
+		return x
 	case *ast.Deref:
 		// `scalar @{ $ref }` asks the list behind the reference how long it
 		// is, exactly as a named array would be asked.

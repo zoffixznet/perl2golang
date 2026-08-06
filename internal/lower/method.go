@@ -437,7 +437,7 @@ func (l *Lowerer) lowerMethodDecl(s *Sub, sd *ast.SubDecl) {
 		stmts = append(append([]ir.Stmt{}, s.Prologue...), stmts...)
 	}
 	fn.Body = l.markUnused(&ir.Block{Stmts: stmts})
-	l.addImplicitReturn(s, fn)
+	l.addImplicitReturn(s, fn, rest)
 	l.ensureReturn(s, fn.Body)
 	l.setProv(fn, sd)
 	l.explainMethod(fn, s)
