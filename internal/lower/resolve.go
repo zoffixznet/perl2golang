@@ -194,6 +194,10 @@ type Sub struct {
 	Named       *Binding
 	NamedParams []*Binding
 	namedBy     map[string]*Binding
+	// Prologue holds statements the parameter recovery synthesised to run
+	// before the body: a `%args` the sub walks as data is rebuilt here from
+	// the variadic pair list.
+	Prologue []ir.Stmt
 	// SelfVar names the variable a constructor blesses, which is the one
 	// that has to be built as the struct rather than as a map.
 	SelfVar string

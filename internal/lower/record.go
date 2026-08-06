@@ -36,6 +36,9 @@ func (l *Lowerer) recordFor(h *ast.AnonHash, hint string) *Class {
 	}
 	shape := strings.Join(keys, "\x00")
 	if c, ok := l.records[shape]; ok {
+		if l.recordEscaped[c] {
+			return nil
+		}
 		return c
 	}
 	if !mixedValues(h) {
@@ -47,6 +50,40 @@ func (l *Lowerer) recordFor(h *ast.AnonHash, hint string) *Class {
 	}
 	l.records[shape] = c
 	return c
+}
+
+// escapeLostRecords finds record types a binding's settled type can no
+// longer carry: the binding, or its element slot, resolved to `any`, while
+// the evidence shows a record value went in. Reads on the other side of that
+// slot speak map, so the record types involved are marked and their literals
+// are built as maps from the next sweep on.
+func (l *Lowerer) escapeLostRecords(b *Binding) {
+	t := b.Type
+	if t == nil {
+		return
+	}
+	lost := t.Kind == ir.Any ||
+		((t.Kind == ir.Slice || t.Kind == ir.Map) && t.Elem != nil && t.Elem.Kind == ir.Any)
+	if !lost {
+		return
+	}
+	for _, ev := range b.Evidence {
+		l.escapeRecordIn(ev)
+	}
+}
+
+// escapeRecordIn walks one observed type looking for a record class.
+func (l *Lowerer) escapeRecordIn(t *ir.Type) {
+	for t != nil {
+		if c := l.classOf(t); c != nil && c.Record {
+			if l.recordEscaped == nil {
+				l.recordEscaped = map[*Class]bool{}
+			}
+			l.recordEscaped[c] = true
+			return
+		}
+		t = t.Elem
+	}
 }
 
 // recordHint is the best name in scope for a record being built here: the
@@ -330,6 +367,13 @@ func literalKind(e ast.Expr) string {
 		return "number"
 	case *ast.AnonSub:
 		return "sub"
+	case *ast.RefGen:
+		// \&handler is as much a sub value as an anonymous one, and a hash
+		// whose values are all handlers is a dispatch table, not a record:
+		// its keys are the events, and events are data.
+		if v, ok := n.X.(*ast.Var); ok && v.Sigil == '&' {
+			return "sub"
+		}
 	case *ast.AnonArray:
 		return "list"
 	case *ast.AnonHash:

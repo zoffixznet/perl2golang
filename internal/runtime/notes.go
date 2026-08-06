@@ -514,6 +514,20 @@ var notes = map[string]string{
 		"assertion and the same choice to keep going past a value that does " +
 		"not fit.",
 
+	"hexNum": "hex takes the longest run of hex digits and never fails: " +
+		"\"1g\" is 1 and \"g\" is 0. strconv.ParseInt would reject both with " +
+		"an error, which is the better behaviour to move to once the inputs " +
+		"are trusted to be numbers.",
+
+	"octNum": "The prefix picks the base, the way character escapes spell " +
+		"it: 0x is hex, 0b binary, 0o or nothing octal. ParseInt with base 0 " +
+		"is close but not the same: it reads \"10\" as decimal where oct " +
+		"read it as octal, and it rejects trailing junk instead of stopping " +
+		"at it.",
+
+	"radixNum": "The digit loop hexNum and octNum share: digits accumulate, " +
+		"underscores are skipped, junk ends the read.",
+
 	"readChunk": "Reading an exact number of bytes is io.ReadFull, not Read: " +
 		"a plain Read may hand back fewer bytes than the buffer holds with no " +
 		"error, which works on a file and quietly breaks on a pipe. The " +

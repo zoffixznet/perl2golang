@@ -1405,20 +1405,23 @@ func (l *Lowerer) absCall(n *ast.Call) ir.Expr {
 }
 
 func (l *Lowerer) radixCall(n *ast.Call, base int) ir.Expr {
-	s := l.argStr(n, 0)
-	name := l.tmp("n")
-	parsed := assign(":=", []ir.Expr{ir.NewIdent(name, ir.TInt), ir.NewIdent("_", nil)},
-		[]ir.Expr{call("strconv", "strconv", "ParseInt", ir.TInt, s, ir.IntLit(itoa(base)), ir.IntLit("64"))})
-	l.approximate(n, "P2G5050", "hex or oct",
-		"the parse error is discarded here",
-		"Perl's hex and oct return 0 for text they cannot read. Go's "+
-			"strconv.ParseInt returns an error instead, which is the shape every "+
-			"conversion in Go takes.",
-		"Check the second result and decide what a bad value should mean, rather "+
-			"than letting it become 0.",
+	helper := hHexNum
+	name := "hex"
+	if base == 8 {
+		helper = hOctNum
+		name = "oct"
+	}
+	out := l.helperCall(helper, ir.TInt, l.argStr(n, 0))
+	l.approximate(n, "P2G5050", name,
+		"unreadable text is read as far as it goes",
+		"Perl's "+name+" takes the longest run of digits it can and answers 0 "+
+			"for text with none, where Go's strconv.ParseInt rejects anything "+
+			"that is not entirely a number, with an error saying why.",
+		"Once the inputs are trusted to be numbers, strconv.ParseInt with a "+
+			"checked error is the better Go: a typo becomes a message instead of "+
+			"a zero.",
 		"errors-are-values", "strconv-parsing")
-	l.emit(parsed)
-	return conversion(ir.TInt, ir.NewIdent(name, ir.TInt))
+	return out
 }
 
 func (l *Lowerer) chompCall(n *ast.Call) []ir.Stmt {

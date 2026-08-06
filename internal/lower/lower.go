@@ -148,6 +148,10 @@ type Lowerer struct {
 	// records holds the struct synthesised for each set of literal hash keys
 	// the file uses as a record, so two literals of one shape share a type.
 	records map[string]*Class
+	// recordEscaped marks record types whose values were also stored where
+	// only `any` fits, so readers on the far side expect a map. Their
+	// literals are built as maps from the sweep after the escape is seen.
+	recordEscaped map[*Class]bool
 	// recordLookups and recordDecls hold the by-name field reader declared
 	// for a record whose field name is worked out while the program runs.
 	recordLookups map[*Class]string
@@ -982,6 +986,18 @@ func (l *Lowerer) resolveTypes() {
 	}
 	for _, name := range l.subOrd {
 		fillResults(l.subs[name])
+	}
+	// A record stored where the settled type has room only for `any` has
+	// readers the struct rewrite cannot reach: they will assert the value
+	// back to a map, find a struct, and quietly get nothing. A rewrite that
+	// changes a value's representation must reach every reader or not fire,
+	// so the class is marked and the next sweep builds those literals as the
+	// maps their readers expect.
+	for _, b := range l.decls {
+		l.escapeLostRecords(b)
+	}
+	for _, b := range l.globals {
+		l.escapeLostRecords(b)
 	}
 	for _, s := range l.anonOrd {
 		fillResults(s)

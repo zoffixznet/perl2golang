@@ -106,10 +106,18 @@ func (l *Lowerer) inheritedCtorDecl(s *Sub) *ir.FuncDecl {
 	for _, b := range parent.NamedParams {
 		add(b)
 	}
+	// A parent that takes its arguments as a variadic list hands the whole
+	// list on, spread back out with the ellipsis.
+	if parent.VarArgs != nil {
+		b := parent.VarArgs
+		params = append(params, ir.Param{Name: b.Go, Type: elemOf(b.Type), Variadic: true})
+		args = append(args, ir.NewIdent(b.Go, b.Type))
+	}
 	// The constructor may live several levels up, and each level in between
 	// embeds the one above it, so the literal nests the same way.
-	value := ir.Expr(ir.Un("*", ir.CallOf(ir.NewIdent(parent.Go, nil), parent.Class.Ptr, args...),
-		parent.Class.Value))
+	inner := ir.CallOf(ir.NewIdent(parent.Go, nil), parent.Class.Ptr, args...)
+	inner.Ellipsis = parent.VarArgs != nil
+	value := ir.Expr(ir.Un("*", inner, parent.Class.Value))
 	var chain []*Class
 	for x := c; x != nil && x != parent.Class; x = x.Parent {
 		chain = append(chain, x)
@@ -424,7 +432,11 @@ func (l *Lowerer) lowerMethodDecl(s *Sub, sd *ast.SubDecl) {
 		fn.Results = s.Results
 		fn.Doc = l.methodDoc(s)
 	}
-	fn.Body = l.markUnused(&ir.Block{Stmts: l.stmts(rest)})
+	stmts := l.stmts(rest)
+	if len(s.Prologue) > 0 {
+		stmts = append(append([]ir.Stmt{}, s.Prologue...), stmts...)
+	}
+	fn.Body = l.markUnused(&ir.Block{Stmts: stmts})
 	l.addImplicitReturn(s, fn)
 	l.ensureReturn(s, fn.Body)
 	l.setProv(fn, sd)
@@ -527,6 +539,14 @@ func (l *Lowerer) explainMethod(fn *ir.FuncDecl, s *Sub) {
 // recoverMethodParams turns the argument unpacking at the top of a method into
 // a receiver and a Go parameter list.
 func (l *Lowerer) recoverMethodParams(s *Sub, body []ast.Stmt) ([]ir.Param, []ast.Stmt) {
+	// The recovery re-derives the argument shape from the body every time it
+	// runs. What an earlier round concluded must not leak in: a stale VarArgs
+	// would push the `%args` decision down the wrong branch, and a stale
+	// prologue would name temporaries from a round that no longer exists.
+	s.Prologue = nil
+	s.VarArgs = nil
+	s.Variadic = false
+	s.Named = nil
 	rest := body
 	var bindings []*Binding
 	// A plain function in a package takes no invocant: it is called by name,
@@ -580,9 +600,35 @@ func (l *Lowerer) recoverMethodParams(s *Sub, body []ast.Stmt) ([]ir.Param, []as
 					}
 				}
 			case v.Sigil == '%' && s.VarArgs == nil:
-				b := l.declare(v, KindParam)
-				b.Kind = KindSpecial
-				s.Named = b
+				// The named-arguments rewrite replaces the hash with one
+				// parameter per key, so it may only fire when every use of
+				// the hash is a key written out in the source. A body that
+				// walks the hash itself, with keys, values, a computed key or
+				// the hash whole, is saying the keys are data: rewriting the
+				// signature would leave those reads speaking about a variable
+				// that no longer exists. Such a sub keeps a variadic pair
+				// list and rebuilds the hash from it at the top.
+				if hashReadsOnlyStaticKeys(v.Name, rest[1:]) {
+					b := l.declare(v, KindParam)
+					b.Kind = KindSpecial
+					s.Named = b
+				} else {
+					b := l.declare(v, KindLocal)
+					b.Type = ir.MapOf(ir.TAny)
+					l.observe(b, b.Type)
+					pairs := l.declareNamed("pairs@"+s.Pkg+"::"+s.Name, '@', "kv", KindParam, v)
+					pairs.Type = ir.SliceOf(ir.TAny)
+					s.Variadic = true
+					s.VarArgs = pairs
+					s.Prologue = l.pairCarrier(b, pairs)
+					l.inform(v, "P2G2055", "%"+v.Name+" walked as data",
+						"This sub does not read its named arguments by key: it walks "+
+							"the hash itself, so the keys are data and there is nothing "+
+							"to turn into a Go parameter list. The arguments stay a "+
+							"variadic pair list, and the hash is rebuilt from it before "+
+							"the body runs.",
+						"variadic-and-no-defaults", "maps-of-slices")
+				}
 			case v.Sigil == '$':
 				bindings = append(bindings, l.declare(v, KindParam))
 			default:
@@ -691,6 +737,62 @@ func (l *Lowerer) namesThisClass(e ast.Expr) bool {
 		}
 	}
 	return false
+}
+
+// hashReadsOnlyStaticKeys reports whether every use of the named hash is a
+// key written out in the source, which is the condition the named-arguments
+// rewrite needs: it replaces the hash entirely, so a read it cannot rewrite
+// is a read it must not orphan.
+func hashReadsOnlyStaticKeys(name string, body []ast.Stmt) bool {
+	ok := true
+	walkExprs(body, func(e ast.Expr) {
+		switch n := e.(type) {
+		case *ast.Var:
+			if n.Sigil == '%' && n.Name == name {
+				ok = false
+			}
+		case *ast.HashIndex:
+			if v, isVar := n.Base.(*ast.Var); isVar && !n.Arrow && v.Sigil == '$' && v.Name == name {
+				if _, static := staticString(n.Key); !static {
+					ok = false
+				}
+			}
+		case *ast.Slice:
+			if v, isVar := n.Base.(*ast.Var); isVar && v.Name == name {
+				ok = false
+			}
+		}
+	})
+	return ok
+}
+
+// pairCarrier builds the statements that rebuild a `%args` hash from the
+// variadic pair list, for a sub that walks its named arguments as data.
+func (l *Lowerer) pairCarrier(hash, pairs *Binding) []ir.Stmt {
+	mapT := ir.MapOf(ir.TAny)
+	listT := ir.SliceOf(ir.TAny)
+	target := ir.NewIdent(hash.Go, mapT)
+	list := ir.NewIdent(pairs.Go, listT)
+
+	decl := assign(":=", []ir.Expr{target}, []ir.Expr{composite(mapT, nil, nil)})
+	l.note(decl, "The caller wrote name => value pairs, which arrive here as one "+
+		"flat list. Go has no named arguments, so the pairing Perl did inside the "+
+		"call is done in the open: two elements at a time, key then value.",
+		"variadic-and-no-defaults", "nil-slices-vs-nil-maps")
+
+	idx := l.tmp("i")
+	key := l.toStr(index(list, ir.NewIdent(idx, ir.TInt), ir.TAny), nil)
+	value := index(list, ir.Bin("+", ir.NewIdent(idx, ir.TInt), ir.IntLit("1"), ir.TInt), ir.TAny)
+	loop := &ir.For{
+		Init: assign(":=", []ir.Expr{ir.NewIdent(idx, ir.TInt)}, []ir.Expr{ir.IntLit("0")}),
+		Cond: ir.Bin("<", ir.Bin("+", ir.NewIdent(idx, ir.TInt), ir.IntLit("1"), ir.TInt),
+			lenOf(list), ir.TBool),
+		Post: assign("+=", []ir.Expr{ir.NewIdent(idx, ir.TInt)}, []ir.Expr{ir.IntLit("2")}),
+		Body: &ir.Block{Stmts: []ir.Stmt{
+			assign("=", []ir.Expr{index(target, key, ir.TAny)}, []ir.Expr{value}),
+		}},
+	}
+	return []ir.Stmt{decl, loop}
 }
 
 // namedParam returns the Go parameter standing in for one key of a `%args`

@@ -529,6 +529,18 @@ func usesArgs(body []ast.Stmt) bool {
 			walkE(n.X)
 		case *ast.Deref:
 			walkE(n.X)
+		case *ast.HashIndex:
+			// $h{ $_[0] } reads the argument list from inside a key.
+			walkE(n.Base)
+			walkE(n.Key)
+		case *ast.Match:
+			walkE(n.Bound)
+			walkE(n.PatternExpr)
+		case *ast.Subst:
+			walkE(n.Bound)
+			walkE(n.Repl)
+		case *ast.Trans:
+			walkE(n.Bound)
 		case *ast.Assign:
 			walkE(n.LHS)
 			walkE(n.RHS)

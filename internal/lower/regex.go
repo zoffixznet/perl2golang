@@ -873,15 +873,15 @@ func (l *Lowerer) substStmt(n *ast.Subst) []ir.Stmt {
 
 	target := l.substTarget(n)
 	if target == nil {
-		return nil
+		return l.refusedStmtMarker(n)
 	}
 	pattern, ok := l.patternOf(n.Pattern)
 	if !ok {
-		return nil
+		return l.refusedStmtMarker(n)
 	}
 	repl, replOK := l.replacement(n)
 	if !replOK {
-		return nil
+		return l.refusedStmtMarker(n)
 	}
 
 	global := strings.Contains(n.Pattern.Mods, "g")
@@ -1559,6 +1559,24 @@ func (l *Lowerer) markRefusedPattern(x ir.Expr) ir.Expr {
 	ir.MetaOf(x).Todo = l.patternTodo
 	l.patternTodo = nil
 	return x
+}
+
+// refusedStmtMarker is markRefusedPattern for a whole statement that has
+// nothing left to emit. Dropping the statement silently would leave the code
+// reading as though the step never existed; the marker keeps the original
+// text at the point of refusal and names the gap on stderr if the line is
+// reached, which is what every other refused statement leaves behind.
+func (l *Lowerer) refusedStmtMarker(n ast.Node) []ir.Stmt {
+	if l.patternTodo == nil {
+		return nil
+	}
+	todo := *l.patternTodo
+	l.patternTodo = nil
+	st := l.todoMarker(todo, n)
+	st.Stub = l.helperCall(hNotImplementedHere, ir.TVoid,
+		ir.Str(strconv.Quote(todo.Code)), ir.Str(strconv.Quote(todoWording(todo))))
+	st.Info.Spelled = true
+	return []ir.Stmt{st}
 }
 
 // matchGroups reports how many capture groups a match has, and what the named

@@ -15,6 +15,8 @@ const (
 	hIsTrue           = "isTrue"        // any -> bool, Perl's truthiness
 	hTruthy           = "truthy"        // string -> bool, Perl's truthiness for text
 	hMod              = "mod"           // Perl's %, which follows the right operand's sign
+	hHexNum           = "hexNum"        // hex(), the longest run of hex digits
+	hOctNum           = "octNum"        // oct(), with the prefix picking the base
 	hSprintf          = "sprintf"       // Perl-compatible sprintf
 	hSubstr           = "substr"        // 4-argument substr with Perl's offset rules
 	hSubstrFrom       = "substrFrom"    // 2-argument substr

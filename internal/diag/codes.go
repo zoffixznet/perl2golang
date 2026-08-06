@@ -147,6 +147,9 @@ const (
 	ForeachAliasing Code = "P2G2040"
 	// HashFromOddList: a hash is built from a list of unknown length.
 	HashFromOddList Code = "P2G2050"
+	// ArgsHashRebuilt: a `%args` the sub walks as data is rebuilt from the
+	// variadic pair list instead of becoming named parameters.
+	ArgsHashRebuilt Code = "P2G2055"
 	// DefinedOnValueType: `defined` cannot see the absence of a value here.
 	DefinedOnValueType Code = "P2G2110"
 	// BareReturnZeroValues: a bare `return` became the declared zero values.
@@ -880,6 +883,14 @@ var catalogue = map[Code]Entry{
 		Advice:    "build the map with an explicit loop over the list, two elements at a time",
 		Cost:      "the pairs cannot be matched up at conversion time, so none of them reach the map",
 		Converted: "the emitted code declares the map empty and leaves the filling to the loop",
+	},
+	ArgsHashRebuilt: {
+		Severity:  report.Note,
+		Message:   "`%%%s` is walked as data, so it stays a map rebuilt from the argument pairs",
+		Short:     "the args hash is rebuilt from pairs",
+		Advice:    "where the keys are really fixed, read them by name and the hash becomes ordinary parameters",
+		Converted: "the sub takes a variadic pair list and rebuilds the hash before the body runs",
+		Concepts:  []string{"variadic-and-no-defaults", "maps-of-slices"},
 	},
 	DefinedOnValueType: {
 		Severity:  report.Warn,
