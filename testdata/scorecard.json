@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T15:53:07Z",
+  "recorded": "2026-08-15T16:02:03Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -111,8 +111,8 @@
           "skip": 0
         },
         "equivalent": {
-          "pass": 21,
-          "fail": 16,
+          "pass": 23,
+          "fail": 14,
           "skip": 0
         },
         "translated": {
@@ -127,16 +127,16 @@
         }
       },
       "equivalent_annotated": {
-        "pass": 21,
-        "fail": 16,
+        "pass": 23,
+        "fail": 14,
         "skip": 0
       },
       "quality": {
         "todos": 44,
-        "symbols": 912,
+        "symbols": 911,
         "symbols_typed": 711,
         "refusals": 45,
-        "approximations": 316,
+        "approximations": 313,
         "crashes": 1
       }
     },
@@ -244,8 +244,8 @@
         "skip": 0
       },
       "equivalent": {
-        "pass": 133,
-        "fail": 70,
+        "pass": 135,
+        "fail": 68,
         "skip": 0
       },
       "honest": {
@@ -265,25 +265,25 @@
       }
     },
     "equivalent_annotated": {
-      "pass": 133,
-      "fail": 70,
+      "pass": 135,
+      "fail": 68,
       "skip": 0
     },
     "quality": {
       "todos": 107,
-      "symbols": 4008,
+      "symbols": 4007,
       "symbols_typed": 3447,
       "refusals": 108,
-      "approximations": 1233,
+      "approximations": 1230,
       "crashes": 2
     }
   },
   "quality": {
     "todos": 107,
-    "symbols": 4008,
+    "symbols": 4007,
     "symbols_typed": 3447,
     "refusals": 108,
-    "approximations": 1233,
+    "approximations": 1230,
     "crashes": 2
   },
   "entries": [
@@ -5642,8 +5642,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 17, byte 458: got \"0 time(s)\\n\", wanted \"1 time(s)\\n\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -5653,16 +5652,15 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "8 variables left dynamic out of 35"
+          "reason": "7 variables left dynamic out of 34"
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 17, byte 458: got \"0 time(s)\\n\", wanted \"1 time(s)\\n\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
-        "symbols": 35,
+        "symbols": 34,
         "symbols_typed": 27,
         "refusals": 0,
         "approximations": 9,
@@ -6556,8 +6554,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 1, byte 9: got \"1 line(s), first is sep = ::\\nmod...\", wanted \"2 line(s), first is sep = ::\\nslu...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -6570,15 +6567,14 @@
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 1, byte 9: got \"1 line(s), first is sep = ::\\nmod...\", wanted \"2 line(s), first is sep = ::\\nslu...\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
         "symbols": 16,
         "symbols_typed": 16,
         "refusals": 0,
-        "approximations": 9,
+        "approximations": 6,
         "crashes": 0
       }
     },

@@ -469,6 +469,12 @@ func (l *Lowerer) readlineExpr(n *ast.Readline) ir.Expr {
 				"bufio.Scanner and keep only what you need.",
 			"io-reader-writer", "bufio-scanner-limit")
 		return out
+	case sepDynamic:
+		out := l.helperCall(hReadRecords, ir.SliceOf(ir.TString), src, l.seps.dyn)
+		l.note(out, "$/ holds a value the program worked out, so the separator rides "+
+			"into the read as an argument, which is where Go names one anyway.",
+			"io-reader-writer")
+		return out
 	case sepPara, sepCustom:
 		sep := l.seps.text
 		out := l.helperCall(hReadRecords, ir.SliceOf(ir.TString), src, ir.Str(quote(sep)))

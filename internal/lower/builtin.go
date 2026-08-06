@@ -1443,8 +1443,12 @@ func (l *Lowerer) chompStmts(target ir.Expr, n *ast.Call) []ir.Stmt {
 		idx := l.tmp("i")
 		elem := elemOf(t)
 		at := index(target, ir.NewIdent(idx, ir.TInt), elem)
+		suffix, trims := l.chompSuffix()
+		if !trims {
+			return nil
+		}
 		trimmed := ir.Expr(call("strings", "strings", "TrimSuffix", ir.TString,
-			l.toStr(at, n), ir.Str(`"\n"`)))
+			l.toStr(at, n), suffix))
 		loop := &ir.Range{
 			Key:    ir.NewIdent(idx, ir.TInt),
 			X:      target,
@@ -1464,8 +1468,12 @@ func (l *Lowerer) chompStmts(target ir.Expr, n *ast.Call) []ir.Stmt {
 
 	// A target whose type did not resolve is not a string yet, and
 	// strings.TrimSuffix will not take one, so it is read as text first.
+	suffix, trims := l.chompSuffix()
+	if !trims {
+		return nil
+	}
 	trimmed := ir.Expr(call("strings", "strings", "TrimSuffix", ir.TString,
-		l.toStr(target, n), ir.Str(`"\n"`)))
+		l.toStr(target, n), suffix))
 	st := assign("=", []ir.Expr{target}, []ir.Expr{l.assignable(trimmed, typeOrAny(target), n)})
 	l.setProv(st, n)
 	l.note(st, "chomp removes one trailing newline and nothing else, which is exactly "+
@@ -1473,6 +1481,20 @@ func (l *Lowerer) chompStmts(target ir.Expr, n *ast.Call) []ir.Stmt {
 		"so a chomp after a Scan is unnecessary.",
 		"bufio-scanner-limit")
 	return []ir.Stmt{st}
+}
+
+// chompSuffix is what chomp removes: whatever $/ says. With $/ undefined
+// chomp removes nothing at all, which the false result reports.
+func (l *Lowerer) chompSuffix() (ir.Expr, bool) {
+	switch l.seps.rec {
+	case sepSlurp:
+		return nil, false
+	case sepCustom:
+		return ir.Str(quote(l.seps.text)), true
+	case sepDynamic:
+		return l.seps.dyn, true
+	}
+	return ir.Str(`"\n"`), true
 }
 
 func (l *Lowerer) chompTarget(n *ast.Call) ast.Expr {
@@ -1546,9 +1568,13 @@ func (l *Lowerer) chompExpr(n *ast.Call) ir.Expr {
 		return ir.IntLit("0")
 	}
 	count := l.tmp("removed")
+	suffix, trims := l.chompSuffix()
+	if !trims {
+		return ir.IntLit("0")
+	}
 	decl := &ir.DeclStmt{Names: []string{count}, Type: ir.TInt}
 	check := &ir.If{
-		Cond: call("strings", "strings", "HasSuffix", ir.TBool, target, ir.Str(`"\n"`)),
+		Cond: call("strings", "strings", "HasSuffix", ir.TBool, target, suffix),
 		Then: &ir.Block{Stmts: []ir.Stmt{
 			assign("=", []ir.Expr{ir.NewIdent(count, ir.TInt)}, []ir.Expr{ir.IntLit("1")}),
 		}},

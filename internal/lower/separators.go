@@ -38,13 +38,17 @@ const (
 	sepPara
 	// sepCustom is `$/ = "text"`: a read stops at that text.
 	sepCustom
+	// sepDynamic is `$/ = $expr`: the separator is a value the program
+	// works out, carried into the reads as an argument.
+	sepDynamic
 )
 
 // separators is the state the four separator variables carry.
 type separators struct {
 	// rec is `$/`, the input record separator.
 	rec  sepMode
-	text string // the separator itself when rec is sepCustom
+	text string  // the separator itself when rec is sepCustom
+	dyn  ir.Expr // the separator's value when rec is sepDynamic
 
 	// ofs is `$,`, written between print's arguments, empty by default.
 	ofs string
@@ -98,6 +102,24 @@ func (l *Lowerer) setSeparator(name string, value ast.Expr, n ast.Node, scoped b
 		known = true
 	}
 	if !known {
+		// The record separator is the one that can travel as a value: the
+		// reads it governs become calls that take the separator as an
+		// argument, so a separator worked out at run time rides along.
+		if name == "/" {
+			l.seps.rec, l.seps.text = sepDynamic, ""
+			l.seps.dyn = l.toStr(l.expr(value), value)
+			l.approximate(n, "P2G6018", "$"+name,
+				"the separator becomes an argument of the reads it governs",
+				"Perl keeps $/ in a global the read operator consults while the "+
+					"program runs. Go has no such variable, so the value is handed to "+
+					"each read in this block as an argument, which is where Go names a "+
+					"separator anyway.",
+				"A sub called from inside this block would have seen the new value in "+
+					"Perl and does not here; pass the separator to it explicitly where "+
+					"that was the intent.",
+				"small-stdlib-philosophy")
+			return nil
+		}
 		l.approximate(n, "P2G6018", "$"+name,
 			"the separator is read while converting, and this value is not known then",
 			"Perl's separator variables are read by print and by the read operator "+

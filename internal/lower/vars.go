@@ -2,6 +2,7 @@ package lower
 
 import (
 	"sort"
+	"strings"
 
 	"perl2golang/internal/ir"
 	"perl2golang/internal/perl/ast"
@@ -76,12 +77,33 @@ func (l *Lowerer) lookup(sigil rune, name string, at ast.Node) *Binding {
 	if b, ok := l.globalSeen[key]; ok {
 		return b
 	}
+	// A package variable has one identity however it is spelled: %CALLS
+	// inside package TextUtil and %TextUtil::CALLS anywhere name the same
+	// hash. A qualified name falls back to the bare binding created under
+	// that package, and a bare name to the qualified binding of the package
+	// being lowered, whichever the file happened to declare first.
+	if i := strings.LastIndex(name, "::"); i >= 0 {
+		pkg, bare := name[:i], name[i+2:]
+		if b, ok := l.globalSeen[varKey(sigil, bare)]; ok && b.Pkg == pkg {
+			l.globalSeen[key] = b
+			return b
+		}
+	} else if l.curPkg != "" && l.curPkg != "main" {
+		if b, ok := l.globalSeen[varKey(sigil, l.curPkg+"::"+name)]; ok {
+			l.globalSeen[key] = b
+			return b
+		}
+	}
 	b := &Binding{
 		Perl:  key,
 		Sigil: sigil,
 		Kind:  KindGlobal,
 		Line:  posLine(at),
 		Type:  defaultFor(sigil),
+		Pkg:   l.curPkg,
+	}
+	if i := strings.LastIndex(name, "::"); i >= 0 {
+		b.Pkg = name[:i]
 	}
 	b.Go = l.names.take(goName(name))
 	l.globalSeen[key] = b

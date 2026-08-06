@@ -44,6 +44,10 @@ type Binding struct {
 	Reason string
 	Kind   Kind
 	Line   int
+	// Pkg is the package a global binding was created under, which is what
+	// lets $TextUtil::CALLS and %CALLS inside package TextUtil resolve to
+	// one variable rather than two.
+	Pkg string
 	// Reads and Writes count uses, so the emitter can pick var versus :=
 	// and can drop a variable that is written but never read.
 	Reads  int
