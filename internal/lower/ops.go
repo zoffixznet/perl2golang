@@ -115,7 +115,7 @@ func (l *Lowerer) binop(n *ast.BinOp) ir.Expr {
 
 	case ",", "=>":
 		parts, t := l.listParts([]ast.Expr{n})
-		return composite(ir.SliceOf(t), nil, parts)
+		return l.listValue(parts, t)
 
 	case "=~", "!~":
 		// The parser normally folds these into Match/Subst nodes; reaching

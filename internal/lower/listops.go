@@ -545,11 +545,7 @@ func (l *Lowerer) blockLoopTail(n *ast.Call) (src ir.Expr, item ir.Expr, body []
 	var listArgs []ast.Expr
 	listArgs = append(listArgs, args...)
 	parts, t := l.listParts(listArgs)
-	if len(parts) == 1 && typeOrAny(parts[0]).Kind == ir.Slice {
-		src = parts[0]
-	} else {
-		src = composite(ir.SliceOf(t), nil, parts)
-	}
+	src = l.listValue(parts, t)
 	elem := elemOf(typeOrAny(src))
 
 	saved := l.scope
@@ -599,10 +595,7 @@ func (l *Lowerer) mapToHash(n *ast.Call, want *ir.Type) (ir.Expr, bool) {
 
 	args := flatten(argList(n))
 	parts, t := l.listParts(args)
-	src := ir.Expr(composite(ir.SliceOf(t), nil, parts))
-	if len(parts) == 1 && typeOrAny(parts[0]).Kind == ir.Slice {
-		src = parts[0]
-	}
+	src := l.listValue(parts, t)
 	elem := elemOf(typeOrAny(src))
 
 	saved := l.scope

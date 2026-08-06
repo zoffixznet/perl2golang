@@ -284,6 +284,11 @@ var notes = map[string]string{
 		"exists only for values whose type did not resolve, where the choice " +
 		"between a collection and its length cannot be made at compile time.",
 
+	"asList": "A list in this program is flat: a slice written into one " +
+		"contributes its elements, not itself. When the value's type is only " +
+		"known while the program runs, whether it has elements to contribute " +
+		"has to be asked then too, which is the one question this answers.",
+
 	"fileStat": "os.Stat returns an fs.FileInfo and an error, and every " +
 		"field is a method on it: Size, Mode, ModTime, IsDir. Nothing hands " +
 		"back a list of thirteen numbers, so nothing has to remember which " +

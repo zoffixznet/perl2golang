@@ -116,10 +116,7 @@ func (l *Lowerer) reduceCall(n *ast.Call) ir.Expr {
 
 	args := flatten(argList(n))
 	parts, t := l.listParts(args)
-	src := ir.Expr(composite(ir.SliceOf(t), nil, parts))
-	if len(parts) == 1 && typeOrAny(parts[0]).Kind == ir.Slice {
-		src = parts[0]
-	}
+	src := l.listValue(parts, t)
 	elem := elemOf(typeOrAny(src))
 
 	saved := l.scope

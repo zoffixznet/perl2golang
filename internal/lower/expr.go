@@ -229,10 +229,13 @@ func (l *Lowerer) list(e ast.Expr) ir.Expr {
 		if p.Type() != nil && p.Type().Kind == ir.Slice {
 			return p
 		}
-		// A value whose type inference did not resolve may be holding a list
-		// at run time, and Go cannot tell. Treating it as a single element is
-		// the only thing that compiles, and it is not necessarily right.
-		if typeOrAny(p).Kind == ir.Any {
+		// A call or a conditional whose type did not resolve may be handing
+		// back a list, and neither its spelling nor its Go type can say.
+		// Treating it as a single element is the only thing that compiles,
+		// and it is not necessarily right. A scalar variable is different: it
+		// holds exactly one value however unresolved its type, so wrapping it
+		// as one element is simply correct and nothing needs reporting.
+		if typeOrAny(p).Kind == ir.Any && flattensInList(e) {
 			l.approximate(e, "P2G3010", "a dynamic value used as a list",
 				"a value of unknown type is being treated as one element",
 				"This value's type did not resolve, so it is declared as `any`. Perl "+
@@ -294,7 +297,14 @@ func (l *Lowerer) listValue(parts []ir.Expr, elem *ir.Type) ir.Expr {
 	sliceT := ir.SliceOf(elem)
 	splices := func(p ir.Expr) bool {
 		pt := typeOrAny(p)
-		return pt.Kind == ir.Slice && pt.Elem.Equal(elem)
+		if pt.Kind != ir.Slice {
+			return false
+		}
+		// A part marked when the list was taken apart is known to stand for
+		// several values whatever its element type; for the rest, an element
+		// type that matches the list's is the evidence, and a mismatch means
+		// the slice is a reference standing as one element.
+		return l.spliced[p] || pt.Elem.Equal(elem)
 	}
 
 	any := false
@@ -325,7 +335,10 @@ func (l *Lowerer) listValue(parts []ir.Expr, elem *ir.Type) ir.Expr {
 	for _, p := range parts {
 		if splices(p) {
 			flush()
-			groups = append(groups, p)
+			// A spliced-in slice whose elements are narrower than the list's
+			// is copied across, because Go has no conversion between a slice
+			// of one type and a slice of another.
+			groups = append(groups, l.assignable(p, sliceT, nil))
 			continue
 		}
 		run = append(run, p)
@@ -374,6 +387,7 @@ func (l *Lowerer) listParts(es []ast.Expr) ([]ir.Expr, *ir.Type) {
 			// A global match in list context yields every match, not a truth
 			// value, which is a different Go call entirely.
 			if x, ok := l.globalMatch(n); ok {
+				l.spliced[x] = true
 				out = append(out, x)
 				seen = append(seen, elemOf(typeOrAny(x)))
 				return
@@ -392,11 +406,13 @@ func (l *Lowerer) listParts(es []ast.Expr) ([]ir.Expr, *ir.Type) {
 			// line, which is a different call from the one that hands back
 			// the whole output.
 			x := l.backtickCmd(n, true)
+			l.spliced[x] = true
 			out = append(out, x)
 			seen = append(seen, elemOf(typeOrAny(x)))
 			return
 		case *ast.Call:
 			if x, ok := l.multiResultCall(n, true); ok {
+				l.spliced[x] = true
 				out = append(out, x)
 				seen = append(seen, elemOf(typeOrAny(x)))
 				return
@@ -415,12 +431,41 @@ func (l *Lowerer) listParts(es []ast.Expr) ([]ir.Expr, *ir.Type) {
 				"either, so the pairs come out sorted by key, which is stable where "+
 				"ranging over the map would not be.",
 				"map-iteration-order", "context-is-gone")
+			l.spliced[flat] = true
+			out = append(out, flat)
+			seen = append(seen, ir.TAny)
+			return
+		}
+		// A dereferenced array whose type did not resolve still flattens: the
+		// syntax proves it holds a list even though the compiled type cannot.
+		// The helper asks the value for its elements while the program runs,
+		// which is when the answer exists.
+		if typeOrAny(x).Kind == ir.Any && certainlyList(e) {
+			flat := l.helperCall(hAsList, ir.SliceOf(ir.TAny), x)
+			l.note(flat, "This value's type did not resolve, so it is compiled as "+
+				"`any`, but the way it is written proves it stands for a list. The "+
+				"helper splices in whatever elements it holds when the program runs, "+
+				"which is the moment the answer becomes knowable.",
+				"type-assertions-and-switches", "context-is-gone")
+			if l.pass == 2 {
+				l.approximate(e, "P2G3010", "a dynamic value used as a list",
+					"the value's elements are spliced in while the program runs",
+					"This value's type did not resolve, so it is declared as `any`. "+
+						"Perl flattens what it holds into the surrounding list; the "+
+						"generated code does the same through a helper that asks the "+
+						"value for its elements at run time instead of at compile time.",
+					"Give the variable a concrete slice type at its declaration. The "+
+						"helper call then disappears, along with the conversions around it.",
+					"type-assertions-and-switches", "static-types-and-zero-values")
+			}
+			l.spliced[flat] = true
 			out = append(out, flat)
 			seen = append(seen, ir.TAny)
 			return
 		}
 		out = append(out, x)
 		if xt := x.Type(); xt != nil && xt.Kind == ir.Slice && flattensInList(e) {
+			l.spliced[x] = true
 			seen = append(seen, xt.Elem)
 			return
 		}
@@ -480,6 +525,24 @@ func flattensInList(e ast.Expr) bool {
 		return n.Sigil != '$'
 	}
 	return true
+}
+
+// certainlyList reports whether an expression's spelling alone proves it
+// stands for a list of values, whatever type inference made of it. `@$ref`
+// can only ever be a list; `f()` might return one value or several; `$x` is
+// always exactly one. Only the first kind is safe to splice when the type is
+// unknown, because a slice-typed value behind a scalar is a reference and a
+// reference contributes itself.
+func certainlyList(e ast.Expr) bool {
+	switch n := e.(type) {
+	case *ast.Var:
+		return n.Sigil == '@'
+	case *ast.Deref:
+		return n.Sigil == '@'
+	case *ast.Slice:
+		return true
+	}
+	return false
 }
 
 // flatten returns the elements of a Perl list expression without lowering
@@ -566,13 +629,18 @@ func (l *Lowerer) noteNumericEdge(n *ast.NumberLit) {
 	}
 }
 
-// listLit lowers a parenthesised list.
+// listLit lowers a parenthesised list reached as a plain expression.
+//
+// Everything that genuinely consumes a list, an array being filled, a sub
+// being called, a loop being fed, takes the list apart itself, so reaching
+// here means the parentheses stand in an ordinary expression position.
 func (l *Lowerer) listLit(n *ast.List) ir.Expr {
 	parts, t := l.listParts(n.Elems)
-	// A list holding one thing that is already a list is that list: Perl
-	// flattens, so (@a) and @a are the same. Wrapping it in a slice literal
-	// would build a slice of slices.
-	if len(parts) == 1 && typeOrAny(parts[0]).Kind == ir.Slice {
+	// One part means the parentheses were grouping, not a container: Perl
+	// flattens, so (@a) is @a, and ($x) in a value position is $x. Wrapping
+	// the part in a slice literal would invent a container Perl never built,
+	// and a one-element slice where a number was wanted reads as 0.
+	if len(parts) == 1 {
 		return parts[0]
 	}
 	return l.listValue(parts, t)

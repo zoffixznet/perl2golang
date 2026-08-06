@@ -112,15 +112,7 @@ func (l *Lowerer) listSource(n *ast.Foreach) ir.Expr {
 		return l.list(n.List[0])
 	}
 	parts, t := l.listParts(n.List)
-	if len(parts) == 1 && typeOrAny(parts[0]).Kind == ir.Slice {
-		return parts[0]
-	}
-	// The elements decided the element type together, and the ones that were
-	// not already that type have to be written as it.
-	for i, p := range parts {
-		parts[i] = l.assignable(p, t, nil)
-	}
-	return composite(ir.SliceOf(t), nil, parts)
+	return l.listValue(parts, t)
 }
 
 // countingLoop recognises `for my $i (A .. B)` and emits a counting loop.

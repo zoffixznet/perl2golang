@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T13:57:24Z",
+  "recorded": "2026-08-15T14:18:55Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -67,8 +67,8 @@
           "skip": 0
         },
         "equivalent": {
-          "pass": 55,
-          "fail": 37,
+          "pass": 56,
+          "fail": 36,
           "skip": 0
         },
         "translated": {
@@ -83,8 +83,8 @@
         }
       },
       "equivalent_annotated": {
-        "pass": 55,
-        "fail": 37,
+        "pass": 56,
+        "fail": 36,
         "skip": 0
       },
       "quality": {
@@ -92,7 +92,7 @@
         "symbols": 1440,
         "symbols_typed": 1256,
         "refusals": 18,
-        "approximations": 522,
+        "approximations": 523,
         "crashes": 1
       }
     },
@@ -101,8 +101,8 @@
       "entries": 37,
       "stages": {
         "compiled": {
-          "pass": 33,
-          "fail": 4,
+          "pass": 34,
+          "fail": 3,
           "skip": 0
         },
         "emitted": {
@@ -111,8 +111,8 @@
           "skip": 0
         },
         "equivalent": {
-          "pass": 12,
-          "fail": 25,
+          "pass": 14,
+          "fail": 23,
           "skip": 0
         },
         "translated": {
@@ -127,16 +127,16 @@
         }
       },
       "equivalent_annotated": {
-        "pass": 12,
-        "fail": 25,
+        "pass": 14,
+        "fail": 23,
         "skip": 0
       },
       "quality": {
         "todos": 48,
         "symbols": 910,
-        "symbols_typed": 709,
+        "symbols_typed": 711,
         "refusals": 50,
-        "approximations": 316,
+        "approximations": 318,
         "crashes": 1
       }
     },
@@ -224,7 +224,7 @@
         "symbols": 924,
         "symbols_typed": 843,
         "refusals": 3,
-        "approximations": 206,
+        "approximations": 208,
         "crashes": 0
       }
     }
@@ -234,8 +234,8 @@
     "entries": 237,
     "stages": {
       "compiled": {
-        "pass": 229,
-        "fail": 8,
+        "pass": 230,
+        "fail": 7,
         "skip": 0
       },
       "emitted": {
@@ -244,8 +244,8 @@
         "skip": 0
       },
       "equivalent": {
-        "pass": 119,
-        "fail": 80,
+        "pass": 122,
+        "fail": 77,
         "skip": 0
       },
       "honest": {
@@ -265,25 +265,25 @@
       }
     },
     "equivalent_annotated": {
-      "pass": 119,
-      "fail": 80,
+      "pass": 122,
+      "fail": 77,
       "skip": 0
     },
     "quality": {
       "todos": 116,
       "symbols": 3935,
-      "symbols_typed": 3381,
+      "symbols_typed": 3383,
       "refusals": 118,
-      "approximations": 1201,
+      "approximations": 1206,
       "crashes": 2
     }
   },
   "quality": {
     "todos": 116,
     "symbols": 3935,
-    "symbols_typed": 3381,
+    "symbols_typed": 3383,
     "refusals": 118,
-    "approximations": 1201,
+    "approximations": 1206,
     "crashes": 2
   },
   "entries": [
@@ -3152,7 +3152,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: line 13, byte 433: got \"[web1 web2 db1 cache1 edge1]=0.0...\", wanted \"cache1=0.69 db1=2.17 edge1=2.35 ...\""
+          "reason": "stdout differs: line 19, byte 620: got \"1,2,2,3\\nuniqnum on numish: 1,2,3...\", wanted \"2,3\\nuniqnum on numish: 1,2,3\\npai...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -3167,14 +3167,14 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: line 13, byte 433: got \"[web1 web2 db1 cache1 edge1]=0.0...\", wanted \"cache1=0.69 db1=2.17 edge1=2.35 ...\""
+        "reason": "stdout differs: line 19, byte 620: got \"1,2,2,3\\nuniqnum on numish: 1,2,3...\", wanted \"2,3\\nuniqnum on numish: 1,2,3\\npai...\""
       },
       "quality": {
         "todos": 0,
         "symbols": 30,
         "symbols_typed": 24,
         "refusals": 0,
-        "approximations": 11,
+        "approximations": 12,
         "crashes": 0
       }
     },
@@ -3632,8 +3632,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 1, byte 26: got \"[primary eu-west]\\n-- asked as a ...\", wanted \"primary,eu-west\\n-- asked as a co...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -3647,8 +3646,7 @@
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 1, byte 26: got \"[primary eu-west]\\n-- asked as a ...\", wanted \"primary,eu-west\\n-- asked as a co...\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
@@ -4264,7 +4262,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: line 1, byte 28: got \"[fast]\\nweb1  count=2 last=500 ta...\", wanted \"fast\\nweb1  count=2 last=500 tags...\""
+          "reason": "stdout differs: line 4, byte 119: got \"1 key(s): alpha\\nbeta exists: no,...\", wanted \"2 key(s): alpha,beta\\nbeta exists...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -4278,7 +4276,7 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: line 1, byte 28: got \"[fast]\\nweb1  count=2 last=500 ta...\", wanted \"fast\\nweb1  count=2 last=500 tags...\""
+        "reason": "stdout differs: line 4, byte 119: got \"1 key(s): alpha\\nbeta exists: no,...\", wanted \"2 key(s): alpha,beta\\nbeta exists...\""
       },
       "quality": {
         "todos": 0,
@@ -5540,7 +5538,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: line 2, byte 40: got \"                    1      0.00 ...\", wanted \"Ada    gold         2     83.25 ...\""
+          "reason": "stdout differs: line 2, byte 69: got \"00 no\\nGrace  silver       1     ...\", wanted \"25 no\\nGrace  silver       1     ...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -5555,7 +5553,7 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: line 2, byte 40: got \"                    1      0.00 ...\", wanted \"Ada    gold         2     83.25 ...\""
+        "reason": "stdout differs: line 2, byte 69: got \"00 no\\nGrace  silver       1     ...\", wanted \"25 no\\nGrace  silver       1     ...\""
       },
       "quality": {
         "todos": 0,
@@ -5650,15 +5648,13 @@
       "kind": "convert",
       "stages": {
         "compiled": {
-          "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:125:43: cannot use rows2 (variable of type [][]string) as []string value in array or slice literal"
+          "outcome": "pass"
         },
         "emitted": {
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "the generated program did not compile"
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -5672,8 +5668,7 @@
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "the generated program did not compile"
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
@@ -5697,7 +5692,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: line 1, byte 0: got \"error: unclosed each block\\nno er...\", wanted \"INVOICE INV-2024-0117 (2024-06-0...\""
+          "reason": "exit status 255, wanted 0; stdout differs: 469 byte(s) missing after line 1, expected \"INVOICE INV-2024-0117 (2024-06-0...\"; stderr differs: unexpected \"undefined template variable 'invoice.number'\""
         },
         "honest": {
           "outcome": "n/a"
@@ -5712,7 +5707,7 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: line 1, byte 0: got \"error: unclosed each block\\nno er...\", wanted \"INVOICE INV-2024-0117 (2024-06-0...\""
+        "reason": "exit status 255, wanted 0; stdout differs: 469 byte(s) missing after line 1, expected \"INVOICE INV-2024-0117 (2024-06-0...\"; stderr differs: unexpected \"undefined template variable 'invoice.number'\""
       },
       "quality": {
         "todos": 0,
@@ -6109,7 +6104,7 @@
         "symbols": 44,
         "symbols_typed": 42,
         "refusals": 0,
-        "approximations": 13,
+        "approximations": 14,
         "crashes": 0
       }
     },
@@ -6165,7 +6160,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: line 2, byte 28: got \"known; did you mean stage (d=2 s...\", wanted \"ambiguous prefix of 'status'\\ncom...\"; stderr differs: unexpected \"TODO P2G3599: the abbrev function is not implemented\""
+          "reason": "stdout differs: line 2, byte 28: got \"known; did you mean status (d=2 ...\", wanted \"ambiguous prefix of 'status'\\ncom...\"; stderr differs: unexpected \"TODO P2G3599: the abbrev function is not implemented\""
         },
         "honest": {
           "outcome": "n/a"
@@ -6176,17 +6171,17 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "5 variables left dynamic out of 31"
+          "reason": "3 variables left dynamic out of 31"
         }
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: line 2, byte 28: got \"known; did you mean stage (d=2 s...\", wanted \"ambiguous prefix of 'status'\\ncom...\"; stderr differs: unexpected \"TODO P2G3599: the abbrev function is not implemented\""
+        "reason": "stdout differs: line 2, byte 28: got \"known; did you mean status (d=2 ...\", wanted \"ambiguous prefix of 'status'\\ncom...\"; stderr differs: unexpected \"TODO P2G3599: the abbrev function is not implemented\""
       },
       "quality": {
         "todos": 2,
         "symbols": 31,
-        "symbols_typed": 26,
+        "symbols_typed": 28,
         "refusals": 2,
         "approximations": 8,
         "crashes": 0
@@ -6322,8 +6317,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 8, byte 249: got \"[- All deployments must be revie...\", wanted \"- All deployments must be review...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -6337,8 +6331,7 @@
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 8, byte 249: got \"[- All deployments must be revie...\", wanted \"- All deployments must be review...\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
@@ -6718,7 +6711,7 @@
         "symbols": 14,
         "symbols_typed": 10,
         "refusals": 0,
-        "approximations": 3,
+        "approximations": 4,
         "crashes": 1,
         "panic": "panic: runtime error: index out of range [0] with length 0"
       }
@@ -8385,7 +8378,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "exit status 1, wanted 2; stdout differs: line 2, byte 51: got \"\\n0 filesystems, 0K used total; c...\", wanted \"CRIT   96%        20G      18.9G...\""
+          "reason": "exit status 0, wanted 2; stdout differs: line 2, byte 51: got \"\\n0 filesystems, 0K used total; c...\", wanted \"CRIT   96%        20G      18.9G...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -8400,7 +8393,7 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "exit status 1, wanted 2; stdout differs: line 2, byte 51: got \"\\n0 filesystems, 0K used total; c...\", wanted \"CRIT   96%        20G      18.9G...\""
+        "reason": "exit status 0, wanted 2; stdout differs: line 2, byte 51: got \"\\n0 filesystems, 0K used total; c...\", wanted \"CRIT   96%        20G      18.9G...\""
       },
       "quality": {
         "todos": 0,
@@ -8485,7 +8478,7 @@
         "symbols": 43,
         "symbols_typed": 40,
         "refusals": 0,
-        "approximations": 10,
+        "approximations": 12,
         "crashes": 0
       }
     },

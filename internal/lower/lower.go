@@ -217,6 +217,11 @@ type Lowerer struct {
 	// helpers records which runtime support functions were used.
 	helpers    map[string]bool
 	helperOrd  []string
+	// spliced marks a lowered list part that stands for several values, so
+	// the list builder knows to splice it in rather than store it as one
+	// element. The type alone cannot say: an array flattens into a list and
+	// a reference to one does not, and both are slices in Go.
+	spliced map[ir.Expr]bool
 	patterns   map[string]*patternVar
 	patternOrd []string
 
@@ -346,6 +351,7 @@ func Lower(res parser.Result, src []byte, opts Options) *Result {
 		decls:       map[ast.Node]*Binding{},
 		globalSeen:  map[string]*Binding{},
 		helpers:     map[string]bool{},
+		spliced:     map[ir.Expr]bool{},
 		patterns:    map[string]*patternVar{},
 		rep: &report.Report{
 			Source: opts.File,
