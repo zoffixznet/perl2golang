@@ -3099,5 +3099,17 @@
     "expected_exit": 0,
     "deterministic": true,
     "kind": "convert"
+  },
+  {
+    "tier": "tier2",
+    "name": "96-names-the-language-took",
+    "path": "testdata/corpus/tier2/96-names-the-language-took",
+    "args": [],
+    "has_stdin": false,
+    "has_files": false,
+    "allow_stderr": false,
+    "expected_exit": 0,
+    "deterministic": true,
+    "kind": "convert"
   }
 ]

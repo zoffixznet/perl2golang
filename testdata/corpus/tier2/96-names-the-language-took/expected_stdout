@@ -1,0 +1,6 @@
+line: $50
+  "name": "widget"
+  "note": "(none)"
+  "price": 12.5
+  "qty": 4
+as int: 7, as float: 7.25

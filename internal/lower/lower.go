@@ -23,6 +23,7 @@ import (
 	"perl2golang/internal/ir"
 	"perl2golang/internal/perl/ast"
 	"perl2golang/internal/perl/parser"
+	perlrt "perl2golang/internal/runtime"
 	"perl2golang/internal/perl/token"
 	"perl2golang/internal/report"
 )
@@ -378,6 +379,12 @@ func Lower(res parser.Result, src []byte, opts Options) *Result {
 		"strconv", "strings", "sync", "syscall", "time", "unicode", "utf8",
 	} {
 		l.names.reserve(pkg)
+	}
+	// And every helper the runtime library can emit beside the program: a
+	// user sub that happens to share a name with one would otherwise
+	// redeclare it the moment both are needed.
+	for _, h := range perlrt.Names() {
+		l.names.reserve(h)
 	}
 
 	for _, d := range res.Diags {

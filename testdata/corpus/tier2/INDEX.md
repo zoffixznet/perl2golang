@@ -142,6 +142,7 @@ Two entries exit non-zero on purpose: **27** (65) and **32** (1). The rest exit 
 | 93 | `93-list-shapes-through-subs` | Values changing shape at boundaries: flat returns, eval in list context, a sub ending in //= | `return ($cost, @crates)`, `my ($c, @r) = eval { ... }`, memoise-by-`//=`, a list built from scalar plus array plus slice, a parenthesised ternary that is grouping |
 | 94 | `94-chained-builders-and-guards` | A chaining builder through a hierarchy, and three guard lifetimes | `return $self` through a promoted method, `ref $self` in a base method, DESTROY at a brace, at an undef, and at a sub return |
 | 95 | `95-lookahead-at-the-tail` | Every pattern ends in a lookaround, which is the position that converts | commify `(?=\d)`, `(?=\d{10}$)`, `(?=/|$)`, negative `(?!\.?$)`, a counted lookahead substitution |
+| 96 | `96-names-the-language-took` | Subs named fmt, json and toText, and one buried in a block | identifier collisions with imports and emitted helpers, hoisting a nested named sub |
 
 ## Coverage map
 

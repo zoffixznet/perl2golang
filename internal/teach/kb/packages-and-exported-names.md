@@ -87,4 +87,14 @@ The lesson for reading Perl generally: `@EXPORT`, `@EXPORT_OK` and `use Exporter
 
 Everything you know about `@EXPORT`, `import()`, and `Sub::Exporter` simply evaporates — there is nothing to configure. The rule applies uniformly to functions, types, struct fields, methods, constants, and package-level variables, and the struct-field case is the one that bites: `encoding/json` cannot see lower-case fields, so a struct of unexported fields marshals to `{}` (see `struct-tags`). Also unlearn Perl's file-to-package looseness: in Go, one directory equals one package, every file in it declares the same `package` name, and identifiers are shared across all files of the package without any `use`. And note the flipped naming signal: in Perl, `_underscore` marks private; in Go, `Capital` marks *public*, so the default (what you type without thinking) is private — a better default than Perl's.
 
+One naming trap deserves its own sentence, because Perl habits walk straight
+into it: a helper sub named `fmt`, `json` or `sort` reads naturally in Perl
+and collides in Go. An import is file-scoped, but a package-level identifier
+is package-scoped, so `func fmt(...)` in one file breaks every file in the
+package that says `import "fmt"` — the error is "fmt already declared through
+import", pointing at the other file. There is no renaming an import out of
+the way in the file that declares the function; the function is the one that
+has to move. Pick names that do not shadow the standard library packages you
+use, the same way you already avoided naming a Perl sub `length`.
+
 Further reading: https://go.dev/ref/spec#Exported_identifiers
