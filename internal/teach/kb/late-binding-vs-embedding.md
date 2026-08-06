@@ -242,6 +242,87 @@ not a failure: a bare string, not an object
 
 Three details worth keeping. `Detail` and `Code` are methods rather than exported fields, because an interface can promise a method and never a field; that is the reason a Perl accessor, which usually wants to vanish into an exported field, has to stay a method as soon as anything calls it through an interface. The predicate has to be maintained: a new subclass is a new `case`, and forgetting it is a bug the compiler cannot see, which is the price Go charges for deciding the rest at compile time. And note that `Label` still resolves the wrong way inside a base method for the reason the first half of this page explains: `isNetworkFailure` and the interface fix the *value* half of the problem, not the *call* half.
 
+## The third face: a method that returns `$self`
+
+The same receiver problem has a value-shaped twin, and it is sneakier because
+nothing looks dynamic at all. A Perl base class writes
+
+```perl
+sub with_context { my ($self, $note) = @_; push @{$self->{context}}, $note; return $self }
+```
+
+and every subclass chains or rethrows through it: `die $err->with_context("job=$name")`.
+The `$self` that comes back is whatever went in, subclass and all. Port that
+mechanically to Go and the method's receiver is the *base* struct, because
+the subclass reaches the method by promotion; `return b` hands back only the
+embedded part, the rethrown error arrives as a plain base error, and every
+`isa`-shaped check downstream quietly answers no. Nothing panics. The
+program just classifies everything as "generic" from then on.
+
+The fix is the same back-pointer the template method needed, used for its
+identity rather than its methods:
+
+```go
+package main
+
+import "fmt"
+
+type note interface{ Describe() string }
+
+type Base struct {
+	tags []string
+	// whole is the object this Base is part of. The constructor of every
+	// type built on Base stores the finished object here, because inside a
+	// promoted method the receiver alone no longer knows it.
+	whole note
+}
+
+func (b *Base) Describe() string { return "base" }
+
+// Tag adds a note and hands the object back for chaining. Returning b would
+// hand back only the embedded Base; returning through the back-pointer keeps
+// whichever type the caller actually built.
+func (b *Base) Tag(t string) note {
+	b.tags = append(b.tags, t)
+	if b.whole != nil {
+		return b.whole
+	}
+	return b
+}
+
+type Timeout struct{ Base }
+
+func (t *Timeout) Describe() string { return "timeout" }
+
+func NewTimeout() *Timeout {
+	t := &Timeout{}
+	t.whole = t
+	return t
+}
+
+func main() {
+	rethrown := NewTimeout().Tag("job=fetch")
+	fmt.Println(rethrown.Describe())
+	_, still := rethrown.(*Timeout)
+	fmt.Println("still a timeout:", still)
+}
+```
+
+```
+timeout
+still a timeout: true
+```
+
+Note what the signature had to become: `Tag` returns the interface, not
+`*Base` and not `*Timeout`. Go has no covariant returns, so one method with
+one signature serving the whole hierarchy must name a type that covers the
+whole hierarchy, and that is an interface. The cost is that a caller who
+needs the concrete type asserts for it, as `main` does; the gain is that the
+identity survives the round trip, which is the entire point of returning
+`$self`. The same reasoning answers `ref $self` inside a base method: the
+receiver's type says `Base` forever, so the real class has to be read off
+the back-pointer with a type switch, never written in as a constant.
+
 ## The mismatch
 
 Three things to carry over. First, the rule for when embedding is enough: a base method that calls only *its own* fields and its own helpers is fine, and so is any call made from outside the type, because there the caller holds the concrete value. Only a base method calling a method the subclass overrides needs the interface. Second, prefer to avoid the callback entirely — Go's usual answer is not a base class at all but a small interface consumed by a plain function: `func Describe(s Shaper) string` takes any shape, needs no `self` field, and cannot be left nil. Reach for the `self` field only when a real hierarchy is being ported and the base holds state the subclasses share. Third, `SUPER::` is the one direction that does survive: it becomes a call on the embedded field by name, `r.base.Describe()`, and Go resolves it at compile time so a rename is a build error rather than a surprise at run time.

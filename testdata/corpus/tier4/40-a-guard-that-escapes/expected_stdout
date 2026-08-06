@@ -1,0 +1,4 @@
+lock shared-state
+block done
+after block
+unlock shared-state

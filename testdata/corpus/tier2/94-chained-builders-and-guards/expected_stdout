@@ -1,0 +1,11 @@
+lock database
+run (guarded): Step::Risky deploy [canary] retries=2
+unlock database
+lock config
+run: Step verify [deep,slow] retries=0
+unlock config
+released early
+lock audit-trail
+unlock audit-trail
+audited: STEP::RISKY DEPLOY [CANARY] RETRIES=2
+done

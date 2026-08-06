@@ -140,6 +140,7 @@ Two entries exit non-zero on purpose: **27** (65) and **32** (1). The rest exit 
 | 91 | `91-a-config-hash-with-defaults` | The same shape leaning on undef, which keeps it a map | `//` defaults over a stored 0, `defined` and `exists` probes, a key that is only sometimes there |
 | 92 | `92-reading-the-argument-list` | @_ read without being named, in every form that only reads | `@_[0, 1]`, `scalar @_`, `$_[2] //` past the end, `\@_` into a read-only loop |
 | 93 | `93-list-shapes-through-subs` | Values changing shape at boundaries: flat returns, eval in list context, a sub ending in //= | `return ($cost, @crates)`, `my ($c, @r) = eval { ... }`, memoise-by-`//=`, a list built from scalar plus array plus slice, a parenthesised ternary that is grouping |
+| 94 | `94-chained-builders-and-guards` | A chaining builder through a hierarchy, and three guard lifetimes | `return $self` through a promoted method, `ref $self` in a base method, DESTROY at a brace, at an undef, and at a sub return |
 
 ## Coverage map
 
