@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"perl2golang/internal/ir"
+	"perl2golang/internal/perl/ast"
 )
 
 // This file closes the one gap in the struct-and-embedding mapping.
@@ -89,6 +90,99 @@ func (l *Lowerer) selfCall(s *Sub, recv ir.Expr) (ir.Expr, bool) {
 		"in itself when it was built. That is how Go writes a template method.",
 		"late-binding-vs-embedding", "implicit-interfaces", "structs-and-embedding")
 	return out, true
+}
+
+// receiverReturn lowers `return $self` in a method of a hierarchy that has
+// subclasses, and reports whether it applied.
+//
+// Returning the receiver as its declared type would lose the object's real
+// class: inside a promoted method the receiver is the embedded base struct,
+// so a Timeout error rethrown through the base's with_context came back as a
+// plain base error and classified as nothing. The object's back-pointer is
+// the one thing that still knows the whole object, so that is what a method
+// that hands back $self hands back.
+func (l *Lowerer) receiverReturn(e ast.Expr) (ir.Expr, bool) {
+	s := l.curSub
+	if s == nil || s.Recv == nil || s.Class == nil {
+		return nil, false
+	}
+	v, ok := e.(*ast.Var)
+	if !ok || v.Sigil != '$' {
+		return nil, false
+	}
+	b, found := l.scope.lookup(varKey('$', v.Name))
+	if !found || b != s.Recv {
+		return nil, false
+	}
+	root := virtualRoot(s.Class)
+	if root == nil || len(root.Children) == 0 {
+		return nil, false
+	}
+	if !l.markVirtual(s) {
+		return nil, false
+	}
+	out := ir.CallOf(selector(l.identFor(s.Recv), root.SelfMethod, nil), root.selfType())
+	l.note(out, "This method hands back the object it was called on, and the object's "+
+		"real class matters to the caller: a subclass going in must come back out as "+
+		"itself, not as the "+root.Go+" inside it. The receiver here is only the "+
+		"embedded part, so the method returns the whole object through the reference "+
+		"it stored in itself when it was built.",
+		"late-binding-vs-embedding", "structs-and-embedding", "implicit-interfaces")
+	return out, true
+}
+
+// dynamicClassName lowers `ref $self` in a method of a hierarchy that has
+// subclasses, where the receiver's declared type is not the whole answer: a
+// subclass calling a promoted method reaches this code with the base struct
+// as the receiver, and Perl would have answered with the subclass's name.
+func (l *Lowerer) dynamicClassName(node ast.Expr, c *Class) (ir.Expr, bool) {
+	s := l.curSub
+	if s == nil || s.Recv == nil || s.Class == nil {
+		return nil, false
+	}
+	v, ok := node.(*ast.Var)
+	if !ok || v.Sigil != '$' {
+		return nil, false
+	}
+	b, found := l.scope.lookup(varKey('$', v.Name))
+	if !found || b != s.Recv {
+		return nil, false
+	}
+	root := virtualRoot(s.Class)
+	if root == nil || len(root.Children) == 0 {
+		return nil, false
+	}
+	if !l.markVirtual(s) {
+		return nil, false
+	}
+	fn, ok := l.classNamePredicate()
+	if !ok {
+		return nil, false
+	}
+	self := ir.CallOf(selector(l.identFor(s.Recv), root.SelfMethod, nil), root.selfType())
+	out := ir.CallOf(ir.NewIdent(fn, nil), ir.TString, self)
+	l.note(out, "ref answers with the class of the object itself, which inside this "+
+		"method may be any class built on "+root.Go+": the receiver is only the "+
+		"embedded part, and writing its name in would stamp every subclass with the "+
+		"base's name. The object's back-pointer still knows the whole object, and the "+
+		"generated table maps its type to the name Perl knew it by.",
+		"late-binding-vs-embedding", "type-assertions-and-switches")
+	return out, true
+}
+
+// isSelfIface reports whether a type is the back-pointer interface of some
+// hierarchy, which carries an object every bit as much as the object's own
+// pointer type does.
+func (l *Lowerer) isSelfIface(t *ir.Type) bool {
+	if t == nil || t.Kind != ir.Named {
+		return false
+	}
+	for _, name := range l.classOrd {
+		if c := l.classes[name]; c != nil && c.SelfIface != "" && c.SelfIface == t.Name {
+			return true
+		}
+	}
+	return false
 }
 
 // virtualDecls builds the interface and the accessor a hierarchy needs, when

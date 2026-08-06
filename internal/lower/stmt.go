@@ -21,6 +21,7 @@ func (l *Lowerer) stmts(list []ast.Stmt) []ir.Stmt {
 
 		lead := leadComments(st)
 		body := l.stmt(st)
+		body = l.applyDestroyPlan(st, body)
 		pre := l.takePre()
 		l.pre = savedPre
 		l.errVar = savedErr
@@ -54,7 +55,11 @@ func (l *Lowerer) block(list []ast.Stmt) *ir.Block {
 	// compiles and what the original meant.
 	depth := l.captureDepth()
 	l.scope = newScope(saved)
-	b := l.markUnused(&ir.Block{Stmts: l.stmts(list)})
+	stmts := l.stmts(list)
+	// An object declared in this block dies at its closing brace, and the
+	// call that says so belongs inside it.
+	stmts = append(stmts, l.flushDestroys(l.scope)...)
+	b := l.markUnused(&ir.Block{Stmts: stmts})
 	l.restoreCaptures(depth)
 	l.scope = saved
 	l.seps = savedSeps
@@ -1006,6 +1011,13 @@ func (l *Lowerer) returnStmt(n *ast.Return) []ir.Stmt {
 						"Return the array as its own slice result, or move it to the "+
 							"end of the list, where its elements survive whole.",
 						"context-is-gone", "multiple-return-values")
+				}
+				// `return $self` from a method of a hierarchy returns the
+				// whole object, not the embedded part the receiver names.
+				if x, ok := l.receiverReturn(e); ok {
+					results = append(results, x)
+					kinds = append(kinds, typeOrAny(x))
+					continue
 				}
 				// A sub that hands back a container element the file has put
 				// undef into is handing back the absence too, and its Go

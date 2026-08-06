@@ -34,6 +34,12 @@ func (l *Lowerer) refCall(n *ast.Call) ir.Expr {
 	node := l.argNode(n, 0)
 
 	if c := l.classOf(typeOrAny(x)); c != nil {
+		// Inside a hierarchy's method the receiver's declared class is not
+		// the whole story: a subclass reaches this code through promotion,
+		// and Perl's answer would be the subclass's name.
+		if out, ok := l.dynamicClassName(node, c); ok {
+			return out
+		}
 		out := ir.Str(quote(c.Perl))
 		l.note(out, "Perl answers ref with the class the reference was blessed into, "+
 			"looked up on the value while the program runs. The Go value's type is "+
@@ -104,6 +110,24 @@ func (l *Lowerer) undefCall(n *ast.Call) ir.Expr {
 			"nil-vs-undef", "static-types-and-zero-values")
 		l.concept("nil-vs-undef")
 		return out
+	}
+
+	// `undef $x` on an object whose destructor the converter is managing is
+	// Perl's way of choosing the destruction instant by hand: the reference
+	// count hits zero right here. The destructor runs first, then the
+	// variable is cleared, and nothing runs again at the end of the scope.
+	if v, ok := args[0].(*ast.Var); ok && v.Sigil == '$' && l.pass == 2 {
+		if b, found := l.scope.lookup(varKey('$', v.Name)); found {
+			if pl, planned := l.destroyBound[b]; planned && pl.mode == destroyAtUndef {
+				st := exprStmt(l.destroyCall(b, pl))
+				l.setProv(st, n)
+				l.note(st, "This undef is where the object's reference count reached "+
+					"zero, so it is where Perl ran the destructor. The call is written "+
+					"out at the same spot, before the variable is cleared.",
+					"defer-timing", "nil-vs-undef")
+				l.emit(st)
+			}
+		}
 	}
 
 	// `undef $x` clears the variable, which in Go is assigning its zero value.

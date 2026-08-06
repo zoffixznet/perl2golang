@@ -345,9 +345,20 @@ func (l *Lowerer) blockValueCtx(block []ast.Stmt, wantList bool) ([]ir.Stmt, ir.
 	}
 	lead := block
 	var tail ast.Expr
-	if last, isExpr := block[len(block)-1].(*ast.ExprStmt); isExpr {
+	var tailIf *ast.If
+	switch last := block[len(block)-1].(type) {
+	case *ast.ExprStmt:
 		lead = block[:len(block)-1]
 		tail = last.X
+	case *ast.If:
+		// An if at the end of a value block is Perl's conditional
+		// expression: the block's value is whichever branch ran, so each
+		// branch's own last expression is the value to collect. A modifier
+		// form, `EXPR if COND`, keeps its statement reading.
+		if !last.Modifier && ifYieldsValue(last) {
+			lead = block[:len(block)-1]
+			tailIf = last
+		}
 	}
 
 	savedPre := l.pre
@@ -362,12 +373,122 @@ func (l *Lowerer) blockValueCtx(block []ast.Stmt, wantList bool) ([]ir.Stmt, ir.
 			value = l.expr(tail)
 		}
 	}
+	if tailIf != nil {
+		var ifStmts []ir.Stmt
+		ifStmts, value = l.ifValue(tailIf, wantList)
+		stmts = append(stmts, l.takePre()...)
+		stmts = append(stmts, ifStmts...)
+	}
 	stmts = append(stmts, l.takePre()...)
 	l.pre = savedPre
 	// A separator localised inside the block goes back to what it was on the
 	// way out, exactly as `local` does.
 	l.seps = savedSeps
 	return stmts, value
+}
+
+// ifYieldsValue reports whether every branch of an if ends in an expression,
+// which is what lets the whole statement stand where a value is wanted.
+func ifYieldsValue(n *ast.If) bool {
+	ends := func(body []ast.Stmt) bool {
+		if len(body) == 0 {
+			return false
+		}
+		_, ok := body[len(body)-1].(*ast.ExprStmt)
+		return ok
+	}
+	if !ends(n.Then) || !ends(n.Else) {
+		return false
+	}
+	for _, ei := range n.ElseIfs {
+		if !ends(ei.Then) {
+			return false
+		}
+	}
+	return true
+}
+
+// ifValue lowers an if that stands where a value is wanted: the last statement
+// of an eval, a do block, or any other block read for its value. Whichever
+// branch runs, its own last expression is the answer, so each branch assigns
+// it to one variable declared above the choice.
+func (l *Lowerer) ifValue(n *ast.If, wantList bool) ([]ir.Stmt, ir.Expr) {
+	type arm struct {
+		cond  ir.Expr
+		setup []ir.Stmt
+		stmts []ir.Stmt
+		value ir.Expr
+	}
+	lowerArm := func(cond ast.Expr, unless bool, body []ast.Stmt) arm {
+		var a arm
+		if cond != nil {
+			saved := l.pre
+			l.pre = nil
+			c := l.cond(cond)
+			if unless {
+				c = negated(c)
+			}
+			a.setup = l.takePre()
+			l.pre = saved
+			a.cond = c
+		}
+		savedScope := l.scope
+		l.scope = newScope(savedScope)
+		a.stmts, a.value = l.blockValueCtx(body, wantList)
+		l.scope = savedScope
+		return a
+	}
+
+	arms := []arm{lowerArm(n.Cond, n.Unless, n.Then)}
+	for _, ei := range n.ElseIfs {
+		arms = append(arms, lowerArm(ei.Cond, false, ei.Then))
+	}
+	arms = append(arms, lowerArm(nil, false, n.Else))
+
+	var seen []*ir.Type
+	for _, a := range arms {
+		if a.value != nil {
+			seen = append(seen, typeOrAny(a.value))
+		}
+	}
+	t := joinAll(seen)
+	if t == nil {
+		t = ir.TAny
+	}
+
+	name := l.tmp("value")
+	decl := &ir.DeclStmt{Names: []string{name}, Type: t}
+	target := ir.NewIdent(name, t)
+	l.setProv(decl, n)
+	l.note(decl, "This if sits at the end of a block that is read for its value, so "+
+		"in Perl it is an expression: whichever branch runs, its last expression is "+
+		"the block's answer. Go's if is a statement, so the answer is assigned to a "+
+		"variable declared above the choice.",
+		"statements-vs-expressions")
+
+	var chain ir.Stmt
+	for i := len(arms) - 1; i >= 0; i-- {
+		a := arms[i]
+		body := a.stmts
+		if a.value != nil {
+			if vt := typeOrAny(a.value); vt.Kind != ir.Void && vt.Kind != ir.Invalid {
+				body = append(body, assign("=", []ir.Expr{target}, []ir.Expr{l.assignable(a.value, t, nil)}))
+			}
+		}
+		if a.cond == nil {
+			if len(body) > 0 {
+				chain = &ir.Block{Stmts: body}
+			}
+			continue
+		}
+		branch := &ir.If{Cond: a.cond, Then: &ir.Block{Stmts: body}, Else: chain}
+		if len(a.setup) > 0 {
+			chain = &ir.Block{Stmts: append(a.setup, branch)}
+		} else {
+			chain = branch
+		}
+	}
+	return []ir.Stmt{decl, chain}, target
 }
 
 type cmpKind int

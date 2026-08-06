@@ -250,7 +250,11 @@ print $c->name, "\n";
 		"Name string",
 		"N int",
 		"func NewCounter(name string) *Counter",
-		"func (c *Counter) Bump(by int) *Counter",
+		// bump returns $self, and Counter has a subclass: the receiver's
+		// declared type would hand a Loud back as its embedded Counter, so
+		// the method returns the whole object through the hierarchy's
+		// interface instead.
+		"func (c *Counter) Bump(by int) counterSelf",
 		"type Loud struct",
 		"Counter",                // the parent is embedded, not copied field by field
 		"func (l *Loud) Shout()", // a subclass method of its own

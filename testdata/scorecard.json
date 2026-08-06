@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T14:51:30Z",
+  "recorded": "2026-08-15T15:12:15Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -72,8 +72,8 @@
           "skip": 0
         },
         "translated": {
-          "pass": 84,
-          "fail": 9,
+          "pass": 85,
+          "fail": 8,
           "skip": 0
         },
         "typed": {
@@ -88,11 +88,11 @@
         "skip": 0
       },
       "quality": {
-        "todos": 18,
-        "symbols": 1463,
-        "symbols_typed": 1277,
-        "refusals": 18,
-        "approximations": 529,
+        "todos": 17,
+        "symbols": 1464,
+        "symbols_typed": 1278,
+        "refusals": 17,
+        "approximations": 530,
         "crashes": 1
       }
     },
@@ -111,13 +111,13 @@
           "skip": 0
         },
         "equivalent": {
-          "pass": 17,
-          "fail": 20,
+          "pass": 18,
+          "fail": 19,
           "skip": 0
         },
         "translated": {
-          "pass": 24,
-          "fail": 13,
+          "pass": 25,
+          "fail": 12,
           "skip": 0
         },
         "typed": {
@@ -127,16 +127,16 @@
         }
       },
       "equivalent_annotated": {
-        "pass": 17,
-        "fail": 20,
+        "pass": 18,
+        "fail": 19,
         "skip": 0
       },
       "quality": {
-        "todos": 49,
-        "symbols": 910,
-        "symbols_typed": 709,
-        "refusals": 50,
-        "approximations": 314,
+        "todos": 48,
+        "symbols": 911,
+        "symbols_typed": 710,
+        "refusals": 49,
+        "approximations": 315,
         "crashes": 1
       }
     },
@@ -160,8 +160,8 @@
           "skip": 1
         },
         "translated": {
-          "pass": 23,
-          "fail": 16,
+          "pass": 24,
+          "fail": 15,
           "skip": 0
         },
         "typed": {
@@ -176,11 +176,11 @@
         "skip": 0
       },
       "quality": {
-        "todos": 47,
-        "symbols": 175,
-        "symbols_typed": 117,
-        "refusals": 47,
-        "approximations": 71,
+        "todos": 46,
+        "symbols": 176,
+        "symbols_typed": 118,
+        "refusals": 46,
+        "approximations": 72,
         "crashes": 0
       }
     },
@@ -244,8 +244,8 @@
         "skip": 0
       },
       "equivalent": {
-        "pass": 126,
-        "fail": 74,
+        "pass": 127,
+        "fail": 73,
         "skip": 0
       },
       "honest": {
@@ -254,8 +254,8 @@
         "skip": 1
       },
       "translated": {
-        "pass": 199,
-        "fail": 40,
+        "pass": 202,
+        "fail": 37,
         "skip": 0
       },
       "typed": {
@@ -265,25 +265,25 @@
       }
     },
     "equivalent_annotated": {
-      "pass": 126,
-      "fail": 74,
+      "pass": 127,
+      "fail": 73,
       "skip": 0
     },
     "quality": {
-      "todos": 117,
-      "symbols": 3964,
-      "symbols_typed": 3404,
-      "refusals": 118,
-      "approximations": 1209,
+      "todos": 114,
+      "symbols": 3967,
+      "symbols_typed": 3407,
+      "refusals": 115,
+      "approximations": 1212,
       "crashes": 2
     }
   },
   "quality": {
-    "todos": 117,
-    "symbols": 3964,
-    "symbols_typed": 3404,
-    "refusals": 118,
-    "approximations": 1209,
+    "todos": 114,
+    "symbols": 3967,
+    "symbols_typed": 3407,
+    "refusals": 115,
+    "approximations": 1212,
     "crashes": 2
   },
   "entries": [
@@ -3112,30 +3112,29 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: line 2, byte 11: got \"ok: alpha\\nfetch(3)\\n  missing: [E...\", wanted \"commit 1\\n  ok: alpha\\nfetch(3)\\n  ...\""
+          "reason": "stdout differs: line 9, byte 124: got \"unexpected: map[code:E_LOCKED id...\", wanted \"plain hashref error: code=E_LOCK...\""
         },
         "honest": {
           "outcome": "n/a"
         },
         "translated": {
-          "outcome": "fail",
-          "reason": "1 untranslated construct"
+          "outcome": "pass"
         },
         "typed": {
           "outcome": "fail",
-          "reason": "8 variables left dynamic out of 27"
+          "reason": "8 variables left dynamic out of 28"
         }
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: line 2, byte 11: got \"ok: alpha\\nfetch(3)\\n  missing: [E...\", wanted \"commit 1\\n  ok: alpha\\nfetch(3)\\n  ...\""
+        "reason": "stdout differs: line 9, byte 124: got \"unexpected: map[code:E_LOCKED id...\", wanted \"plain hashref error: code=E_LOCK...\""
       },
       "quality": {
-        "todos": 1,
-        "symbols": 27,
-        "symbols_typed": 19,
-        "refusals": 1,
-        "approximations": 25,
+        "todos": 0,
+        "symbols": 28,
+        "symbols_typed": 20,
+        "refusals": 0,
+        "approximations": 26,
         "crashes": 0
       }
     },
@@ -5478,7 +5477,7 @@
         "symbols": 40,
         "symbols_typed": 30,
         "refusals": 4,
-        "approximations": 8,
+        "approximations": 6,
         "crashes": 0
       }
     },
@@ -6038,31 +6037,28 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 2, byte 41: got \"generic [App::Error] no response...\", wanted \"timeout [App::Error::Timeout] no...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
         },
         "translated": {
-          "outcome": "fail",
-          "reason": "1 untranslated construct"
+          "outcome": "pass"
         },
         "typed": {
           "outcome": "fail",
-          "reason": "12 variables left dynamic out of 34"
+          "reason": "12 variables left dynamic out of 35"
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 2, byte 41: got \"generic [App::Error] no response...\", wanted \"timeout [App::Error::Timeout] no...\""
+        "outcome": "pass"
       },
       "quality": {
-        "todos": 1,
-        "symbols": 34,
-        "symbols_typed": 22,
-        "refusals": 1,
-        "approximations": 25,
+        "todos": 0,
+        "symbols": 35,
+        "symbols_typed": 23,
+        "refusals": 0,
+        "approximations": 28,
         "crashes": 0
       }
     },
@@ -7255,8 +7251,7 @@
           "outcome": "pass"
         },
         "translated": {
-          "outcome": "fail",
-          "reason": "1 untranslated construct"
+          "outcome": "pass"
         },
         "typed": {
           "outcome": "pass"
@@ -7266,11 +7261,11 @@
         "outcome": "n/a"
       },
       "quality": {
-        "todos": 1,
-        "symbols": 3,
-        "symbols_typed": 3,
-        "refusals": 1,
-        "approximations": 0,
+        "todos": 0,
+        "symbols": 4,
+        "symbols_typed": 4,
+        "refusals": 0,
+        "approximations": 1,
         "crashes": 0
       }
     },

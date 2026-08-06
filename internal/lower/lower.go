@@ -217,6 +217,11 @@ type Lowerer struct {
 	// helpers records which runtime support functions were used.
 	helpers    map[string]bool
 	helperOrd  []string
+	// destroyPlans records, per declaring statement, where an object's
+	// destructor call goes; destroyBound finds the plan again from the
+	// binding when an undef names the instant itself.
+	destroyPlans map[ast.Stmt]*destroyPlan
+	destroyBound map[*Binding]*destroyPlan
 	// spliced marks a lowered list part that stands for several values, so
 	// the list builder knows to splice it in rather than store it as one
 	// element. The type alone cannot say: an array flattens into a list and
@@ -422,6 +427,7 @@ func Lower(res parser.Result, src []byte, opts Options) *Result {
 	l.applyPromotions()
 
 	// Pass 2 builds the real tree.
+	l.collectDestroys()
 	l.pass = 2
 	l.scope = newScope(nil)
 	l.seps = defaultSeparators()

@@ -225,11 +225,17 @@ func (l *Lowerer) classifySub(c *Class, s *Sub) {
 	body := s.Decl.Body
 	first, isSelf := selfParam(body)
 	switch {
-	case s.Name == "DESTROY" || s.Name == "AUTOLOAD":
-		// Neither has a Go counterpart, and both are refused where they are
-		// declared rather than at every call site.
+	case s.Name == "AUTOLOAD":
+		// A catch-all method has no Go counterpart, and it is refused where
+		// it is declared rather than at every call site.
 		s.Kind = SubSpecial
 		return
+	case s.Name == "DESTROY":
+		// The destructor becomes an ordinary method; the converter calls it
+		// where an object's life provably ends, and reports the sites where
+		// it cannot see the end.
+		s.Kind = SubMethod
+		c.Destroy = s
 	case s.Name == "new" || blessesSomething(body):
 		s.Kind = SubCtor
 	case isSelf || usesFirstArgAsSelf(body):
@@ -387,6 +393,21 @@ func (l *Lowerer) lowerMethodDecl(s *Sub, sd *ast.SubDecl) {
 	if s.Kind == SubSpecial {
 		l.refuseSpecialMethod(s, sd)
 		return
+	}
+	if s == c.Destroy && l.pass == 2 {
+		l.approximate(sd, "P2G7030", "sub DESTROY",
+			"the destructor becomes an explicit method call",
+			"Perl runs DESTROY the instant an object's reference count reaches "+
+				"zero: at a closing brace, at an undef, or while a die unwinds. Go "+
+				"frees memory when its collector chooses and promises no call at "+
+				"all, so the destructor becomes the method "+s.Go+", and the "+
+				"generated code calls it explicitly at each point where an "+
+				"object's life provably ends.",
+			"An object whose lifetime the converter could not follow is reported "+
+				"where it is created; call "+s.Go+" there yourself. This is the "+
+				"same discipline as a Close method, which is how Go types release "+
+				"what they hold.",
+			"defer-timing", "methods-and-receivers")
 	}
 	if s.Accessor != nil && s.Promoted {
 		l.promotedAccessorDecl(s, sd)
@@ -1773,19 +1794,6 @@ func (l *Lowerer) observeIn(c container, t *ir.Type, hash bool) {
 // they are written rather than at every place they would have fired.
 func (l *Lowerer) refuseSpecialMethod(s *Sub, sd *ast.SubDecl) {
 	if l.pass != 2 {
-		return
-	}
-	if s.Name == "DESTROY" {
-		l.refuse(sd, "P2G7030", "sub DESTROY",
-			"a destructor has no Go equivalent",
-			"Perl runs DESTROY the instant the last reference to an object goes away, "+
-				"which is what makes a guard object work: the release happens at a "+
-				"closing brace or at an undef, in order, every time. Go's collector runs "+
-				"when it chooses and may never run at all before the program exits.",
-			"Give the type a Close method and call it with defer where the object is "+
-				"created. That is the same guarantee written where a reader can see it, "+
-				"and it is what every Go type holding a resource does.",
-			"defer-timing", "methods-and-receivers")
 		return
 	}
 	l.refuse(sd, "P2G7035", "sub AUTOLOAD",

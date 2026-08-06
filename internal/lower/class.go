@@ -40,6 +40,9 @@ type Class struct {
 	subBy map[string]*Sub
 	// Ctor is `sub new`, or whichever sub blesses.
 	Ctor *Sub
+	// Destroy is `sub DESTROY`, converted to an ordinary method that the
+	// generated code calls where an object's life provably ends.
+	Destroy *Sub
 	// Blessed records that something in the package blesses a reference,
 	// which is what distinguishes a class from a plain namespace.
 	Blessed bool

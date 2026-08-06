@@ -224,6 +224,9 @@ type scope struct {
 	vars   map[string]*Binding
 	// fn is the sub this scope belongs to, nil at file level.
 	fn *Sub
+	// destroys are the objects whose destructor runs at this scope's
+	// closing brace, in declaration order; they are called in reverse.
+	destroys []scopeDestroy
 }
 
 func newScope(parent *scope) *scope {

@@ -1644,7 +1644,7 @@ func (l *Lowerer) thrownObject(n *ast.Call) (ir.Expr, bool) {
 		return nil, false
 	}
 	t := typeOrAny(x)
-	if l.classOf(t) == nil {
+	if l.classOf(t) == nil && !l.isSelfIface(t) {
 		return nil, false
 	}
 	return x, true
