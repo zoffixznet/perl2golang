@@ -332,6 +332,14 @@ func (l *Lowerer) blockComparator(n *ast.Call, elem *ir.Type) ir.Expr {
 // to produce. Everything but the last statement is still lowered as statements,
 // because that is what those are.
 func (l *Lowerer) blockValue(block []ast.Stmt) ([]ir.Stmt, ir.Expr) {
+	return l.blockValueCtx(block, false)
+}
+
+// blockValueCtx is blockValue with the block's context made explicit: when a
+// list is wanted, the tail is lowered as one, so a call returning several
+// values or an array at the end of the block arrives as a slice rather than
+// being cut down to one value.
+func (l *Lowerer) blockValueCtx(block []ast.Stmt, wantList bool) ([]ir.Stmt, ir.Expr) {
 	if len(block) == 0 {
 		return nil, nil
 	}
@@ -348,7 +356,11 @@ func (l *Lowerer) blockValue(block []ast.Stmt) ([]ir.Stmt, ir.Expr) {
 	stmts := l.stmts(lead)
 	var value ir.Expr
 	if tail != nil {
-		value = l.expr(tail)
+		if wantList {
+			value = l.list(tail)
+		} else {
+			value = l.expr(tail)
+		}
 	}
 	stmts = append(stmts, l.takePre()...)
 	l.pre = savedPre

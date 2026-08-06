@@ -289,6 +289,12 @@ var notes = map[string]string{
 		"known while the program runs, whether it has elements to contribute " +
 		"has to be asked then too, which is the one question this answers.",
 
+	"tailFrom": "Unpacking a list into variables tolerates a short list: the " +
+		"variables past the end are left empty rather than stopping the " +
+		"program. Go's own xs[i:] treats an i past the end as a mistake and " +
+		"panics, so the tail of a list that may come up short goes through " +
+		"this instead.",
+
 	"fileStat": "os.Stat returns an fs.FileInfo and an error, and every " +
 		"field is a method on it: Size, Mode, ModTime, IsDir. Nothing hands " +
 		"back a list of thirteen numbers, so nothing has to remember which " +

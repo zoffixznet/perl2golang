@@ -147,6 +147,11 @@ type Sub struct {
 	// ResultEvidence records the shape of every return seen on the first
 	// pass, so the second pass can commit to one signature.
 	ResultEvidence [][]*ir.Type
+	// TailSpill records that some return ends in an array, as
+	// `return ($cost, @path)` does. The Go function returns the array as its
+	// last result, and every call site in list position splices that result
+	// into the surrounding list instead of storing it as one element.
+	TailSpill bool
 	// Variadic is true when the sub takes its arguments as a slice.
 	Variadic bool
 	// VarArgs is the binding for the variadic parameter, if any.

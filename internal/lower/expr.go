@@ -417,6 +417,21 @@ func (l *Lowerer) listParts(es []ast.Expr) ([]ir.Expr, *ir.Type) {
 				seen = append(seen, elemOf(typeOrAny(x)))
 				return
 			}
+			// An eval block in a list hands the list on: its value is the
+			// block's last expression evaluated in the caller's context, and
+			// a die inside leaves the empty list, not one undef.
+			if n.Name == "eval" && n.Block != nil {
+				x := l.evalListCall(n)
+				if xt := typeOrAny(x); xt.Kind == ir.Slice {
+					l.spliced[x] = true
+					out = append(out, x)
+					seen = append(seen, xt.Elem)
+					return
+				}
+				out = append(out, x)
+				seen = append(seen, typeOrAny(x))
+				return
+			}
 		}
 		x := l.expr(e)
 		if x == nil {
@@ -439,8 +454,11 @@ func (l *Lowerer) listParts(es []ast.Expr) ([]ir.Expr, *ir.Type) {
 		// A dereferenced array whose type did not resolve still flattens: the
 		// syntax proves it holds a list even though the compiled type cannot.
 		// The helper asks the value for its elements while the program runs,
-		// which is when the answer exists.
-		if typeOrAny(x).Kind == ir.Any && certainlyList(e) {
+		// which is when the answer exists. Only the pass that emits real code
+		// wraps: the discovery pass must keep seeing the plain value, or the
+		// wrapper's []any becomes evidence and freezes the type it was only
+		// standing in for.
+		if l.pass == 2 && typeOrAny(x).Kind == ir.Any && certainlyList(e) {
 			flat := l.helperCall(hAsList, ir.SliceOf(ir.TAny), x)
 			l.note(flat, "This value's type did not resolve, so it is compiled as "+
 				"`any`, but the way it is written proves it stands for a list. The "+

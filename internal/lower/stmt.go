@@ -975,7 +975,38 @@ func (l *Lowerer) returnStmt(n *ast.Return) []ir.Stmt {
 					"context-is-gone", "multiple-return-values")
 			}
 		} else {
-			for _, e := range flat {
+			last := len(flat) - 1
+			for i, e := range flat {
+				// `return ($cost, @path)` hands back a flat list whose length
+				// only the array knows. Go's fixed result count cannot say
+				// that, but a slice as the final result can: the caller that
+				// wrote `my ($cost, @path) = ...` peels the fixed results off
+				// and takes the slice whole, which is the same split Perl
+				// made. The array must stay a list here; reading it as one
+				// value would return its count, which loses the elements for
+				// good, where a caller who wanted the count can still ask the
+				// slice with len.
+				if i == last && l.producesList(e) {
+					x := l.list(e)
+					results = append(results, x)
+					kinds = append(kinds, typeOrAny(x))
+					if l.pass == 1 {
+						s.TailSpill = true
+					}
+					continue
+				}
+				if i != last && l.producesList(e) && l.pass == 2 {
+					l.approximate(n, "P2G2121", "an array in the middle of a return",
+						"the array is returned as its element count",
+						"Perl flattens this array into the returned list, so the "+
+							"values around it shift by however many elements it holds. "+
+							"A Go function returns a fixed number of values, and only a "+
+							"final result can absorb a run of unknown length, so this "+
+							"one is reduced to its count.",
+						"Return the array as its own slice result, or move it to the "+
+							"end of the list, where its elements survive whole.",
+						"context-is-gone", "multiple-return-values")
+				}
 				// A sub that hands back a container element the file has put
 				// undef into is handing back the absence too, and its Go
 				// signature is the only place that can be said. Reading the

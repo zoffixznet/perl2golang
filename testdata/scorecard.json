@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T14:18:55Z",
+  "recorded": "2026-08-15T14:38:46Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -111,8 +111,8 @@
           "skip": 0
         },
         "equivalent": {
-          "pass": 14,
-          "fail": 23,
+          "pass": 15,
+          "fail": 22,
           "skip": 0
         },
         "translated": {
@@ -127,16 +127,16 @@
         }
       },
       "equivalent_annotated": {
-        "pass": 14,
-        "fail": 23,
+        "pass": 15,
+        "fail": 22,
         "skip": 0
       },
       "quality": {
         "todos": 48,
         "symbols": 910,
-        "symbols_typed": 711,
+        "symbols_typed": 709,
         "refusals": 50,
-        "approximations": 318,
+        "approximations": 319,
         "crashes": 1
       }
     },
@@ -244,8 +244,8 @@
         "skip": 0
       },
       "equivalent": {
-        "pass": 122,
-        "fail": 77,
+        "pass": 123,
+        "fail": 76,
         "skip": 0
       },
       "honest": {
@@ -265,25 +265,25 @@
       }
     },
     "equivalent_annotated": {
-      "pass": 122,
-      "fail": 77,
+      "pass": 123,
+      "fail": 76,
       "skip": 0
     },
     "quality": {
       "todos": 116,
       "symbols": 3935,
-      "symbols_typed": 3383,
+      "symbols_typed": 3381,
       "refusals": 118,
-      "approximations": 1206,
+      "approximations": 1207,
       "crashes": 2
     }
   },
   "quality": {
     "todos": 116,
     "symbols": 3935,
-    "symbols_typed": 3383,
+    "symbols_typed": 3381,
     "refusals": 118,
-    "approximations": 1206,
+    "approximations": 1207,
     "crashes": 2
   },
   "entries": [
@@ -6036,7 +6036,7 @@
       "stages": {
         "compiled": {
           "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:106:72: use of package fmt not in selector"
+          "reason": "the generated Go does not compile: ./main.go:105:72: use of package fmt not in selector"
         },
         "emitted": {
           "outcome": "pass"
@@ -6120,8 +6120,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 2, byte 55: got \"unreachable\\nRiverside:Uptown: un...\", wanted \"17 min via Depot -\u003e Central -\u003e O...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -6131,19 +6130,18 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "4 variables left dynamic out of 46"
+          "reason": "6 variables left dynamic out of 46"
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 2, byte 55: got \"unreachable\\nRiverside:Uptown: un...\", wanted \"17 min via Depot -\u003e Central -\u003e O...\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
         "symbols": 46,
-        "symbols_typed": 42,
+        "symbols_typed": 40,
         "refusals": 0,
-        "approximations": 15,
+        "approximations": 16,
         "crashes": 0
       }
     },
@@ -8986,7 +8984,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: line 1, byte 11: got \"4 no-start,no-terminal-stop\\ninte...\", wanted \"0\\nMADEGFKDL*\\n\u003eorf2_revstrand len...\""
+          "reason": "stdout differs: line 1, byte 0: got \"# translated 0/6 records\\n# FAILE...\", wanted \"\u003eorf1 len=10\\nMADEGFKDL*\\n\u003eorf2_re...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -9001,7 +8999,7 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: line 1, byte 11: got \"4 no-start,no-terminal-stop\\ninte...\", wanted \"0\\nMADEGFKDL*\\n\u003eorf2_revstrand len...\""
+        "reason": "stdout differs: line 1, byte 0: got \"# translated 0/6 records\\n# FAILE...\", wanted \"\u003eorf1 len=10\\nMADEGFKDL*\\n\u003eorf2_re...\""
       },
       "quality": {
         "todos": 0,

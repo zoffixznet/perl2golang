@@ -466,9 +466,11 @@ const maxDiscoveryRounds = 6
 func (l *Lowerer) forgetResults() {
 	for _, name := range l.subOrd {
 		l.subs[name].ResultEvidence = nil
+		l.subs[name].TailSpill = false
 	}
 	for _, s := range l.anonOrd {
 		s.ResultEvidence = nil
+		s.TailSpill = false
 	}
 }
 

@@ -977,7 +977,17 @@ func (l *Lowerer) listAssignByIndex(targets []ast.Expr, rhs ast.Expr, n *ast.Ass
 		b.Writes++
 		if v.Sigil == '@' {
 			l.observe(b, ir.SliceOf(elem))
-			rest := slicing(ir.NewIdent(tmp, typeOrAny(src)), ir.IntLit(itoa(i)), nil, ir.SliceOf(elem))
+			// A plain values[i:] is only safe when the list provably reaches
+			// i. A list whose length the program decides, a sub's return or
+			// an eval's value, may come up short, and Perl reads that as the
+			// tail being empty rather than as an error.
+			var rest ir.Expr
+			if n := literalLen(src); n >= 0 && i <= n {
+				rest = slicing(ir.NewIdent(tmp, typeOrAny(src)), ir.IntLit(itoa(i)), nil, ir.SliceOf(elem))
+			} else {
+				rest = l.helperCall(hTailFrom, ir.SliceOf(elem),
+					ir.NewIdent(tmp, typeOrAny(src)), ir.IntLit(itoa(i)))
+			}
 			var st ir.Stmt
 			if declare && b.Type != nil && !b.Type.Equal(ir.SliceOf(elem)) {
 				// The rest of this list is not what the rest of the file puts

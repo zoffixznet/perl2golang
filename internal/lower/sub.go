@@ -697,6 +697,30 @@ func (l *Lowerer) multiResultCall(c *ast.Call, wantList bool) (ir.Expr, bool) {
 	l.emit(st)
 
 	if wantList {
+		last := len(names) - 1
+		if s.TailSpill && typeOrAny(names[last]).Kind == ir.Slice {
+			// The final result carries a whole list, so it contributes its
+			// elements to this one rather than itself.
+			var seen []*ir.Type
+			for i, name := range names {
+				if i == last {
+					l.spliced[name] = true
+					seen = append(seen, elemOf(typeOrAny(name)))
+					continue
+				}
+				seen = append(seen, typeOrAny(name))
+			}
+			t := joinAll(seen)
+			if t == nil {
+				t = ir.TAny
+			}
+			// listValue rewrites the parts it is given to fit the element
+			// type, and names is also the left side of the := above, so it
+			// gets a copy.
+			parts := make([]ir.Expr, len(names))
+			copy(parts, names)
+			return l.listValue(parts, t), true
+		}
 		t := joinAll(s.Results)
 		if t == nil {
 			t = ir.TAny
@@ -708,6 +732,18 @@ func (l *Lowerer) multiResultCall(c *ast.Call, wantList bool) (ir.Expr, bool) {
 			elems[i] = l.assignable(name, t, c)
 		}
 		return composite(ir.SliceOf(t), nil, elems), true
+	}
+	if s.TailSpill && typeOrAny(names[len(names)-1]).Kind == ir.Slice {
+		// One value wanted from a call whose return ends in an array: Perl
+		// evaluates the return's last expression in the caller's context, and
+		// an array asked for one value answers with its element count.
+		out := lenOf(names[len(names)-1])
+		l.note(out, "This sub's return ends in an array, and a Perl sub called "+
+			"where one value is wanted evaluates its return in that context: the "+
+			"array answers with its element count. Go has no context, so the len "+
+			"is taken here, at the call.",
+			"context-is-gone", "multiple-return-values")
+		return out, true
 	}
 	return names[len(names)-1], true
 }

@@ -17,6 +17,17 @@ import (
 // evalCall lowers `eval { BLOCK }`, whose value is the block's last expression
 // and whose failure lands in $@.
 func (l *Lowerer) evalCall(n *ast.Call) ir.Expr {
+	return l.evalValue(n, false)
+}
+
+// evalListCall lowers the same construct where a list is wanted, as
+// `my ($cost, @rest) = eval { ... }` does. The block's value becomes a slice,
+// and a die inside leaves that slice empty, which is Perl's empty list.
+func (l *Lowerer) evalListCall(n *ast.Call) ir.Expr {
+	return l.evalValue(n, true)
+}
+
+func (l *Lowerer) evalValue(n *ast.Call, wantList bool) ir.Expr {
 	if n.Block == nil {
 		return l.todoExpr(n, "P2G8001", "string eval",
 			"eval of a string is not implemented",
@@ -39,7 +50,7 @@ func (l *Lowerer) evalCall(n *ast.Call) ir.Expr {
 
 	saved := l.scope
 	l.scope = newScope(saved)
-	stmts, value := l.blockValue(n.Block)
+	stmts, value := l.blockValueCtx(n.Block, wantList)
 	l.scope = saved
 
 	result := ""
