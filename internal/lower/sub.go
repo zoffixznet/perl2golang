@@ -283,6 +283,7 @@ func (l *Lowerer) recoverParams(s *Sub, body []ast.Stmt) ([]ir.Param, []ast.Stmt
 		// Re-entering with the shape already settled: rebuild the scope from
 		// the recorded bindings.
 	}
+	l.reportArgAliasing(body)
 	rest := body
 	var bindings []*Binding
 
@@ -517,6 +518,17 @@ func usesArgs(body []ast.Stmt) bool {
 			}
 			walkE(n.Base)
 			walkE(n.Idx)
+		case *ast.Slice:
+			// @_[0, 1] slices the argument list the same way.
+			walkE(n.Base)
+			for _, i := range n.Idx {
+				walkE(i)
+			}
+		case *ast.RefGen:
+			// \@_ carries the whole argument list out as a reference.
+			walkE(n.X)
+		case *ast.Deref:
+			walkE(n.X)
 		case *ast.Assign:
 			walkE(n.LHS)
 			walkE(n.RHS)

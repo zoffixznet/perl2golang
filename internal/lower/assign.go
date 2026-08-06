@@ -201,7 +201,15 @@ func (l *Lowerer) sliceElements(n *ast.Slice) []ir.Expr {
 		if n.Hash {
 			sig = '%'
 		}
-		container = l.identFor(l.lookup(sig, v.Name, v))
+		if sig == '@' && v.Name == "_" && l.curSub != nil && l.curSub.VarArgs != nil {
+			// @_[0, 1] slices the argument list, which is a parameter here
+			// rather than a variable the file declared.
+			b := l.curSub.VarArgs
+			b.Reads++
+			container = ir.NewIdent(b.Go, b.Type)
+		} else {
+			container = l.identFor(l.lookup(sig, v.Name, v))
+		}
 	} else {
 		container = l.expr(n.Base)
 	}

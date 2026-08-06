@@ -138,6 +138,7 @@ Two entries exit non-zero on purpose: **27** (65) and **32** (1). The rest exit 
 | 89 | `89-a-position-under-a-line-reader` | The positioning corners that do not convert yet | `tell` between line reads, where a buffered reader has walked ahead, and four-argument `read`, which patches bytes into the middle of its target |
 | 90 | `90-a-config-hash-is-a-record` | A named hash whose keys are written out and whose values differ in kind | static reads and writes, a key added after the initialiser, `sort keys`, a field picked from a written-out set at run time, an arrayref field |
 | 91 | `91-a-config-hash-with-defaults` | The same shape leaning on undef, which keeps it a map | `//` defaults over a stored 0, `defined` and `exists` probes, a key that is only sometimes there |
+| 92 | `92-reading-the-argument-list` | @_ read without being named, in every form that only reads | `@_[0, 1]`, `scalar @_`, `$_[2] //` past the end, `\@_` into a read-only loop |
 
 ## Coverage map
 

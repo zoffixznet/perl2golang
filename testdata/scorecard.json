@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T13:17:07Z",
+  "recorded": "2026-08-15T13:27:47Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -54,46 +54,46 @@
     },
     {
       "tier": "tier2",
-      "entries": 91,
+      "entries": 92,
       "stages": {
         "compiled": {
-          "pass": 90,
+          "pass": 91,
           "fail": 1,
           "skip": 0
         },
         "emitted": {
-          "pass": 91,
+          "pass": 92,
           "fail": 0,
           "skip": 0
         },
         "equivalent": {
-          "pass": 54,
+          "pass": 55,
           "fail": 37,
           "skip": 0
         },
         "translated": {
-          "pass": 82,
+          "pass": 83,
           "fail": 9,
           "skip": 0
         },
         "typed": {
-          "pass": 47,
+          "pass": 48,
           "fail": 44,
           "skip": 0
         }
       },
       "equivalent_annotated": {
-        "pass": 54,
+        "pass": 55,
         "fail": 37,
         "skip": 0
       },
       "quality": {
         "todos": 18,
-        "symbols": 1429,
-        "symbols_typed": 1245,
+        "symbols": 1439,
+        "symbols_typed": 1258,
         "refusals": 18,
-        "approximations": 520,
-        "crashes": 2
+        "approximations": 522,
+        "crashes": 1
       }
     },
     {
@@ -134,9 +134,9 @@
       "quality": {
         "todos": 47,
         "symbols": 915,
-        "symbols_typed": 720,
+        "symbols_typed": 721,
         "refusals": 50,
-        "approximations": 322,
+        "approximations": 323,
         "crashes": 1
       }
     },
@@ -180,7 +180,7 @@
         "symbols": 167,
         "symbols_typed": 115,
         "refusals": 47,
-        "approximations": 63,
+        "approximations": 67,
         "crashes": 0
       }
     },
@@ -231,20 +231,20 @@
   ],
   "total": {
     "tier": "TOTAL",
-    "entries": 236,
+    "entries": 237,
     "stages": {
       "compiled": {
-        "pass": 226,
+        "pass": 227,
         "fail": 10,
         "skip": 0
       },
       "emitted": {
-        "pass": 236,
+        "pass": 237,
         "fail": 0,
         "skip": 0
       },
       "equivalent": {
-        "pass": 115,
+        "pass": 116,
         "fail": 83,
         "skip": 0
       },
@@ -254,37 +254,37 @@
         "skip": 1
       },
       "translated": {
-        "pass": 196,
+        "pass": 197,
         "fail": 40,
         "skip": 0
       },
       "typed": {
-        "pass": 111,
+        "pass": 112,
         "fail": 125,
         "skip": 0
       }
     },
     "equivalent_annotated": {
-      "pass": 115,
+      "pass": 116,
       "fail": 83,
       "skip": 0
     },
     "quality": {
       "todos": 115,
-      "symbols": 3927,
-      "symbols_typed": 3382,
+      "symbols": 3937,
+      "symbols_typed": 3396,
       "refusals": 118,
-      "approximations": 1198,
-      "crashes": 3
+      "approximations": 1205,
+      "crashes": 2
     }
   },
   "quality": {
     "todos": 115,
-    "symbols": 3927,
-    "symbols_typed": 3382,
+    "symbols": 3937,
+    "symbols_typed": 3396,
     "refusals": 118,
-    "approximations": 1198,
-    "crashes": 3
+    "approximations": 1205,
+    "crashes": 2
   },
   "entries": [
     {
@@ -2102,7 +2102,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "exit status 2, wanted 0; stdout differs: line 2, byte 42: got \"0 a=3 b=2 c=1\\nqueue len=4 conten...\", wanted \"3 a=3 b=2 c=1\\nqueue len=5 conten...\"; stderr differs: unexpected \"panic: runtime error: index out of range [0] with length 0 ...\""
+          "reason": "stdout differs: line 2, byte 42: got \"0 a=3 b=2 c=1\\nqueue len=4 conten...\", wanted \"3 a=3 b=2 c=1\\nqueue len=5 conten...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -2112,21 +2112,20 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "14 variables left dynamic out of 32"
+          "reason": "11 variables left dynamic out of 33"
         }
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "exit status 2, wanted 0; stdout differs: line 2, byte 42: got \"0 a=3 b=2 c=1\\nqueue len=4 conten...\", wanted \"3 a=3 b=2 c=1\\nqueue len=5 conten...\"; stderr differs: unexpected \"panic: runtime error: index out of range [0] with length 0 ...\""
+        "reason": "stdout differs: line 2, byte 42: got \"0 a=3 b=2 c=1\\nqueue len=4 conten...\", wanted \"3 a=3 b=2 c=1\\nqueue len=5 conten...\""
       },
       "quality": {
         "todos": 0,
-        "symbols": 32,
-        "symbols_typed": 18,
+        "symbols": 33,
+        "symbols_typed": 22,
         "refusals": 0,
         "approximations": 11,
-        "crashes": 1,
-        "panic": "panic: runtime error: index out of range [0] with length 0"
+        "crashes": 0
       }
     },
     {
@@ -5345,6 +5344,42 @@
       }
     },
     {
+      "tier": "tier2",
+      "name": "92-reading-the-argument-list",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "pass"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "pass"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 9,
+        "symbols_typed": 9,
+        "refusals": 0,
+        "approximations": 2,
+        "crashes": 0
+      }
+    },
+    {
       "tier": "tier3",
       "name": "01-inventory-manager",
       "kind": "convert",
@@ -6211,7 +6246,7 @@
       "stages": {
         "compiled": {
           "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:70:29: self(toNum(k) - 1.0) (no value) used as value"
+          "reason": "the generated Go does not compile: ./main.go:67:29: self(toNum(k) - 1.0) (no value) used as value"
         },
         "emitted": {
           "outcome": "pass"
@@ -6229,7 +6264,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "12 variables left dynamic out of 41"
+          "reason": "11 variables left dynamic out of 41"
         }
       },
       "equivalent_annotated": {
@@ -6239,9 +6274,9 @@
       "quality": {
         "todos": 0,
         "symbols": 41,
-        "symbols_typed": 29,
+        "symbols_typed": 30,
         "refusals": 1,
-        "approximations": 15,
+        "approximations": 16,
         "crashes": 0
       }
     },
@@ -7347,7 +7382,7 @@
         "symbols": 9,
         "symbols_typed": 7,
         "refusals": 0,
-        "approximations": 6,
+        "approximations": 10,
         "crashes": 0
       }
     },
