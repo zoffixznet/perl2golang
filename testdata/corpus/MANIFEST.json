@@ -3039,5 +3039,29 @@
     "expected_exit": 0,
     "deterministic": true,
     "kind": "convert"
+  },
+  {
+    "tier": "tier2",
+    "name": "93-list-shapes-through-subs",
+    "path": "testdata/corpus/tier2/93-list-shapes-through-subs",
+    "args": [],
+    "has_stdin": false,
+    "has_files": false,
+    "allow_stderr": false,
+    "expected_exit": 0,
+    "deterministic": true,
+    "kind": "convert"
+  },
+  {
+    "tier": "tier4",
+    "name": "39-array-mid-return",
+    "path": "testdata/corpus/tier4/39-array-mid-return",
+    "args": [],
+    "has_stdin": false,
+    "has_files": false,
+    "allow_stderr": false,
+    "expected_exit": 0,
+    "deterministic": true,
+    "kind": "honest-failure"
   }
 ]

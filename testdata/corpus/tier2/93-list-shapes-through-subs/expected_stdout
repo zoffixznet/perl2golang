@@ -1,0 +1,9 @@
+bolts: 2 crates, cost 14
+nuts: 4 crates, cost 28
+washers: stocked
+girders: unknown item
+bolts depth 3
+nuts depth 2
+washers depth 1
+trail: start>bolts>nuts>bolts>nuts>end (6 stops)
+settled: 3 9 9
