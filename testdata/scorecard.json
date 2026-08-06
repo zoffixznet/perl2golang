@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T15:39:00Z",
+  "recorded": "2026-08-15T15:46:03Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -101,8 +101,8 @@
       "entries": 37,
       "stages": {
         "compiled": {
-          "pass": 35,
-          "fail": 2,
+          "pass": 36,
+          "fail": 1,
           "skip": 0
         },
         "emitted": {
@@ -111,13 +111,13 @@
           "skip": 0
         },
         "equivalent": {
-          "pass": 19,
-          "fail": 18,
+          "pass": 21,
+          "fail": 16,
           "skip": 0
         },
         "translated": {
-          "pass": 27,
-          "fail": 10,
+          "pass": 28,
+          "fail": 9,
           "skip": 0
         },
         "typed": {
@@ -127,16 +127,16 @@
         }
       },
       "equivalent_annotated": {
-        "pass": 19,
-        "fail": 18,
+        "pass": 21,
+        "fail": 16,
         "skip": 0
       },
       "quality": {
-        "todos": 46,
-        "symbols": 911,
-        "symbols_typed": 710,
-        "refusals": 47,
-        "approximations": 317,
+        "todos": 44,
+        "symbols": 912,
+        "symbols_typed": 711,
+        "refusals": 45,
+        "approximations": 316,
         "crashes": 1
       }
     },
@@ -234,8 +234,8 @@
     "entries": 242,
     "stages": {
       "compiled": {
-        "pass": 236,
-        "fail": 6,
+        "pass": 237,
+        "fail": 5,
         "skip": 0
       },
       "emitted": {
@@ -244,8 +244,8 @@
         "skip": 0
       },
       "equivalent": {
-        "pass": 130,
-        "fail": 72,
+        "pass": 132,
+        "fail": 70,
         "skip": 0
       },
       "honest": {
@@ -254,8 +254,8 @@
         "skip": 1
       },
       "translated": {
-        "pass": 209,
-        "fail": 33,
+        "pass": 210,
+        "fail": 32,
         "skip": 0
       },
       "typed": {
@@ -265,25 +265,25 @@
       }
     },
     "equivalent_annotated": {
-      "pass": 130,
-      "fail": 72,
+      "pass": 132,
+      "fail": 70,
       "skip": 0
     },
     "quality": {
-      "todos": 109,
-      "symbols": 4000,
-      "symbols_typed": 3440,
-      "refusals": 110,
-      "approximations": 1232,
+      "todos": 107,
+      "symbols": 4001,
+      "symbols_typed": 3441,
+      "refusals": 108,
+      "approximations": 1231,
       "crashes": 2
     }
   },
   "quality": {
-    "todos": 109,
-    "symbols": 4000,
-    "symbols_typed": 3440,
-    "refusals": 110,
-    "approximations": 1232,
+    "todos": 107,
+    "symbols": 4001,
+    "symbols_typed": 3441,
+    "refusals": 108,
+    "approximations": 1231,
     "crashes": 2
   },
   "entries": [
@@ -6136,15 +6136,14 @@
       "kind": "convert",
       "stages": {
         "compiled": {
-          "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:105:72: use of package fmt not in selector"
+          "outcome": "pass"
         },
         "emitted": {
           "outcome": "pass"
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "the generated program did not compile"
+          "reason": "stdout differs: line 1, byte 32: got \" = 14\\n 4| (2 + 3) * 4           ...\", wanted \"14\\n 4| (2 + 3) * 4              ...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -6159,7 +6158,7 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "the generated program did not compile"
+        "reason": "stdout differs: line 1, byte 32: got \" = 14\\n 4| (2 + 3) * 4           ...\", wanted \"14\\n 4| (2 + 3) * 4              ...\""
       },
       "quality": {
         "todos": 0,
@@ -6256,15 +6255,14 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 2, byte 28: got \"known; did you mean status (d=2 ...\", wanted \"ambiguous prefix of 'status'\\ncom...\"; stderr differs: unexpected \"TODO P2G3599: the abbrev function is not implemented\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
         },
         "translated": {
           "outcome": "fail",
-          "reason": "2 untranslated constructs"
+          "reason": "1 untranslated construct"
         },
         "typed": {
           "outcome": "fail",
@@ -6272,15 +6270,14 @@
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 2, byte 28: got \"known; did you mean status (d=2 ...\", wanted \"ambiguous prefix of 'status'\\ncom...\"; stderr differs: unexpected \"TODO P2G3599: the abbrev function is not implemented\""
+        "outcome": "pass"
       },
       "quality": {
-        "todos": 2,
+        "todos": 1,
         "symbols": 31,
         "symbols_typed": 28,
-        "refusals": 2,
-        "approximations": 8,
+        "refusals": 1,
+        "approximations": 7,
         "crashes": 0
       }
     },
@@ -6822,30 +6819,27 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 11, byte 343: got \"\\n--- the pragma also truncates t...\", wanted \"3\\n--- the pragma also truncates ...\"; stderr differs: unexpected \"TODO P2G3599: the inner_half function is not implemented\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
         },
         "translated": {
-          "outcome": "fail",
-          "reason": "1 untranslated construct"
+          "outcome": "pass"
         },
         "typed": {
           "outcome": "fail",
-          "reason": "1 variable left dynamic out of 5"
+          "reason": "1 variable left dynamic out of 6"
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 11, byte 343: got \"\\n--- the pragma also truncates t...\", wanted \"3\\n--- the pragma also truncates ...\"; stderr differs: unexpected \"TODO P2G3599: the inner_half function is not implemented\""
+        "outcome": "pass"
       },
       "quality": {
-        "todos": 1,
-        "symbols": 5,
-        "symbols_typed": 4,
-        "refusals": 1,
+        "todos": 0,
+        "symbols": 6,
+        "symbols_typed": 5,
+        "refusals": 0,
         "approximations": 0,
         "crashes": 0
       }

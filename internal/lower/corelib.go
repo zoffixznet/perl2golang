@@ -286,6 +286,20 @@ func (l *Lowerer) suffixPattern(e ast.Expr, quote bool) ir.Expr {
 		ir.NamedType("*regexp.Regexp", "regexp"), text)
 }
 
+// abbrevCall lowers Text::Abbrev's abbrev, which maps every unambiguous
+// prefix of its words to the word it identifies.
+func (l *Lowerer) abbrevCall(n *ast.Call) ir.Expr {
+	src := l.list(argList(n))
+	out := l.helperCall(hAbbrevTable, ir.MapOf(ir.TString), l.strSlice(src, n))
+	out.Ellipsis = true
+	l.note(out, "abbrev hands back a hash of every prefix that identifies exactly "+
+		"one word, with each whole word mapping to itself. The helper is the same "+
+		"two passes Text::Abbrev makes: count the owners of every prefix, then "+
+		"keep the prefixes owned by one word.",
+		"maps-of-slices")
+	return out
+}
+
 // hasUpdirArg reports whether one of a path join's components is a literal
 // "..", which is the one component filepath.Join would rewrite away.
 func hasUpdirArg(args []ir.Expr) bool {

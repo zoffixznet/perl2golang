@@ -468,6 +468,8 @@ func (l *Lowerer) builtin(n *ast.Call) ir.Expr {
 		return l.uniqCall(n, n.Name == "uniqnum")
 	case "pairs":
 		return l.pairsCall(n)
+	case "abbrev":
+		return l.abbrevCall(n)
 	case "floor", "ceil", "fmod":
 		return l.posix(n)
 	case "strftime", "POSIX::strftime":

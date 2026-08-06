@@ -366,6 +366,19 @@ func Lower(res parser.Result, src []byte, opts Options) *Result {
 	// main and the package name are taken; nothing else may claim them.
 	l.names.reserve("main")
 	l.names.reserve("err")
+	// So is every package the generated files may import. Imports are
+	// file-scoped, but a package-level identifier conflicts with any file's
+	// import of the same name, and the helper file's imports are not known
+	// until emission. A user sub called fmt or sort takes a suffixed name
+	// instead of breaking the build.
+	for _, pkg := range []string{
+		"bufio", "base64", "binary", "bytes", "cmp", "errors", "exec", "flag",
+		"filepath", "fmt", "fs", "hash", "hex", "io", "json", "maps", "math",
+		"md5", "os", "reflect", "regexp", "runtime", "slices", "sort",
+		"strconv", "strings", "sync", "syscall", "time", "unicode", "utf8",
+	} {
+		l.names.reserve(pkg)
+	}
 
 	for _, d := range res.Diags {
 		l.rep.Stats.ParseErrors++

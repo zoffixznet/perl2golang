@@ -303,6 +303,11 @@ var notes = map[string]string{
 		"to start inside it, which is what makes s/(\\d{3})(?=\\d)/$1,/g " +
 		"put a comma every three digits rather than every four.",
 
+	"abbrevTable": "There is no library counterpart to reach for, and none " +
+		"is needed: the whole idea is one pass counting prefix owners and one " +
+		"pass keeping the prefixes owned by exactly one word. A map lookup " +
+		"then answers what the shortest-unambiguous-prefix question asked.",
+
 	"canonPath": "filepath.Clean resolves a/../b to b, which changes where " +
 		"the path points when a is a symbolic link. This cleanup stops short " +
 		"of that on purpose: slashes and dots are textual, dot-dot is not.",

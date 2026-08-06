@@ -18,25 +18,23 @@ import (
 // functions.
 func (l *Lowerer) hoistSubs() {
 	for _, u := range l.units {
-		sd, ok := u.st.(*ast.SubDecl)
-		if !ok {
-			continue
+		for _, sd := range namedSubs(u.st) {
+			key := qualify(u.pkg, sd.Name)
+			if _, dup := l.subs[key]; dup {
+				continue
+			}
+			s := &Sub{Name: sd.Name, Pkg: u.pkg, Decl: sd, Line: posLine(sd), File: u.file}
+			s.Doc = leadComments(sd)
+			l.subs[key] = s
+			l.subOrd = append(l.subOrd, key)
+			if c, ok := l.classes[u.pkg]; ok && c.IsType {
+				s.Class = c
+				c.Subs = append(c.Subs, s)
+				c.subBy[sd.Name] = s
+				continue
+			}
+			s.Go = l.plainName(u.pkg, sd.Name)
 		}
-		key := qualify(u.pkg, sd.Name)
-		if _, dup := l.subs[key]; dup {
-			continue
-		}
-		s := &Sub{Name: sd.Name, Pkg: u.pkg, Decl: sd, Line: posLine(sd), File: u.file}
-		s.Doc = leadComments(sd)
-		l.subs[key] = s
-		l.subOrd = append(l.subOrd, key)
-		if c, ok := l.classes[u.pkg]; ok && c.IsType {
-			s.Class = c
-			c.Subs = append(c.Subs, s)
-			c.subBy[sd.Name] = s
-			continue
-		}
-		s.Go = l.plainName(u.pkg, sd.Name)
 	}
 	// Naming the members of a class needs the whole class in hand: a method
 	// and a field share one namespace in Go, and the constructor's name is
@@ -53,6 +51,40 @@ func (l *Lowerer) hoistSubs() {
 			l.inheritCtor(c)
 		}
 	}
+}
+
+// namedSubs finds the named sub declarations in one statement, including any
+// nested in blocks, branches and loops. A named sub is package-global in Perl
+// however deeply its declaration is buried; only its body is affected by
+// where it sits, `use integer` in the enclosing block being the usual reason
+// to bury one.
+func namedSubs(st ast.Stmt) []*ast.SubDecl {
+	var out []*ast.SubDecl
+	var walk func(list []ast.Stmt)
+	walk = func(list []ast.Stmt) {
+		for _, s := range list {
+			switch n := s.(type) {
+			case *ast.SubDecl:
+				out = append(out, n)
+			case *ast.Block:
+				walk(n.Body)
+			case *ast.If:
+				walk(n.Then)
+				for _, ei := range n.ElseIfs {
+					walk(ei.Then)
+				}
+				walk(n.Else)
+			case *ast.While:
+				walk(n.Body)
+			case *ast.ForC:
+				walk(n.Body)
+			case *ast.Foreach:
+				walk(n.Body)
+			}
+		}
+	}
+	walk([]ast.Stmt{st})
+	return out
 }
 
 // qualify returns the fully qualified Perl name of a sub.

@@ -113,6 +113,7 @@ const (
 	hRemoveTree    = "removeTree"    // a directory and everything under it
 	hTempDir       = "tempDir"       // a directory nothing else is using
 	hTempFile      = "tempFile"      // a file nothing else is using
+	hAbbrevTable   = "abbrevTable"   // Text::Abbrev, unambiguous prefixes to their words
 	hCanonPath     = "canonPath"     // File::Spec canonpath, which keeps .. intact
 	hSplitPath     = "splitPath"     // volume, directory and final component
 	hPathParts     = "pathParts"     // a path broken into its components
