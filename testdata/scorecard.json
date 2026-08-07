@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T16:02:03Z",
+  "recorded": "2026-08-15T16:06:15Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -54,43 +54,43 @@
     },
     {
       "tier": "tier2",
-      "entries": 96,
+      "entries": 97,
       "stages": {
         "compiled": {
-          "pass": 95,
+          "pass": 96,
           "fail": 1,
           "skip": 0
         },
         "emitted": {
-          "pass": 96,
+          "pass": 97,
           "fail": 0,
           "skip": 0
         },
         "equivalent": {
-          "pass": 60,
+          "pass": 61,
           "fail": 36,
           "skip": 0
         },
         "translated": {
-          "pass": 88,
+          "pass": 89,
           "fail": 8,
           "skip": 0
         },
         "typed": {
-          "pass": 50,
+          "pass": 51,
           "fail": 46,
           "skip": 0
         }
       },
       "equivalent_annotated": {
-        "pass": 60,
+        "pass": 61,
         "fail": 36,
         "skip": 0
       },
       "quality": {
         "todos": 17,
-        "symbols": 1499,
-        "symbols_typed": 1312,
+        "symbols": 1506,
+        "symbols_typed": 1319,
         "refusals": 17,
         "approximations": 544,
         "crashes": 1
@@ -133,8 +133,8 @@
       },
       "quality": {
         "todos": 44,
-        "symbols": 911,
-        "symbols_typed": 711,
+        "symbols": 908,
+        "symbols_typed": 710,
         "refusals": 45,
         "approximations": 313,
         "crashes": 1
@@ -142,31 +142,31 @@
     },
     {
       "tier": "tier4",
-      "entries": 40,
+      "entries": 41,
       "stages": {
         "compiled": {
-          "pass": 39,
+          "pass": 40,
           "fail": 1,
           "skip": 0
         },
         "emitted": {
-          "pass": 40,
+          "pass": 41,
           "fail": 0,
           "skip": 0
         },
         "honest": {
-          "pass": 36,
+          "pass": 37,
           "fail": 3,
           "skip": 1
         },
         "translated": {
-          "pass": 25,
+          "pass": 26,
           "fail": 15,
           "skip": 0
         },
         "typed": {
-          "pass": 19,
-          "fail": 21,
+          "pass": 21,
+          "fail": 20,
           "skip": 0
         }
       },
@@ -177,10 +177,10 @@
       },
       "quality": {
         "todos": 46,
-        "symbols": 181,
-        "symbols_typed": 123,
+        "symbols": 185,
+        "symbols_typed": 128,
         "refusals": 46,
-        "approximations": 75,
+        "approximations": 77,
         "crashes": 0
       }
     },
@@ -231,59 +231,59 @@
   ],
   "total": {
     "tier": "TOTAL",
-    "entries": 243,
+    "entries": 245,
     "stages": {
       "compiled": {
-        "pass": 238,
+        "pass": 240,
         "fail": 5,
         "skip": 0
       },
       "emitted": {
-        "pass": 243,
+        "pass": 245,
         "fail": 0,
         "skip": 0
       },
       "equivalent": {
-        "pass": 135,
+        "pass": 136,
         "fail": 68,
         "skip": 0
       },
       "honest": {
-        "pass": 36,
+        "pass": 37,
         "fail": 3,
         "skip": 1
       },
       "translated": {
-        "pass": 211,
+        "pass": 213,
         "fail": 32,
         "skip": 0
       },
       "typed": {
-        "pass": 114,
-        "fail": 129,
+        "pass": 117,
+        "fail": 128,
         "skip": 0
       }
     },
     "equivalent_annotated": {
-      "pass": 135,
+      "pass": 136,
       "fail": 68,
       "skip": 0
     },
     "quality": {
       "todos": 107,
-      "symbols": 4007,
-      "symbols_typed": 3447,
+      "symbols": 4015,
+      "symbols_typed": 3458,
       "refusals": 108,
-      "approximations": 1230,
+      "approximations": 1232,
       "crashes": 2
     }
   },
   "quality": {
     "todos": 107,
-    "symbols": 4007,
-    "symbols_typed": 3447,
+    "symbols": 4015,
+    "symbols_typed": 3458,
     "refusals": 108,
-    "approximations": 1230,
+    "approximations": 1232,
     "crashes": 2
   },
   "entries": [
@@ -5515,6 +5515,42 @@
       }
     },
     {
+      "tier": "tier2",
+      "name": "97-qualified-package-variables",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "pass"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "pass"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 7,
+        "symbols_typed": 7,
+        "refusals": 0,
+        "approximations": 0,
+        "crashes": 0
+      }
+    },
+    {
       "tier": "tier3",
       "name": "01-inventory-manager",
       "kind": "convert",
@@ -5652,7 +5688,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "7 variables left dynamic out of 34"
+          "reason": "6 variables left dynamic out of 32"
         }
       },
       "equivalent_annotated": {
@@ -5660,8 +5696,8 @@
       },
       "quality": {
         "todos": 0,
-        "symbols": 34,
-        "symbols_typed": 27,
+        "symbols": 32,
+        "symbols_typed": 26,
         "refusals": 0,
         "approximations": 9,
         "crashes": 0
@@ -6377,7 +6413,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "11 variables left dynamic out of 41"
+          "reason": "10 variables left dynamic out of 40"
         }
       },
       "equivalent_annotated": {
@@ -6386,7 +6422,7 @@
       },
       "quality": {
         "todos": 1,
-        "symbols": 41,
+        "symbols": 40,
         "symbols_typed": 30,
         "refusals": 1,
         "approximations": 16,
@@ -6965,7 +7001,7 @@
       "stages": {
         "compiled": {
           "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:21:3: cannot assign to name + \"_seen\" (neither addressable nor a map index expression)"
+          "reason": "the generated Go does not compile: ./main.go:30:3: cannot assign to name + \"_seen\" (neither addressable nor a map index expression)"
         },
         "emitted": {
           "outcome": "pass"
@@ -7510,8 +7546,7 @@
           "outcome": "pass"
         },
         "typed": {
-          "outcome": "fail",
-          "reason": "1 variable left dynamic out of 3"
+          "outcome": "pass"
         }
       },
       "equivalent_annotated": {
@@ -7519,7 +7554,7 @@
       },
       "quality": {
         "todos": 0,
-        "symbols": 3,
+        "symbols": 2,
         "symbols_typed": 2,
         "refusals": 0,
         "approximations": 4,
@@ -8525,6 +8560,48 @@
       }
     },
     {
+      "tier": "tier4",
+      "name": "41-local-reaches-a-called-sub",
+      "kind": "honest-failure",
+      "categories": [
+        "approximate"
+      ],
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "n/a"
+        },
+        "honest": {
+          "outcome": "pass"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "n/a"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 5,
+        "symbols_typed": 5,
+        "refusals": 0,
+        "approximations": 2,
+        "crashes": 0
+      },
+      "notes": [
+        "the directory has a files directory but the manifest says it has none"
+      ]
+    },
+    {
       "tier": "domain",
       "name": "01-logrotate-check",
       "kind": "convert",
@@ -9472,5 +9549,8 @@
         "crashes": 0
       }
     }
+  ],
+  "notes": [
+    "tier4/41-local-reaches-a-called-sub: the directory has a files directory but the manifest says it has none"
   ]
 }

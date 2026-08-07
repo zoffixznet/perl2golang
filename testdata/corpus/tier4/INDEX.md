@@ -83,6 +83,7 @@ notes and checked by replaying the program under `2>&1`.
 | 38-fork-and-reap | fork, a child exit status through `$?`, waitpid | refuse each call naming both Go models (goroutine, exec.Command); the degraded program stops at the first fork the way a failed fork would. |
 | 39-array-mid-return | an array between two fixed values in a sub's return | say what stood in for the array, at the return, in the report; the trailing-array form converts exactly and this is the position that cannot. |
 | 40-a-guard-that-escapes | a DESTROY object whose reference outlives its block | report at the construction site that the destructor is not called automatically; the block-shaped lifetimes convert exactly and this one belongs to the reference count. |
+| 41-local-reaches-a-called-sub | local $/ seen by a sub compiled elsewhere | state the lexical-folding approximation at the local: the called sub keeps the default, and the note says how to pass the separator explicitly. |
 
 ## Priority ranking — what matters for real scripts
 

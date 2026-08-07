@@ -327,7 +327,19 @@ func (l *Lowerer) markShared() {
 				my = m
 			}
 		}
-		if my == nil || my.Keyword != "my" {
+		if my == nil {
+			continue
+		}
+		// `our` declares the package variable itself, not a lexical: it is
+		// package-level however it is reached, so its declaration site binds
+		// the same global that a qualified spelling names.
+		if my.Keyword == "our" {
+			for _, v := range declaredVars(my) {
+				l.hoisted[v] = true
+			}
+			continue
+		}
+		if my.Keyword != "my" {
 			continue
 		}
 		for _, v := range declaredVars(my) {

@@ -1,0 +1,9 @@
+apple -> ok
+apple -> ok
+pear -> ok
+apple -> ok
+apple -> over
+pear -> ok
+tally: apple=4 pear=2
+apples counted: 4
+after meddling: ok / apple=4 pear=2 plum=8
