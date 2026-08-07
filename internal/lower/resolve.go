@@ -151,6 +151,11 @@ type Sub struct {
 	// ResultEvidence records the shape of every return seen on the first
 	// pass, so the second pass can commit to one signature.
 	ResultEvidence [][]*ir.Type
+	// NilResults marks the result positions some return leaves undef, so
+	// the settled type gets room for the absence: a position seen both as
+	// text and as undef is a *string, where a plain string would turn the
+	// undef into an empty string the caller cannot tell from a real one.
+	NilResults map[int]bool
 	// TailSpill records that some return ends in an array, as
 	// `return ($cost, @path)` does. The Go function returns the array as its
 	// last result, and every call site in list position splices that result

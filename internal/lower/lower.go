@@ -296,6 +296,11 @@ type Lowerer struct {
 	// changes what die has to compile into. It is discovered on the first
 	// pass and acted on by the second.
 	traps bool
+	// mixedReads records that the program reads single lines outside of
+	// loops, which means every read on a handle has to share one buffered
+	// reader or they would steal each other's read-ahead. Discovered on the
+	// first pass and acted on by the second.
+	mixedReads bool
 }
 
 // label returns a loop label only when something branches to it. Go rejects a

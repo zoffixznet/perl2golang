@@ -308,6 +308,11 @@ var notes = map[string]string{
 		"pass keeping the prefixes owned by exactly one word. A map lookup " +
 		"then answers what the shortest-unambiguous-prefix question asked.",
 
+	"plain": "A nil pointer inside an interface is not a nil interface, " +
+		"which is the classic typed-nil trap. Values crossing into the " +
+		"dynamic world through a reflected call are unwrapped here so an " +
+		"absence stays testable as nil.",
+
 	"canonPath": "filepath.Clean resolves a/../b to b, which changes where " +
 		"the path points when a is a symbolic link. This cleanup stops short " +
 		"of that on purpose: slashes and dots are textual, dot-dot is not.",
@@ -598,6 +603,21 @@ var notes = map[string]string{
 		"leading blank lines are skipped, a run of them counts once, and each " +
 		"paragraph keeps a single trailing blank line. Splitting on \"\\n\\n\" " +
 		"alone gets all three of those wrong.",
+
+	"lineReaders": "The registry itself: one buffered reader per handle, " +
+		"living at package level because the position in the input is state " +
+		"the handle carries in Perl and nothing carries in Go.",
+
+	"readLine": "One read takes one line, and what a failed read hands back " +
+		"has to be tellable from an empty line: the pointer is nil at the " +
+		"end of the input and nowhere else. The buffered reader is shared " +
+		"through a registry so a later read of any shape continues where " +
+		"this one stopped.",
+
+	"reading": "Two buffered readers over one handle would each read ahead " +
+		"and lose lines to the other's buffer. The registry hands every " +
+		"read the same reader, which is what makes a single-line read " +
+		"followed by a read-the-rest give back the whole input exactly once.",
 
 	"readLines": "Reading a handle in list context yields every line at once, " +
 		"newlines included. bufio.Scanner strips the newline and reads one line " +

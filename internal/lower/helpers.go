@@ -46,6 +46,8 @@ const (
 	hReplaceFirst     = "replaceFirst"     // s/// without the /g modifier
 	hReplaceFirstFunc = "replaceFirstFunc" // the same, with a computed replacement
 	hReadLines        = "readLines"        // reading a whole handle as a list of lines
+	hReadLine         = "readLine"         // reading one line, or nil at the end
+	hReading          = "reading"          // the buffered reader that owns a handle's unread bytes
 	hReadAll          = "readAll"          // reading a whole handle as one string
 	hReadRecords      = "readRecords"      // reading a whole handle split on a separator
 	hReadChunk        = "readChunk"        // an exact-length read through io.ReadFull

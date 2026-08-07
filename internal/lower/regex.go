@@ -1013,7 +1013,7 @@ func (l *Lowerer) substStmt(n *ast.Subst) []ir.Stmt {
 		out := l.helperCall(hReplaceAhead, ir.TString, mainPat, lookPat,
 			ir.BoolLit(neg), ir.BoolLit(strings.Contains(n.Pattern.Mods, "g")),
 			l.toStr(target, nil), repl)
-		st := assign("=", []ir.Expr{target}, []ir.Expr{out})
+		st := assign("=", []ir.Expr{target}, []ir.Expr{l.assignable(out, typeOrAny(target), nil)})
 		l.setProv(st, n)
 		l.note(st, "The pattern ends in a lookaround, which Go's regexp does not "+
 			"have, so the substitution runs as two patterns: the helper replaces "+
@@ -1035,7 +1035,7 @@ func (l *Lowerer) substStmt(n *ast.Subst) []ir.Stmt {
 	method := "ReplaceAllString"
 	if !global {
 		out := l.helperCall(hReplaceFirst, ir.TString, pattern, l.toStr(target, nil), repl)
-		st := assign("=", []ir.Expr{target}, []ir.Expr{out})
+		st := assign("=", []ir.Expr{target}, []ir.Expr{l.assignable(out, typeOrAny(target), nil)})
 		l.setProv(st, n)
 		l.note(st, "Without /g a substitution replaces only the first match. Go's "+
 			"ReplaceAllString always replaces every match, so a small helper does the "+
@@ -1044,7 +1044,7 @@ func (l *Lowerer) substStmt(n *ast.Subst) []ir.Stmt {
 		return []ir.Stmt{st}
 	}
 	out := ir.CallOf(selector(pattern, method, nil), ir.TString, l.toStr(target, nil), repl)
-	st := assign("=", []ir.Expr{target}, []ir.Expr{out})
+	st := assign("=", []ir.Expr{target}, []ir.Expr{l.assignable(out, typeOrAny(target), nil)})
 	l.setProv(st, n)
 	l.note(st, "s///g becomes ReplaceAllString. The replacement is a template where "+
 		"${1} names the first capture group. Perl writes that as $1; the braces are "+

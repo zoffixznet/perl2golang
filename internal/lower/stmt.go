@@ -574,11 +574,56 @@ func (l *Lowerer) whileStmt(n *ast.While) []ir.Stmt {
 	depth := l.captureDepth()
 	defer l.restoreCaptures(depth)
 
-	cond := l.cond(n.Cond)
+	// The conjuncts of an `and` are lowered one at a time, each keeping its
+	// own setup, because Perl's and stops at the first false: a read in the
+	// second conjunct must not run when the first has already failed.
+	conjs := andChain(n.Cond)
+	var conds []ir.Expr
+	var pres [][]ir.Stmt
+	for _, cj := range conjs {
+		savedPre := l.pre
+		l.pre = nil
+		conds = append(conds, l.cond(cj))
+		pres = append(pres, l.takePre())
+		l.pre = savedPre
+	}
+	laterSetup := false
+	for _, p := range pres[1:] {
+		if len(p) > 0 {
+			laterSetup = true
+		}
+	}
+	if laterSetup && !n.Until {
+		body, label := l.loopBody(n.Body, l.label(n.Label))
+		var lead []ir.Stmt
+		for i, c := range conds {
+			lead = append(lead, pres[i]...)
+			lead = append(lead, &ir.If{
+				Cond: negated(c),
+				Then: &ir.Block{Stmts: []ir.Stmt{&ir.Branch{Kind: "break"}}},
+			})
+		}
+		out := &ir.For{Body: &ir.Block{Stmts: append(lead, body.Stmts...)}, Label: label}
+		l.setProv(out, n)
+		l.note(out, "The loop's condition does work of its own, a read, in a later "+
+			"conjunct, and Perl's `and` stops at the first false. Each test gets its "+
+			"own break so the work only happens when everything before it held, which "+
+			"is the order the original ran in.",
+			"range-is-not-foreach", "statements-vs-expressions")
+		return []ir.Stmt{out}
+	}
+
+	cond := conds[0]
+	for _, c := range conds[1:] {
+		cond = ir.Bin("&&", cond, c, ir.TBool)
+	}
 	if n.Until {
 		cond = negated(cond)
 	}
-	setup := l.takePre()
+	var setup []ir.Stmt
+	for _, p := range pres {
+		setup = append(setup, p...)
+	}
 
 	body, label := l.loopBody(n.Body, l.label(n.Label))
 	out := &ir.For{Cond: cond, Body: body, Label: label}
@@ -598,6 +643,15 @@ func (l *Lowerer) whileStmt(n *ast.While) []ir.Stmt {
 		}), body.Stmts...)}
 	}
 	return []ir.Stmt{out}
+}
+
+// andChain flattens a condition's top-level conjunction into its operands,
+// in evaluation order.
+func andChain(e ast.Expr) []ast.Expr {
+	if n, ok := e.(*ast.BinOp); ok && (n.Op == "and" || n.Op == "&&") {
+		return append(andChain(n.L), andChain(n.R)...)
+	}
+	return []ast.Expr{e}
 }
 
 // drainLoop lowers `while (defined(my $x = shift @queue))`, which is how Perl
@@ -1024,6 +1078,12 @@ func (l *Lowerer) returnStmt(n *ast.Return) []ir.Stmt {
 				// signature is the only place that can be said. Reading the
 				// value out here would turn a missing key into a 0 at the
 				// boundary, where nothing downstream can tell the two apart.
+				if isUndefLiteral(e) && l.pass == 1 {
+					if s.NilResults == nil {
+						s.NilResults = map[int]bool{}
+					}
+					s.NilResults[i] = true
+				}
 				x := l.scalarKeepingNil(e)
 				results = append(results, x)
 				kinds = append(kinds, typeOrAny(x))

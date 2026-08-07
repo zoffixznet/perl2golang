@@ -42,10 +42,41 @@ func callFn(v any, args ...any) any {
 		in = append(in, reflect.Zero(t.In(len(in))))
 	}
 	out := fn.Call(in)
-	if len(out) == 0 {
+	switch len(out) {
+	case 0:
 		return nil
+	case 1:
+		return plain(out[0])
 	}
-	return out[0].Interface()
+	// Several results come back as one list, which is what the sub was
+	// returning in the first place; the caller that wanted them separately
+	// takes the list apart.
+	list := make([]any, len(out))
+	for i, o := range out {
+		list[i] = plain(o)
+	}
+	return list
+}
+
+// plain unwraps the pointer-for-absent convention on the way into a value
+// of no fixed type: a nil pointer becomes nil itself, which reads as
+// absent, and a pointer to a value becomes the value. Leaving the pointer
+// in would make the absence untestable, because an interface holding a nil
+// pointer is not itself nil.
+func plain(v reflect.Value) any {
+	if v.Kind() == reflect.Interface {
+		v = reflect.ValueOf(v.Interface())
+		if !v.IsValid() {
+			return nil
+		}
+	}
+	if v.Kind() == reflect.Pointer {
+		if v.IsNil() {
+			return nil
+		}
+		return v.Elem().Interface()
+	}
+	return v.Interface()
 }
 
 // fitTo makes a value suit the parameter it is going into, so that a number

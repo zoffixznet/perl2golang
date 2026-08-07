@@ -196,6 +196,10 @@ func (l *Lowerer) scalar(e ast.Expr) ir.Expr {
 			l.evalForEffect(el)
 		}
 		return l.scalar(n.Elems[len(n.Elems)-1])
+	case *ast.Readline:
+		if x, ok := l.readlineScalar(n); ok {
+			return x
+		}
 	case *ast.FuncCallRef:
 		// A sub called through a reference where one value is wanted: Perl
 		// hands the context into the sub, so a body ending in split answers
@@ -428,6 +432,34 @@ func (l *Lowerer) listParts(es []ast.Expr) ([]ir.Expr, *ir.Type) {
 			l.spliced[x] = true
 			out = append(out, x)
 			seen = append(seen, elemOf(typeOrAny(x)))
+			return
+		case *ast.FuncCallRef:
+			// A sub reached through a reference flattens what it returns into
+			// the surrounding list, exactly as a named sub would; which sub
+			// answers is only known while the program runs, so what its result
+			// holds is asked then too.
+			x := l.expr(e)
+			if l.pass == 2 && typeOrAny(x).Kind == ir.Any {
+				flat := l.helperCall(hAsList, ir.SliceOf(ir.TAny), x)
+				l.note(flat, "This call reaches its sub through a value, so how many "+
+					"values come back is only known while the program runs. The helper "+
+					"splices in whatever list the call produced, or the single value as "+
+					"a list of one.",
+					"type-assertions-and-switches", "context-is-gone")
+				l.spliced[flat] = true
+				out = append(out, flat)
+				seen = append(seen, ir.TAny)
+				return
+			}
+			if x != nil {
+				out = append(out, x)
+				if xt := x.Type(); xt != nil && xt.Kind == ir.Slice {
+					l.spliced[x] = true
+					seen = append(seen, xt.Elem)
+					return
+				}
+				seen = append(seen, x.Type())
+			}
 			return
 		case *ast.Call:
 			if x, ok := l.multiResultCall(n, true); ok {

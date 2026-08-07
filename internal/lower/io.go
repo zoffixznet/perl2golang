@@ -449,6 +449,12 @@ func (l *Lowerer) handleBinding(e ast.Expr) *Binding {
 // whole handle.
 func (l *Lowerer) readlineExpr(n *ast.Readline) ir.Expr {
 	src := l.readSource(n)
+	// A program that also reads single lines holds each handle's unread
+	// bytes in a buffered reader, and a whole-handle read must continue
+	// from there rather than from the file's own position.
+	if l.mixedReads {
+		src = l.helperCall(hReading, ir.NamedType("*bufio.Reader", "bufio"), src)
+	}
 
 	// What a read stops at is whatever $/ was last set to. Perl carries that
 	// in a global the read consults; here it is known already and becomes part
@@ -499,6 +505,34 @@ func (l *Lowerer) readlineExpr(n *ast.Readline) ir.Expr {
 		"usually the wrong one.",
 		"io-reader-writer", "bufio-scanner-limit")
 	return out
+}
+
+// readlineScalar lowers <$fh> where one value is wanted: a single line, or
+// undef at the end of the input. This is a different operation from the
+// list-context read, which takes everything the handle has.
+//
+// It also commits the whole program to reading through one buffered reader
+// per handle. A single-line read has to buffer to find the newline, and a
+// later read of any shape must continue where it stopped, not where the
+// operating system's file position happens to be.
+func (l *Lowerer) readlineScalar(n *ast.Readline) (ir.Expr, bool) {
+	if l.seps.rec != sepLine {
+		// With $/ changed, the scalar read takes a record or the whole
+		// handle; the existing whole-handle forms stand in for those.
+		return nil, false
+	}
+	if l.pass == 1 {
+		l.mixedReads = true
+	}
+	src := l.readSource(n)
+	out := l.helperCall(hReadLine, nullable(ir.TString), src)
+	l.note(out, "One read takes one line here, where the same operator in list "+
+		"context takes them all: Perl decides by the context, Go by which call "+
+		"this is. The result is a *string so the end of the input reads as nil, "+
+		"which is what undef meant, and every read on this handle shares one "+
+		"buffered reader so none of them steals the others' read-ahead.",
+		"nil-vs-undef", "io-reader-writer", "context-is-gone")
+	return out, true
 }
 
 // readSource resolves what a readline reads from.
@@ -571,6 +605,60 @@ func (l *Lowerer) readLoop(n *ast.While) ([]ir.Stmt, bool) {
 		b.Type = ir.TString
 	}
 	l.observe(b, ir.TString)
+
+	// A program that also reads single lines outside its loops has to read
+	// everything through one buffered reader per handle, or the loop's
+	// read-ahead would swallow lines the single reads were waiting for. The
+	// loop then walks the same readLine call the single reads use.
+	if l.mixedReads {
+		next := l.tmp("next")
+		nextT := nullable(ir.TString)
+		getLine := assign(":=", []ir.Expr{ir.NewIdent(next, nextT)},
+			[]ir.Expr{l.helperCall(hReadLine, nextT, src)})
+		l.setProv(getLine, n)
+		stop := &ir.If{
+			Cond: ir.Bin("==", ir.NewIdent(next, nextT), ir.Nil(nextT), ir.TBool),
+			Then: &ir.Block{Stmts: []ir.Stmt{&ir.Branch{Kind: "break"}}},
+		}
+		deref := ir.Expr(ir.Un("*", ir.NewIdent(next, nextT), ir.TString))
+		if chomped {
+			deref = call("strings", "strings", "TrimSuffix", ir.TString, deref, ir.Str(`"\n"`))
+		}
+		mixDecl := assign(":=", []ir.Expr{ir.NewIdent(b.Go, ir.TString)}, []ir.Expr{deref})
+		l.note(getLine, "This program also reads single lines from its handles, so "+
+			"every read goes through one buffered reader per handle: a scanner of "+
+			"its own here would read ahead and swallow lines the single reads were "+
+			"waiting for. readLine hands back nil at the end of the input, which is "+
+			"what ends the loop.",
+			"io-reader-writer", "nil-vs-undef")
+		if target == nil {
+			l.topicStack = append(l.topicStack, ir.NewIdent(b.Go, ir.TString))
+			defer func() { l.topicStack = l.topicStack[:len(l.topicStack)-1] }()
+		}
+		if l.pass == 1 {
+			l.readLoops++
+		}
+		inner := l.block(body)
+		lead := []ir.Stmt{getLine, stop, mixDecl}
+		if l.pass == 2 && b.Used == 0 && b.Reads == 0 {
+			lead = append(lead, l.discardIfUnused(b)...)
+		}
+		var reset ir.Stmt
+		if l.countsLines {
+			counter := l.lineCounter(n)
+			lead = append(lead, assign("+=", []ir.Expr{ir.NewIdent(counter.Go, ir.TInt)}, []ir.Expr{ir.IntLit("1")}))
+			if l.readLoops > 1 {
+				reset = assign("=", []ir.Expr{ir.NewIdent(counter.Go, ir.TInt)}, []ir.Expr{ir.IntLit("0")})
+			}
+		}
+		inner.Stmts = append(lead, inner.Stmts...)
+		loop := &ir.For{Body: inner, Label: l.label(n.Label)}
+		l.setProv(loop, n)
+		if reset != nil {
+			return []ir.Stmt{reset, loop}, true
+		}
+		return []ir.Stmt{loop}, true
+	}
 
 	text := ir.Expr(ir.CallOf(selector(ir.NewIdent(scanner, scannerType), "Text", nil), ir.TString))
 	if !chomped {

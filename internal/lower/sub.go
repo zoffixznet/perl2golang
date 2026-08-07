@@ -765,6 +765,11 @@ func (l *Lowerer) settleSubs() {
 			if results[i] == nil {
 				results[i] = ir.TAny
 			}
+			// A position some return leaves undef needs room for the
+			// absence, the same rule a container with undef in it follows.
+			if s.NilResults[i] && isScalarKind(results[i]) {
+				results[i] = nullable(results[i])
+			}
 		}
 		s.Results = results
 	}
