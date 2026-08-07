@@ -58,6 +58,25 @@ func (l *Lowerer) binop(n *ast.BinOp) ir.Expr {
 		return l.repeatOp(n)
 
 	case "==", "!=", "<", ">", "<=", ">=":
+		// == on two references compares their addresses: it is Perl's
+		// identity test, `$m == $survivor` asking whether two variables hold
+		// the same object. Reading the operands as numbers would compare two
+		// zeros and answer yes for every pair.
+		if n.Op == "==" || n.Op == "!=" {
+			lp, rp := l.peek(n.L), l.peek(n.R)
+			lt, rt := typeOrAny(lp), typeOrAny(rp)
+			identity := func(t *ir.Type) bool {
+				return t.Kind == ir.Pointer || (t.Kind == ir.Named && l.classOf(t) != nil)
+			}
+			if identity(lt) && identity(rt) {
+				out := ir.Bin(n.Op, l.scalar(n.L), l.scalar(n.R), ir.TBool)
+				l.note(out, "Perl's == on two references compares addresses, which is "+
+					"the identity question: are these the same object. Go's == on two "+
+					"pointers asks exactly that.",
+					"pointers-vs-references")
+				return out
+			}
+		}
 		lx, rx, _ := l.numPair(n.L, n.R)
 		return ir.Bin(n.Op, lx, rx, ir.TBool)
 

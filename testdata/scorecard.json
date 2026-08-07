@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T16:48:10Z",
+  "recorded": "2026-08-15T16:53:43Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -199,8 +199,8 @@
           "skip": 0
         },
         "equivalent": {
-          "pass": 15,
-          "fail": 10,
+          "pass": 17,
+          "fail": 8,
           "skip": 0
         },
         "translated": {
@@ -215,8 +215,8 @@
         }
       },
       "equivalent_annotated": {
-        "pass": 15,
-        "fail": 10,
+        "pass": 17,
+        "fail": 8,
         "skip": 0
       },
       "quality": {
@@ -244,8 +244,8 @@
         "skip": 0
       },
       "equivalent": {
-        "pass": 144,
-        "fail": 61,
+        "pass": 146,
+        "fail": 59,
         "skip": 0
       },
       "honest": {
@@ -265,8 +265,8 @@
       }
     },
     "equivalent_annotated": {
-      "pass": 144,
-      "fail": 61,
+      "pass": 146,
+      "fail": 59,
       "skip": 0
     },
     "quality": {
@@ -8723,8 +8723,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 17, byte 620: got \"6: non-numeric field\\n\\nmemory hog...\", wanted \"7: non-numeric field\\n\\nmemory hog...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -8738,8 +8737,7 @@
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 17, byte 620: got \"6: non-numeric field\\n\\nmemory hog...\", wanted \"7: non-numeric field\\n\\nmemory hog...\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
@@ -9174,8 +9172,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 4, byte 70: got \"* C001   Robert Martinez        ...\", wanted \"- C001   Robert Martinez        ...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -9188,8 +9185,7 @@
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 4, byte 70: got \"* C001   Robert Martinez        ...\", wanted \"- C001   Robert Martinez        ...\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,

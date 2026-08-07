@@ -292,6 +292,10 @@ type Lowerer struct {
 	// first pass. More than one means they share the line counter and each
 	// has to start it again.
 	readLoops int
+	// readLoopSeq numbers the loops as the current pass emits them, so only
+	// the second and later ones reset the shared counter: a reset before the
+	// first would erase what a single read above it already counted.
+	readLoopSeq int
 	// traps records that the program catches a failure with eval, which
 	// changes what die has to compile into. It is discovered on the first
 	// pass and acted on by the second.
@@ -461,6 +465,7 @@ func Lower(res parser.Result, src []byte, opts Options) *Result {
 	l.pass = 2
 	l.scope = newScope(nil)
 	l.seps = defaultSeparators()
+	l.readLoopSeq = 0
 	l.tmpSeq = 0
 	l.tmpNames = newNameSet()
 	for _, b := range l.decls {

@@ -532,6 +532,23 @@ func (l *Lowerer) readlineScalar(n *ast.Readline) (ir.Expr, bool) {
 		"which is what undef meant, and every read on this handle shares one "+
 		"buffered reader so none of them steals the others' read-ahead.",
 		"nil-vs-undef", "io-reader-writer", "context-is-gone")
+	// A program that reads $. counts every successful read, this one
+	// included, so the line is named and counted before it is used.
+	if l.countsLines {
+		name := l.tmp("line")
+		nt := nullable(ir.TString)
+		get := assign(":=", []ir.Expr{ir.NewIdent(name, nt)}, []ir.Expr{out})
+		l.setProv(get, n)
+		l.emit(get)
+		counter := l.lineCounter(n)
+		l.emit(&ir.If{
+			Cond: ir.Bin("!=", ir.NewIdent(name, nt), ir.Nil(nt), ir.TBool),
+			Then: &ir.Block{Stmts: []ir.Stmt{
+				assign("+=", []ir.Expr{ir.NewIdent(counter.Go, ir.TInt)}, []ir.Expr{ir.IntLit("1")}),
+			}},
+		})
+		return ir.NewIdent(name, nt), true
+	}
 	return out, true
 }
 
@@ -638,6 +655,7 @@ func (l *Lowerer) readLoop(n *ast.While) ([]ir.Stmt, bool) {
 		if l.pass == 1 {
 			l.readLoops++
 		}
+		l.readLoopSeq++
 		inner := l.block(body)
 		lead := []ir.Stmt{getLine, stop, mixDecl}
 		if l.pass == 2 && b.Used == 0 && b.Reads == 0 {
@@ -647,7 +665,7 @@ func (l *Lowerer) readLoop(n *ast.While) ([]ir.Stmt, bool) {
 		if l.countsLines {
 			counter := l.lineCounter(n)
 			lead = append(lead, assign("+=", []ir.Expr{ir.NewIdent(counter.Go, ir.TInt)}, []ir.Expr{ir.IntLit("1")}))
-			if l.readLoops > 1 {
+			if l.readLoops > 1 && l.readLoopSeq > 1 {
 				reset = assign("=", []ir.Expr{ir.NewIdent(counter.Go, ir.TInt)}, []ir.Expr{ir.IntLit("0")})
 			}
 		}
@@ -684,6 +702,7 @@ func (l *Lowerer) readLoop(n *ast.While) ([]ir.Stmt, bool) {
 	if l.pass == 1 {
 		l.readLoops++
 	}
+	l.readLoopSeq++
 
 	inner := l.block(body)
 	lead := []ir.Stmt{lineDecl}
@@ -700,7 +719,7 @@ func (l *Lowerer) readLoop(n *ast.While) ([]ir.Stmt, bool) {
 			"next to the read, is one line of code and removes the question of which "+
 			"handle the number belongs to.")
 		lead = append(lead, bump)
-		if l.readLoops > 1 {
+		if l.readLoops > 1 && l.readLoopSeq > 1 {
 			// More than one loop shares the counter, so each one starts it
 			// again. Perl does the same when the previous handle was closed.
 			reset = assign("=", []ir.Expr{ir.NewIdent(counter.Go, ir.TInt)}, []ir.Expr{ir.IntLit("0")})
