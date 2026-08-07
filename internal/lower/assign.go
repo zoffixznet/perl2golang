@@ -1668,6 +1668,14 @@ func (l *Lowerer) observeTargetValue(lhs ast.Expr, t *ir.Type) {
 		}
 		return
 	case *ast.HashIndex:
+		// A key that resolved to a struct field is the field itself: what the
+		// write puts there is evidence about that field, not about a map.
+		// `$slot->{spend} += $total` widens Spend to float when $total is
+		// one, instead of truncating every addition.
+		if f, ok := l.fieldAt[lhs]; ok && f != nil {
+			l.observeField(f, t)
+			return
+		}
 		if b := l.hashBindingOf(n); b != nil {
 			l.observeElem(b, t)
 			return

@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T16:16:53Z",
+  "recorded": "2026-08-15T16:27:58Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -111,8 +111,8 @@
           "skip": 0
         },
         "equivalent": {
-          "pass": 23,
-          "fail": 14,
+          "pass": 24,
+          "fail": 13,
           "skip": 0
         },
         "translated": {
@@ -127,8 +127,8 @@
         }
       },
       "equivalent_annotated": {
-        "pass": 23,
-        "fail": 14,
+        "pass": 24,
+        "fail": 13,
         "skip": 0
       },
       "quality": {
@@ -244,8 +244,8 @@
         "skip": 0
       },
       "equivalent": {
-        "pass": 136,
-        "fail": 68,
+        "pass": 137,
+        "fail": 67,
         "skip": 0
       },
       "honest": {
@@ -265,8 +265,8 @@
       }
     },
     "equivalent_annotated": {
-      "pass": 136,
-      "fail": 68,
+      "pass": 137,
+      "fail": 67,
       "skip": 0
     },
     "quality": {
@@ -5714,8 +5714,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 2, byte 69: got \"00 no\\nGrace  silver       1     ...\", wanted \"25 no\\nGrace  silver       1     ...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -5729,8 +5728,7 @@
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 2, byte 69: got \"00 no\\nGrace  silver       1     ...\", wanted \"25 no\\nGrace  silver       1     ...\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
