@@ -881,8 +881,11 @@ func (l *Lowerer) sprintfCall(n *ast.Call) ir.Expr {
 	}
 	format, ok := staticString(args[0])
 	if !ok {
-		var vals []ir.Expr
-		for _, a := range args {
+		// The format itself is computed, so the helper interprets it at run
+		// time. Its first parameter is text, whatever the format was stored
+		// as along the way.
+		vals := []ir.Expr{l.toStr(l.expr(args[0]), args[0])}
+		for _, a := range args[1:] {
 			vals = append(vals, l.expr(a))
 		}
 		return l.helperCall(hSprintf, ir.TString, vals...)

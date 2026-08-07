@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T16:43:19Z",
+  "recorded": "2026-08-15T16:48:10Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -189,8 +189,8 @@
       "entries": 25,
       "stages": {
         "compiled": {
-          "pass": 23,
-          "fail": 2,
+          "pass": 24,
+          "fail": 1,
           "skip": 0
         },
         "emitted": {
@@ -199,8 +199,8 @@
           "skip": 0
         },
         "equivalent": {
-          "pass": 14,
-          "fail": 11,
+          "pass": 15,
+          "fail": 10,
           "skip": 0
         },
         "translated": {
@@ -215,8 +215,8 @@
         }
       },
       "equivalent_annotated": {
-        "pass": 14,
-        "fail": 11,
+        "pass": 15,
+        "fail": 10,
         "skip": 0
       },
       "quality": {
@@ -234,8 +234,8 @@
     "entries": 246,
     "stages": {
       "compiled": {
-        "pass": 241,
-        "fail": 5,
+        "pass": 242,
+        "fail": 4,
         "skip": 0
       },
       "emitted": {
@@ -244,8 +244,8 @@
         "skip": 0
       },
       "equivalent": {
-        "pass": 143,
-        "fail": 62,
+        "pass": 144,
+        "fail": 61,
         "skip": 0
       },
       "honest": {
@@ -265,8 +265,8 @@
       }
     },
     "equivalent_annotated": {
-      "pass": 143,
-      "fail": 62,
+      "pass": 144,
+      "fail": 61,
       "skip": 0
     },
     "quality": {
@@ -9355,15 +9355,13 @@
       "kind": "convert",
       "stages": {
         "compiled": {
-          "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:204:21: cannot use rec2.Template (variable of interface type any) as string value in argument to sprintf: need type assertion"
+          "outcome": "pass"
         },
         "emitted": {
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "the generated program did not compile"
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -9377,8 +9375,7 @@
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "the generated program did not compile"
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,

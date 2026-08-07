@@ -1047,6 +1047,7 @@ func (l *Lowerer) returnStmt(n *ast.Return) []ir.Stmt {
 				// slice with len.
 				if i == last && l.producesList(e) {
 					x := l.list(e)
+					l.spliced[x] = true
 					results = append(results, x)
 					kinds = append(kinds, typeOrAny(x))
 					if l.pass == 1 {
@@ -1090,6 +1091,23 @@ func (l *Lowerer) returnStmt(n *ast.Return) []ir.Stmt {
 			}
 		}
 	}
+	// A closure that shares a slot with others answers with one value of no
+	// fixed type, and a return with several values folds them into one list,
+	// which the caller takes apart again. Trimming to the first would throw
+	// the rest away silently.
+	if s != nil && s.Uniform && len(results) > 1 {
+		one := l.listValue(results, ir.TAny)
+		if l.pass == 2 {
+			l.note(one, "This sub shares a table or a variable with other "+
+				"subs, so they all answer with one value of no fixed type. A return "+
+				"of several values folds them into one list, and the caller that "+
+				"wrote my ($a, $b) = ... takes the list apart again.",
+				"context-is-gone", "multiple-return-values")
+		}
+		results = []ir.Expr{one}
+		kinds = []*ir.Type{ir.SliceOf(ir.TAny)}
+	}
+
 	if l.pass == 1 {
 		s.ResultEvidence = append(s.ResultEvidence, kinds)
 	}
