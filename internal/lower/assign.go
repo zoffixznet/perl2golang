@@ -1357,6 +1357,40 @@ func (l *Lowerer) growPath(n *ast.Index) (pre []ir.Stmt, place ir.Expr, elem *ir
 		if base.Sigil != '$' {
 			return nil, nil, nil, false
 		}
+		// `$grid->[$r]` reaches through a scalar holding an array reference,
+		// which is a slice-typed variable here: the same growth applies, and
+		// it writes back to the same variable.
+		if n.Arrow {
+			b := l.lookup('$', base.Name, base)
+			if b == nil || l.aliases[b] != nil {
+				return nil, nil, nil, false
+			}
+			if t := typeOr(b.Type, ir.TAny); t.Kind != ir.Slice {
+				return nil, nil, nil, false
+			}
+			if b.Kind == KindParam {
+				// A slice parameter shares its elements with the caller but
+				// not its length: growing it here grows this function's
+				// copy of the header and nothing else. Perl's reference
+				// reached the caller's array; this is the one part of that
+				// which does not carry, and it deserves saying.
+				l.approximate(n, "P2G5562", "growing an array through a reference parameter",
+					"growth inside this function does not reach the caller",
+					"The caller's array and this parameter share their elements, so "+
+						"writing an element the array already has is visible outside. "+
+						"Growing is different: a Go slice parameter is a copy of the "+
+						"length and a pointer, so new room made here belongs to this "+
+						"function alone, where Perl's reference grew the caller's array.",
+					"Return the grown slice and assign it at the call site, or pass "+
+						"*[]T when the function's job is to grow it.",
+					"slice-aliasing-and-copy", "pointers-vs-references")
+			}
+			container = l.identFor(b)
+			store = func(x ir.Expr) ir.Stmt {
+				return assign("=", []ir.Expr{l.identFor(b)}, []ir.Expr{x})
+			}
+			break
+		}
 		b := l.arrayBindingOf(n)
 		if b == nil || l.aliases[b] != nil {
 			return nil, nil, nil, false
@@ -1368,11 +1402,22 @@ func (l *Lowerer) growPath(n *ast.Index) (pre []ir.Stmt, place ir.Expr, elem *ir
 		}
 		alwaysRoom = withinLength(b, n.Idx)
 	case *ast.Index:
-		outer, up, _, found := l.growPath(base)
+		outer, up, upElem, found := l.growPath(base)
 		if !found {
 			return nil, nil, nil, false
 		}
 		pre = append(pre, outer...)
+		if upElem != nil && upElem.Kind == ir.Any {
+			// The level above stores its rows as `any`, so the row is read
+			// through an assertion, and the growth statement writes the
+			// grown row back through the same element. The final write then
+			// reaches the shared backing array through a fresh assertion.
+			container = l.tolerantAs(up, ir.SliceOf(ir.TAny))
+			store = func(x ir.Expr) ir.Stmt {
+				return assign("=", []ir.Expr{up}, []ir.Expr{x})
+			}
+			break
+		}
 		container = up
 		store = func(x ir.Expr) ir.Stmt {
 			return assign("=", []ir.Expr{up}, []ir.Expr{x})

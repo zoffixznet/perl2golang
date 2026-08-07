@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T16:06:15Z",
+  "recorded": "2026-08-15T16:16:53Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -90,10 +90,10 @@
       "quality": {
         "todos": 17,
         "symbols": 1506,
-        "symbols_typed": 1319,
+        "symbols_typed": 1320,
         "refusals": 17,
         "approximations": 544,
-        "crashes": 1
+        "crashes": 0
       }
     },
     {
@@ -136,8 +136,8 @@
         "symbols": 908,
         "symbols_typed": 710,
         "refusals": 45,
-        "approximations": 313,
-        "crashes": 1
+        "approximations": 316,
+        "crashes": 0
       }
     },
     {
@@ -272,19 +272,19 @@
     "quality": {
       "todos": 107,
       "symbols": 4015,
-      "symbols_typed": 3458,
+      "symbols_typed": 3459,
       "refusals": 108,
-      "approximations": 1232,
-      "crashes": 2
+      "approximations": 1235,
+      "crashes": 0
     }
   },
   "quality": {
     "todos": 107,
     "symbols": 4015,
-    "symbols_typed": 3458,
+    "symbols_typed": 3459,
     "refusals": 108,
-    "approximations": 1232,
-    "crashes": 2
+    "approximations": 1235,
+    "crashes": 0
   },
   "entries": [
     {
@@ -2021,7 +2021,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "exit status 2, wanted 0; stdout differs: line 8, byte 131: got \"context\\n\", wanted \"scalar context\\nvoid context\\nroot...\"; stderr differs: unexpected \"panic: runtime error: invalid memory address or nil pointer dereferen...\""
+          "reason": "stdout differs: line 8, byte 131: got \"context\\nroot\\n  etc\\n    passwd\\n  ...\", wanted \"scalar context\\nvoid context\\nroot...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -2031,21 +2031,20 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "3 variables left dynamic out of 17"
+          "reason": "2 variables left dynamic out of 17"
         }
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "exit status 2, wanted 0; stdout differs: line 8, byte 131: got \"context\\n\", wanted \"scalar context\\nvoid context\\nroot...\"; stderr differs: unexpected \"panic: runtime error: invalid memory address or nil pointer dereferen...\""
+        "reason": "stdout differs: line 8, byte 131: got \"context\\nroot\\n  etc\\n    passwd\\n  ...\", wanted \"scalar context\\nvoid context\\nroot...\""
       },
       "quality": {
         "todos": 0,
         "symbols": 17,
-        "symbols_typed": 14,
+        "symbols_typed": 15,
         "refusals": 0,
         "approximations": 7,
-        "crashes": 1,
-        "panic": "panic: runtime error: invalid memory address or nil pointer dereference"
+        "crashes": 0
       }
     },
     {
@@ -6849,7 +6848,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "exit status 2, wanted 0; stdout differs: 177 byte(s) missing after line 1, expected \"--- the grid ---\\n   1  2  3  4\\n ...\"; stderr differs: unexpected \"panic: runtime error: index out of range [0] with length 0 ...\""
+          "reason": "stdout differs: line 6, byte 96: got \"3 rows, last row 4 wide\\nthe corn...\", wanted \"5 rows, last row 6 wide\\nthe corn...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -6864,16 +6863,15 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "exit status 2, wanted 0; stdout differs: 177 byte(s) missing after line 1, expected \"--- the grid ---\\n   1  2  3  4\\n ...\"; stderr differs: unexpected \"panic: runtime error: index out of range [0] with length 0 ...\""
+        "reason": "stdout differs: line 6, byte 96: got \"3 rows, last row 4 wide\\nthe corn...\", wanted \"5 rows, last row 6 wide\\nthe corn...\""
       },
       "quality": {
         "todos": 0,
         "symbols": 14,
         "symbols_typed": 10,
         "refusals": 0,
-        "approximations": 4,
-        "crashes": 1,
-        "panic": "panic: runtime error: index out of range [0] with length 0"
+        "approximations": 7,
+        "crashes": 0
       }
     },
     {

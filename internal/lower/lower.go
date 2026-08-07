@@ -149,6 +149,11 @@ type Lowerer struct {
 	// records holds the struct synthesised for each set of literal hash keys
 	// the file uses as a record, so two literals of one shape share a type.
 	records map[string]*Class
+	// recordStack is the chain of record types whose literals are being
+	// built, outermost first. A literal nested inside one whose keys are a
+	// subset of its fields is the same kind of thing with fields left off,
+	// a leaf node of a tree being the usual case, and takes that type.
+	recordStack []*Class
 	// recordEscaped marks record types whose values were also stored where
 	// only `any` fits, so readers on the far side expect a map. Their
 	// literals are built as maps from the sweep after the escape is seen.

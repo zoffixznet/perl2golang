@@ -332,6 +332,9 @@ const (
 	ArrayLengthAssignment Code = "P2G5560"
 	// AssignPastEnd: an assignment writes past the end of an array.
 	AssignPastEnd Code = "P2G5561"
+	// GrowThroughParam: growing an array through a reference parameter stays
+	// inside the function.
+	GrowThroughParam Code = "P2G5562"
 	// EachIterator: `each` walks a hash through state kept on the hash.
 	EachIterator Code = "P2G5570"
 	// SpliceReturn: `splice` returns the elements it removed.
@@ -1632,6 +1635,15 @@ var catalogue = map[Code]Entry{
 		Cost:      "an index Perl filled with undef stops the program instead",
 		Converted: "the emitted code writes at the index, which needs the position to be there already",
 		Concepts:  []string{"slices-not-arrays"},
+	},
+	GrowThroughParam: {
+		Severity:  report.Warn,
+		Message:   "growing an array through a reference parameter grows a local copy of the slice, not the caller's array",
+		Short:     "growth stays inside the function",
+		Advice:    "return the grown slice and assign it at the call site, or pass `*[]T` when the function's job is to grow it",
+		Cost:      "room Perl's reference made in the caller's array exists only inside the function here",
+		Converted: "the emitted code grows the parameter, so element writes within the old length still reach the caller",
+		Concepts:  []string{"slice-aliasing-and-copy", "pointers-vs-references"},
 	},
 	EachIterator: {
 		Severity:  report.Warn,

@@ -30,6 +30,26 @@ import (
 // Two literals with the same set of keys share one type, which is what makes
 // a constructor function and the records it builds agree.
 func (l *Lowerer) recordFor(h *ast.AnonHash, hint string) *Class {
+	// A literal built inside another record whose fields cover its keys is
+	// the same kind of thing with some fields left off: the leaf of a tree
+	// spells only its name where the inner nodes also spell their children.
+	// Giving it the enclosing type keeps the container one type, and the
+	// missing fields are the zero values, which is what an absent key reads
+	// as everywhere else in the struct. This check comes first because a
+	// leaf may be too small to qualify as a record on its own.
+	if len(l.recordStack) > 0 {
+		if keys, ok := literalKeys(h); ok {
+			for i := len(l.recordStack) - 1; i >= 0; i-- {
+				c := l.recordStack[i]
+				if l.recordEscaped[c] {
+					continue
+				}
+				if coversKeys(c, keys) {
+					return c
+				}
+			}
+		}
+	}
 	keys, ok := recordKeys(h)
 	if !ok {
 		return nil
@@ -50,6 +70,17 @@ func (l *Lowerer) recordFor(h *ast.AnonHash, hint string) *Class {
 	}
 	l.records[shape] = c
 	return c
+}
+
+// coversKeys reports whether every one of the keys is already a field of
+// the record class.
+func coversKeys(c *Class, keys []string) bool {
+	for _, k := range keys {
+		if c.field(k) == nil {
+			return false
+		}
+	}
+	return true
 }
 
 // escapeLostRecords finds record types a binding's settled type can no
@@ -307,11 +338,21 @@ func (l *Lowerer) recordHash(rhs ast.Expr, hint string) (*Class, *ast.AnonHash, 
 // recordKeys reads the key list of a hash literal, reporting false unless
 // every key is written out in the source and there are at least two.
 func recordKeys(h *ast.AnonHash) ([]string, bool) {
+	keys, ok := literalKeys(h)
+	if !ok || len(keys) < 2 {
+		return nil, false
+	}
+	return keys, true
+}
+
+// literalKeys reads the key list of a hash literal whose keys are all
+// written out, however few there are, sorted.
+func literalKeys(h *ast.AnonHash) ([]string, bool) {
 	var flat []ast.Expr
 	for _, e := range h.Elems {
 		flat = append(flat, flatten(e)...)
 	}
-	if len(flat) < 4 || len(flat)%2 != 0 {
+	if len(flat) == 0 || len(flat)%2 != 0 {
 		return nil, false
 	}
 	keys := make([]string, 0, len(flat)/2)
@@ -440,7 +481,9 @@ func (l *Lowerer) recordLit(c *Class, h *ast.AnonHash) ir.Expr {
 		l.recordUsed = map[*Class]bool{}
 	}
 	l.recordUsed[c] = true
+	l.recordStack = append(l.recordStack, c)
 	out := l.structLit(c, h)
+	l.recordStack = l.recordStack[:len(l.recordStack)-1]
 	l.note(out, "The keys of this hash are written into the program and never vary, "+
 		"and no one Go type covers all its values, so it is a record rather than a "+
 		"collection. A struct gives every field its own type, costs no lookup, and "+
