@@ -125,4 +125,6 @@ trailer TRL
 
 One caution when mixing layers: a position belongs to the underlying file, and a `bufio.Scanner` or `bufio.Reader` reads ahead of what you have consumed. Seek the `*os.File` first, then wrap it — seeking under an active buffered reader leaves the buffer describing bytes from the old position.
 
+The same read-ahead is why a program that reads one handle in several shapes needs **one buffered reader per handle, made once and used everywhere**. Perl let you write `my $header = <$fh>` and then `while (<$fh>)` and then a slurp of the rest, and every read continued exactly where the last stopped, because the position was the handle's own. Wrap the same `*os.File` in a fresh `bufio.Reader` or `Scanner` at each of those sites and each wrapper reads ahead into its private buffer: the header read buffers 4KB, the loop's scanner starts from wherever the file position really is, and lines silently vanish into the first buffer. The shape that works is to make the `bufio.Reader` next to the `Open` and pass *it* around — it is an `io.Reader` too, so everything downstream accepts it — and to read single lines with `r.ReadString('\n')`, which keeps the newline the way `<$fh>` did and returns what it has plus an error at the end of input.
+
 Further reading: https://pkg.go.dev/io#Reader

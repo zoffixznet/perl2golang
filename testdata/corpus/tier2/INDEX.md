@@ -144,6 +144,7 @@ Two entries exit non-zero on purpose: **27** (65) and **32** (1). The rest exit 
 | 95 | `95-lookahead-at-the-tail` | Every pattern ends in a lookaround, which is the position that converts | commify `(?=\d)`, `(?=\d{10}$)`, `(?=/|$)`, negative `(?!\.?$)`, a counted lookahead substitution |
 | 96 | `96-names-the-language-took` | Subs named fmt, json and toText, and one buried in a block | identifier collisions with imports and emitted helpers, hoisting a nested named sub |
 | 97 | `97-qualified-package-variables` | One hash spelled %TALLY inside its package and %Counter::TALLY outside | `our` with an initialiser, qualified reads and writes from main, package state shared with the script |
+| 98 | `98-reads-of-every-shape` | Four shapes of read through one handle, sharing one position | a scalar `<STDIN>`, a line loop, a mid-loop continuation read behind `and`, `do { local $/; <STDIN> }` for the rest |
 
 ## Coverage map
 

@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T16:41:20Z",
+  "recorded": "2026-08-15T16:43:19Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -54,45 +54,45 @@
     },
     {
       "tier": "tier2",
-      "entries": 97,
+      "entries": 98,
       "stages": {
         "compiled": {
-          "pass": 96,
+          "pass": 97,
           "fail": 1,
           "skip": 0
         },
         "emitted": {
-          "pass": 97,
+          "pass": 98,
           "fail": 0,
           "skip": 0
         },
         "equivalent": {
-          "pass": 62,
+          "pass": 63,
           "fail": 35,
           "skip": 0
         },
         "translated": {
-          "pass": 89,
+          "pass": 90,
           "fail": 8,
           "skip": 0
         },
         "typed": {
-          "pass": 51,
+          "pass": 52,
           "fail": 46,
           "skip": 0
         }
       },
       "equivalent_annotated": {
-        "pass": 62,
+        "pass": 63,
         "fail": 35,
         "skip": 0
       },
       "quality": {
         "todos": 17,
-        "symbols": 1506,
-        "symbols_typed": 1320,
+        "symbols": 1515,
+        "symbols_typed": 1329,
         "refusals": 17,
-        "approximations": 541,
+        "approximations": 543,
         "crashes": 0
       }
     },
@@ -231,20 +231,20 @@
   ],
   "total": {
     "tier": "TOTAL",
-    "entries": 245,
+    "entries": 246,
     "stages": {
       "compiled": {
-        "pass": 240,
+        "pass": 241,
         "fail": 5,
         "skip": 0
       },
       "emitted": {
-        "pass": 245,
+        "pass": 246,
         "fail": 0,
         "skip": 0
       },
       "equivalent": {
-        "pass": 142,
+        "pass": 143,
         "fail": 62,
         "skip": 0
       },
@@ -254,36 +254,36 @@
         "skip": 1
       },
       "translated": {
-        "pass": 213,
+        "pass": 214,
         "fail": 32,
         "skip": 0
       },
       "typed": {
-        "pass": 117,
+        "pass": 118,
         "fail": 128,
         "skip": 0
       }
     },
     "equivalent_annotated": {
-      "pass": 142,
+      "pass": 143,
       "fail": 62,
       "skip": 0
     },
     "quality": {
       "todos": 107,
-      "symbols": 4015,
-      "symbols_typed": 3461,
+      "symbols": 4024,
+      "symbols_typed": 3470,
       "refusals": 108,
-      "approximations": 1229,
+      "approximations": 1231,
       "crashes": 0
     }
   },
   "quality": {
     "todos": 107,
-    "symbols": 4015,
-    "symbols_typed": 3461,
+    "symbols": 4024,
+    "symbols_typed": 3470,
     "refusals": 108,
-    "approximations": 1229,
+    "approximations": 1231,
     "crashes": 0
   },
   "entries": [
@@ -5548,6 +5548,45 @@
       }
     },
     {
+      "tier": "tier2",
+      "name": "98-reads-of-every-shape",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "pass"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "pass"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 9,
+        "symbols_typed": 9,
+        "refusals": 0,
+        "approximations": 2,
+        "crashes": 0
+      },
+      "notes": [
+        "the directory has a stdin file but the manifest says it has none"
+      ]
+    },
+    {
       "tier": "tier3",
       "name": "01-inventory-manager",
       "kind": "convert",
@@ -9537,6 +9576,7 @@
     }
   ],
   "notes": [
+    "tier2/98-reads-of-every-shape: the directory has a stdin file but the manifest says it has none",
     "tier4/41-local-reaches-a-called-sub: the directory has a files directory but the manifest says it has none"
   ]
 }
