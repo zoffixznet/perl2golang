@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T17:11:23Z",
+  "recorded": "2026-08-15T17:14:07Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -199,8 +199,8 @@
           "skip": 0
         },
         "equivalent": {
-          "pass": 19,
-          "fail": 6,
+          "pass": 20,
+          "fail": 5,
           "skip": 0
         },
         "translated": {
@@ -215,8 +215,8 @@
         }
       },
       "equivalent_annotated": {
-        "pass": 19,
-        "fail": 6,
+        "pass": 20,
+        "fail": 5,
         "skip": 0
       },
       "quality": {
@@ -244,8 +244,8 @@
         "skip": 0
       },
       "equivalent": {
-        "pass": 149,
-        "fail": 57,
+        "pass": 150,
+        "fail": 56,
         "skip": 0
       },
       "honest": {
@@ -265,8 +265,8 @@
       }
     },
     "equivalent_annotated": {
-      "pass": 149,
-      "fail": 57,
+      "pass": 150,
+      "fail": 56,
       "skip": 0
     },
     "quality": {
@@ -9018,8 +9018,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 8, byte 442: got \"0 field : 0 chars\\n  record 0 fie...\", wanted \"3 field notes: 31 chars\\n  record...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -9033,8 +9032,7 @@
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 8, byte 442: got \"0 field : 0 chars\\n  record 0 fie...\", wanted \"3 field notes: 31 chars\\n  record...\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,

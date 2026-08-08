@@ -182,6 +182,12 @@ func (l *Lowerer) formatValues(args []ast.Expr, format string, at ast.Node) []ir
 			if x == nil {
 				continue
 			}
+			// A dereferenced array whose type did not resolve still flattens
+			// into the argument list, filling as many verbs as it holds; the
+			// helper asks the value for its elements when the program runs.
+			if l.pass == 2 && typeOrAny(x).Kind == ir.Any && certainlyList(one) {
+				x = l.helperCall(hAsList, ir.SliceOf(ir.TAny), x)
+			}
 			if t := typeOrAny(x); t.Kind == ir.Slice && flattensInList(one) {
 				if lit, ok := x.(*ir.CompositeLit); ok {
 					vals = append(vals, lit.Elems...)
