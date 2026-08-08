@@ -146,6 +146,7 @@ Two entries exit non-zero on purpose: **27** (65) and **32** (1). The rest exit 
 | 97 | `97-qualified-package-variables` | One hash spelled %TALLY inside its package and %Counter::TALLY outside | `our` with an initialiser, qualified reads and writes from main, package state shared with the script |
 | 98 | `98-reads-of-every-shape` | Four shapes of read through one handle, sharing one position | a scalar `<STDIN>`, a line loop, a mid-loop continuation read behind `and`, `do { local $/; <STDIN> }` for the rest |
 | 99 | `99-targets-and-topics` | List-assignment targets of every shape, and the arrow that keeps $_->[0] off $_[0] | inline `my` mid-list, a hash element target, `@+{qw(...)}`, `$_->[0]` in map vs `$_[0]` in a sub |
+| 100 | `100-a-byte-level-decoder` | A Q-encoding decoder built from multi-statement /e, byte-wise chr, and interpolated named captures | `s{...}{ several; statements; }ge`, `chr hex $1` building UTF-8 bytes, `"$+{key}"`, undef placeholders in a split unpack |
 
 ## Coverage map
 
