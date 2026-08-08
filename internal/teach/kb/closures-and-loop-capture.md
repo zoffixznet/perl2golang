@@ -149,11 +149,29 @@ my %actions = (
 
 There are three ways across, in increasing order of how much Go you get for the work.
 
-The mechanical one gives every handler the same signature: `map[string]func(...any) any`. It compiles, it keeps the table, and it throws away everything the compiler could have checked. Each handler reads its arguments out of a slice and returns a value nobody can use without an assertion. Take this when porting and move on; it is the one a converter can produce on its own.
+The mechanical one gives every handler the widest signature there is: `map[string]func(...any) any`. It compiles, it keeps the table, and it throws away everything the compiler could have checked: each handler reads its arguments out of a slice and returns a value nobody can use without an assertion. A table falls all the way to this only when the handlers genuinely cannot agree, a body that walks `@_` whole or shifts from it mid-loop, or arguments of irreconcilable types flowing to the same position.
 
-The next one splits the table by shape. Most real tables are less varied than they look: three handlers take a string and return a string, one takes two, one returns nothing. `map[string]func(string) string` for the three, called directly, with the odd ones out written as plain functions, is usually smaller *and* clearer than the original.
+The one to expect from a conversion is the *shared signature*: the narrowest one every handler in the table can carry. Most real tables are less varied than they look. In the table above, every position ever passed holds a string, the widest handler takes two arguments, and the results disagree, text here, a number there, so the table becomes:
 
-The one Go actually wants is an interface:
+```go
+audit := []string{}
+actions := map[string]func(string, string) any{
+	"upper":   func(s, _ string) any { return strings.ToUpper(s) },
+	"tag":     func(s, t string) any { return "[" + t + "] " + s },
+	"note":    func(s, _ string) any { audit = append(audit, s); return nil },
+	"measure": func(s, _ string) any { return len(s) },
+}
+fmt.Println(actions["tag"]("body", "warn"))
+fmt.Println(actions["measure"]("four", ""), audit)
+```
+```
+[warn] body
+4 []
+```
+
+The signature is a group decision, so read it as one. A blank parameter, the `_` in `upper`, is Go's way of writing "this argument arrives and nothing here wants it": Perl let the extra value sit unread in `@_`, and the blank says the same thing out loud. The cost runs the other way too: a call that passed fewer arguments than the widest handler reads has its missing positions filled with zero values, `actions["measure"]("four", "")` above, because Go will not leave a parameter unfilled where Perl would have left undef. The parameters are typed because the *calls* typed them, every call site passes strings, which matters for a handler like `note` whose body never says what it takes. And the `any` result is the honest leftover: `measure` answers with a number where the others answer with text, no single Go type covers both, so every caller that uses a result still needs to know which handler it called. Where the results do agree, the result type is concrete too and the `any` disappears. A call that hands the table a whole list at once, `$handler->(@args)`, costs the fixed positions, since the list's length is only known at run time; the table then keeps a variadic slice, still typed by what flows through it: `map[string]func(...string) any`.
+
+The shared signature is where a conversion can take you. The step worth taking by hand, when the disagreement is real rather than incidental, is the interface:
 
 ```go
 type Action interface {

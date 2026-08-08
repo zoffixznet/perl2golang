@@ -1,0 +1,8 @@
+plain: report
+banner: [report    ]
+shout: REPORT!
+log: logged
+missing: (no such format)
+log holds: report
+piped: << three word phrase >>
+pass=5 fail=1

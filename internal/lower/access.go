@@ -788,6 +788,14 @@ func (l *Lowerer) anonSub(n *ast.AnonSub) ir.Expr {
 		"Unlike Perl's, it has a written-down signature, so the compiler checks every "+
 		"call to it.",
 		"closures-and-loop-capture")
+	if g := s.group(); g != nil && len(g.members) > 1 {
+		l.note(out, "This sub shares a table or a variable with others, and a Go slot "+
+			"holds one type, so they all carry the narrowest signature every one of "+
+			"them can: the parameters their bodies name, typed by the arguments the "+
+			"calls pass. A blank parameter is a position this member never reads, "+
+			"which Perl left sitting unread in @_.",
+			"closures-and-loop-capture", "collections-hold-one-type")
+	}
 	return out
 }
 
