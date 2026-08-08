@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T17:09:56Z",
+  "recorded": "2026-08-15T17:11:23Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -54,43 +54,43 @@
     },
     {
       "tier": "tier2",
-      "entries": 98,
+      "entries": 99,
       "stages": {
         "compiled": {
-          "pass": 97,
+          "pass": 98,
           "fail": 1,
           "skip": 0
         },
         "emitted": {
-          "pass": 98,
+          "pass": 99,
           "fail": 0,
           "skip": 0
         },
         "equivalent": {
-          "pass": 63,
+          "pass": 64,
           "fail": 35,
           "skip": 0
         },
         "translated": {
-          "pass": 90,
+          "pass": 91,
           "fail": 8,
           "skip": 0
         },
         "typed": {
           "pass": 53,
-          "fail": 45,
+          "fail": 46,
           "skip": 0
         }
       },
       "equivalent_annotated": {
-        "pass": 63,
+        "pass": 64,
         "fail": 35,
         "skip": 0
       },
       "quality": {
         "todos": 17,
-        "symbols": 1515,
-        "symbols_typed": 1330,
+        "symbols": 1526,
+        "symbols_typed": 1340,
         "refusals": 17,
         "approximations": 544,
         "crashes": 0
@@ -231,20 +231,20 @@
   ],
   "total": {
     "tier": "TOTAL",
-    "entries": 246,
+    "entries": 247,
     "stages": {
       "compiled": {
-        "pass": 242,
+        "pass": 243,
         "fail": 4,
         "skip": 0
       },
       "emitted": {
-        "pass": 246,
+        "pass": 247,
         "fail": 0,
         "skip": 0
       },
       "equivalent": {
-        "pass": 148,
+        "pass": 149,
         "fail": 57,
         "skip": 0
       },
@@ -254,25 +254,25 @@
         "skip": 1
       },
       "translated": {
-        "pass": 214,
+        "pass": 215,
         "fail": 32,
         "skip": 0
       },
       "typed": {
         "pass": 119,
-        "fail": 127,
+        "fail": 128,
         "skip": 0
       }
     },
     "equivalent_annotated": {
-      "pass": 148,
+      "pass": 149,
       "fail": 57,
       "skip": 0
     },
     "quality": {
       "todos": 107,
-      "symbols": 4023,
-      "symbols_typed": 3477,
+      "symbols": 4034,
+      "symbols_typed": 3487,
       "refusals": 108,
       "approximations": 1231,
       "crashes": 0
@@ -280,8 +280,8 @@
   },
   "quality": {
     "todos": 107,
-    "symbols": 4023,
-    "symbols_typed": 3477,
+    "symbols": 4034,
+    "symbols_typed": 3487,
     "refusals": 108,
     "approximations": 1231,
     "crashes": 0
@@ -5584,6 +5584,43 @@
       "notes": [
         "the directory has a stdin file but the manifest says it has none"
       ]
+    },
+    {
+      "tier": "tier2",
+      "name": "99-targets-and-topics",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "pass"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "1 variable left dynamic out of 11"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "pass"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 11,
+        "symbols_typed": 10,
+        "refusals": 0,
+        "approximations": 0,
+        "crashes": 0
+      }
     },
     {
       "tier": "tier3",

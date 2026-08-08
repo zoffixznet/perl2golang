@@ -145,6 +145,7 @@ Two entries exit non-zero on purpose: **27** (65) and **32** (1). The rest exit 
 | 96 | `96-names-the-language-took` | Subs named fmt, json and toText, and one buried in a block | identifier collisions with imports and emitted helpers, hoisting a nested named sub |
 | 97 | `97-qualified-package-variables` | One hash spelled %TALLY inside its package and %Counter::TALLY outside | `our` with an initialiser, qualified reads and writes from main, package state shared with the script |
 | 98 | `98-reads-of-every-shape` | Four shapes of read through one handle, sharing one position | a scalar `<STDIN>`, a line loop, a mid-loop continuation read behind `and`, `do { local $/; <STDIN> }` for the rest |
+| 99 | `99-targets-and-topics` | List-assignment targets of every shape, and the arrow that keeps $_->[0] off $_[0] | inline `my` mid-list, a hash element target, `@+{qw(...)}`, `$_->[0]` in map vs `$_[0]` in a sub |
 
 ## Coverage map
 

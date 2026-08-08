@@ -1,0 +1,5 @@
+what=auth kind=failure rest=from 10.0.0.7 port 2222
+addr-part=from 10.0.0.7 port=2222
+svc=auth outcome=failure addr=10.0.0.7
+high: cpu=91% mem=74%
+labelled: [cpu] [mem] [disk]
