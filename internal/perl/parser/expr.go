@@ -855,10 +855,21 @@ func (p *parser) substFromToken(t token.Token) *ast.Subst {
 	n.EvalRepl = strings.Contains(t.Mods, "e")
 	if n.EvalRepl {
 		// Under /e the replacement is code, so the backslashes that were
-		// only there to hide the delimiter have to come off first.
-		e, diags := ParseExprString(unescapeDelim(repl, t.Delim))
-		p.diags = append(p.diags, diags...)
-		n.Repl = e
+		// only there to hide the delimiter have to come off first. The code
+		// may be several statements, and every one of them counts: parsing
+		// only the first would silently drop the rest of the computation.
+		code := unescapeDelim(repl, t.Delim)
+		res := Parse([]byte(code))
+		p.diags = append(p.diags, res.Diags...)
+		stmts := res.Program.Stmts
+		if len(stmts) == 1 {
+			if es, ok := stmts[0].(*ast.ExprStmt); ok {
+				n.Repl = es.X
+			}
+		}
+		if n.Repl == nil {
+			n.Repl = &ast.Call{Name: "do", Block: stmts}
+		}
 	} else {
 		n.Repl = p.interpString(repl, t)
 	}

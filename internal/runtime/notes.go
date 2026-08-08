@@ -313,6 +313,11 @@ var notes = map[string]string{
 		"dynamic world through a reflected call are unwrapped here so an " +
 		"absence stays testable as nil.",
 
+	"chr": "string(rune(n)) yields UTF-8, so chr(0xE2) would become two " +
+		"bytes and a decoder assembling a UTF-8 sequence byte by byte would " +
+		"corrupt it. Below 256 chr is one byte, which is the byte-string " +
+		"rule the original ran under.",
+
 	"canonPath": "filepath.Clean resolves a/../b to b, which changes where " +
 		"the path points when a is a symbolic link. This cleanup stops short " +
 		"of that on purpose: slashes and dots are textual, dot-dot is not.",

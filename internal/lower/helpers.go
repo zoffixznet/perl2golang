@@ -32,6 +32,7 @@ const (
 	hUcFirst          = "ucFirst"
 	hLcFirst          = "lcFirst"
 	hOrd              = "ord"
+	hChr              = "chr" // chr(), one byte below 256
 	hPowInt           = "powInt" // ** on two integers, staying integral
 	hFileExists       = "fileExists"
 	hStrRange         = "strRange" // the string form of the range operator

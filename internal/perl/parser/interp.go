@@ -402,6 +402,11 @@ func scanInterpVar(raw string, i int) int {
 		return j
 	default:
 		if sig == '$' && isPunctVarByte(c) {
+			// $+{name} interpolates a named capture: the subscript belongs
+			// to the punctuation variable it follows.
+			if c == '+' || c == '-' {
+				return scanInterpSubscripts(raw, j+1)
+			}
 			return j + 1
 		}
 		return i

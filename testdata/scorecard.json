@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T17:24:56Z",
+  "recorded": "2026-08-15T17:30:48Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -199,8 +199,8 @@
           "skip": 0
         },
         "equivalent": {
-          "pass": 22,
-          "fail": 3,
+          "pass": 23,
+          "fail": 2,
           "skip": 0
         },
         "translated": {
@@ -209,22 +209,22 @@
           "skip": 0
         },
         "typed": {
-          "pass": 9,
-          "fail": 16,
+          "pass": 10,
+          "fail": 15,
           "skip": 0
         }
       },
       "equivalent_annotated": {
-        "pass": 22,
-        "fail": 3,
+        "pass": 23,
+        "fail": 2,
         "skip": 0
       },
       "quality": {
         "todos": 0,
-        "symbols": 923,
+        "symbols": 922,
         "symbols_typed": 854,
         "refusals": 0,
-        "approximations": 208,
+        "approximations": 209,
         "crashes": 0
       }
     }
@@ -244,8 +244,8 @@
         "skip": 0
       },
       "equivalent": {
-        "pass": 152,
-        "fail": 54,
+        "pass": 153,
+        "fail": 53,
         "skip": 0
       },
       "honest": {
@@ -259,31 +259,31 @@
         "skip": 0
       },
       "typed": {
-        "pass": 119,
-        "fail": 128,
+        "pass": 120,
+        "fail": 127,
         "skip": 0
       }
     },
     "equivalent_annotated": {
-      "pass": 152,
-      "fail": 54,
+      "pass": 153,
+      "fail": 53,
       "skip": 0
     },
     "quality": {
       "todos": 107,
-      "symbols": 4034,
+      "symbols": 4033,
       "symbols_typed": 3490,
       "refusals": 108,
-      "approximations": 1230,
+      "approximations": 1231,
       "crashes": 0
     }
   },
   "quality": {
     "todos": 107,
-    "symbols": 4034,
+    "symbols": 4033,
     "symbols_typed": 3490,
     "refusals": 108,
-    "approximations": 1230,
+    "approximations": 1231,
     "crashes": 0
   },
   "entries": [
@@ -9128,8 +9128,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 5, byte 189: got \"_2026.08_=E2=80=93_now_with_20=2...\", wanted \" 2026.08 – now with 20% fewer ...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -9138,20 +9137,18 @@
           "outcome": "pass"
         },
         "typed": {
-          "outcome": "fail",
-          "reason": "1 variable left dynamic out of 23"
+          "outcome": "pass"
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 5, byte 189: got \"_2026.08_=E2=80=93_now_with_20=2...\", wanted \" 2026.08 – now with 20% fewer ...\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
-        "symbols": 23,
+        "symbols": 22,
         "symbols_typed": 22,
         "refusals": 0,
-        "approximations": 4,
+        "approximations": 5,
         "crashes": 0
       }
     },

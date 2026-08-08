@@ -225,7 +225,13 @@ func (l *Lowerer) builtin(n *ast.Call) ir.Expr {
 	case "sqrt":
 		return call("math", "math", "Sqrt", ir.TFloat, l.argFloat(n, 0))
 	case "chr":
-		return conversion(ir.TString, conversion(ir.NamedType("rune", ""), l.argInt(n, 0)))
+		out := l.helperCall(hChr, ir.TString, l.argInt(n, 0))
+		l.note(out, "string(rune(n)) is the near-miss here: for a code above 127 "+
+			"it produces the character's UTF-8 encoding, where chr on a byte "+
+			"string produces the single byte. Decoders that build multi-byte "+
+			"sequences one chr at a time depend on the byte reading.",
+			"strings-are-bytes")
+		return out
 	case "ord":
 		return l.helperCall(hOrd, ir.TInt, l.argStr(n, 0))
 	case "hex":
