@@ -463,6 +463,33 @@ func (l *Lowerer) readNullable(x ir.Expr, elem *ir.Type) ir.Expr {
 
 // sliceExpr lowers @a[...] and @h{...}.
 func (l *Lowerer) sliceExpr(n *ast.Slice) ir.Expr {
+	// @+{qw(a b)} reads several named captures at once. There is no hash to
+	// slice: each name resolves to its numbered group in the match at hand.
+	if v, ok := n.Base.(*ast.Var); ok && n.Hash && v.Name == "+" {
+		var elems []ir.Expr
+		complete := true
+		for _, ke := range sliceKeyExprs(n) {
+			k, isStatic := staticString(ke)
+			if !isStatic {
+				complete = false
+				break
+			}
+			x, found := l.namedCapture(k)
+			if !found {
+				complete = false
+				break
+			}
+			elems = append(elems, x)
+		}
+		if complete && len(elems) > 0 {
+			out := composite(ir.SliceOf(ir.TString), nil, elems)
+			l.note(out, "A slice of %+ reads several named captures at once. Go's "+
+				"matches are a slice indexed by group number, so each name resolves "+
+				"to its group and the values are listed out.",
+				"submatch-and-named-groups")
+			return out
+		}
+	}
 	var container ir.Expr
 	if v, ok := n.Base.(*ast.Var); ok {
 		sig := '@'

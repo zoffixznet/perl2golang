@@ -960,7 +960,10 @@ func (l *Lowerer) keysCall(n *ast.Call, wantValues bool) ir.Expr {
 func (l *Lowerer) reverseText(n *ast.Call) ir.Expr {
 	args := flatten(argList(n))
 	if len(args) == 1 {
-		if x := l.expr(args[0]); typeOrAny(x).Kind == ir.String {
+		// The argument is lowered exactly once: a shift in there takes an
+		// element, and lowering it again would take two.
+		x := l.expr(args[0])
+		if typeOrAny(x).Kind == ir.String {
 			out := l.helperCall(hReverseStr, ir.TString, x)
 			l.note(out, "reverse read for one value reverses characters rather than "+
 				"elements. Go has no built-in for it, partly because reversing text is "+
@@ -968,6 +971,24 @@ func (l *Lowerer) reverseText(n *ast.Call) ir.Expr {
 				"strings-are-bytes", "context-is-gone")
 			return out
 		}
+		if typeOrAny(x).Kind != ir.Slice {
+			out := l.helperCall(hReverseStr, ir.TString, l.toStr(x, args[0]))
+			l.note(out, "reverse read for one value reverses the characters of its "+
+				"argument rendered as text, whatever it was held as.",
+				"strings-are-bytes", "context-is-gone")
+			return out
+		}
+		joined := l.stringsJoin(x, ir.Str(`""`))
+		out := l.helperCall(hReverseStr, ir.TString, joined)
+		l.approximate(n, "P2G2031", "reverse read for one value",
+			"the list is joined and then reversed",
+			"reverse in list context reverses the elements; read for one value it "+
+				"runs them together and reverses the characters of the result. Go has no "+
+				"context, so which of the two was meant is decided here.",
+			"Write the two out separately: slices.Reverse for the elements, and a "+
+				"join followed by a character reversal for the text.",
+			"context-is-gone", "strings-are-bytes")
+		return out
 	}
 	joined := l.stringsJoin(l.list(argList(n)), ir.Str(`""`))
 	out := l.helperCall(hReverseStr, ir.TString, joined)
@@ -1118,8 +1139,6 @@ func (l *Lowerer) popCall(n *ast.Call, front bool) ir.Expr {
 	args := flatten(argList(n))
 	if len(args) > 0 {
 		targetNode = args[0]
-	} else if l.curSub != nil && l.curSub.VarArgs != nil {
-		targetNode = &ast.Var{Sigil: '@', Name: "args"}
 	}
 	var target ir.Expr
 	if targetNode != nil {
@@ -1127,7 +1146,12 @@ func (l *Lowerer) popCall(n *ast.Call, front bool) ir.Expr {
 		target = l.assignTarget(targetNode)
 	}
 	if target == nil && l.curSub != nil && l.curSub.VarArgs != nil {
-		target = ir.NewIdent(l.curSub.VarArgs.Go, l.curSub.VarArgs.Type)
+		// A bare shift inside a sub takes from @_, which is the variadic
+		// parameter here, not a variable of the file's own.
+		b := l.curSub.VarArgs
+		b.Writes++
+		l.forgetLength(b)
+		target = ir.NewIdent(b.Go, b.Type)
 	}
 	if target == nil {
 		return ir.Nil(ir.TAny)
