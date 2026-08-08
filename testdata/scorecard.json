@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T17:04:41Z",
+  "recorded": "2026-08-15T17:09:56Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -199,8 +199,8 @@
           "skip": 0
         },
         "equivalent": {
-          "pass": 18,
-          "fail": 7,
+          "pass": 19,
+          "fail": 6,
           "skip": 0
         },
         "translated": {
@@ -215,14 +215,14 @@
         }
       },
       "equivalent_annotated": {
-        "pass": 18,
-        "fail": 7,
+        "pass": 19,
+        "fail": 6,
         "skip": 0
       },
       "quality": {
         "todos": 0,
         "symbols": 923,
-        "symbols_typed": 850,
+        "symbols_typed": 851,
         "refusals": 0,
         "approximations": 208,
         "crashes": 0
@@ -244,8 +244,8 @@
         "skip": 0
       },
       "equivalent": {
-        "pass": 147,
-        "fail": 58,
+        "pass": 148,
+        "fail": 57,
         "skip": 0
       },
       "honest": {
@@ -265,14 +265,14 @@
       }
     },
     "equivalent_annotated": {
-      "pass": 147,
-      "fail": 58,
+      "pass": 148,
+      "fail": 57,
       "skip": 0
     },
     "quality": {
       "todos": 107,
       "symbols": 4023,
-      "symbols_typed": 3476,
+      "symbols_typed": 3477,
       "refusals": 108,
       "approximations": 1231,
       "crashes": 0
@@ -281,7 +281,7 @@
   "quality": {
     "todos": 107,
     "symbols": 4023,
-    "symbols_typed": 3476,
+    "symbols_typed": 3477,
     "refusals": 108,
     "approximations": 1231,
     "crashes": 0
@@ -9464,8 +9464,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 1, byte 48: got \"\\n 2 http    http://shop.example....\", wanted \"?a=1\u0026b=2\\n 2 http    http://shop....\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -9475,17 +9474,16 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "3 variables left dynamic out of 37"
+          "reason": "2 variables left dynamic out of 37"
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 1, byte 48: got \"\\n 2 http    http://shop.example....\", wanted \"?a=1\u0026b=2\\n 2 http    http://shop....\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
         "symbols": 37,
-        "symbols_typed": 34,
+        "symbols_typed": 35,
         "refusals": 0,
         "approximations": 12,
         "crashes": 0

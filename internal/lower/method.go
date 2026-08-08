@@ -290,6 +290,11 @@ func isFirstArg(e ast.Expr) bool {
 	if !ok {
 		return false
 	}
+	// $_->[0] is not $_[0]: the arrow dereferences the topic, an array
+	// reference held in $_, where $_[0] reads the first argument.
+	if n.Arrow {
+		return false
+	}
 	v, ok := n.Base.(*ast.Var)
 	if !ok || v.Name != "_" {
 		return false

@@ -176,6 +176,9 @@ const (
 	// HashSliceAsPlace: a hash slice on the left of an assignment becomes a
 	// loop over its keys.
 	HashSliceAsPlace Code = "P2G2531"
+	// ListTargetUnnamed: one position of a list assignment had a destination
+	// that could not be resolved.
+	ListTargetUnnamed Code = "P2G2533"
 	// HashSliceDelete: `delete @h{...}` removes several keys and answers with
 	// the values it removed.
 	HashSliceDelete Code = "P2G2532"
@@ -970,6 +973,15 @@ var catalogue = map[Code]Entry{
 		Cost:      "the pairing runs as a loop rather than as one statement",
 		Converted: "the emitted code loops over the keys and reads the values by position, with the zero value where they run out",
 		Concepts:  []string{"nil-slices-vs-nil-maps", "nil-vs-undef"},
+	},
+	ListTargetUnnamed: {
+		Severity:  report.Warn,
+		Message:   "one position of this list assignment had a destination the converter could not resolve, so it was not stored",
+		Short:     "one list-assignment position was not stored",
+		Advice:    "assign this position from the held list by hand",
+		Cost:      "the value at this position is dropped; positions after it still fill correctly",
+		Converted: "the other positions of the assignment are stored as written",
+		Concepts:  []string{"multiple-return-values"},
 	},
 	HashSliceDelete: {
 		Severity:  report.Warn,

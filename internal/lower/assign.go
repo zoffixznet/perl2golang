@@ -969,10 +969,40 @@ func (l *Lowerer) listAssignByIndex(targets []ast.Expr, rhs ast.Expr, n *ast.Ass
 
 	i := 0
 	for _, t := range targets {
+		// `my $x` in the middle of the target list declares as it unpacks:
+		// ($rest, my $query) = split ... is one statement doing both.
+		declareThis := declare
+		if my, isMy := t.(*ast.My); isMy {
+			if vars := declaredVars(my); len(vars) == 1 {
+				t = vars[0]
+				declareThis = true
+			}
+		}
 		v, ok := t.(*ast.Var)
 		if !ok {
+			// A container element or a field can stand in a target list too:
+			// ($rest, $self->{fragment}) = split ... stores by position the
+			// same way named targets do.
+			place := l.assignTarget(t)
+			if place == nil {
+				l.approximate(t, "P2G2533", "a target this list assignment cannot name",
+					"one position of this list assignment was not stored",
+					"The value at this position had a destination the converter could "+
+						"not resolve, so it is not stored, and the positions after it are "+
+						"still filled correctly.",
+					"Assign this position from the held list by hand.",
+					"multiple-return-values")
+				i++
+				continue
+			}
+			val := l.helperCall(hAt, elem, ir.NewIdent(tmp, typeOrAny(src)), ir.IntLit(itoa(i)))
+			l.observeTargetValue(t, elem)
+			st := assign("=", []ir.Expr{place}, []ir.Expr{l.assignable(val, typeOrAny(place), nil)})
+			out = append(out, st)
+			i++
 			continue
 		}
+		declare := declareThis
 		b := l.bindingFor(v, declare)
 		b.Writes++
 		if v.Sigil == '@' {
