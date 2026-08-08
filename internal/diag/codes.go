@@ -371,6 +371,8 @@ const (
 	ReadLineKeepsNewline Code = "P2G6011"
 	// SlurpFile: `$/ = undef` reads the whole file at once.
 	SlurpFile Code = "P2G6012"
+	// DiamondWalk: `<>` walks every file named on the command line.
+	DiamondWalk Code = "P2G6013"
 	// InputLineNumber: `$.` counts lines across every handle at once.
 	InputLineNumber Code = "P2G6015"
 	// OutputFormatVars: a global changes how `print` and `split` behave.
@@ -1778,6 +1780,15 @@ var catalogue = map[Code]Entry{
 		Advice:   "stream with `bufio.Reader` for files that do not fit in memory",
 		Cost:     "the whole file is held in memory at once, as it was in Perl",
 		Concepts: []string{"io-reader-writer", "bufio-scanner-limit"},
+	},
+	DiamondWalk: {
+		Severity:  report.Warn,
+		Message:   "`<>` reads every file named on the command line in order, and standard input when none are named",
+		Short:     "the file walk is written out",
+		Advice:    "where only one input is ever passed, open it directly and drop the walk",
+		Cost:      "the warning printed for an unopenable file is worded differently",
+		Converted: "the emitted loop opens each named file, warns and moves on when one fails, and reads standard input for -",
+		Concepts:  []string{"io-reader-writer", "range-is-not-foreach"},
 	},
 	InputLineNumber: {
 		Severity:  report.Warn,

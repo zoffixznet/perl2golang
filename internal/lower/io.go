@@ -577,7 +577,21 @@ func (l *Lowerer) readLoop(n *ast.While) ([]ir.Stmt, bool) {
 	l.scope = newScope(saved)
 	defer func() { l.scope = saved }()
 
-	src := l.readSource(rl)
+	// `while (<>)` walks every file named on the command line, falling back
+	// to standard input when there are none. The inner loop below is built
+	// against one open handle, and a loop over the names wraps it at the
+	// end; $ARGV is the loop variable, which is exactly what it was.
+	diamond := rl.Handle == "" && rl.Var == nil
+	var src ir.Expr
+	var argvName *Binding
+	if diamond {
+		argvName = l.special("$ARGV", '$', "argvName", n)
+		argvName.Type = ir.TString
+		inName := l.tmp("in")
+		src = ir.NewIdent(inName, fileType)
+	} else {
+		src = l.readSource(rl)
+	}
 	scanner := l.tmp("scanner")
 	scannerType := ir.NamedType("*bufio.Scanner", "bufio")
 
@@ -672,10 +686,14 @@ func (l *Lowerer) readLoop(n *ast.While) ([]ir.Stmt, bool) {
 		inner.Stmts = append(lead, inner.Stmts...)
 		loop := &ir.For{Body: inner, Label: l.label(n.Label)}
 		l.setProv(loop, n)
+		out := []ir.Stmt{loop}
 		if reset != nil {
-			return []ir.Stmt{reset, loop}, true
+			out = append([]ir.Stmt{reset}, out...)
 		}
-		return []ir.Stmt{loop}, true
+		if diamond {
+			return l.wrapDiamond(argvName, src, out, n), true
+		}
+		return out, true
 	}
 
 	text := ir.Expr(ir.CallOf(selector(ir.NewIdent(scanner, scannerType), "Text", nil), ir.TString))
@@ -757,7 +775,86 @@ func (l *Lowerer) readLoop(n *ast.While) ([]ir.Stmt, bool) {
 	if reset != nil {
 		out = append([]ir.Stmt{reset}, out...)
 	}
+	if diamond {
+		return l.wrapDiamond(argvName, src, out, n), true
+	}
 	return out, true
+}
+
+// wrapDiamond wraps one file's reading loop in the walk over every file
+// named on the command line, which is what <> was doing invisibly.
+func (l *Lowerer) wrapDiamond(argvName *Binding, src ir.Expr, inner []ir.Stmt, n ast.Node) []ir.Stmt {
+	args := l.argv(n)
+	sources := l.tmp("sources")
+	strsT := ir.SliceOf(ir.TString)
+	decl := assign(":=", []ir.Expr{ir.NewIdent(sources, strsT)},
+		[]ir.Expr{ir.NewIdent(args.Go, strsT)})
+	l.setProv(decl, n)
+	l.note(decl, "<> reads every file named on the command line, one after another, "+
+		"and reads standard input when there are none. Go has no such operator, so "+
+		"the file list is walked out loud, and the dash stands for standard input "+
+		"the way it conventionally does.",
+		"io-reader-writer", "range-is-not-foreach")
+	fallback := &ir.If{
+		Cond: ir.Bin("==", lenOf(ir.NewIdent(sources, strsT)), ir.IntLit("0"), ir.TBool),
+		Then: &ir.Block{Stmts: []ir.Stmt{
+			assign("=", []ir.Expr{ir.NewIdent(sources, strsT)},
+				[]ir.Expr{composite(strsT, nil, []ir.Expr{ir.Str(`"-"`)})}),
+		}},
+	}
+
+	// in := os.Stdin; if the name is not "-", open the file, warn and move
+	// on when it cannot be opened, which is what perl's <> does.
+	inIdent, _ := src.(*ir.Ident)
+	openStmts := []ir.Stmt{
+		assign(":=", []ir.Expr{src}, []ir.Expr{ir.Pkg("os", "os", "Stdin", fileType)}),
+	}
+	f := l.tmp("f")
+	errName := l.tmp("err")
+	openIf := &ir.If{
+		Cond: ir.Bin("!=", ir.NewIdent(argvName.Go, ir.TString), ir.Str(`"-"`), ir.TBool),
+		Then: &ir.Block{Stmts: []ir.Stmt{
+			assign(":=", []ir.Expr{ir.NewIdent(f, fileType), ir.NewIdent(errName, ir.TError)},
+				[]ir.Expr{call("os", "os", "Open", fileType, ir.NewIdent(argvName.Go, ir.TString))}),
+			&ir.If{
+				Cond: ir.Bin("!=", ir.NewIdent(errName, ir.TError), ir.Nil(ir.TError), ir.TBool),
+				Then: &ir.Block{Stmts: []ir.Stmt{
+					exprStmt(call("fmt", "fmt", "Fprintln", ir.TVoid,
+						ir.Pkg("os", "os", "Stderr", nil), ir.NewIdent(errName, ir.TError))),
+					&ir.Branch{Kind: "continue"},
+				}},
+			},
+			assign("=", []ir.Expr{src}, []ir.Expr{ir.NewIdent(f, fileType)}),
+		}},
+	}
+	openStmts = append(openStmts, openIf)
+	closeIf := &ir.If{
+		Cond: ir.Bin("!=", src, ir.Pkg("os", "os", "Stdin", fileType), ir.TBool),
+		Then: &ir.Block{Stmts: []ir.Stmt{
+			exprStmt(ir.CallOf(selector(src, "Close", nil), ir.TError)),
+		}},
+	}
+	_ = inIdent
+
+	bodyStmts := append(openStmts, inner...)
+	bodyStmts = append(bodyStmts, closeIf)
+	walk := &ir.Range{
+		Key:    ir.NewIdent("_", ir.TInt),
+		Value:  ir.NewIdent(argvName.Go, ir.TString),
+		X:      ir.NewIdent(sources, strsT),
+		Define: true,
+		Body:   &ir.Block{Stmts: bodyStmts},
+	}
+	l.setProv(walk, n)
+	l.approximate(n, "P2G6013", "the <> handle",
+		"the file walk is written out",
+		"<> reads every file named on the command line in order, warning and "+
+			"moving on when one cannot be opened, and falls back to standard input "+
+			"when none are named. The generated loop does the same; the warning's "+
+			"wording is Go's rather than perl's.",
+		"Where only one input is ever passed, open it directly and drop the walk.",
+		"io-reader-writer")
+	return []ir.Stmt{decl, fallback, walk}
 }
 
 // readTarget names what a read loop assigns each line to.
