@@ -323,11 +323,24 @@ func (l *Lowerer) recoverParams(s *Sub, body []ast.Stmt) ([]ir.Param, []ast.Stmt
 	rest := body
 	var bindings []*Binding
 
-	// A closure sharing a slot with others takes everything through @_ and
-	// answers with one value, because that is the only signature they can
-	// all have. The body still names its arguments; it reads them out of the
-	// argument list instead of out of parameters.
-	if l.uniformFn {
+	// A closure sharing a slot with others has to carry the signature they
+	// all agree on. When the group has settled on a fixed parameter list,
+	// the member names its own parameters below and the missing positions
+	// are padded; until then, and whenever a call passes a whole list or a
+	// body reads @_ raw, the shared signature is a variadic slice, typed by
+	// what the call sites pass through it.
+	group := s.group()
+	fixedGroup := group != nil && group.decided && group.fixed
+	if fixedGroup && s.VarArgs != nil {
+		// An earlier round shaped this member as a variadic slice before the
+		// group had settled on a fixed list. The slice parameter it declared
+		// then would now be a second tail after the named parameters, so it
+		// is withdrawn along with its binding.
+		delete(l.decls, keyNode{"args@" + s.Name})
+		s.VarArgs = nil
+		s.Variadic = false
+	}
+	if l.uniformFn && !fixedGroup {
 		var at ast.Node
 		if s.Decl != nil {
 			at = s.Decl
@@ -336,9 +349,20 @@ func (l *Lowerer) recoverParams(s *Sub, body []ast.Stmt) ([]ir.Param, []ast.Stmt
 		if s.VarArgs == nil {
 			s.VarArgs = l.declareNamed("args@"+s.Name, '@', "args", KindParam, at)
 		}
-		s.VarArgs.Type = ir.SliceOf(ir.TAny)
+		elem := ir.TAny
 		s.Results = []*ir.Type{ir.TAny}
-		return []ir.Param{{Name: s.VarArgs.Go, Type: ir.TAny, Variadic: true}}, rest
+		if group != nil && group.decided {
+			if group.elem != nil && !isUnresolved(group.elem) {
+				elem = group.elem
+			}
+			if !group.returns {
+				s.Results = nil
+			} else if group.result != nil && !isUnresolved(group.result) {
+				s.Results = []*ir.Type{group.result}
+			}
+		}
+		s.VarArgs.Type = ir.SliceOf(elem)
+		return []ir.Param{{Name: s.VarArgs.Go, Type: elem, Variadic: true}}, rest
 	}
 
 	for len(rest) > 0 {
@@ -412,6 +436,15 @@ func (l *Lowerer) recoverParams(s *Sub, body []ast.Stmt) ([]ir.Param, []ast.Stmt
 	if s.VarArgs != nil {
 		elem := elemOf(s.VarArgs.Type)
 		params = append(params, ir.Param{Name: s.VarArgs.Go, Type: elem, Variadic: true})
+	}
+	// A member of a fixed-signature group takes the group's full width,
+	// whatever its own body reads. The positions it never looks at are
+	// blank, which is Go's way of writing "this argument arrives and
+	// nothing here wants it".
+	if fixedGroup && s.VarArgs == nil {
+		for i := len(params); i < group.arity; i++ {
+			params = append(params, ir.Param{Name: "_", Type: group.settledParam(i)})
+		}
 	}
 	return params, rest
 }
@@ -773,6 +806,9 @@ func (l *Lowerer) settleSubs() {
 		}
 		s.Results = results
 	}
+	// Members of a shared slot answer with one type between them, decided
+	// here so the literal types refreshed on the way out carry it.
+	l.unifyGroupResults()
 }
 
 // multiResultCall handles a call to a sub that returns several values.

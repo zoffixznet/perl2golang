@@ -1,0 +1,398 @@
+package lower
+
+import (
+	"perl2golang/internal/ir"
+	"perl2golang/internal/perl/ast"
+)
+
+// sigGroup ties together the function values that share one slot: the
+// closures in a dispatch table, the stages of a pipeline held in one array,
+// the two subs a conditional can leave in one variable. Go gives that slot
+// exactly one type, so everything that can land in it has to agree on a
+// signature, and the group is where the agreement is worked out.
+//
+// A group grows two ways. Every anonymous sub starts in a group of its own,
+// and whenever two function types meet in a join, their groups merge,
+// because a join happens exactly where two values flow into one place. Call
+// sites through the slot feed the group the types they pass, which is how a
+// closure whose body never says what it takes gets its parameters typed:
+// `$counters{hit}->(1)` is the only evidence about $by there is.
+type sigGroup struct {
+	// parent is set when this group has been absorbed into another; find
+	// follows it, union-find style, because type values across the file
+	// still point at the old group.
+	parent  *sigGroup
+	members []*Sub
+
+	// argEv holds the types call sites passed at each fixed position, and
+	// spreadEv the element types of whole lists passed at once.
+	argEv    [][]observation
+	spreadEv []observation
+	// sawSpread records that some call passes a run of values whose length
+	// only the program knows, which rules out a fixed parameter list.
+	sawSpread bool
+
+	// The settled decision, renewed at the end of every discovery round.
+	decided bool
+	// fixed says the members take a fixed parameter list rather than a
+	// variadic slice.
+	fixed bool
+	// demoted records that the members' parameters would not settle on one
+	// type per position, so the fixed list was given up for good in favour
+	// of the variadic slice. It never unsets: flapping between the two
+	// shapes would keep discovery from settling.
+	demoted bool
+	// arity is the fixed list's width.
+	arity int
+	// params are the fixed positions' types as the call sites showed them,
+	// and settledParams the types the members' own bindings agreed on,
+	// which is what a padded blank position is declared as.
+	params        []*ir.Type
+	settledParams []*ir.Type
+	// elem is the variadic slice's element type.
+	elem *ir.Type
+	// result is the one result every member answers with, and returns says
+	// whether any member answers at all.
+	result  *ir.Type
+	returns bool
+}
+
+// group follows a sub's signature group to the one that speaks for it.
+func (s *Sub) group() *sigGroup {
+	if s.Group == nil {
+		return nil
+	}
+	return s.Group.find()
+}
+
+// settledParam is the declared type of a fixed position, preferring what
+// the members' own parameters settled on over what the call sites passed.
+func (g *sigGroup) settledParam(i int) *ir.Type {
+	if i < len(g.settledParams) && g.settledParams[i] != nil {
+		return g.settledParams[i]
+	}
+	if i < len(g.params) && g.params[i] != nil && !isUnresolved(g.params[i]) {
+		return g.params[i]
+	}
+	return ir.TAny
+}
+
+// find follows absorbed groups to the one that speaks for them now.
+func (g *sigGroup) find() *sigGroup {
+	for g.parent != nil {
+		g = g.parent
+	}
+	return g
+}
+
+// groupOf reads the signature group off a function type, if it carries one.
+func groupOf(t *ir.Type) *sigGroup {
+	if t == nil || t.Kind != ir.Func {
+		return nil
+	}
+	g, _ := t.Group.(*sigGroup)
+	if g == nil {
+		return nil
+	}
+	return g.find()
+}
+
+// mergeSigGroups is the union half of the union-find: two function types
+// meeting in a join means their values share a slot, so their groups become
+// one. Either side may be missing, since function types are built in plenty
+// of places that know nothing of groups.
+func mergeSigGroups(a, b any) any {
+	ga, _ := a.(*sigGroup)
+	gb, _ := b.(*sigGroup)
+	if ga != nil {
+		ga = ga.find()
+	}
+	if gb != nil {
+		gb = gb.find()
+	}
+	switch {
+	case ga == nil:
+		return gb
+	case gb == nil, ga == gb:
+		return ga
+	}
+	for _, m := range gb.members {
+		m.Group = ga
+	}
+	ga.members = append(ga.members, gb.members...)
+	gb.members = nil
+	for i, evs := range gb.argEv {
+		for len(ga.argEv) <= i {
+			ga.argEv = append(ga.argEv, nil)
+		}
+		ga.argEv[i] = append(ga.argEv[i], evs...)
+	}
+	ga.spreadEv = append(ga.spreadEv, gb.spreadEv...)
+	ga.sawSpread = ga.sawSpread || gb.sawSpread
+	gb.parent = ga
+	return ga
+}
+
+// observeCall records what one call through the shared slot passed: the
+// leading single values by position, and any whole list by its element
+// type, after which the positions stop being knowable.
+func (g *sigGroup) observeCall(l *Lowerer, args []ir.Expr) {
+	if l.pass != 1 {
+		return
+	}
+	g = g.find()
+	pos := 0
+	spread := false
+	for _, a := range args {
+		at := typeOrAny(a)
+		// A slice-typed argument stands for a run of values, exactly as the
+		// call spread machinery treats it.
+		if at.Kind == ir.Slice {
+			spread = true
+			g.spreadEv = l.recordObservation(g.spreadEv, elemOf(at))
+			continue
+		}
+		if spread {
+			g.spreadEv = l.recordObservation(g.spreadEv, at)
+			continue
+		}
+		for len(g.argEv) <= pos {
+			g.argEv = append(g.argEv, nil)
+		}
+		g.argEv[pos] = l.recordObservation(g.argEv[pos], at)
+		pos++
+	}
+	if spread {
+		g.sawSpread = true
+	}
+}
+
+// settleGroups renews every group's decision from this round's evidence and
+// feeds what the call sites showed into the members' parameter bindings, so
+// the ordinary settling that follows sees it as evidence like any other.
+func (l *Lowerer) settleGroups() {
+	seen := map[*sigGroup]bool{}
+	for _, s := range l.anonOrd {
+		g := s.Group
+		if g == nil {
+			continue
+		}
+		g = g.find()
+		if seen[g] {
+			continue
+		}
+		seen[g] = true
+		l.settleGroup(g)
+	}
+}
+
+func (l *Lowerer) settleGroup(g *sigGroup) {
+	if l.stickyEvidence {
+		for i := range g.argEv {
+			g.argEv[i] = compactFuncEvidence(g.argEv[i])
+		}
+		g.spreadEv = compactFuncEvidence(g.spreadEv)
+	} else {
+		for i := range g.argEv {
+			g.argEv[i] = compactEvidence(g.argEv[i])
+		}
+		g.spreadEv = compactEvidence(g.spreadEv)
+	}
+
+	// The members' own bodies say how wide a fixed parameter list would be
+	// and whether one is possible at all: a member that reads @_ raw, or a
+	// call that passes a whole list, leaves the width to the program.
+	arity := 0
+	named := true
+	for _, m := range g.members {
+		a, ok := m.naturalShape()
+		if !ok {
+			named = false
+		}
+		if a > arity {
+			arity = a
+		}
+	}
+	for i, evs := range g.argEv {
+		if len(evs) > 0 && i+1 > arity {
+			arity = i + 1
+		}
+	}
+
+	g.arity = arity
+	g.fixed = named && !g.sawSpread && !g.demoted && len(g.members) > 1
+	g.params = make([]*ir.Type, arity)
+	for i := range g.params {
+		if i < len(g.argEv) {
+			g.params[i] = joinAll(observedTypes(g.argEv[i]))
+		}
+	}
+	var all []*ir.Type
+	for _, evs := range g.argEv {
+		all = append(all, observedTypes(evs)...)
+	}
+	all = append(all, observedTypes(g.spreadEv)...)
+	g.elem = joinAll(all)
+	g.decided = true
+
+	// What the call sites passed at a position is evidence about the
+	// parameter that reads it, for every member that names one there.
+	for _, m := range g.members {
+		for i, b := range m.Params {
+			if i >= len(g.argEv) || b == nil {
+				continue
+			}
+			b.Evidence = mergeObservations(b.Evidence, g.argEv[i])
+		}
+		if m.VarArgs != nil && len(g.members) == 1 && g.elem != nil && !isUnresolved(g.elem) {
+			b := m.VarArgs
+			b.Evidence = mergeObservations(b.Evidence, []observation{{t: ir.SliceOf(g.elem), site: nil, round: l.round}})
+		}
+	}
+}
+
+// mergeObservations folds src into dst without duplicating what an earlier
+// round of the same feed already added: one entry per site and round.
+func mergeObservations(dst, src []observation) []observation {
+	have := map[[2]any]bool{}
+	for _, o := range dst {
+		have[[2]any{o.site, o.round}] = true
+	}
+	for _, o := range src {
+		if have[[2]any{o.site, o.round}] {
+			continue
+		}
+		dst = append(dst, o)
+	}
+	return dst
+}
+
+// unifyGroupResults gives every member of a shared slot the one result type
+// they can all answer with. It runs after each member's own returns have
+// been settled, and only a group that really shares a slot, two or more
+// members, is unified: a lone closure keeps whatever shape its body implies.
+func (l *Lowerer) unifyGroupResults() {
+	seen := map[*sigGroup]bool{}
+	for _, s := range l.anonOrd {
+		g := s.Group
+		if g == nil {
+			continue
+		}
+		g = g.find()
+		if seen[g] || len(g.members) < 2 {
+			continue
+		}
+		seen[g] = true
+		var r *ir.Type
+		returns := false
+		for _, m := range g.members {
+			fillResults(m)
+			if len(m.Results) > 0 {
+				returns = true
+				r = join(r, m.Results[0])
+			}
+		}
+		g.returns = returns
+		if !returns {
+			g.result = nil
+			for _, m := range g.members {
+				m.Results = nil
+			}
+			continue
+		}
+		if r == nil || isUnresolved(r) {
+			r = ir.TAny
+		}
+		g.result = r
+		for _, m := range g.members {
+			m.Results = []*ir.Type{r}
+		}
+	}
+}
+
+// checkGroupAgreement runs once the parameters have settled and asks, for
+// every fixed-signature group, whether the members' parameters really did
+// land on one type per position. A position two members disagree about
+// means the fixed list cannot be written, and the group falls back to the
+// variadic slice for good.
+func (l *Lowerer) checkGroupAgreement() {
+	seen := map[*sigGroup]bool{}
+	for _, s := range l.anonOrd {
+		g := s.group()
+		if g == nil || seen[g] {
+			continue
+		}
+		seen[g] = true
+		if !g.fixed {
+			continue
+		}
+		g.settledParams = make([]*ir.Type, g.arity)
+		for _, m := range g.members {
+			for i, b := range m.Params {
+				if b == nil || i >= g.arity {
+					continue
+				}
+				switch {
+				case g.settledParams[i] == nil:
+					g.settledParams[i] = b.Type
+				case !g.settledParams[i].Equal(b.Type):
+					g.demoted = true
+					g.fixed = false
+				}
+			}
+		}
+	}
+}
+
+// naturalShape reports how many leading scalar parameters the sub's body
+// names in the `my (...) = @_` and `my $x = shift` idioms, and whether that
+// naming accounts for every read of the argument list. A body that goes on
+// reading @_ raw, `$_[0]` included, has no fixed parameter list to recover.
+func (s *Sub) naturalShape() (arity int, named bool) {
+	if s.Decl == nil && s.Body == nil {
+		return 0, false
+	}
+	body := s.Body
+	if body == nil {
+		body = s.Decl.Body
+	}
+	rest := valueTail(body)
+	for len(rest) > 0 {
+		es, ok := rest[0].(*ast.ExprStmt)
+		if !ok {
+			break
+		}
+		as, ok := es.X.(*ast.Assign)
+		if !ok || as.Op != "=" {
+			break
+		}
+		my, ok := as.LHS.(*ast.My)
+		if !ok || my.Keyword != "my" {
+			break
+		}
+		if isArgsVar(as.RHS) {
+			vars := declaredVars(my)
+			for _, v := range vars {
+				if v.Sigil != '$' {
+					return 0, false
+				}
+			}
+			arity += len(vars)
+			rest = rest[1:]
+			continue
+		}
+		if isShiftArgs(as.RHS) {
+			vars := declaredVars(my)
+			if len(vars) == 1 && vars[0].Sigil == '$' {
+				arity++
+				rest = rest[1:]
+				continue
+			}
+		}
+		break
+	}
+	if usesArgs(rest) {
+		return arity, false
+	}
+	return arity, true
+}

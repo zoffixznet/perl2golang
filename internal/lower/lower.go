@@ -23,9 +23,9 @@ import (
 	"perl2golang/internal/ir"
 	"perl2golang/internal/perl/ast"
 	"perl2golang/internal/perl/parser"
-	perlrt "perl2golang/internal/runtime"
 	"perl2golang/internal/perl/token"
 	"perl2golang/internal/report"
+	perlrt "perl2golang/internal/runtime"
 )
 
 // Options configure a lowering run.
@@ -229,8 +229,8 @@ type Lowerer struct {
 	pre []ir.Stmt
 
 	// helpers records which runtime support functions were used.
-	helpers    map[string]bool
-	helperOrd  []string
+	helpers   map[string]bool
+	helperOrd []string
 	// destroyPlans records, per declaring statement, where an object's
 	// destructor call goes; destroyBound finds the plan again from the
 	// binding when an undef names the instant itself.
@@ -240,7 +240,7 @@ type Lowerer struct {
 	// the list builder knows to splice it in rather than store it as one
 	// element. The type alone cannot say: an array flattens into a list and
 	// a reference to one does not, and both are slices in Go.
-	spliced map[ir.Expr]bool
+	spliced    map[ir.Expr]bool
 	patterns   map[string]*patternVar
 	patternOrd []string
 
@@ -378,30 +378,30 @@ func Lower(res parser.Result, src []byte, opts Options) *Result {
 func lowerOnce(res parser.Result, src []byte, opts Options, sticky bool) (*Result, bool) {
 	l := &Lowerer{
 		stickyEvidence: sticky,
-		opts:        opts,
-		src:         string(src),
-		lines:       strings.Split(string(src), "\n"),
-		names:       newNameSet(),
-		subs:        map[string]*Sub{},
-		classes:     map[string]*Class{},
-		byGoType:    map[string]*Class{},
-		hoisted:     map[*ast.Var]bool{},
-		classVars:   map[*Binding]*Class{},
-		optionHash:  map[string]*Class{},
-		optionSites: map[any]optionSite{},
-		loaded:      map[string]bool{},
-		aliases:     map[*Binding]ir.Expr{},
-		optionDests: map[*Binding]*ir.Type{},
-		fieldAt:     map[ast.Node]*ClassField{},
-		arrowCalls:  map[string]bool{},
-		qualCalls:   map[string]bool{},
-		curPkg:      "main",
-		seps:        defaultSeparators(),
-		decls:       map[ast.Node]*Binding{},
-		globalSeen:  map[string]*Binding{},
-		helpers:     map[string]bool{},
-		spliced:     map[ir.Expr]bool{},
-		patterns:    map[string]*patternVar{},
+		opts:           opts,
+		src:            string(src),
+		lines:          strings.Split(string(src), "\n"),
+		names:          newNameSet(),
+		subs:           map[string]*Sub{},
+		classes:        map[string]*Class{},
+		byGoType:       map[string]*Class{},
+		hoisted:        map[*ast.Var]bool{},
+		classVars:      map[*Binding]*Class{},
+		optionHash:     map[string]*Class{},
+		optionSites:    map[any]optionSite{},
+		loaded:         map[string]bool{},
+		aliases:        map[*Binding]ir.Expr{},
+		optionDests:    map[*Binding]*ir.Type{},
+		fieldAt:        map[ast.Node]*ClassField{},
+		arrowCalls:     map[string]bool{},
+		qualCalls:      map[string]bool{},
+		curPkg:         "main",
+		seps:           defaultSeparators(),
+		decls:          map[ast.Node]*Binding{},
+		globalSeen:     map[string]*Binding{},
+		helpers:        map[string]bool{},
+		spliced:        map[ir.Expr]bool{},
+		patterns:       map[string]*patternVar{},
 		rep: &report.Report{
 			Source: opts.File,
 			Module: opts.Module,
@@ -1002,7 +1002,9 @@ func (l *Lowerer) resolveTypes() {
 			b.Type = t
 			return
 		}
-		if !l.stickyEvidence {
+		if l.stickyEvidence {
+			b.Evidence = compactFuncEvidence(b.Evidence)
+		} else {
 			b.Evidence = compactEvidence(b.Evidence)
 		}
 		t := joinAll(observedTypes(b.Evidence))
@@ -1042,6 +1044,10 @@ func (l *Lowerer) resolveTypes() {
 			}
 		}
 	}
+	// What call sites passed through shared function slots becomes evidence
+	// on the parameters that read them, and it has to land before those
+	// parameters settle.
+	l.settleGroups()
 	// Parameters settle first, because a function literal's type is built out
 	// of them, and whatever holds that literal (a variable, a map of
 	// callbacks) is inferred from the literal's type in turn. Settling the
@@ -1060,6 +1066,7 @@ func (l *Lowerer) resolveTypes() {
 			once(b)
 		}
 	}
+	l.checkGroupAgreement()
 	l.settleSubs()
 	l.unifyOverrides()
 	for _, b := range l.decls {

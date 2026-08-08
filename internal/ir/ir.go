@@ -129,6 +129,11 @@ type Type struct {
 	Name string
 	// Import is the package path a Named type needs, empty for local types.
 	Import string
+	// Group ties a Func type to the other function values that share a slot
+	// with it, so the analysis can give them all one signature. It is an
+	// opaque tag for the lowering's own use: rendering ignores it and Equal
+	// does not compare it.
+	Group any
 }
 
 // Common types, shared because they are immutable in practice.

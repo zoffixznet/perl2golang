@@ -178,6 +178,12 @@ type Sub struct {
 	// settled, in place, because whatever holds the literal was inferred
 	// from this very object.
 	LitType *ir.Type
+	// Group ties this sub to the other function values it shares a slot
+	// with, so they can be given one signature.
+	Group *sigGroup
+	// Body is an anonymous sub's statement list, which a named sub keeps in
+	// its declaration instead.
+	Body []ast.Stmt
 	// irDecl is the lowered function, filled in on each pass.
 	irDecl *ir.FuncDecl
 	// Doc is the comment block above the declaration.

@@ -591,7 +591,9 @@ func (l *Lowerer) settleFields() {
 			if f.Fixed {
 				continue
 			}
-			if !l.stickyEvidence {
+			if l.stickyEvidence {
+				f.Evidence = compactFuncEvidence(f.Evidence)
+			} else {
 				f.Evidence = compactEvidence(f.Evidence)
 			}
 			t := joinAll(observedTypes(f.Evidence))

@@ -71,6 +71,64 @@ func compactEvidence(evs []observation) []observation {
 	return kept
 }
 
+// compactFuncEvidence is the compaction the sticky mode still performs:
+// only the observations that carry a function type anywhere in them.
+//
+// Sticky mode keeps every round's word so that a file whose types circle
+// still settles, and for plain values that works because keeping more can
+// only widen. Function types are different: a literal's signature object is
+// refreshed in place as its results settle, so an old round's copy of it is
+// not a wider truth but a stale one, and joining it with the final
+// signature emits a container type no literal in the file has. The latest
+// round's word is the only one the emitted code can agree with.
+func compactFuncEvidence(evs []observation) []observation {
+	var fn []observation
+	for _, o := range evs {
+		if containsFunc(o.t, 0) {
+			fn = append(fn, o)
+		}
+	}
+	if len(fn) == 0 {
+		return evs
+	}
+	keep := map[observation]bool{}
+	for _, o := range compactEvidence(fn) {
+		keep[o] = true
+	}
+	out := evs[:0]
+	for _, o := range evs {
+		if containsFunc(o.t, 0) && !keep[o] {
+			continue
+		}
+		out = append(out, o)
+	}
+	return out
+}
+
+// containsFunc reports whether a type has a function type anywhere in it.
+func containsFunc(t *ir.Type, depth int) bool {
+	if t == nil || depth > 12 {
+		return false
+	}
+	if t.Kind == ir.Func {
+		return true
+	}
+	if containsFunc(t.Elem, depth+1) || containsFunc(t.Key, depth+1) {
+		return true
+	}
+	for _, p := range t.Params {
+		if containsFunc(p, depth+1) {
+			return true
+		}
+	}
+	for _, r := range t.Results {
+		if containsFunc(r, depth+1) {
+			return true
+		}
+	}
+	return false
+}
+
 // observedTypes flattens observations back into the types they carry, which
 // is the shape the join and the report want.
 func observedTypes(evs []observation) []*ir.Type {

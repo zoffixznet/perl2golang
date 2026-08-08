@@ -69,7 +69,8 @@ func join(a, b *ir.Type) *ir.Type {
 			// inferred from that very object. A join is the other case: the
 			// answer describes a collection of several literals and must not
 			// go on tracking any one of them.
-			return &ir.Type{Kind: ir.Func, Params: a.Params, Results: a.Results, Variadic: a.Variadic}
+			return &ir.Type{Kind: ir.Func, Params: a.Params, Results: a.Results,
+				Variadic: a.Variadic, Group: mergeSigGroups(a.Group, b.Group)}
 		}
 		return a
 	}
@@ -117,7 +118,12 @@ func join(a, b *ir.Type) *ir.Type {
 	// everything the later round worked out, and leaves whatever holds the
 	// closure as `any`, which does not compile at the call.
 	if a.Kind == ir.Func && b.Kind == ir.Func {
+		// Meeting in a join means the two functions share a slot, so their
+		// signature groups merge whether or not their shapes reconcile
+		// today: the group is what makes them reconcile tomorrow.
+		g := mergeSigGroups(a.Group, b.Group)
 		if t := joinFunc(a, b); t != nil {
+			t.Group = g
 			return t
 		}
 	}

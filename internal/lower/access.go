@@ -723,8 +723,13 @@ func (l *Lowerer) addressOf(x ir.Expr, at ast.Node) ir.Expr {
 func (l *Lowerer) anonSub(n *ast.AnonSub) ir.Expr {
 	s := l.anonSubs[n]
 	if s == nil {
-		s = &Sub{Name: "anon@" + itoa(posLine(n)), Line: posLine(n)}
+		s = &Sub{Name: "anon@" + itoa(posLine(n)), Line: posLine(n), Body: n.Body}
 		s.Go = s.Name
+		// Every function literal starts in a signature group of its own.
+		// Whenever its type meets another function's in a join, the two
+		// groups merge, because a join happens exactly where two values
+		// flow into one slot.
+		s.Group = &sigGroup{members: []*Sub{s}}
 		if l.anonSubs == nil {
 			l.anonSubs = map[*ast.AnonSub]*Sub{}
 		}
@@ -748,12 +753,6 @@ func (l *Lowerer) anonSub(n *ast.AnonSub) ir.Expr {
 	}
 	params, rest := l.recoverParams(s, valueTail(n.Body))
 	l.uniformFn = false
-	if s.Uniform {
-		// A closure sharing a slot answers with one value of no fixed type,
-		// whatever its body happens to produce, or the collection could not
-		// hold it beside the others.
-		s.Results = []*ir.Type{ir.TAny}
-	}
 	body := l.markUnused(&ir.Block{Stmts: l.stmts(rest)})
 	l.implicitReturn(s, body, rest)
 	l.ensureReturn(s, body)
@@ -764,6 +763,7 @@ func (l *Lowerer) anonSub(n *ast.AnonSub) ir.Expr {
 	// of discovery onwards, so that whatever holds the literal is inferred
 	// from the shape the literal will actually have.
 	out := funcLit(params, s.Results, body)
+	out.T.Group = s.Group
 	if l.pass == 1 {
 		s.LitType = out.Type()
 	}
@@ -781,6 +781,13 @@ func (l *Lowerer) callRef(n *ast.FuncCallRef) ir.Expr {
 	fn := l.expr(n.Ref)
 	args, _ := l.listParts(n.Args)
 	t := typeOrAny(fn)
+
+	// What this call passes is evidence about what the functions in the
+	// slot take, and for a closure whose body never names its arguments it
+	// is the only evidence there is.
+	if g := groupOf(t); g != nil {
+		g.observeCall(l, args)
+	}
 
 	if t.Kind != ir.Func {
 		// The value's type did not resolve to a function. Go will not call an
@@ -814,8 +821,47 @@ func (l *Lowerer) callRef(n *ast.FuncCallRef) ir.Expr {
 		result = t.Results[0]
 	}
 	ellipsis := false
-	if t.Variadic && len(t.Params) > 0 {
+	switch {
+	case t.Variadic && len(t.Params) > 0:
 		args, ellipsis = l.spreadArgs(args, t.Params[len(t.Params)-1], n)
+	default:
+		// A fixed signature takes exactly its declared arguments. Perl let
+		// a call come up short, leaving undef in the unread positions, or
+		// run long, leaving the extras unread in @_; Go does neither, so a
+		// short call is padded with zero values and a long one trimmed.
+		for i, a := range args {
+			if i < len(t.Params) {
+				args[i] = l.assignable(a, t.Params[i], n)
+			}
+		}
+		if len(args) > len(t.Params) {
+			if l.pass == 2 {
+				l.approximate(n, "P2G2130", "call with extra arguments",
+					"the extra arguments are dropped",
+					"This call passes more values than the function's signature takes. "+
+						"In Perl the extras sit in @_ where nothing reads them; a Go call "+
+						"has to match the signature exactly.",
+					"If the extras were meant to be used, add parameters for them. If "+
+						"they were not, remove them from the call.",
+					"variadic-and-no-defaults")
+			}
+			args = args[:len(t.Params)]
+		}
+		for i := len(args); i < len(t.Params); i++ {
+			args = append(args, zeroOf(t.Params[i]))
+			if l.pass == 2 {
+				l.approximate(n, "P2G2130", "call with missing arguments",
+					"a missing argument becomes a zero value",
+					"This call passes fewer arguments than the function's signature "+
+						"takes, so Perl would have left the rest undef. Go requires every "+
+						"parameter, so the missing ones are passed as their type's zero "+
+						"value.",
+					"Give the parameter an explicit default inside the function, or "+
+						"split the function in two, which is what Go code does instead of "+
+						"optional arguments.",
+					"variadic-and-no-defaults")
+			}
+		}
 	}
 	out := ir.CallOf(fn, result, args...)
 	out.Ellipsis = ellipsis
