@@ -290,10 +290,17 @@ func (l *Lowerer) declareAssign(my *ast.My, n *ast.Assign) []ir.Stmt {
 	}
 
 	vars := declaredVars(my)
-	if len(vars) == 1 && !my.Paren {
+	// The targets keep their placeholders: `my ($a, undef, $b) = ...` skips
+	// the middle value, and dropping the undef would shift every position
+	// after it.
+	var targets []ast.Expr
+	for _, v := range my.Vars {
+		targets = append(targets, flatten(v)...)
+	}
+	if len(vars) == 1 && len(targets) == 1 && !my.Paren {
 		return l.declareSingle(vars[0], n)
 	}
-	return l.listAssign(varExprs(vars), n.RHS, n, true)
+	return l.listAssign(targets, n.RHS, n, true)
 }
 
 // declaredVars pulls the *ast.Var nodes out of a `my` declaration.
@@ -977,6 +984,12 @@ func (l *Lowerer) listAssignByIndex(targets []ast.Expr, rhs ast.Expr, n *ast.Ass
 				t = vars[0]
 				declareThis = true
 			}
+		}
+		// undef in a target list is a placeholder: the position is consumed
+		// and its value discarded, which Go spells by not storing it.
+		if isUndefLiteral(t) {
+			i++
+			continue
 		}
 		v, ok := t.(*ast.Var)
 		if !ok {

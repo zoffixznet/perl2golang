@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T17:14:07Z",
+  "recorded": "2026-08-15T17:18:44Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -199,8 +199,8 @@
           "skip": 0
         },
         "equivalent": {
-          "pass": 20,
-          "fail": 5,
+          "pass": 21,
+          "fail": 4,
           "skip": 0
         },
         "translated": {
@@ -215,8 +215,8 @@
         }
       },
       "equivalent_annotated": {
-        "pass": 20,
-        "fail": 5,
+        "pass": 21,
+        "fail": 4,
         "skip": 0
       },
       "quality": {
@@ -244,8 +244,8 @@
         "skip": 0
       },
       "equivalent": {
-        "pass": 150,
-        "fail": 56,
+        "pass": 151,
+        "fail": 55,
         "skip": 0
       },
       "honest": {
@@ -265,8 +265,8 @@
       }
     },
     "equivalent_annotated": {
-      "pass": 150,
-      "fail": 56,
+      "pass": 151,
+      "fail": 55,
       "skip": 0
     },
     "quality": {
@@ -9276,8 +9276,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 2, byte 90: got \"-\\npeak_02  chr1:4401-4600       ...\", wanted \"ABC1(+,201bp)\\npeak_02  chr1:4401...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -9290,8 +9289,7 @@
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 2, byte 90: got \"-\\npeak_02  chr1:4401-4600       ...\", wanted \"ABC1(+,201bp)\\npeak_02  chr1:4401...\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
