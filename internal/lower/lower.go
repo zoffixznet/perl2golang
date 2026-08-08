@@ -75,6 +75,14 @@ type Lowerer struct {
 	// being built. Diagnostics and notes are only recorded on pass 2, so
 	// nothing is reported twice.
 	pass int
+	// round counts the discovery sweeps, so an observation can say which
+	// sweep made it and a later sweep's look at the same statement can
+	// replace an earlier one's.
+	round int
+	// stickyEvidence keeps every round's observations instead of letting a
+	// later round replace an earlier one's, for the rare file whose types
+	// never stop circling otherwise.
+	stickyEvidence bool
 
 	scope  *scope
 	names  *nameSet
@@ -347,8 +355,29 @@ type patternVar struct {
 }
 
 // Lower converts a parsed program.
+//
+// Discovery normally converges: each round reads the file against the types
+// the last round settled, and after a few rounds nothing moves. A file whose
+// shapes feed back into themselves can instead circle without settling, and
+// stopping such a file mid-circle would emit types from two different rounds
+// that do not agree with each other. Those files are converted again with
+// every round's evidence kept, which always reaches a settled answer: a
+// disagreement between rounds widens to `any` once and stays there. It is
+// the blunter reading, and it is only used where the sharper one does not
+// hold still.
 func Lower(res parser.Result, src []byte, opts Options) *Result {
+	out, converged := lowerOnce(res, src, opts, false)
+	if !converged {
+		out, _ = lowerOnce(res, src, opts, true)
+	}
+	return out
+}
+
+// lowerOnce runs one full conversion and reports whether type discovery
+// settled before its round cap.
+func lowerOnce(res parser.Result, src []byte, opts Options, sticky bool) (*Result, bool) {
 	l := &Lowerer{
+		stickyEvidence: sticky,
 		opts:        opts,
 		src:         string(src),
 		lines:       strings.Split(string(src), "\n"),
@@ -434,8 +463,10 @@ func Lower(res parser.Result, src []byte, opts Options) *Result {
 	// one more link in such a chain, and the loop stops as soon as a sweep
 	// changes nothing, which on an ordinary script is after two or three.
 	prev := ""
+	converged := false
 	for round := 0; round < maxDiscoveryRounds; round++ {
 		l.pass = 1
+		l.round = round
 		l.scope = newScope(nil)
 		l.curPkg = "main"
 		l.seps = defaultSeparators()
@@ -450,6 +481,7 @@ func Lower(res parser.Result, src []byte, opts Options) *Result {
 		l.settleFields()
 		state := l.typeState()
 		if state == prev {
+			converged = true
 			break
 		}
 		prev = state
@@ -494,13 +526,13 @@ func Lower(res parser.Result, src []byte, opts Options) *Result {
 	out := l.run()
 
 	l.finishReport()
-	return out
+	return out, converged || l.stickyEvidence
 }
 
-// maxDiscoveryRounds caps the type-discovery loop. Each round can only make a
-// type more specific, so the loop terminates on its own; the cap is there so
-// that a program the converter models badly costs bounded time rather than
-// spinning.
+// maxDiscoveryRounds caps the type-discovery loop. With every round's
+// evidence kept a round can only widen, so the loop settles on its own; with
+// replacement a self-feeding shape can circle, which is what the cap and the
+// sticky rerun in Lower are for.
 const maxDiscoveryRounds = 6
 
 // forgetResults drops the return shapes gathered by the previous round.
@@ -970,7 +1002,10 @@ func (l *Lowerer) resolveTypes() {
 			b.Type = t
 			return
 		}
-		t := joinAll(b.Evidence)
+		if !l.stickyEvidence {
+			b.Evidence = compactEvidence(b.Evidence)
+		}
+		t := joinAll(observedTypes(b.Evidence))
 		if t == nil {
 			t = defaultFor(b.Sigil)
 		}
@@ -1089,8 +1124,8 @@ func scalarPart(t *ir.Type) *ir.Type {
 // type. The wording is aimed at someone who wants to fix it by hand.
 func (l *Lowerer) dynamicReason(b *Binding) string {
 	kinds := map[ir.TypeKind]bool{}
-	for _, t := range b.Evidence {
-		if s := scalarPart(t); s != nil {
+	for _, ev := range b.Evidence {
+		if s := scalarPart(ev.t); s != nil {
 			kinds[s.Kind] = true
 		}
 	}

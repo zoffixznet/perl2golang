@@ -111,7 +111,7 @@ type ClassField struct {
 	Go string
 	// Type is the field's settled Go type.
 	Type     *ir.Type
-	Evidence []*ir.Type
+	Evidence []observation
 	// Fixed marks a field whose type is known from a declaration rather than
 	// inferred from use, which is what an option specification gives.
 	Fixed bool
@@ -579,7 +579,7 @@ func (l *Lowerer) observeField(f *ClassField, t *ir.Type) {
 	if t.Kind == ir.Void || t.Kind == ir.Invalid {
 		return
 	}
-	f.Evidence = append(f.Evidence, t)
+	f.Evidence = l.recordObservation(f.Evidence, t)
 }
 
 // settleFields decides each field's Go type from what the file showed it
@@ -591,7 +591,10 @@ func (l *Lowerer) settleFields() {
 			if f.Fixed {
 				continue
 			}
-			t := joinAll(f.Evidence)
+			if !l.stickyEvidence {
+				f.Evidence = compactEvidence(f.Evidence)
+			}
+			t := joinAll(observedTypes(f.Evidence))
 			if t == nil {
 				t = ir.TAny
 			}

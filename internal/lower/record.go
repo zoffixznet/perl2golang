@@ -99,7 +99,7 @@ func (l *Lowerer) escapeLostRecords(b *Binding) {
 		return
 	}
 	for _, ev := range b.Evidence {
-		l.escapeRecordIn(ev)
+		l.escapeRecordIn(ev.t)
 	}
 }
 

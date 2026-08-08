@@ -55,8 +55,10 @@ type Binding struct {
 	// Used records the first pass's read count, which is the whole-file
 	// answer the second pass needs before it has finished counting again.
 	Used int
-	// Evidence is every type the inference pass observed for this binding.
-	Evidence []*ir.Type
+	// Evidence is every type the inference pass observed for this binding,
+	// each tagged with the statement and round that saw it, so that a later
+	// round's look at the same statement replaces the earlier one's.
+	Evidence []observation
 	// Captured marks a binding referenced from inside a nested closure.
 	Captured bool
 	// Closed marks a filehandle the program closes explicitly, so the

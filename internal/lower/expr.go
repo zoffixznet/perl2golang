@@ -246,11 +246,44 @@ func (l *Lowerer) scalar(e ast.Expr) ir.Expr {
 
 // list lowers an expression in list context and always yields a slice.
 func (l *Lowerer) list(e ast.Expr) ir.Expr {
+	x, _ := l.listWithShape(e)
+	return x
+}
+
+// listPart describes one part of a lowered list: the type it had before it
+// was fitted to the list's element type, and whether it stands for a run of
+// values rather than one.
+//
+// The shape is what a list assignment needs to type its targets by position.
+// The first target takes the first part, not the join of everything on the
+// right: `($best, @pair) = ($score, @names)` gives $best a number however
+// text-like the names are.
+type listPart struct {
+	t       *ir.Type
+	spliced bool
+}
+
+// listWithShape lowers an expression in list context and also reports the
+// shape of the parts the list was built from.
+func (l *Lowerer) listWithShape(e ast.Expr) (ir.Expr, []listPart) {
 	parts, t := l.listParts([]ast.Expr{e})
+	elem := usableElem(t, argTypes(parts))
+	shape := make([]listPart, len(parts))
+	for i, p := range parts {
+		pt := typeOrAny(p)
+		shape[i] = listPart{
+			t: pt,
+			spliced: pt.Kind == ir.Slice &&
+				(l.spliced[p] || (pt.Elem != nil && elem != nil && pt.Elem.Equal(elem))),
+		}
+	}
 	if len(parts) == 1 {
 		p := parts[0]
 		if p.Type() != nil && p.Type().Kind == ir.Slice {
-			return p
+			// A single part that is already a slice is the whole list, and it
+			// stands for however many values it holds.
+			shape[0].spliced = true
+			return p, shape
 		}
 		// A call or a conditional whose type did not resolve may be handing
 		// back a list, and neither its spelling nor its Go type can say.
@@ -270,7 +303,7 @@ func (l *Lowerer) list(e ast.Expr) ir.Expr {
 				"type-assertions-and-switches", "static-types-and-zero-values")
 		}
 	}
-	return l.listValue(parts, t)
+	return l.listValue(parts, t), shape
 }
 
 // containerList lowers a list that is about to become an array's contents,

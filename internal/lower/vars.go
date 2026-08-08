@@ -239,7 +239,7 @@ func (l *Lowerer) observe(b *Binding, t *ir.Type) {
 	if t.Kind == ir.Void || t.Kind == ir.Invalid {
 		return
 	}
-	b.Evidence = append(b.Evidence, t)
+	b.Evidence = l.recordObservation(b.Evidence, t)
 }
 
 // observeElem records a type for the *elements* of a container binding.

@@ -958,11 +958,36 @@ func (l *Lowerer) listAssignDirect(targets []ast.Expr, src ir.Expr, n *ast.Assig
 // listAssignByIndex fills targets from a slice, which is what Perl does when
 // the right side is an array.
 func (l *Lowerer) listAssignByIndex(targets []ast.Expr, rhs ast.Expr, n *ast.Assign, declare bool) []ir.Stmt {
-	src := l.list(rhs)
+	src, shape := l.listWithShape(rhs)
 	if out, ok := l.listAssignDirect(targets, src, n, declare); ok {
 		return out
 	}
 	elem := elemOf(typeOrAny(src))
+	// The leading parts of the list stand one-to-one with the leading
+	// targets, up to the first part whose length is only known at run time.
+	// Those targets take their types from their own positions: the join of
+	// the whole list would let one late position retype every variable
+	// before it.
+	lead := 0
+	for lead < len(shape) && !shape[lead].spliced {
+		lead++
+	}
+	// restType is the element type of everything from part i on, which is
+	// what an array target swallowing the tail actually holds.
+	restType := func(i int) *ir.Type {
+		if i >= len(shape) {
+			return nil
+		}
+		var seen []*ir.Type
+		for _, p := range shape[i:] {
+			if p.spliced {
+				seen = append(seen, elemOf(p.t))
+				continue
+			}
+			seen = append(seen, p.t)
+		}
+		return joinAll(seen)
+	}
 	tmp := l.tmp("values")
 	var out []ir.Stmt
 	hold := assign(":=", []ir.Expr{ir.NewIdent(tmp, typeOrAny(src))}, []ir.Expr{src})
@@ -1019,7 +1044,39 @@ func (l *Lowerer) listAssignByIndex(targets []ast.Expr, rhs ast.Expr, n *ast.Ass
 		b := l.bindingFor(v, declare)
 		b.Writes++
 		if v.Sigil == '@' {
-			l.observe(b, ir.SliceOf(elem))
+			if i <= lead {
+				// The positions up to here line up one-to-one, so the tail
+				// this array swallows starts exactly at part i and its
+				// element type comes from those parts alone. An empty tail
+				// says nothing about the type at all: Perl leaves the array
+				// empty, whatever it is an array of.
+				if re := restType(i); re != nil {
+					l.observe(b, ir.SliceOf(re))
+				}
+			} else {
+				l.observe(b, ir.SliceOf(elem))
+			}
+			// A tail that provably holds nothing leaves the array empty,
+			// which is what Perl's list assignment does with it. Reading the
+			// empty tail out of the held list would only manufacture a slice
+			// of the list's type for an array that may well hold another.
+			if ln := literalLen(src); ln >= 0 && i >= ln {
+				var st ir.Stmt
+				if declare {
+					st = &ir.DeclStmt{Names: []string{b.Go}, Type: b.Type}
+				} else {
+					st = assign("=", []ir.Expr{ir.NewIdent(b.Go, b.Type)},
+						[]ir.Expr{ir.Nil(b.Type)})
+				}
+				l.setProv(st, t)
+				l.note(st, "The list runs out before this array's position, so Perl "+
+					"leaves it empty. Its Go declaration starts empty the same way: a "+
+					"nil slice is a slice with nothing in it, ready to be appended to.",
+					"nil-slices-vs-nil-maps")
+				out = append(out, st)
+				i++
+				continue
+			}
 			// A plain values[i:] is only safe when the list provably reaches
 			// i. A list whose length the program decides, a sub's return or
 			// an eval's value, may come up short, and Perl reads that as the
@@ -1032,13 +1089,20 @@ func (l *Lowerer) listAssignByIndex(targets []ast.Expr, rhs ast.Expr, n *ast.Ass
 					ir.NewIdent(tmp, typeOrAny(src)), ir.IntLit(itoa(i)))
 			}
 			var st ir.Stmt
-			if declare && b.Type != nil && !b.Type.Equal(ir.SliceOf(elem)) {
+			if b.Type != nil && !b.Type.Equal(ir.SliceOf(elem)) {
 				// The rest of this list is not what the rest of the file puts
 				// in the array, and Go has no conversion between two slice
 				// types. Declaring the array with the type the whole file
 				// agreed on keeps every later use of it compiling; what the
-				// list had to offer goes in one element at a time.
-				st = &ir.DeclStmt{Names: []string{b.Go}, Type: b.Type}
+				// list had to offer goes in one element at a time. An array
+				// being reassigned starts again from empty first, which is
+				// what Perl's list assignment does to it too.
+				if declare {
+					st = &ir.DeclStmt{Names: []string{b.Go}, Type: b.Type}
+				} else {
+					st = assign("=", []ir.Expr{ir.NewIdent(b.Go, b.Type)},
+						[]ir.Expr{ir.Nil(b.Type)})
+				}
 				loop := &ir.Range{
 					Key:    ir.NewIdent("_", ir.TInt),
 					Value:  ir.NewIdent(l.tmp("rest"), elem),
@@ -1065,7 +1129,11 @@ func (l *Lowerer) listAssignByIndex(targets []ast.Expr, rhs ast.Expr, n *ast.Ass
 			i++
 			continue
 		}
-		l.observe(b, elem)
+		if i < lead {
+			l.observe(b, shape[i].t)
+		} else {
+			l.observe(b, elem)
+		}
 		val := l.helperCall(hAt, elem, ir.NewIdent(tmp, typeOrAny(src)), ir.IntLit(itoa(i)))
 		out = append(out, l.bindDecl(declare, b, val))
 		if declare {

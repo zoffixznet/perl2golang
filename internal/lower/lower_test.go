@@ -84,6 +84,15 @@ func TestLowerInfersTypes(t *testing.T) {
 		{"array of text", `my @a = ("x", "y"); print "@a";`, "@a", "[]string"},
 		{"hash of counts", "my %c;\n$c{a}++;\nprint $c{a};", "%c", "map[string]int"},
 		{"mixed uses fall back", "my $x = 1;\n$x = \"two\";\nprint $x;", "$x", "any"},
+		// A list assignment types its targets by position, not by the join
+		// of everything on the right: the number stays a number however
+		// text-like the tail is.
+		{"list assignment head is positional",
+			"my @names = (\"a\", \"b\");\nmy ($best, @pair) = (-1);\n($best, @pair) = (2.5, @names);\nprint $best, \"@pair\";",
+			"$best", "float64"},
+		{"list assignment tail is positional",
+			"my @names = (\"a\", \"b\");\nmy ($best, @pair) = (-1);\n($best, @pair) = (2.5, @names);\nprint $best, \"@pair\";",
+			"@pair", "[]string"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -98,6 +107,51 @@ func TestLowerInfersTypes(t *testing.T) {
 				}
 			}
 			t.Errorf("no symbol named %s in the report", tt.vari)
+		})
+	}
+}
+
+// TestCompactEvidence covers the rule that lets discovery rounds change
+// their minds: for every site, only the latest round with a definite answer
+// keeps its say, and a round that answered `any` does not erase the round
+// that answered.
+func TestCompactEvidence(t *testing.T) {
+	siteA, siteB := keyNode{"a"}, keyNode{"b"}
+	obs := func(t *ir.Type, site keyNode, round int) observation {
+		return observation{t: t, site: site, round: round}
+	}
+	tests := []struct {
+		name string
+		in   []observation
+		want []*ir.Type
+	}{
+		{"a later round replaces an earlier one at the same site",
+			[]observation{obs(ir.TInt, siteA, 0), obs(ir.TString, siteA, 1)},
+			[]*ir.Type{ir.TString}},
+		{"an any round does not erase the round that answered",
+			[]observation{obs(ir.TString, siteA, 0), obs(ir.TAny, siteA, 1)},
+			[]*ir.Type{ir.TString}},
+		{"a site no round revisits keeps its old word",
+			[]observation{obs(ir.TInt, siteA, 0), obs(ir.TString, siteB, 2)},
+			[]*ir.Type{ir.TInt, ir.TString}},
+		{"several observations in one round all survive",
+			[]observation{obs(ir.TInt, siteA, 1), obs(ir.TFloat, siteA, 1)},
+			[]*ir.Type{ir.TInt, ir.TFloat}},
+		{"a site that only ever said any keeps one round of it",
+			[]observation{obs(ir.TAny, siteA, 0), obs(ir.TAny, siteA, 1)},
+			[]*ir.Type{ir.TAny}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := observedTypes(compactEvidence(tt.in))
+			if len(got) != len(tt.want) {
+				t.Fatalf("kept %d observations, want %d", len(got), len(tt.want))
+			}
+			for i := range got {
+				if !got[i].Equal(tt.want[i]) {
+					t.Errorf("observation %d = %s, want %s", i, got[i], tt.want[i])
+				}
+			}
 		})
 	}
 }
