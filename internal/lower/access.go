@@ -678,7 +678,7 @@ func (l *Lowerer) refGen(n *ast.RefGen) ir.Expr {
 			return x
 		case '&':
 			if s, ok := l.findSub(inner.Name); ok {
-				out := ir.NewIdent(s.Go, nil)
+				out := ir.NewIdent(s.Go, l.subFuncType(s))
 				l.note(out, "A code reference is just the function value in Go. "+
 					"Functions are ordinary values that can be stored, passed and "+
 					"returned.",
@@ -801,9 +801,40 @@ func (l *Lowerer) anonSub(n *ast.AnonSub) ir.Expr {
 
 // callRef lowers $code->(...) and &$code(...).
 func (l *Lowerer) callRef(n *ast.FuncCallRef) ir.Expr {
+	out, t, direct := l.codeRefCall(n)
+	if !direct {
+		return out
+	}
+	// A call whose function answers with several values can only stand
+	// where all of them are taken at once, so anywhere else it becomes its
+	// own statement and this expression reads Perl's scalar answer: the
+	// last value of the returned list.
+	if len(t.Results) > 1 {
+		names := make([]ir.Expr, len(t.Results))
+		for i, rt := range t.Results {
+			names[i] = ir.NewIdent(l.tmp("r"), rt)
+		}
+		st := assign(":=", names, []ir.Expr{out})
+		l.setProv(st, n)
+		l.note(st, "A Go function that returns several values can only be called "+
+			"where all of them are taken at once, so the call gets its own statement "+
+			"and the results are named. A Perl sub called where one value is wanted "+
+			"evaluates its return in that context, and a returned list answers with "+
+			"its last value.",
+			"multiple-return-values", "context-is-gone")
+		l.emit(st)
+		return names[len(names)-1]
+	}
+	return out
+}
+
+// codeRefCall builds the call a code reference makes. It reports direct as
+// false when the reference's type never resolved and the call had to go
+// through reflection; the reflective call is complete and is the answer.
+func (l *Lowerer) codeRefCall(n *ast.FuncCallRef) (out ir.Expr, t *ir.Type, direct bool) {
 	fn := l.expr(n.Ref)
 	args, _ := l.listParts(n.Args)
-	t := typeOrAny(fn)
+	t = typeOrAny(fn)
 
 	// What this call passes is evidence about what the functions in the
 	// slot take, and for a closure whose body never names its arguments it
@@ -836,11 +867,11 @@ func (l *Lowerer) callRef(n *ast.FuncCallRef) ir.Expr {
 			"the value's type is not known; the moment it is, the call is written "+
 			"straight and the compiler checks it.",
 			"type-assertions-and-switches")
-		return out
+		return out, t, false
 	}
 
 	result := ir.TVoid
-	if len(t.Results) == 1 {
+	if len(t.Results) >= 1 {
 		result = t.Results[0]
 	}
 	ellipsis := false
@@ -886,11 +917,11 @@ func (l *Lowerer) callRef(n *ast.FuncCallRef) ir.Expr {
 			}
 		}
 	}
-	out := ir.CallOf(fn, result, args...)
-	out.Ellipsis = ellipsis
-	l.note(out, "Calling through a code reference needs no arrow in Go: a variable "+
+	call := ir.CallOf(fn, result, args...)
+	call.Ellipsis = ellipsis
+	l.note(call, "Calling through a code reference needs no arrow in Go: a variable "+
 		"holding a function is called like any other function.")
-	return out
+	return call, t, true
 }
 
 // spreadArgs prepares an argument list for a call whose target takes its

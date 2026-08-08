@@ -408,7 +408,12 @@ func (l *Lowerer) varExpr(v *ast.Var) ir.Expr {
 		return out
 	case '&':
 		if s, ok := l.findSub(v.Name); ok {
-			return ir.NewIdent(s.Go, nil)
+			out := ir.NewIdent(s.Go, l.subFuncType(s))
+			l.note(out, "\\&name takes a reference to a sub. A Go function is already "+
+				"a value, so its bare name is the reference: it can be stored, passed, "+
+				"and called without any taking or dereferencing.",
+				"closures-and-loop-capture")
+			return out
 		}
 	}
 

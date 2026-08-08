@@ -471,7 +471,25 @@ func (l *Lowerer) listParts(es []ast.Expr) ([]ir.Expr, *ir.Type) {
 			// the surrounding list, exactly as a named sub would; which sub
 			// answers is only known while the program runs, so what its result
 			// holds is asked then too.
-			x := l.expr(e)
+			x, ft, direct := l.codeRefCall(n)
+			if direct && len(ft.Results) > 1 {
+				// The signature says how many values come back, so each one
+				// takes its own place in the list, by position.
+				names := make([]ir.Expr, len(ft.Results))
+				for i, rt := range ft.Results {
+					names[i] = ir.NewIdent(l.tmp("r"), rt)
+				}
+				st := assign(":=", names, []ir.Expr{x})
+				l.setProv(st, n)
+				l.note(st, "A Go function that returns several values can only be "+
+					"called where all of them are taken at once, so the call gets its "+
+					"own statement and the results join the list by position.",
+					"multiple-return-values")
+				l.emit(st)
+				out = append(out, names...)
+				seen = append(seen, ft.Results...)
+				return
+			}
 			if l.pass == 2 && typeOrAny(x).Kind == ir.Any {
 				flat := l.helperCall(hAsList, ir.SliceOf(ir.TAny), x)
 				l.note(flat, "This call reaches its sub through a value, so how many "+

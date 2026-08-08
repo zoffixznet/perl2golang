@@ -51,9 +51,11 @@ type sigGroup struct {
 	settledParams []*ir.Type
 	// elem is the variadic slice's element type.
 	elem *ir.Type
-	// result is the one result every member answers with, and returns says
-	// whether any member answers at all.
+	// result is the first result position every member answers with,
+	// unified is the whole result shape, and returns says whether any
+	// member answers at all.
 	result  *ir.Type
+	unified []*ir.Type
 	returns bool
 }
 
@@ -83,6 +85,36 @@ func (g *sigGroup) find() *sigGroup {
 		g = g.parent
 	}
 	return g
+}
+
+// subFuncType is the function type a reference to a named sub carries: the
+// signature the sub has settled on so far, tagged with its signature group
+// so that storing the reference beside closures merges their groups.
+//
+// Methods and constructors stay untyped here: their Go signature carries a
+// receiver, which a plain function value cannot spell without the method
+// expression form, and no corpus script has asked for one yet.
+func (l *Lowerer) subFuncType(s *Sub) *ir.Type {
+	if s.Class != nil {
+		return nil
+	}
+	if s.Group == nil {
+		s.Group = &sigGroup{members: []*Sub{s}}
+	}
+	var params []*ir.Type
+	for _, b := range s.Params {
+		if b == nil {
+			return nil
+		}
+		params = append(params, b.Type)
+	}
+	t := ir.FuncOf(params, s.Results)
+	if s.VarArgs != nil {
+		t.Params = append(t.Params, elemOf(s.VarArgs.Type))
+		t.Variadic = true
+	}
+	t.Group = s.Group
+	return t
 }
 
 // sansGroups strips the signature groups off function types, for the joins
@@ -187,23 +219,34 @@ func (g *sigGroup) observeCall(l *Lowerer, args []ir.Expr) {
 	}
 }
 
+// eachGroup visits every signature group once. Groups hang off anonymous
+// subs and off the named subs the file takes references to.
+func (l *Lowerer) eachGroup(f func(*sigGroup)) {
+	seen := map[*sigGroup]bool{}
+	visit := func(s *Sub) {
+		if s == nil || s.Group == nil {
+			return
+		}
+		g := s.Group.find()
+		if seen[g] {
+			return
+		}
+		seen[g] = true
+		f(g)
+	}
+	for _, s := range l.anonOrd {
+		visit(s)
+	}
+	for _, name := range l.subOrd {
+		visit(l.subs[name])
+	}
+}
+
 // settleGroups renews every group's decision from this round's evidence and
 // feeds what the call sites showed into the members' parameter bindings, so
 // the ordinary settling that follows sees it as evidence like any other.
 func (l *Lowerer) settleGroups() {
-	seen := map[*sigGroup]bool{}
-	for _, s := range l.anonOrd {
-		g := s.Group
-		if g == nil {
-			continue
-		}
-		g = g.find()
-		if seen[g] {
-			continue
-		}
-		seen[g] = true
-		l.settleGroup(g)
-	}
+	l.eachGroup(func(g *sigGroup) { l.settleGroup(g) })
 }
 
 func (l *Lowerer) settleGroup(g *sigGroup) {
@@ -287,47 +330,51 @@ func mergeObservations(dst, src []observation) []observation {
 	return dst
 }
 
-// unifyGroupResults gives every member of a shared slot the one result type
-// they can all answer with. It runs after each member's own returns have
-// been settled, and only a group that really shares a slot, two or more
-// members, is unified: a lone closure keeps whatever shape its body implies.
+// unifyGroupResults gives every member of a shared slot the result shape
+// they can all answer with: as many positions as the widest member returns,
+// each position the join of what the members put there. It runs after each
+// member's own returns have been settled, and only a group that really
+// shares a slot, two or more members, is unified: a lone closure keeps
+// whatever shape its body implies. A member returning fewer values than the
+// widest one pads the rest with zero values, which is Perl's undef made
+// explicit at the one place Go can say it, the return statement.
 func (l *Lowerer) unifyGroupResults() {
-	seen := map[*sigGroup]bool{}
-	for _, s := range l.anonOrd {
-		g := s.Group
-		if g == nil {
-			continue
+	l.eachGroup(func(g *sigGroup) {
+		if len(g.members) < 2 {
+			return
 		}
-		g = g.find()
-		if seen[g] || len(g.members) < 2 {
-			continue
-		}
-		seen[g] = true
-		var r *ir.Type
-		returns := false
+		width := 0
 		for _, m := range g.members {
 			fillResults(m)
-			if len(m.Results) > 0 {
-				returns = true
-				r = join(r, m.Results[0])
+			if len(m.Results) > width {
+				width = len(m.Results)
 			}
 		}
-		g.returns = returns
-		if !returns {
+		g.returns = width > 0
+		if width == 0 {
 			g.result = nil
 			for _, m := range g.members {
 				m.Results = nil
 			}
-			continue
+			return
 		}
-		if r == nil || isUnresolved(r) {
-			r = ir.TAny
-		}
-		g.result = r
+		results := make([]*ir.Type, width)
 		for _, m := range g.members {
-			m.Results = []*ir.Type{r}
+			for i, t := range m.Results {
+				results[i] = join(results[i], t)
+			}
 		}
-	}
+		for i := range results {
+			if results[i] == nil || isUnresolved(results[i]) {
+				results[i] = ir.TAny
+			}
+		}
+		g.result = results[0]
+		g.unified = results
+		for _, m := range g.members {
+			m.Results = append([]*ir.Type(nil), results...)
+		}
+	})
 }
 
 // checkGroupAgreement runs once the parameters have settled and asks, for
@@ -336,15 +383,9 @@ func (l *Lowerer) unifyGroupResults() {
 // means the fixed list cannot be written, and the group falls back to the
 // variadic slice for good.
 func (l *Lowerer) checkGroupAgreement() {
-	seen := map[*sigGroup]bool{}
-	for _, s := range l.anonOrd {
-		g := s.group()
-		if g == nil || seen[g] {
-			continue
-		}
-		seen[g] = true
+	l.eachGroup(func(g *sigGroup) {
 		if !g.fixed {
-			continue
+			return
 		}
 		g.settledParams = make([]*ir.Type, g.arity)
 		for _, m := range g.members {
@@ -361,7 +402,7 @@ func (l *Lowerer) checkGroupAgreement() {
 				}
 			}
 		}
-	}
+	})
 }
 
 // naturalShape reports how many leading scalar parameters the sub's body

@@ -355,9 +355,12 @@ func (l *Lowerer) recoverParams(s *Sub, body []ast.Stmt) ([]ir.Param, []ast.Stmt
 			if group.elem != nil && !isUnresolved(group.elem) {
 				elem = group.elem
 			}
-			if !group.returns {
+			switch {
+			case !group.returns:
 				s.Results = nil
-			} else if group.result != nil && !isUnresolved(group.result) {
+			case len(group.unified) > 0:
+				s.Results = append([]*ir.Type(nil), group.unified...)
+			case group.result != nil && !isUnresolved(group.result):
 				s.Results = []*ir.Type{group.result}
 			}
 		}
