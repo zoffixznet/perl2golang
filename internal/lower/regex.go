@@ -937,6 +937,14 @@ func (l *Lowerer) matchSubject(bound ast.Expr) ir.Expr {
 		}
 		return l.toStr(l.varExpr(&ast.Var{Sigil: '$', Name: "_"}), nil)
 	}
+	// Binding a scalar to a pattern is evidence about the scalar: matching
+	// reads it as text, which is worth as much to inference as any other
+	// string use and often the only stringy use a value has.
+	if v, ok := bound.(*ast.Var); ok && v.Sigil == '$' {
+		if b, found := l.scope.lookup(varKey('$', v.Name)); found {
+			l.observe(b, ir.TString)
+		}
+	}
 	return l.toStr(l.expr(bound), bound)
 }
 

@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T17:18:44Z",
+  "recorded": "2026-08-15T17:24:56Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -90,9 +90,9 @@
       "quality": {
         "todos": 17,
         "symbols": 1526,
-        "symbols_typed": 1340,
+        "symbols_typed": 1339,
         "refusals": 17,
-        "approximations": 544,
+        "approximations": 543,
         "crashes": 0
       }
     },
@@ -134,7 +134,7 @@
       "quality": {
         "todos": 44,
         "symbols": 908,
-        "symbols_typed": 710,
+        "symbols_typed": 711,
         "refusals": 45,
         "approximations": 316,
         "crashes": 0
@@ -199,8 +199,8 @@
           "skip": 0
         },
         "equivalent": {
-          "pass": 21,
-          "fail": 4,
+          "pass": 22,
+          "fail": 3,
           "skip": 0
         },
         "translated": {
@@ -215,14 +215,14 @@
         }
       },
       "equivalent_annotated": {
-        "pass": 21,
-        "fail": 4,
+        "pass": 22,
+        "fail": 3,
         "skip": 0
       },
       "quality": {
         "todos": 0,
         "symbols": 923,
-        "symbols_typed": 851,
+        "symbols_typed": 854,
         "refusals": 0,
         "approximations": 208,
         "crashes": 0
@@ -244,8 +244,8 @@
         "skip": 0
       },
       "equivalent": {
-        "pass": 151,
-        "fail": 55,
+        "pass": 152,
+        "fail": 54,
         "skip": 0
       },
       "honest": {
@@ -265,25 +265,25 @@
       }
     },
     "equivalent_annotated": {
-      "pass": 151,
-      "fail": 55,
+      "pass": 152,
+      "fail": 54,
       "skip": 0
     },
     "quality": {
       "todos": 107,
       "symbols": 4034,
-      "symbols_typed": 3487,
+      "symbols_typed": 3490,
       "refusals": 108,
-      "approximations": 1231,
+      "approximations": 1230,
       "crashes": 0
     }
   },
   "quality": {
     "todos": 107,
     "symbols": 4034,
-    "symbols_typed": 3487,
+    "symbols_typed": 3490,
     "refusals": 108,
-    "approximations": 1231,
+    "approximations": 1230,
     "crashes": 0
   },
   "entries": [
@@ -3118,7 +3118,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "8 variables left dynamic out of 28"
+          "reason": "9 variables left dynamic out of 28"
         }
       },
       "equivalent_annotated": {
@@ -3128,9 +3128,9 @@
       "quality": {
         "todos": 0,
         "symbols": 28,
-        "symbols_typed": 20,
+        "symbols_typed": 19,
         "refusals": 0,
-        "approximations": 26,
+        "approximations": 25,
         "crashes": 0
       }
     },
@@ -5988,7 +5988,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "5 variables left dynamic out of 34"
+          "reason": "4 variables left dynamic out of 34"
         }
       },
       "equivalent_annotated": {
@@ -5997,7 +5997,7 @@
       "quality": {
         "todos": 0,
         "symbols": 34,
-        "symbols_typed": 29,
+        "symbols_typed": 30,
         "refusals": 0,
         "approximations": 15,
         "crashes": 0
@@ -6128,7 +6128,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: line 3, byte 94: got \"no\\n--- workspace audit ---\\n0    ...\", wanted \"yes\\n--- workspace audit ---\\nship...\""
+          "reason": "stdout differs: line 3, byte 94: got \"no\\n--- workspace audit ---\\nshipi...\", wanted \"yes\\n--- workspace audit ---\\nship...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -6138,17 +6138,17 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "4 variables left dynamic out of 27"
+          "reason": "5 variables left dynamic out of 27"
         }
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: line 3, byte 94: got \"no\\n--- workspace audit ---\\n0    ...\", wanted \"yes\\n--- workspace audit ---\\nship...\""
+        "reason": "stdout differs: line 3, byte 94: got \"no\\n--- workspace audit ---\\nshipi...\", wanted \"yes\\n--- workspace audit ---\\nship...\""
       },
       "quality": {
         "todos": 0,
         "symbols": 27,
-        "symbols_typed": 23,
+        "symbols_typed": 22,
         "refusals": 0,
         "approximations": 11,
         "crashes": 0
@@ -6779,7 +6779,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "12 variables left dynamic out of 16"
+          "reason": "11 variables left dynamic out of 16"
         }
       },
       "equivalent_annotated": {
@@ -6788,7 +6788,7 @@
       "quality": {
         "todos": 0,
         "symbols": 16,
-        "symbols_typed": 4,
+        "symbols_typed": 5,
         "refusals": 0,
         "approximations": 4,
         "crashes": 0
@@ -9312,8 +9312,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 1, byte 0: got \"# translated 0/6 records\\n# FAILE...\", wanted \"\u003eorf1 len=10\\nMADEGFKDL*\\n\u003eorf2_re...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -9323,17 +9322,16 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "6 variables left dynamic out of 56"
+          "reason": "7 variables left dynamic out of 56"
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 1, byte 0: got \"# translated 0/6 records\\n# FAILE...\", wanted \"\u003eorf1 len=10\\nMADEGFKDL*\\n\u003eorf2_re...\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
         "symbols": 56,
-        "symbols_typed": 50,
+        "symbols_typed": 49,
         "refusals": 0,
         "approximations": 12,
         "crashes": 0
@@ -9397,7 +9395,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "13 variables left dynamic out of 42"
+          "reason": "9 variables left dynamic out of 42"
         }
       },
       "equivalent_annotated": {
@@ -9406,7 +9404,7 @@
       "quality": {
         "todos": 0,
         "symbols": 42,
-        "symbols_typed": 29,
+        "symbols_typed": 33,
         "refusals": 0,
         "approximations": 5,
         "crashes": 0

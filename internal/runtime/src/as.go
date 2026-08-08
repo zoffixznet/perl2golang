@@ -1,5 +1,7 @@
 package src
 
+import "reflect"
+
 // as reads a value of no fixed type as a T, and gives T's zero value when it
 // turns out to hold something else.
 //
@@ -10,10 +12,43 @@ package src
 // stops at the first row of real data. An empty map reads as empty, a missing
 // record reads as nil, and the lines after this one still get their turn.
 //
+// One conversion is performed rather than refused: a map read as a map of
+// anything, or a slice as a slice of anything, is copied across element by
+// element. The original had one kind of hash and one kind of array, so two
+// collections differing only in element type are the same thing here, not a
+// failed guess.
+//
 // This is the shape to get rid of, not to spread. Where the value's type is
 // known, the assertion disappears entirely and the compiler does the checking
 // instead.
 func as[T any](v any) T {
-	t, _ := v.(T)
-	return t
+	if t, ok := v.(T); ok {
+		return t
+	}
+	var zero T
+	switch any(zero).(type) {
+	case map[string]any:
+		rv := reflect.ValueOf(v)
+		if rv.Kind() == reflect.Map && rv.Type().Key().Kind() == reflect.String {
+			out := make(map[string]any, rv.Len())
+			for _, k := range rv.MapKeys() {
+				out[k.String()] = rv.MapIndex(k).Interface()
+			}
+			if t, ok := any(out).(T); ok {
+				return t
+			}
+		}
+	case []any:
+		rv := reflect.ValueOf(v)
+		if rv.Kind() == reflect.Slice {
+			out := make([]any, rv.Len())
+			for i := range out {
+				out[i] = rv.Index(i).Interface()
+			}
+			if t, ok := any(out).(T); ok {
+				return t
+			}
+		}
+	}
+	return zero
 }
