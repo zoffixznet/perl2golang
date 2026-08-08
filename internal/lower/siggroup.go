@@ -85,6 +85,26 @@ func (g *sigGroup) find() *sigGroup {
 	return g
 }
 
+// sansGroups strips the signature groups off function types, for the joins
+// that ask "what one type could hold all of these" without the values
+// actually sharing a slot. A sub returning two closures returns them in two
+// result positions; flattening the results into a list joins their types to
+// find the list's element type, and that join must not marry the closures'
+// signatures for good on the strength of a question.
+func sansGroups(ts []*ir.Type) []*ir.Type {
+	out := make([]*ir.Type, len(ts))
+	for i, t := range ts {
+		if t != nil && t.Kind == ir.Func && t.Group != nil {
+			c := *t
+			c.Group = nil
+			out[i] = &c
+			continue
+		}
+		out[i] = t
+	}
+	return out
+}
+
 // groupOf reads the signature group off a function type, if it carries one.
 func groupOf(t *ir.Type) *sigGroup {
 	if t == nil || t.Kind != ir.Func {
@@ -345,9 +365,12 @@ func (l *Lowerer) checkGroupAgreement() {
 }
 
 // naturalShape reports how many leading scalar parameters the sub's body
-// names in the `my (...) = @_` and `my $x = shift` idioms, and whether that
-// naming accounts for every read of the argument list. A body that goes on
-// reading @_ raw, `$_[0]` included, has no fixed parameter list to recover.
+// accounts for, and whether that accounting is complete. The `my (...) = @_`
+// and `my $x = shift` idioms name parameters outright; a body whose only
+// other reach into the argument list is `$_[k]` with the position written
+// as a number is positional, which a fixed parameter list can still carry.
+// Anything else, @_ whole, a slice of it, a computed index, leaves the
+// arity to the program and rules the fixed list out.
 func (s *Sub) naturalShape() (arity int, named bool) {
 	if s.Decl == nil && s.Body == nil {
 		return 0, false
@@ -391,8 +414,165 @@ func (s *Sub) naturalShape() (arity int, named bool) {
 		}
 		break
 	}
-	if usesArgs(rest) {
+	if !usesArgs(rest) {
+		return arity, true
+	}
+	top, ok := positionalArgsOnly(rest)
+	if !ok {
 		return arity, false
 	}
+	if top+1 > arity {
+		arity = top + 1
+	}
 	return arity, true
+}
+
+// positionalArgsOnly reports whether every reach into the argument list in
+// these statements is `$_[k]` with k written as a number, and the largest k.
+func positionalArgsOnly(body []ast.Stmt) (top int, ok bool) {
+	top, ok = -1, true
+	var walkE func(ast.Expr)
+	var walkS func([]ast.Stmt)
+	walkE = func(e ast.Expr) {
+		switch n := e.(type) {
+		case nil:
+			return
+		case *ast.Var:
+			if n.Sigil == '@' && n.Name == "_" {
+				ok = false
+			}
+		case *ast.Index:
+			if v, isVar := n.Base.(*ast.Var); isVar && !n.Arrow && v.Sigil == '$' && v.Name == "_" {
+				if k, num := staticIndex(n.Idx); num {
+					if k > top {
+						top = k
+					}
+				} else {
+					ok = false
+				}
+				return
+			}
+			walkE(n.Base)
+			walkE(n.Idx)
+		case *ast.Slice:
+			if v, isVar := n.Base.(*ast.Var); isVar && v.Sigil == '@' && v.Name == "_" {
+				ok = false
+				return
+			}
+			walkE(n.Base)
+			for _, i := range n.Idx {
+				walkE(i)
+			}
+		case *ast.RefGen:
+			if isArgsVar(n.X) {
+				ok = false
+				return
+			}
+			walkE(n.X)
+		case *ast.Deref:
+			walkE(n.X)
+		case *ast.HashIndex:
+			walkE(n.Base)
+			walkE(n.Key)
+		case *ast.Match:
+			walkE(n.Bound)
+			walkE(n.PatternExpr)
+		case *ast.Subst:
+			walkE(n.Bound)
+			walkE(n.Repl)
+		case *ast.Trans:
+			walkE(n.Bound)
+		case *ast.Assign:
+			walkE(n.LHS)
+			walkE(n.RHS)
+		case *ast.BinOp:
+			walkE(n.L)
+			walkE(n.R)
+		case *ast.UnOp:
+			walkE(n.X)
+		case *ast.Ternary:
+			walkE(n.Cond)
+			walkE(n.A)
+			walkE(n.B)
+		case *ast.List:
+			for _, el := range n.Elems {
+				walkE(el)
+			}
+		case *ast.Call:
+			if n.Name == "shift" && len(n.Args) == 0 {
+				ok = false
+			}
+			for _, a := range n.Args {
+				walkE(a)
+			}
+			walkS(n.Block)
+		case *ast.FuncCallRef:
+			walkE(n.Ref)
+			for _, a := range n.Args {
+				walkE(a)
+			}
+		case *ast.MethodCall:
+			walkE(n.Invocant)
+			walkE(n.Dynamic)
+			for _, a := range n.Args {
+				walkE(a)
+			}
+		case *ast.AnonArray:
+			for _, el := range n.Elems {
+				walkE(el)
+			}
+		case *ast.AnonHash:
+			for _, el := range n.Elems {
+				walkE(el)
+			}
+		case *ast.My:
+			for _, v := range n.Vars {
+				walkE(v)
+			}
+		case *ast.InterpLit:
+			for _, p := range n.Parts {
+				walkE(p)
+			}
+		case *ast.AnonSub:
+			// A nested sub's @_ is its own argument list, not this one.
+			return
+		}
+	}
+	walkS = func(list []ast.Stmt) {
+		for _, st := range list {
+			switch n := st.(type) {
+			case *ast.ExprStmt:
+				walkE(n.X)
+			case *ast.If:
+				walkE(n.Cond)
+				walkS(n.Then)
+				for _, ei := range n.ElseIfs {
+					walkE(ei.Cond)
+					walkS(ei.Then)
+				}
+				walkS(n.Else)
+			case *ast.While:
+				walkE(n.Cond)
+				walkS(n.Body)
+			case *ast.ForC:
+				walkE(n.Init)
+				walkE(n.Cond)
+				walkE(n.Post)
+				walkS(n.Body)
+			case *ast.Foreach:
+				for _, e := range n.List {
+					walkE(e)
+				}
+				walkS(n.Body)
+			case *ast.Block:
+				walkS(n.Body)
+			case *ast.Return:
+				for _, e := range n.Exprs {
+					walkE(e)
+				}
+			}
+		}
+	}
+	walkS(body)
+	return top, ok
 }

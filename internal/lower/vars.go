@@ -14,6 +14,12 @@ import (
 // name refers to, which is the whole reason the two-pass design works.
 func (l *Lowerer) declare(v *ast.Var, kind Kind) *Binding {
 	if b, ok := l.decls[v]; ok {
+		// A name that an earlier discovery round read as a local can turn
+		// out to be a parameter once its sub's signature settles, and a
+		// parameter settles earlier than a local, so the record moves up.
+		if kind == KindParam && b.Kind == KindLocal {
+			b.Kind = KindParam
+		}
 		l.scope.define(varKey(v.Sigil, v.Name), b)
 		return b
 	}

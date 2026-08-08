@@ -532,8 +532,13 @@ func lowerOnce(res parser.Result, src []byte, opts Options, sticky bool) (*Resul
 // maxDiscoveryRounds caps the type-discovery loop. With every round's
 // evidence kept a round can only widen, so the loop settles on its own; with
 // replacement a self-feeding shape can circle, which is what the cap and the
-// sticky rerun in Lower are for.
-const maxDiscoveryRounds = 6
+// sticky rerun in Lower are for. The cap has to clear the longest chain a
+// fact travels in one-round hops: a call types a closure's slice, the slice
+// types the closure's result, the result types the variable the caller
+// stored it in, and so on. Twelve hops covers the deepest chain the corpus
+// has needed with room to spare; an ordinary file settles in three or four
+// and never feels the cap.
+const maxDiscoveryRounds = 12
 
 // forgetResults drops the return shapes gathered by the previous round.
 func (l *Lowerer) forgetResults() {

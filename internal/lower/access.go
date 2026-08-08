@@ -54,6 +54,21 @@ func (l *Lowerer) indexExpr(n *ast.Index) ir.Expr {
 			"methods-and-receivers")
 		return out
 	}
+
+	// $_[k] in a sub whose parameters are fixed reads the parameter that
+	// position became.
+	if v, ok := n.Base.(*ast.Var); ok && !n.Arrow && v.Sigil == '$' && v.Name == "_" &&
+		l.curSub != nil && l.curSub.VarArgs == nil && len(l.curSub.Params) > 0 {
+		if k, num := staticIndex(n.Idx); num && k < len(l.curSub.Params) {
+			b := l.curSub.Params[k]
+			b.Reads++
+			out := ir.NewIdent(b.Go, b.Type)
+			l.note(out, "$_[k] reads the argument list by position. The positions this "+
+				"sub reads have become named parameters, so the read is the name.",
+				"variadic-and-no-defaults")
+			return out
+		}
+	}
 	base, idx, elem := l.indexParts(n)
 	if base == nil {
 		return ir.Nil(ir.TAny)

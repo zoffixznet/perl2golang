@@ -417,7 +417,21 @@ func (l *Lowerer) recoverParams(s *Sub, body []ast.Stmt) ([]ir.Param, []ast.Stmt
 		break
 	}
 
-	if len(bindings) == 0 && s.VarArgs == nil && usesArgs(body) {
+	if fixedGroup {
+		// A member whose body reads `$_[k]` by number is positional: each
+		// position it reads becomes a parameter of its own, so the fixed
+		// signature can carry it and the reads resolve to names.
+		if arity, ok := s.naturalShape(); ok {
+			var at ast.Node
+			if s.Decl != nil {
+				at = s.Decl
+			}
+			for i := len(bindings); i < arity; i++ {
+				bindings = append(bindings,
+					l.declareNamed("pos"+itoa(i)+"@"+s.Name, '$', "arg", KindParam, at))
+			}
+		}
+	} else if len(bindings) == 0 && s.VarArgs == nil && usesArgs(body) {
 		// An anonymous sub has no declaration node to point at, so the
 		// position comes out as unknown rather than as a nil dereference.
 		var at ast.Node
@@ -699,6 +713,25 @@ func usesArgs(body []ast.Stmt) bool {
 				walkE(a)
 			}
 			walkS(n.Block)
+		case *ast.FuncCallRef:
+			walkE(n.Ref)
+			for _, a := range n.Args {
+				walkE(a)
+			}
+		case *ast.MethodCall:
+			walkE(n.Invocant)
+			walkE(n.Dynamic)
+			for _, a := range n.Args {
+				walkE(a)
+			}
+		case *ast.AnonArray:
+			for _, el := range n.Elems {
+				walkE(el)
+			}
+		case *ast.AnonHash:
+			for _, el := range n.Elems {
+				walkE(el)
+			}
 		case *ast.My:
 			for _, v := range n.Vars {
 				walkE(v)
@@ -852,7 +885,7 @@ func (l *Lowerer) multiResultCall(c *ast.Call, wantList bool) (ir.Expr, bool) {
 				}
 				seen = append(seen, typeOrAny(name))
 			}
-			t := joinAll(seen)
+			t := joinAll(sansGroups(seen))
 			if t == nil {
 				t = ir.TAny
 			}
@@ -863,7 +896,7 @@ func (l *Lowerer) multiResultCall(c *ast.Call, wantList bool) (ir.Expr, bool) {
 			copy(parts, names)
 			return l.listValue(parts, t), true
 		}
-		t := joinAll(s.Results)
+		t := joinAll(sansGroups(s.Results))
 		if t == nil {
 			t = ir.TAny
 		}
