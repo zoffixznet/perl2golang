@@ -374,7 +374,7 @@ func (b *bundle) startHere() string {
 	m.p("%s", b.honesty())
 
 	m.h(2, "What to read, in what order")
-	m.numbered(1, "%s. Your file and its translation side by side. This is the one to read while looking at the generated code in another window.", link("The walkthrough", rel(fileStartHere, fileWalk)))
+	m.numbered(1, "%s. Your file and its translation, region by region, each remark keyed to a line. This is the one to read while looking at the generated code in another window.", link("The walkthrough", rel(fileStartHere, fileWalk)))
 	m.numbered(2, "%s. The counts, and every construct the converter had something to say about.", link("The conversion report", rel(fileStartHere, fileReport)))
 	m.numbered(3, "%s. The list of things you have to write yourself, with the reasoning for each.", link("What did not translate", rel(fileStartHere, fileNotTrans)))
 	m.numbered(4, "%s. The lessons your code triggered, ordered so that nothing depends on something you have not read yet.", link("The concept lessons", rel(fileStartHere, fileConceptIdx)))

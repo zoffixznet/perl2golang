@@ -15,7 +15,7 @@ You asked for a conversion and got a directory. This page says what is in it, ho
 
 ## What to read, in what order
 
-1. [The walkthrough](walkthrough.md). Your file and its translation side by side. This is the one to read while looking at the generated code in another window.
+1. [The walkthrough](walkthrough.md). Your file and its translation, region by region, each remark keyed to a line. This is the one to read while looking at the generated code in another window.
 2. [The conversion report](conversion-report.md). The counts, and every construct the converter had something to say about.
 3. [What did not translate](not-translated.md). The list of things you have to write yourself, with the reasoning for each.
 4. [The concept lessons](concepts/index.md). The lessons your code triggered, ordered so that nothing depends on something you have not read yet.

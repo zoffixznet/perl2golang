@@ -136,12 +136,17 @@ func startsNewSourceLine(group []ir.Stmt, st ir.Stmt) bool {
 }
 
 // joinTitle turns a comment block into a section heading: one line, whole
-// words, short enough to read in a table of contents.
+// words, short enough to read in a table of contents. Developers box their
+// section comments in dashes and equals signs; the decoration is stripped,
+// because "---- report ----" is a heading in a source file and noise in one
+// of this document's.
 func joinTitle(lines []string) string {
 	joined := strings.TrimSpace(strings.Join(lines, " "))
-	if i := strings.IndexAny(joined, ".;"); i > 12 {
+	joined = strings.Trim(joined, "-=*#~_ \t")
+	if i := strings.IndexAny(joined, ".;:"); i > 12 {
 		joined = joined[:i]
 	}
+	joined = strings.Trim(joined, "-=*#~_ \t")
 	const limit = 64
 	if len(joined) <= limit {
 		return joined
