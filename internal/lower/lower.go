@@ -276,6 +276,10 @@ type Lowerer struct {
 	// curStmt is the statement being lowered, used to place a diagnostic
 	// whose own node has no usable position.
 	curStmt ast.Node
+	// declNotes queues the notes for `my` declarations until lowering ends,
+	// so each one is worded from the type its binding finished with rather
+	// than from a dynamic flag a later use may retract.
+	declNotes []declNote
 	// seenEntry keeps one report entry per situation per place.
 	seenEntry map[string]bool
 	// tmpNames hands out temporary identifiers, seeded on the second pass
@@ -933,6 +937,7 @@ func (l *Lowerer) takePre() []ir.Stmt {
 
 // finishReport fills in the counters that can only be known at the end.
 func (l *Lowerer) finishReport() {
+	l.flushDeclNotes()
 	l.rep.SortEntries()
 	seen := map[*Binding]bool{}
 	record := func(b *Binding) {

@@ -46,7 +46,7 @@ func TestSession(t *testing.T) {
 			want: []string{
 				"perl> my @nums = (3, 1, 4, 1, 5);",
 				"nums := []int{3, 1, 4, 1, 5}",
-				"concepts: slices-not-arrays",
+				"concepts: var-vs-short-declaration, slices-not-arrays",
 				":explain to expand",
 			},
 		},

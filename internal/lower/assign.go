@@ -459,37 +459,58 @@ func (l *Lowerer) discardIfUnused(b *Binding) []ir.Stmt {
 	return []ir.Stmt{st}
 }
 
-// explainDeclaration attaches the lesson a first declaration deserves. Only
-// the first few carry the full explanation, because a note on every line stops
-// being read.
+// explainDeclaration queues the lesson a first declaration deserves. The note
+// is worded when lowering finishes rather than here, because a binding can be
+// flagged dynamic mid-sweep and be pinned down by evidence later in the file,
+// and a note written now would call a variable `any` that the generated code
+// declares with a real type.
 func (l *Lowerer) explainDeclaration(st ir.Annotated, b *Binding, v *ast.Var) {
 	if l.pass != 2 {
 		return
 	}
-	switch {
-	case b.Dynamic:
-		l.note(st, "Type inference could not settle on one Go type for "+b.Perl+": "+
-			b.Reason+". The variable is declared as `any`, which compiles and is "+
-			"honest, but every use of it needs a type assertion or a helper. Narrowing "+
-			"it by hand is the single biggest readability win available in this file.",
-			"type-assertions-and-switches", "static-types-and-zero-values")
-	case v.Sigil == '@':
-		l.note(st, "A Perl array becomes a Go slice of one element type. The := form "+
-			"declares the variable and infers its type from the right-hand side, so "+
-			"the type is written nowhere and still checked everywhere.",
-			"slices-not-arrays", "var-vs-short-declaration")
-	case v.Sigil == '%':
-		l.note(st, "A Perl hash becomes a Go map with a declared key type and value "+
-			"type. Keys here are strings, as they always are in Perl. Writing to a nil "+
-			"map panics, so a map must be made before use; a literal like this one "+
-			"makes it.",
-			"nil-slices-vs-nil-maps")
-	default:
-		l.note(st, "my declares a lexically scoped variable, and so does Go's :=. The "+
-			"difference is that the Go variable has a type from this moment on, chosen "+
-			"here as "+typeWords(b.Type)+", and nothing else can ever be stored in it.",
-			"var-vs-short-declaration", "static-types-and-zero-values")
+	l.declNotes = append(l.declNotes, declNote{st: st, b: b, sigil: v.Sigil})
+}
+
+// declNote is one queued declaration note: the statement it belongs on, the
+// binding whose final type words it, and the sigil the variable was declared
+// with.
+type declNote struct {
+	st    ir.Annotated
+	b     *Binding
+	sigil rune
+}
+
+// flushDeclNotes words the queued declaration notes from the types the
+// bindings finished with.
+func (l *Lowerer) flushDeclNotes() {
+	for _, d := range l.declNotes {
+		b := d.b
+		switch {
+		case isDynamic(scalarPart(b.Type)):
+			l.note(d.st, "Type inference could not settle on one Go type for "+b.Perl+": "+
+				b.Reason+". The variable is declared as `any`, which compiles and is "+
+				"honest, but every use of it needs a type assertion or a helper, so "+
+				"giving it a concrete type by hand is the first improvement worth making.",
+				"type-assertions-and-switches", "static-types-and-zero-values")
+		case d.sigil == '@':
+			l.note(d.st, "A Perl array becomes a Go slice of one element type. The := form "+
+				"declares the variable and infers its type from the right-hand side, so "+
+				"the type is written nowhere and still checked everywhere.",
+				"slices-not-arrays", "var-vs-short-declaration")
+		case d.sigil == '%':
+			l.note(d.st, "A Perl hash becomes a Go map with a declared key type and value "+
+				"type. Keys here are strings, as they always are in Perl. Writing to a nil "+
+				"map panics, so a map must be made before use; a literal like this one "+
+				"makes it.",
+				"nil-slices-vs-nil-maps")
+		default:
+			l.note(d.st, "my declares a lexically scoped variable, and so does Go's :=. The "+
+				"difference is that the Go variable has a type from this moment on, chosen "+
+				"here as "+typeWords(b.Type)+", and nothing else can ever be stored in it.",
+				"var-vs-short-declaration", "static-types-and-zero-values")
+		}
 	}
+	l.declNotes = nil
 }
 
 // hashInit builds the value for a hash assignment.

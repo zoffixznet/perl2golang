@@ -35,7 +35,7 @@ func TestReplCommand(t *testing.T) {
 				"perl2golang",
 				"perl> my @nums = (1, 2, 3);",
 				"nums := []int{1, 2, 3}",
-				"concepts: slices-not-arrays",
+				"concepts: var-vs-short-declaration, slices-not-arrays",
 			},
 		},
 		{
