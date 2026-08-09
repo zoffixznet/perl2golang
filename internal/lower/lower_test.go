@@ -83,7 +83,12 @@ func TestLowerInfersTypes(t *testing.T) {
 		{"division always yields a float", "my $r = 7 / 2;\nprint $r;", "$r", "float64"},
 		{"array of text", `my @a = ("x", "y"); print "@a";`, "@a", "[]string"},
 		{"hash of counts", "my %c;\n$c{a}++;\nprint $c{a};", "%c", "map[string]int"},
-		{"mixed uses fall back", "my $x = 1;\n$x = \"two\";\nprint $x;", "$x", "any"},
+		// Text beside numbers resolves to the string form every Perl scalar
+		// carries, with the numbers converted where they are assigned.
+		{"mixed scalars resolve to text", "my $x = 1;\n$x = \"two\";\nprint $x;", "$x", "string"},
+		// A number beside a hash has no honest string form, so it stays
+		// dynamic.
+		{"mixed shapes fall back", "my $x = 1;\n$x = {a => 2};\nprint $x;", "$x", "any"},
 		// A list assignment types its targets by position, not by the join
 		// of everything on the right: the number stays a number however
 		// text-like the tail is.

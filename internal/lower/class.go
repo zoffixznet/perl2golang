@@ -597,6 +597,7 @@ func (l *Lowerer) settleFields() {
 				f.Evidence = compactEvidence(f.Evidence)
 			}
 			t := joinAll(observedTypes(f.Evidence))
+			t = stringlyRescue(t, observedTypes(f.Evidence))
 			if t == nil {
 				t = ir.TAny
 			}

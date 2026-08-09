@@ -53,6 +53,11 @@ func (l *Lowerer) toStr(x ir.Expr, n ast.Node) ir.Expr {
 	case t.Kind == ir.String:
 		return x
 	case t.Kind == ir.Int:
+		// A number written out in the source has its text known here, so the
+		// conversion happens now rather than every time the program runs.
+		if lit, ok := x.(*ir.Lit); ok && lit.Kind == ir.LitInt {
+			return ir.Str(quote(lit.Value))
+		}
 		out := call("strconv", "strconv", "Itoa", ir.TString, x)
 		l.note(out, "Go will not turn a number into text on its own. strconv.Itoa "+
 			"is the explicit conversion Perl was doing silently every time a number "+

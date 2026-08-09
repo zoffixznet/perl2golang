@@ -823,7 +823,15 @@ func (l *Lowerer) incDecExpr(n *ast.UnOp) ir.Expr {
 				"Go has no such operation.",
 			"If the value is really a counter, keep it in an int. If it is really a "+
 				"label sequence, the helper reproduces Perl's rule.")
-		l.emit(assign("=", []ir.Expr{target}, []ir.Expr{out}))
+		// The value may have been read through a helper, which is not a
+		// place Go can store into; the store needs the element itself.
+		store := target
+		if _, isCall := target.(*ir.Call); isCall {
+			if at := l.assignTarget(n.X); at != nil {
+				store = at
+			}
+		}
+		l.emit(assign("=", []ir.Expr{store}, []ir.Expr{out}))
 		return target
 	}
 	if typeOrAny(target).Kind == ir.Any {

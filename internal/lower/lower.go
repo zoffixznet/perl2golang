@@ -1013,6 +1013,7 @@ func (l *Lowerer) resolveTypes() {
 			b.Evidence = compactEvidence(b.Evidence)
 		}
 		t := joinAll(observedTypes(b.Evidence))
+		t = stringlyRescue(t, observedTypes(b.Evidence))
 		if t == nil {
 			t = defaultFor(b.Sigil)
 		}

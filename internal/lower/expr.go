@@ -595,13 +595,19 @@ func (l *Lowerer) listParts(es []ast.Expr) ([]ir.Expr, *ir.Type) {
 		add(e)
 	}
 	// The parts decide the element type together, and two that no single Go
-	// type covers settle it at any for good. Several classes together are the
-	// exception: what they have in common is an interface, and declaring it
-	// is what keeps the collection typed.
+	// type covers settle it at any for good. Two exceptions keep the
+	// collection typed: several classes together have an interface in
+	// common, and text beside numbers has the string form every Perl scalar
+	// carries.
 	t := joinAll(seen)
 	if t == nil || t.Kind == ir.Any {
 		if iface, ok := l.commonInterface(l.classesOf(seen)); ok {
 			return out, iface
+		}
+	}
+	if isUnresolved(t) {
+		if s := stringlyResolve(seen); s != nil {
+			t = s
 		}
 	}
 	if t == nil {
@@ -843,6 +849,14 @@ func (l *Lowerer) pairs(elems []ast.Expr) (keys, vals []ir.Expr, t *ir.Type) {
 		if one == nil || one.Kind == ir.Any {
 			t = ir.TAny
 			break
+		}
+	}
+	// Values that are all scalars, text here and numbers there, share the
+	// string form every Perl scalar carries: the numbers are written in at
+	// their sources, which is what Perl did silently.
+	if isUnresolved(t) {
+		if s := stringlyResolve(seen); s != nil {
+			t = s
 		}
 	}
 	t = usableElem(t, seen)

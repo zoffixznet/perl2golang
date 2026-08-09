@@ -825,12 +825,15 @@ func (l *Lowerer) settleSubs() {
 			continue
 		}
 		results := make([]*ir.Type, width)
+		evByPos := make([][]*ir.Type, width)
 		for _, sh := range shapes {
 			for i, t := range sh {
 				results[i] = join(results[i], t)
+				evByPos[i] = append(evByPos[i], t)
 			}
 		}
 		for i := range results {
+			results[i] = stringlyRescue(results[i], evByPos[i])
 			if results[i] == nil {
 				results[i] = ir.TAny
 			}

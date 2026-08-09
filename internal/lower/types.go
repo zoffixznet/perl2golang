@@ -218,6 +218,92 @@ func joinAll(ts []*ir.Type) *ir.Type {
 // scorecard counts.
 func isDynamic(t *ir.Type) bool { return t == nil || t.Kind == ir.Any }
 
+// stringlyResolve answers for the joins that failed only because text met
+// numbers. Every Perl scalar has a faithful string form, so a slot seen
+// holding "localhost" here and 8080 there is representable as a string with
+// the numbers written in at their sources, which is exactly what Perl was
+// doing silently. That is a far better answer than `any`: the reader gets a
+// real type, truthiness and arithmetic already go through the Perl-faithful
+// conversions, and nothing needs an assertion.
+//
+// It answers nil when the disagreement was about anything more than scalar
+// kinds: a slot holding both a number and a hash, or a function and text,
+// has no honest string form, and those stay dynamic.
+func stringlyResolve(ts []*ir.Type) *ir.Type {
+	scalars, slices, maps := 0, 0, 0
+	var elems []*ir.Type
+	for _, t := range ts {
+		if t == nil || t.Kind == ir.Void || t.Kind == ir.Invalid || t.Kind == ir.Any {
+			continue
+		}
+		switch t.Kind {
+		case ir.Int, ir.Float, ir.String, ir.Bool:
+			scalars++
+		case ir.Slice:
+			slices++
+			elems = append(elems, t.Elem)
+		case ir.Map:
+			maps++
+			elems = append(elems, t.Elem)
+		default:
+			return nil
+		}
+	}
+	switch {
+	case scalars > 0 && slices == 0 && maps == 0:
+		return ir.TString
+	case slices > 0 && scalars == 0 && maps == 0:
+		if e := stringlyElem(elems); e != nil {
+			return ir.SliceOf(e)
+		}
+	case maps > 0 && scalars == 0 && slices == 0:
+		if e := stringlyElem(elems); e != nil {
+			return ir.MapOf(e)
+		}
+	}
+	return nil
+}
+
+// stringlyElem settles the element type of a run of containers whose
+// top-level shapes agreed: the ordinary join when it holds, the string form
+// when only scalar kinds disagreed, nothing otherwise.
+func stringlyElem(elems []*ir.Type) *ir.Type {
+	j := joinAll(elems)
+	if j != nil && !isUnresolved(j) {
+		return j
+	}
+	if j == nil {
+		return nil
+	}
+	return stringlyResolve(elems)
+}
+
+// stringlyRescue applies stringlyResolve to a settled type that came out
+// dynamic: at the top when the join itself failed, and inside a container
+// whose element slot was the conflict.
+func stringlyRescue(t *ir.Type, evidence []*ir.Type) *ir.Type {
+	switch {
+	case isUnresolved(t):
+		if s := stringlyResolve(evidence); s != nil {
+			return s
+		}
+	case t != nil && (t.Kind == ir.Slice || t.Kind == ir.Map) && isUnresolved(t.Elem):
+		var elems []*ir.Type
+		for _, ev := range evidence {
+			if ev != nil && ev.Kind == t.Kind {
+				elems = append(elems, ev.Elem)
+			}
+		}
+		if e := stringlyResolve(elems); e != nil {
+			if t.Kind == ir.Slice {
+				return ir.SliceOf(e)
+			}
+			return ir.MapOf(e)
+		}
+	}
+	return t
+}
+
 // isScalarKind reports whether a type is one of the four Go types a Perl scalar
 // settles on. Those are the ones a pointer can usefully make optional: a slice,
 // a map and an interface already have a nil of their own.

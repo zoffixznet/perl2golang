@@ -559,7 +559,13 @@ func (l *Lowerer) mergedHash(flat []ast.Expr, want *ir.Type, rhs ast.Expr) (ir.E
 	}
 	t := typeOrAny(base)
 	if want != nil && !elemOf(t).Equal(want) {
-		t = ir.MapOf(joinAll([]*ir.Type{elemOf(t), want}))
+		e := joinAll([]*ir.Type{elemOf(t), want})
+		if isUnresolved(e) {
+			if s := stringlyResolve([]*ir.Type{elemOf(t), want}); s != nil {
+				e = s
+			}
+		}
+		t = ir.MapOf(e)
 	}
 	name := l.tmp("merged")
 	decl := assign(":=", []ir.Expr{ir.NewIdent(name, t)},
@@ -574,6 +580,29 @@ func (l *Lowerer) mergedHash(flat []ast.Expr, want *ir.Type, rhs ast.Expr) (ir.E
 	for _, e := range flat[1:lead] {
 		more := l.expr(e)
 		if more == nil {
+			continue
+		}
+		// A contributing hash whose values are another type has no
+		// maps.Copy: Go converts between two map types one pair at a time.
+		if mt := typeOrAny(more); mt.Kind == ir.Map && !mt.Equal(t) && mt.Elem != nil && mt.Elem.Kind != ir.Any {
+			k, v := l.tmp("k"), l.tmp("v")
+			loop := &ir.Range{
+				Key:    ir.NewIdent(k, ir.TString),
+				Value:  ir.NewIdent(v, mt.Elem),
+				X:      more,
+				Define: true,
+			}
+			loop.Body = &ir.Block{Stmts: []ir.Stmt{
+				assign("=", []ir.Expr{index(target, ir.NewIdent(k, ir.TString), elemOf(t))},
+					[]ir.Expr{l.assignable(ir.NewIdent(v, mt.Elem), elemOf(t), e)}),
+			}}
+			l.setProv(loop, e)
+			l.note(loop, "A second hash in the same literal contributes its pairs too, "+
+				"and the later one wins where they share a key. Its values are a "+
+				"different type from the merged hash's, and Go converts between two "+
+				"map types one pair at a time.",
+				"nil-slices-vs-nil-maps", "explicit-conversions-no-coercion")
+			l.emit(loop)
 			continue
 		}
 		st := exprStmt(call("maps", "maps", "Copy", ir.TVoid, target, l.assignable(more, t, e)))
@@ -1922,6 +1951,21 @@ func (l *Lowerer) compoundAssign(n *ast.Assign) []ir.Stmt {
 			value = l.toFloat(value, n.RHS)
 		case ir.Int:
 			value = l.toInt(value, n.RHS)
+		case ir.String:
+			// The variable carries its value as text because something else
+			// in the file needs it as text, so the arithmetic reads the
+			// number out, works on it, and writes the text back, which is
+			// what Perl's += was doing to a string all along.
+			st := assign("=", []ir.Expr{target},
+				[]ir.Expr{l.toStr(ir.Bin(op, l.toFloat(target, n.LHS),
+					l.toFloat(value, n.RHS), ir.TFloat), n)})
+			l.setProv(st, n)
+			l.note(st, "This variable holds text elsewhere in the file, and every Perl "+
+				"scalar has a string form, so it travels as a string here too: the "+
+				"arithmetic reads the number out and writes the result back as text, "+
+				"the conversions Perl performed silently.",
+				"explicit-conversions-no-coercion")
+			return []ir.Stmt{st}
 		case ir.Any:
 			// A dynamic target cannot be added to directly, so the arithmetic
 			// happens in float64 and the result goes back into the value.
