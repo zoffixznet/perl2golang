@@ -279,6 +279,10 @@ var notes = map[string]string{
 		"costs a little and makes the result diffable, which is what a list " +
 		"built this way is nearly always for.",
 
+	"flatPairsText": "flatPairs for a map of text: keys and values alike are " +
+		"strings, so the flat list can be a []string and whatever it lands " +
+		"in stays typed.",
+
 	"scalarOf": "A Go function has one return type and a caller cannot ask " +
 		"for a different one, so nothing here needs a notion of context. This " +
 		"exists only for values whose type did not resolve, where the choice " +

@@ -193,7 +193,11 @@ func (l *Lowerer) lowerSubDecl(sd *ast.SubDecl) {
 		fn.Results = s.Results
 		fn.Doc = l.subDoc(s)
 	}
-	fn.Body = l.markUnused(&ir.Block{Stmts: l.stmts(rest)})
+	stmts := l.stmts(rest)
+	if len(s.Prologue) > 0 {
+		stmts = append(append([]ir.Stmt{}, s.Prologue...), stmts...)
+	}
+	fn.Body = l.markUnused(&ir.Block{Stmts: stmts})
 	l.addImplicitReturn(s, fn, rest)
 	l.ensureReturn(s, fn.Body)
 	l.setProv(fn, sd)
@@ -320,6 +324,9 @@ func (l *Lowerer) recoverParams(s *Sub, body []ast.Stmt) ([]ir.Param, []ast.Stmt
 		// the recorded bindings.
 	}
 	l.reportArgAliasing(body)
+	// The recovery re-derives the argument shape every round; a prologue
+	// from an earlier round would name temporaries that no longer exist.
+	s.Prologue = nil
 	rest := body
 	var bindings []*Binding
 
@@ -422,6 +429,41 @@ func (l *Lowerer) recoverParams(s *Sub, body []ast.Stmt) ([]ir.Param, []ast.Stmt
 					b := l.declare(vars[n-1], KindParam)
 					s.Variadic = true
 					s.VarArgs = b
+					rest = rest[1:]
+					break
+				}
+			}
+			// my %args = @_; and my ($x, %opts) = @_; take the tail as
+			// name => value pairs: the arguments stay a variadic pair
+			// list, and the hash is rebuilt from it before the body runs.
+			if n := len(vars); vars[n-1].Sigil == '%' {
+				scalars := true
+				for _, v := range vars[:n-1] {
+					if v.Sigil != '$' {
+						scalars = false
+					}
+				}
+				if scalars {
+					for _, v := range vars[:n-1] {
+						bindings = append(bindings, l.declare(v, KindParam))
+					}
+					hv := vars[n-1]
+					hb := l.declare(hv, KindLocal)
+					pairs := l.declareNamed("pairs@"+s.Name, '@', "kv", KindParam, hv)
+					s.Variadic = true
+					s.VarArgs = pairs
+					// What the flat list carries is what the hash holds.
+					if et := elemOf(pairs.Type); et.Kind != ir.Any {
+						l.observeElem(hb, et)
+					}
+					s.Prologue = l.pairCarrier(hb, pairs)
+					if l.pass == 2 {
+						l.inform(hv, "P2G2055", "%"+hv.Name+" built from the argument list",
+							"This sub takes named arguments as a flat key/value list. Go "+
+								"has no named arguments, so the list arrives as a variadic "+
+								"slice and the hash is rebuilt from it before the body runs.",
+							"variadic-and-no-defaults", "maps-of-slices")
+					}
 					rest = rest[1:]
 					break
 				}

@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T19:28:52Z",
+  "recorded": "2026-08-15T19:35:39Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -67,8 +67,8 @@
           "skip": 0
         },
         "equivalent": {
-          "pass": 73,
-          "fail": 31,
+          "pass": 74,
+          "fail": 30,
           "skip": 0
         },
         "translated": {
@@ -77,22 +77,22 @@
           "skip": 0
         },
         "typed": {
-          "pass": 71,
-          "fail": 33,
+          "pass": 72,
+          "fail": 32,
           "skip": 0
         }
       },
       "equivalent_annotated": {
-        "pass": 73,
-        "fail": 31,
+        "pass": 74,
+        "fail": 30,
         "skip": 0
       },
       "quality": {
         "todos": 17,
         "symbols": 1568,
-        "symbols_typed": 1484,
+        "symbols_typed": 1493,
         "refusals": 17,
-        "approximations": 529,
+        "approximations": 530,
         "crashes": 0
       }
     },
@@ -134,7 +134,7 @@
       "quality": {
         "todos": 44,
         "symbols": 896,
-        "symbols_typed": 779,
+        "symbols_typed": 781,
         "refusals": 45,
         "approximations": 323,
         "crashes": 0
@@ -244,8 +244,8 @@
         "skip": 0
       },
       "equivalent": {
-        "pass": 163,
-        "fail": 48,
+        "pass": 164,
+        "fail": 47,
         "skip": 0
       },
       "honest": {
@@ -259,31 +259,31 @@
         "skip": 0
       },
       "typed": {
-        "pass": 162,
-        "fail": 90,
+        "pass": 163,
+        "fail": 89,
         "skip": 0
       }
     },
     "equivalent_annotated": {
-      "pass": 163,
-      "fail": 48,
+      "pass": 164,
+      "fail": 47,
       "skip": 0
     },
     "quality": {
       "todos": 107,
       "symbols": 4055,
-      "symbols_typed": 3785,
+      "symbols_typed": 3796,
       "refusals": 108,
-      "approximations": 1238,
+      "approximations": 1239,
       "crashes": 0
     }
   },
   "quality": {
     "todos": 107,
     "symbols": 4055,
-    "symbols_typed": 3785,
+    "symbols_typed": 3796,
     "refusals": 108,
-    "approximations": 1238,
+    "approximations": 1239,
     "crashes": 0
   },
   "entries": [
@@ -1972,8 +1972,7 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stdout differs: line 1, byte 0: got \"         role=        active=0 q...\", wanted \"ada      role=guest   active=1 q...\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -1982,18 +1981,16 @@
           "outcome": "pass"
         },
         "typed": {
-          "outcome": "fail",
-          "reason": "6 variables left dynamic out of 16"
+          "outcome": "pass"
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stdout differs: line 1, byte 0: got \"         role=        active=0 q...\", wanted \"ada      role=guest   active=1 q...\""
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
         "symbols": 16,
-        "symbols_typed": 10,
+        "symbols_typed": 16,
         "refusals": 0,
         "approximations": 1,
         "crashes": 0
@@ -2534,7 +2531,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: line 11, byte 346: got \"0 hashes=0 leaves=\\nadd(9,4)=13\\nm...\", wanted \"2 hashes=2 leaves=report|ada|1|2...\""
+          "reason": "stdout differs: line 11, byte 346: got \"0 hashes=0 leaves=\u0026{report ada [...\", wanted \"2 hashes=2 leaves=report|ada|1|2...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -2544,19 +2541,19 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "16 variables left dynamic out of 41"
+          "reason": "13 variables left dynamic out of 41"
         }
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: line 11, byte 346: got \"0 hashes=0 leaves=\\nadd(9,4)=13\\nm...\", wanted \"2 hashes=2 leaves=report|ada|1|2...\""
+        "reason": "stdout differs: line 11, byte 346: got \"0 hashes=0 leaves=\u0026{report ada [...\", wanted \"2 hashes=2 leaves=report|ada|1|2...\""
       },
       "quality": {
         "todos": 0,
         "symbols": 41,
-        "symbols_typed": 25,
+        "symbols_typed": 28,
         "refusals": 0,
-        "approximations": 14,
+        "approximations": 15,
         "crashes": 0
       }
     },
@@ -6553,7 +6550,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "3 variables left dynamic out of 31"
+          "reason": "1 variable left dynamic out of 31"
         }
       },
       "equivalent_annotated": {
@@ -6562,7 +6559,7 @@
       "quality": {
         "todos": 1,
         "symbols": 31,
-        "symbols_typed": 28,
+        "symbols_typed": 30,
         "refusals": 1,
         "approximations": 7,
         "crashes": 0

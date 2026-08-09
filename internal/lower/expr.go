@@ -540,9 +540,15 @@ func (l *Lowerer) listParts(es []ast.Expr) ([]ir.Expr, *ir.Type) {
 			return
 		}
 		// A keyed collection read where a list is wanted lays itself out as
-		// key, value, key, value.
+		// key, value, key, value. When the values are text the whole flat
+		// list is text, keys included, and keeping that fact keeps typed
+		// whatever the list lands in.
 		if xt := typeOrAny(x); xt.Kind == ir.Map && flattensInList(e) {
-			flat := l.helperCall(hFlatPairs, ir.SliceOf(ir.TAny), x)
+			helper, elem := hFlatPairs, ir.TAny
+			if xt.Elem != nil && xt.Elem.Kind == ir.String {
+				helper, elem = hFlatPairsText, ir.TString
+			}
+			flat := l.helperCall(helper, ir.SliceOf(elem), x)
 			l.note(flat, "A hash used where a list is wanted becomes its pairs, laid "+
 				"out one after another. Go has no such flattening and no ordering "+
 				"either, so the pairs come out sorted by key, which is stable where "+
@@ -550,7 +556,7 @@ func (l *Lowerer) listParts(es []ast.Expr) ([]ir.Expr, *ir.Type) {
 				"map-iteration-order", "context-is-gone")
 			l.spliced[flat] = true
 			out = append(out, flat)
-			seen = append(seen, ir.TAny)
+			seen = append(seen, elem)
 			return
 		}
 		// A dereferenced array whose type did not resolve still flattens: the

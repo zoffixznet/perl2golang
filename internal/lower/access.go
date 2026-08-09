@@ -768,7 +768,11 @@ func (l *Lowerer) anonSub(n *ast.AnonSub) ir.Expr {
 	}
 	params, rest := l.recoverParams(s, valueTail(n.Body))
 	l.uniformFn = false
-	body := l.markUnused(&ir.Block{Stmts: l.stmts(rest)})
+	inner := l.stmts(rest)
+	if len(s.Prologue) > 0 {
+		inner = append(append([]ir.Stmt{}, s.Prologue...), inner...)
+	}
+	body := l.markUnused(&ir.Block{Stmts: inner})
 	l.implicitReturn(s, body, rest)
 	l.ensureReturn(s, body)
 	l.scope, l.curSub = savedScope, savedSub

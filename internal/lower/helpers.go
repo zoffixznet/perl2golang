@@ -85,7 +85,8 @@ const (
 	hDumpValues = "dumpValues" // a structure rendered as Go source
 	hScalarOf   = "scalarOf"   // one value wanted where a list may be
 	hAsList     = "asList"     // a list wanted where the value's type is unknown
-	hFlatPairs  = "flatPairs"  // a keyed collection read where a list is wanted
+	hFlatPairs     = "flatPairs"     // a keyed collection read where a list is wanted
+	hFlatPairsText = "flatPairsText" // the same for a map of text, kept []string
 	hCallFn     = "callFn"     // calling a function held in an untyped value
 	hAs         = "as"         // reading an untyped value as a type, without panicking
 

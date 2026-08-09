@@ -20,3 +20,18 @@ func flatPairs[V any](m map[string]V) []any {
 	}
 	return out
 }
+
+// flatPairsText is flatPairs for a map of text, where keys and values alike
+// are strings and the flat list can say so.
+func flatPairsText(m map[string]string) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	out := make([]string, 0, 2*len(m))
+	for _, k := range keys {
+		out = append(out, k, m[k])
+	}
+	return out
+}

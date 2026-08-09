@@ -795,8 +795,14 @@ func hashReadsOnlyStaticKeys(name string, body []ast.Stmt) bool {
 // pairCarrier builds the statements that rebuild a `%args` hash from the
 // variadic pair list, for a sub that walks its named arguments as data.
 func (l *Lowerer) pairCarrier(hash, pairs *Binding) []ir.Stmt {
-	mapT := ir.MapOf(ir.TAny)
-	listT := ir.SliceOf(ir.TAny)
+	mapT := hash.Type
+	if mapT == nil || mapT.Kind != ir.Map {
+		mapT = ir.MapOf(ir.TAny)
+	}
+	listT := pairs.Type
+	if listT == nil || listT.Kind != ir.Slice {
+		listT = ir.SliceOf(ir.TAny)
+	}
 	target := ir.NewIdent(hash.Go, mapT)
 	list := ir.NewIdent(pairs.Go, listT)
 
@@ -807,15 +813,15 @@ func (l *Lowerer) pairCarrier(hash, pairs *Binding) []ir.Stmt {
 		"variadic-and-no-defaults", "nil-slices-vs-nil-maps")
 
 	idx := l.tmp("i")
-	key := l.toStr(index(list, ir.NewIdent(idx, ir.TInt), ir.TAny), nil)
-	value := index(list, ir.Bin("+", ir.NewIdent(idx, ir.TInt), ir.IntLit("1"), ir.TInt), ir.TAny)
+	key := l.toStr(index(list, ir.NewIdent(idx, ir.TInt), listT.Elem), nil)
+	value := l.assignable(index(list, ir.Bin("+", ir.NewIdent(idx, ir.TInt), ir.IntLit("1"), ir.TInt), listT.Elem), mapT.Elem, nil)
 	loop := &ir.For{
 		Init: assign(":=", []ir.Expr{ir.NewIdent(idx, ir.TInt)}, []ir.Expr{ir.IntLit("0")}),
 		Cond: ir.Bin("<", ir.Bin("+", ir.NewIdent(idx, ir.TInt), ir.IntLit("1"), ir.TInt),
 			lenOf(list), ir.TBool),
 		Post: assign("+=", []ir.Expr{ir.NewIdent(idx, ir.TInt)}, []ir.Expr{ir.IntLit("2")}),
 		Body: &ir.Block{Stmts: []ir.Stmt{
-			assign("=", []ir.Expr{index(target, key, ir.TAny)}, []ir.Expr{value}),
+			assign("=", []ir.Expr{index(target, key, mapT.Elem)}, []ir.Expr{value}),
 		}},
 	}
 	return []ir.Stmt{decl, loop}
