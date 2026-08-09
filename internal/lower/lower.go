@@ -206,6 +206,10 @@ type Lowerer struct {
 	// the loops where Perl's aliasing was load-bearing and the Go form has
 	// to index back into the slice.
 	aliases map[*Binding]ir.Expr
+	// aliasLinks ties the bindings that name one structure, a parameter and
+	// the variable whose reference a call passed it, so they settle on the
+	// evidence all of them saw.
+	aliasLinks map[*Binding][]*Binding
 
 	// patternTodo is the refusal from the pattern most recently turned down,
 	// waiting for whichever caller invents the stand-in expression so the
@@ -1052,8 +1056,10 @@ func (l *Lowerer) resolveTypes() {
 	}
 	// What call sites passed through shared function slots becomes evidence
 	// on the parameters that read them, and it has to land before those
-	// parameters settle.
+	// parameters settle. The same goes for what a sub saw through a
+	// reference parameter: it is evidence about the caller's structure.
 	l.settleGroups()
+	l.shareAliasEvidence()
 	// Parameters settle first, because a function literal's type is built out
 	// of them, and whatever holds that literal (a variable, a map of
 	// callbacks) is inferred from the literal's type in turn. Settling the

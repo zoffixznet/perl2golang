@@ -314,15 +314,56 @@ func (l *Lowerer) settleGroup(g *sigGroup) {
 	}
 }
 
+// linkAlias records that two bindings name one structure: a parameter and
+// the variable whose reference a call passes it. Perl's references make the
+// callee's writes the caller's writes, so what either side learns about the
+// structure is evidence about both.
+func (l *Lowerer) linkAlias(a, b *Binding) {
+	if a == nil || b == nil || a == b || l.pass != 1 {
+		return
+	}
+	if l.aliasLinks == nil {
+		l.aliasLinks = map[*Binding][]*Binding{}
+	}
+	for _, have := range l.aliasLinks[a] {
+		if have == b {
+			return
+		}
+	}
+	l.aliasLinks[a] = append(l.aliasLinks[a], b)
+	l.aliasLinks[b] = append(l.aliasLinks[b], a)
+}
+
+// shareAliasEvidence pools the evidence of the bindings that name one
+// structure, so each settles on what all of them saw. It runs to a fixpoint
+// over the links because a reference can travel through more than one call.
+func (l *Lowerer) shareAliasEvidence() {
+	for range 4 {
+		moved := false
+		for a, bs := range l.aliasLinks {
+			for _, b := range bs {
+				before := len(b.Evidence)
+				b.Evidence = mergeObservations(b.Evidence, a.Evidence)
+				if len(b.Evidence) != before {
+					moved = true
+				}
+			}
+		}
+		if !moved {
+			break
+		}
+	}
+}
+
 // mergeObservations folds src into dst without duplicating what an earlier
-// round of the same feed already added: one entry per site and round.
+// round of the same feed already added.
 func mergeObservations(dst, src []observation) []observation {
-	have := map[[2]any]bool{}
+	have := map[observation]bool{}
 	for _, o := range dst {
-		have[[2]any{o.site, o.round}] = true
+		have[o] = true
 	}
 	for _, o := range src {
-		if have[[2]any{o.site, o.round}] {
+		if have[o] {
 			continue
 		}
 		dst = append(dst, o)

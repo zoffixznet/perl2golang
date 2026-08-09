@@ -405,6 +405,27 @@ func (l *Lowerer) recoverParams(s *Sub, body []ast.Stmt) ([]ir.Param, []ast.Stmt
 				rest = rest[1:]
 				break
 			}
+			// my ($x, $y, @rest) = @_; names the leading arguments and
+			// swallows the tail, which is exactly Go's fixed parameters
+			// followed by a variadic one.
+			if n := len(vars); n > 1 && vars[n-1].Sigil == '@' {
+				scalars := true
+				for _, v := range vars[:n-1] {
+					if v.Sigil != '$' {
+						scalars = false
+					}
+				}
+				if scalars {
+					for _, v := range vars[:n-1] {
+						bindings = append(bindings, l.declare(v, KindParam))
+					}
+					b := l.declare(vars[n-1], KindParam)
+					s.Variadic = true
+					s.VarArgs = b
+					rest = rest[1:]
+					break
+				}
+			}
 			break
 		}
 
@@ -932,7 +953,9 @@ func (l *Lowerer) multiResultCall(c *ast.Call, wantList bool) (ir.Expr, bool) {
 // callSub lowers a call to a user-declared subroutine.
 func (l *Lowerer) callSub(s *Sub, n *ast.Call) ir.Expr {
 	s.CallSites++
-	args, _ := l.listParts(l.callArgs(n))
+	astArgs := l.callArgs(n)
+	l.linkRefArgs(s, astArgs)
+	args, _ := l.listParts(astArgs)
 
 	// Fixed parameters take their values in order; anything left over goes to
 	// the variadic tail.
@@ -1044,6 +1067,37 @@ func (l *Lowerer) callSub(s *Sub, n *ast.Call) ir.Expr {
 			"variadic-and-no-defaults")
 	}
 	return c
+}
+
+// linkRefArgs ties each reference argument's variable to the parameter that
+// receives it. A reference hands the callee the caller's own structure, so
+// the two bindings name one thing, and what the body learns about the
+// parameter is evidence about the variable too. The walk stops at the first
+// argument that flattens, since positions after it are only known when the
+// program runs.
+func (l *Lowerer) linkRefArgs(s *Sub, astArgs []ast.Expr) {
+	if l.pass != 1 {
+		return
+	}
+	pos := 0
+	for _, a := range astArgs {
+		if pos >= len(s.Params) {
+			return
+		}
+		switch av := a.(type) {
+		case *ast.List:
+			return
+		case *ast.Var:
+			if av.Sigil == '@' || av.Sigil == '%' {
+				return
+			}
+		case *ast.RefGen:
+			if v, ok := av.X.(*ast.Var); ok && (v.Sigil == '%' || v.Sigil == '@') {
+				l.linkAlias(s.Params[pos], l.lookup(v.Sigil, v.Name, v))
+			}
+		}
+		pos++
+	}
 }
 
 // flattenTail builds the one slice a variadic call can spread out of a mixture

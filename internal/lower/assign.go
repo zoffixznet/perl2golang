@@ -1822,6 +1822,7 @@ func (l *Lowerer) observeTargetValue(lhs ast.Expr, t *ir.Type) {
 		return
 	}
 	var wrapper func(*ir.Type) *ir.Type
+	var wrapSigil rune
 	var base ast.Expr
 	switch n := lhs.(type) {
 	case *ast.Var:
@@ -1842,13 +1843,13 @@ func (l *Lowerer) observeTargetValue(lhs ast.Expr, t *ir.Type) {
 			l.observeElem(b, t)
 			return
 		}
-		wrapper, base = ir.MapOf, n.Base
+		wrapper, wrapSigil, base = ir.MapOf, '%', n.Base
 	case *ast.Index:
 		if b := l.arrayBindingOf(n); b != nil {
 			l.observeElem(b, t)
 			return
 		}
-		wrapper, base = ir.SliceOf, n.Base
+		wrapper, wrapSigil, base = ir.SliceOf, '@', n.Base
 	default:
 		return
 	}
@@ -1860,6 +1861,21 @@ func (l *Lowerer) observeTargetValue(lhs ast.Expr, t *ir.Type) {
 	}
 	if b, wrap, ok := l.bindingPlace(base, false); ok {
 		l.observe(b, wrap(wrapper(t)))
+		return
+	}
+	// A write through `$ref->{k}` says nothing about $ref in general: it
+	// may be an object or a record of mixed fields. When a call filled the
+	// scalar with a reference to a plain hash or array, though, its alias
+	// link says so, and the write is evidence about that container.
+	if v, ok := base.(*ast.Var); ok && v.Sigil == '$' {
+		if b, found := l.scope.lookup(varKey('$', v.Name)); found {
+			for _, al := range l.aliasLinks[b] {
+				if al.Sigil == wrapSigil {
+					l.observe(b, wrapper(t))
+					return
+				}
+			}
+		}
 	}
 }
 

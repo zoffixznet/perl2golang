@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T19:21:17Z",
+  "recorded": "2026-08-15T19:28:52Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -89,10 +89,10 @@
       },
       "quality": {
         "todos": 17,
-        "symbols": 1573,
-        "symbols_typed": 1479,
+        "symbols": 1568,
+        "symbols_typed": 1484,
         "refusals": 17,
-        "approximations": 534,
+        "approximations": 529,
         "crashes": 0
       }
     },
@@ -133,10 +133,10 @@
       },
       "quality": {
         "todos": 44,
-        "symbols": 897,
+        "symbols": 896,
         "symbols_typed": 779,
         "refusals": 45,
-        "approximations": 325,
+        "approximations": 323,
         "crashes": 0
       }
     },
@@ -165,8 +165,8 @@
           "skip": 0
         },
         "typed": {
-          "pass": 26,
-          "fail": 15,
+          "pass": 27,
+          "fail": 14,
           "skip": 0
         }
       },
@@ -177,10 +177,10 @@
       },
       "quality": {
         "todos": 46,
-        "symbols": 185,
-        "symbols_typed": 142,
+        "symbols": 184,
+        "symbols_typed": 146,
         "refusals": 46,
-        "approximations": 82,
+        "approximations": 81,
         "crashes": 0
       }
     },
@@ -259,8 +259,8 @@
         "skip": 0
       },
       "typed": {
-        "pass": 161,
-        "fail": 91,
+        "pass": 162,
+        "fail": 90,
         "skip": 0
       }
     },
@@ -271,19 +271,19 @@
     },
     "quality": {
       "todos": 107,
-      "symbols": 4062,
-      "symbols_typed": 3776,
+      "symbols": 4055,
+      "symbols_typed": 3785,
       "refusals": 108,
-      "approximations": 1246,
+      "approximations": 1238,
       "crashes": 0
     }
   },
   "quality": {
     "todos": 107,
-    "symbols": 4062,
-    "symbols_typed": 3776,
+    "symbols": 4055,
+    "symbols_typed": 3785,
     "refusals": 108,
-    "approximations": 1246,
+    "approximations": 1238,
     "crashes": 0
   },
   "entries": [
@@ -2090,7 +2090,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: line 2, byte 42: got \"0 a=3 b=2 c=1\\nqueue len=4 conten...\", wanted \"3 a=3 b=2 c=1\\nqueue len=5 conten...\""
+          "reason": "stdout differs: line 3, byte 80: got \"\\nafter increment_args: x=10 y=20...\", wanted \" 3 4 5\\nafter increment_args: x=1...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -2100,19 +2100,19 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "9 variables left dynamic out of 33"
+          "reason": "3 variables left dynamic out of 30"
         }
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: line 2, byte 42: got \"0 a=3 b=2 c=1\\nqueue len=4 conten...\", wanted \"3 a=3 b=2 c=1\\nqueue len=5 conten...\""
+        "reason": "stdout differs: line 3, byte 80: got \"\\nafter increment_args: x=10 y=20...\", wanted \" 3 4 5\\nafter increment_args: x=1...\""
       },
       "quality": {
         "todos": 0,
-        "symbols": 33,
-        "symbols_typed": 24,
+        "symbols": 30,
+        "symbols_typed": 27,
         "refusals": 0,
-        "approximations": 11,
+        "approximations": 10,
         "crashes": 0
       }
     },
@@ -3581,7 +3581,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "1 variable left dynamic out of 10"
+          "reason": "1 variable left dynamic out of 9"
         }
       },
       "equivalent_annotated": {
@@ -3589,10 +3589,10 @@
       },
       "quality": {
         "todos": 0,
-        "symbols": 10,
-        "symbols_typed": 9,
+        "symbols": 9,
+        "symbols_typed": 8,
         "refusals": 0,
-        "approximations": 4,
+        "approximations": 2,
         "crashes": 0
       }
     },
@@ -4129,7 +4129,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "7 variables left dynamic out of 12"
+          "reason": "3 variables left dynamic out of 11"
         }
       },
       "equivalent_annotated": {
@@ -4138,10 +4138,10 @@
       },
       "quality": {
         "todos": 0,
-        "symbols": 12,
-        "symbols_typed": 5,
+        "symbols": 11,
+        "symbols_typed": 8,
         "refusals": 0,
-        "approximations": 5,
+        "approximations": 3,
         "crashes": 0
       }
     },
@@ -5872,7 +5872,7 @@
         },
         "typed": {
           "outcome": "fail",
-          "reason": "24 variables left dynamic out of 31"
+          "reason": "23 variables left dynamic out of 30"
         }
       },
       "equivalent_annotated": {
@@ -5881,7 +5881,7 @@
       },
       "quality": {
         "todos": 16,
-        "symbols": 31,
+        "symbols": 30,
         "symbols_typed": 7,
         "refusals": 16,
         "approximations": 2,
@@ -5968,7 +5968,7 @@
       "stages": {
         "compiled": {
           "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:180:54: cannot use i (variable of type int) as string value in map index"
+          "reason": "the generated Go does not compile: ./main.go:181:54: cannot use i (variable of type int) as string value in map index"
         },
         "emitted": {
           "outcome": "pass"
@@ -5998,7 +5998,7 @@
         "symbols": 25,
         "symbols_typed": 18,
         "refusals": 6,
-        "approximations": 19,
+        "approximations": 17,
         "crashes": 0
       }
     },
@@ -7393,8 +7393,7 @@
           "outcome": "pass"
         },
         "typed": {
-          "outcome": "fail",
-          "reason": "5 variables left dynamic out of 9"
+          "outcome": "pass"
         }
       },
       "equivalent_annotated": {
@@ -7402,10 +7401,10 @@
       },
       "quality": {
         "todos": 0,
-        "symbols": 9,
-        "symbols_typed": 4,
+        "symbols": 8,
+        "symbols_typed": 8,
         "refusals": 0,
-        "approximations": 3,
+        "approximations": 2,
         "crashes": 0
       }
     },
