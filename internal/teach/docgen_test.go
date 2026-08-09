@@ -2,6 +2,7 @@ package teach
 
 import (
 	"flag"
+	"fmt"
 	"os"
 	"path"
 	"path/filepath"
@@ -180,7 +181,12 @@ func main() {
 				PerlTo:   13,
 				Perl:     "while (my $line = <$fh>) {\n    chomp $line;\n    next unless $line =~ /^(\\S+)\\s+(\\d+)$/;\n    $count{$1} += $2;\n}",
 				Go:       "scanner := bufio.NewScanner(r)\nfor scanner.Scan() {\n\tm := linePattern.FindStringSubmatch(scanner.Text())\n\tif m == nil {\n\t\tcontinue\n\t}\n\tn, err := strconv.Atoi(m[2])\n\tif err != nil {\n\t\treturn nil, fmt.Errorf(\"parsing %q: %w\", m[2], err)\n\t}\n\tcounts[m[1]] += n\n}",
-				Explain:  "Three things changed. The read loop became a scanner, which strips the newline for you, so `chomp` disappears. The capture variables `$1` and `$2` became a slice of strings, indexed from one because element zero is the whole match. And `+= $2` became an explicit conversion: Go will not add a string to an integer, so the failure that Perl hid behind a zero is now a value you have to do something with.",
+				Explain:  "The read loop became a scanner, which strips the newline for you, so the chomp on the next line disappears.\n\nThe capture variables $1 and $2 became a slice of strings, indexed from one because element zero is the whole match.\n\n+= $2 became an explicit conversion: Go will not add a string to an integer, so the failure that Perl hid behind a zero is now a value you have to do something with.",
+				Notes: []SegmentNote{
+					{Line: 9, Perl: "while (my $line = <$fh>) {", Text: "The read loop became a scanner, which strips the newline for you, so the chomp on the next line disappears."},
+					{Line: 11, Perl: `next unless $line =~ /^(\S+)\s+(\d+)$/;`, Text: "The capture variables $1 and $2 became a slice of strings, indexed from one because element zero is the whole match."},
+					{Line: 12, Perl: `$count{$1} += $2;`, Text: "+= $2 became an explicit conversion: Go will not add a string to an integer, so the failure that Perl hid behind a zero is now a value you have to do something with."},
+				},
 				Concepts: []string{"strconv-parsing", "submatch-and-named-groups", "bufio-scanner-limit"},
 			},
 			{
@@ -510,7 +516,16 @@ func TestWalkthroughRendersEverySegment(t *testing.T) {
 
 	for i, seg := range in.Walkthrough {
 		mustContain(t, body, seg.Title)
-		mustContain(t, body, strings.TrimSpace(seg.Explain))
+		if len(seg.Notes) == 0 {
+			mustContain(t, body, strings.TrimSpace(seg.Explain))
+		}
+		for _, n := range seg.Notes {
+			// An anchored remark keeps its text intact after the anchor.
+			mustContain(t, body, n.Text)
+			if n.Line > 0 {
+				mustContain(t, body, fmt.Sprintf("**Line %d**", n.Line))
+			}
+		}
 		if !strings.Contains(body, "lines 5 to 8") && i == 0 {
 			t.Error("the walkthrough does not state the line numbers of the first region")
 		}

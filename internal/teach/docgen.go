@@ -786,7 +786,7 @@ func (b *bundle) walkthrough() string {
 		return m.String()
 	}
 
-	m.p("Each section below takes one region of the original, shows the Go it became, and explains the choice. The line numbers refer to the original file, so you can keep it open beside this page. Read the sections in order: later ones assume the earlier ones, and an explanation is given once, at the first region it applies to.")
+	m.p("Each section below takes one region of the original, shows the Go it became, and explains the choice. The line numbers refer to the original file, so you can keep it open beside this page. Read the sections in order: later ones assume the earlier ones, and an explanation is given once, at the first region it applies to. Where a region raises several remarks, each one starts with the line of the original it is about, so a specific line can be looked up without reading the rest.")
 	m.p("Where a region raises something structural about Go rather than something local to your code, it links to a lesson in %s. Those lessons stand alone, so follow them when you want to and skip them when you do not.", link("concepts/", rel(fileWalk, fileConceptIdx)))
 
 	said := map[string]bool{}
@@ -809,11 +809,8 @@ func (b *bundle) walkthrough() string {
 			m.p("The Go it became:")
 			m.fence("go", dedent(seg.Go))
 		}
-		fresh := newParagraphs(seg.Explain, said)
-		for _, para := range fresh {
-			m.p("%s", para)
-		}
-		if len(fresh) == 0 && strings.TrimSpace(seg.Explain) != "" {
+		explained := renderRegionNotes(m, seg, said)
+		if !explained && (len(seg.Notes) > 0 || strings.TrimSpace(seg.Explain) != "") {
 			// Every note here was made earlier. Saying so is better than an
 			// empty section, and better than repeating the paragraphs.
 			m.p("No new ground in this region: every construct in it is one the sections above already explain.")
@@ -842,21 +839,85 @@ func (b *bundle) walkthrough() string {
 // out are still in the index.
 const maxRegionLessons = 4
 
-// newParagraphs splits a region's explanation and returns only the paragraphs
-// that have not appeared earlier in the document, recording them as it goes.
-// The same construct recurs all through a script, and repeating its
-// explanation at every occurrence trains the reader to skip the prose.
-func newParagraphs(explain string, said map[string]bool) []string {
-	var out []string
-	for _, para := range strings.Split(explain, "\n\n") {
-		para = strings.TrimSpace(para)
-		if para == "" || said[para] {
+// renderRegionNotes writes a region's explanation and reports whether it said
+// anything. Remarks that appeared in an earlier region are dropped: the same
+// construct recurs all through a script, and repeating its explanation at
+// every occurrence trains the reader to skip the prose.
+//
+// When the fresh remarks span more than one line of the original, each is
+// anchored to its line. A region's code block can be long, and a wall of
+// unanchored paragraphs leaves the reader matching prose to code by guesswork;
+// the anchor is what lets them look up one line and skip the rest.
+func renderRegionNotes(m *md, seg Segment, said map[string]bool) bool {
+	notes := seg.Notes
+	if len(notes) == 0 {
+		for _, para := range strings.Split(seg.Explain, "\n\n") {
+			if para = strings.TrimSpace(para); para != "" {
+				notes = append(notes, SegmentNote{Text: para})
+			}
+		}
+	}
+
+	var fresh []SegmentNote
+	lines := map[int]bool{}
+	for _, n := range notes {
+		if n.Text == "" || said[n.Text] {
 			continue
 		}
-		said[para] = true
-		out = append(out, para)
+		said[n.Text] = true
+		fresh = append(fresh, n)
+		if n.Line > 0 {
+			lines[n.Line] = true
+		}
 	}
-	return out
+	if len(fresh) == 0 {
+		return false
+	}
+
+	if len(lines) < 2 {
+		for _, n := range fresh {
+			m.p("%s", n.Text)
+		}
+		return true
+	}
+
+	introduced := map[int]bool{}
+	for _, n := range fresh {
+		switch {
+		case n.Line <= 0:
+			m.bullet("%s", n.Text)
+		case introduced[n.Line]:
+			m.bullet("**Line %d**: %s", n.Line, n.Text)
+		default:
+			introduced[n.Line] = true
+			if frag := anchorFragment(n.Perl); frag != "" {
+				m.bullet("**Line %d**, `%s`: %s", n.Line, frag, n.Text)
+			} else {
+				m.bullet("**Line %d**: %s", n.Line, n.Text)
+			}
+		}
+	}
+	return true
+}
+
+// anchorFragment shortens a remark's source line to something a reader can
+// recognise beside the line number. An empty result means the anchor carries
+// the number alone.
+func anchorFragment(perl string) string {
+	frag := strings.Join(strings.Fields(perl), " ")
+	if strings.Contains(frag, "`") {
+		// A backtick would end the code span and swallow the remark.
+		return ""
+	}
+	const limit = 60
+	if len(frag) <= limit {
+		return frag
+	}
+	cut := strings.LastIndexByte(frag[:limit], ' ')
+	if cut < limit/2 {
+		cut = limit
+	}
+	return strings.TrimRight(frag[:cut], " ,({") + " ..."
 }
 
 // firstMentions returns up to max ids that have not been shown yet, recording

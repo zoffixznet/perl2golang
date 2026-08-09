@@ -53,14 +53,15 @@ func declSegment(d ir.Decl, lines []string) (teach.Segment, bool) {
 		return teach.Segment{}, false
 	}
 	from, to := spanOf([]ir.Stmt{}, m.Prov.Line, m.Prov.Text)
-	explain, concepts := collectNotes([]ir.Annotated{d})
+	notes, concepts := collectNotes([]ir.Annotated{d})
 	return teach.Segment{
 		Title:    titleFor(d),
 		PerlFrom: from,
 		PerlTo:   to,
 		Perl:     sourceLines(lines, from, to),
 		Go:       strings.TrimRight(gogen.RenderDecl(gogen.Clean, d), "\n"),
-		Explain:  explain,
+		Explain:  explainText(notes),
+		Notes:    notes,
 		Concepts: concepts,
 	}, true
 }
@@ -185,7 +186,7 @@ func groupSegment(group []ir.Stmt, title string, lines []string) (teach.Segment,
 	for _, st := range group {
 		annotated = append(annotated, st)
 	}
-	explain, concepts := collectNotes(annotated)
+	notes, concepts := collectNotes(annotated)
 
 	if title == "" {
 		title = defaultTitle(group, from, to)
@@ -196,7 +197,8 @@ func groupSegment(group []ir.Stmt, title string, lines []string) (teach.Segment,
 		PerlTo:   to,
 		Perl:     sourceLines(lines, from, to),
 		Go:       goText.String(),
-		Explain:  explain,
+		Explain:  explainText(notes),
+		Notes:    notes,
 		Concepts: concepts,
 	}, true
 }
@@ -309,9 +311,10 @@ func capitaliseFirst(s string) string {
 }
 
 // collectNotes walks a set of IR nodes and gathers their explanations in
-// order, without repeats.
-func collectNotes(nodes []ir.Annotated) (string, []string) {
-	var texts []string
+// order, without repeats. Each remark keeps the position of the construct it
+// is about, so the document can anchor it to a line of the original.
+func collectNotes(nodes []ir.Annotated) ([]teach.SegmentNote, []string) {
+	var out []teach.SegmentNote
 	var concepts []string
 	seenText := map[string]bool{}
 	seenConcept := map[string]bool{}
@@ -321,12 +324,13 @@ func collectNotes(nodes []ir.Annotated) (string, []string) {
 		if m == nil {
 			return
 		}
+		line, perl := noteAnchor(m.Prov)
 		for _, note := range m.Notes {
 			if note.Text == "" || seenText[note.Text] {
 				continue
 			}
 			seenText[note.Text] = true
-			texts = append(texts, note.Text)
+			out = append(out, teach.SegmentNote{Line: line, Perl: perl, Text: note.Text})
 			for _, c := range note.Concepts {
 				if seenConcept[c] {
 					continue
@@ -336,10 +340,14 @@ func collectNotes(nodes []ir.Annotated) (string, []string) {
 			}
 		}
 		if m.Todo != nil {
-			line := "Not converted: " + m.Todo.Message
-			if !seenText[line] {
-				seenText[line] = true
-				texts = append(texts, line)
+			text := "Not converted: " + m.Todo.Message
+			if !seenText[text] {
+				seenText[text] = true
+				tl, tp := line, perl
+				if m.Todo.Prov.Valid() {
+					tl, tp = noteAnchor(m.Todo.Prov)
+				}
+				out = append(out, teach.SegmentNote{Line: tl, Perl: tp, Text: text})
 			}
 		}
 	}
@@ -348,14 +356,32 @@ func collectNotes(nodes []ir.Annotated) (string, []string) {
 		walkIR(n, add)
 	}
 
-	// Every note the region raised is returned, in source order. Keeping only
-	// the first few would read as a shorter section and be a worse one: the
-	// notes arrive in the order the code does, so a cap here always cuts the
-	// bottom of the region loose and leaves the last third of the Go with no
-	// explanation and nothing saying any is missing. What to show is the
-	// document's decision, and the document already drops a note it has given
-	// in an earlier region.
-	return strings.Join(texts, "\n\n"), concepts
+	// Every note the region raised is returned, in the order the generated
+	// code raises it. Keeping only the first few would read as a shorter
+	// section and be a worse one: a cap here always cuts the bottom of the
+	// region loose and leaves the last third of the Go with no explanation and
+	// nothing saying any is missing. What to show is the document's decision,
+	// and the document already drops a note it has given in an earlier region.
+	return out, concepts
+}
+
+// noteAnchor reduces a provenance to what a remark needs: the line, and the
+// first line of the construct so the reader can recognise it without counting.
+func noteAnchor(p ir.Provenance) (int, string) {
+	if !p.Valid() {
+		return 0, ""
+	}
+	first, _, _ := strings.Cut(p.Text, "\n")
+	return p.Line, strings.TrimSpace(first)
+}
+
+// explainText flattens the remarks for consumers that want plain paragraphs.
+func explainText(notes []teach.SegmentNote) string {
+	texts := make([]string, 0, len(notes))
+	for _, n := range notes {
+		texts = append(texts, n.Text)
+	}
+	return strings.Join(texts, "\n\n")
 }
 
 func itoa(n int) string {

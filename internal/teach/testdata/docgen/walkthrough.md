@@ -1,6 +1,6 @@
 # summarise.pl, line by line
 
-Each section below takes one region of the original, shows the Go it became, and explains the choice. The line numbers refer to the original file, so you can keep it open beside this page. Read the sections in order: later ones assume the earlier ones, and an explanation is given once, at the first region it applies to.
+Each section below takes one region of the original, shows the Go it became, and explains the choice. The line numbers refer to the original file, so you can keep it open beside this page. Read the sections in order: later ones assume the earlier ones, and an explanation is given once, at the first region it applies to. Where a region raises several remarks, each one starts with the line of the original it is about, so a specific line can be looked up without reading the rest.
 
 Where a region raises something structural about Go rather than something local to your code, it links to a lesson in [concepts/](concepts/index.md). Those lessons stand alone, so follow them when you want to and skip them when you do not.
 
@@ -61,7 +61,9 @@ for scanner.Scan() {
 }
 ```
 
-Three things changed. The read loop became a scanner, which strips the newline for you, so `chomp` disappears. The capture variables `$1` and `$2` became a slice of strings, indexed from one because element zero is the whole match. And `+= $2` became an explicit conversion: Go will not add a string to an integer, so the failure that Perl hid behind a zero is now a value you have to do something with.
+- **Line 9**, `while (my $line = <$fh>) {`: The read loop became a scanner, which strips the newline for you, so the chomp on the next line disappears.
+- **Line 11**, `next unless $line =~ /^(\S+)\s+(\d+)$/;`: The capture variables $1 and $2 became a slice of strings, indexed from one because element zero is the whole match.
+- **Line 12**, `$count{$1} += $2;`: += $2 became an explicit conversion: Go will not add a string to an integer, so the failure that Perl hid behind a zero is now a value you have to do something with.
 
 Lessons this region introduces: [strconv turns strings into numbers, and refuses to guess](concepts/strconv-parsing.md), [FindStringSubmatch replaces $1, and no-match returns nil](concepts/submatch-and-named-groups.md), and [bufio.Scanner reads lines, and gives up on long ones](concepts/bufio-scanner-limit.md)
 

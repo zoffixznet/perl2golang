@@ -19,10 +19,28 @@ type Segment struct {
 	Perl string
 	// Go is the generated Go for the region, already formatted.
 	Go string
-	// Explain is the prose tying the two together.
+	// Explain is the prose tying the two together, one paragraph per remark.
+	// When Notes is set it carries the same remarks; Explain remains for
+	// consumers that want the flat text, such as the REPL.
 	Explain string
+	// Notes are the remarks with the position each one is about, so a
+	// document can anchor every remark to the line it explains. Optional:
+	// when empty, Explain is the only account of the region.
+	Notes []SegmentNote
 	// Concepts are teaching concept ids relevant to this region.
 	Concepts []string
+}
+
+// SegmentNote is one remark about a region, tied to the construct that raised
+// it. A region of any size collects many remarks, and without the position a
+// reader looking for the explanation of one line has to scan all of them.
+type SegmentNote struct {
+	// Line is the 1-based line in the original, 0 when unknown.
+	Line int
+	// Perl is the first line of the construct the remark is about, trimmed.
+	Perl string
+	// Text is the remark itself.
+	Text string
 }
 
 // Exercise is a checkable task against the generated code.
