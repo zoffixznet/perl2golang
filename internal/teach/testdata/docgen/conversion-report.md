@@ -27,37 +27,15 @@ Dynamic fallback rate: 29%. That is the share of variables the tool could not gi
 
 Nothing was generated for these. The program does not do what the original did until you write them yourself, though it does still run: each one stands in for the value its position wanted and names itself on standard error when it is reached.
 
-### P2G3410: string eval at line 21 of `summarise.pl`
-
-The original:
-
-```perl
-my $keep = eval $expr;
-```
-
-`eval EXPR` compiles and runs Perl source at run time. Go compiles ahead of time and has no way to turn a string into executable code, so there is nothing to generate here: this is a genuine gap between the two languages rather than a missing feature of the converter.
-
-What to do: Decide what the string is really for. If it is a small expression language for users, parse it yourself or use an expression library. If it is a fixed set of alternatives, replace it with a map of named functions, which is what the code almost certainly wants.
-
-Lessons: [Errors are return values, not exceptions](concepts/errors-are-values.md) and [The compiler is the first test suite](concepts/compile-time-mindset.md)
+- **P2G3410**: string eval at line 21. `eval EXPR` compiles and runs Perl source at run time.
 
 ## Approximated (1)
 
 Go was generated for these, but it differs from the original in a way you need to know about.
 
-### P2G2104: sort block comparing hash values at line 16 of `summarise.pl`
+- **P2G2104**: sort block comparing hash values at line 16. The sort block compares counts and says nothing about keys with equal counts.
 
-The original:
-
-```perl
-sort { $count{$b} <=> $count{$a} } keys %count
-```
-
-The sort block compares counts and says nothing about keys with equal counts. Perl's sort is stable in practice for small lists but is not guaranteed to be, and `sort.Slice` is explicitly not stable, so two keys with the same count can swap places between runs.
-
-What to do: Use `sort.SliceStable`, or break the tie explicitly by comparing the keys when the counts are equal. The second is better: it makes the output independent of the sort implementation.
-
-Lessons: [Sorting is a function call, and the default is numeric-aware](concepts/sort-slice.md) and [Map order is randomised per loop, on purpose](concepts/map-iteration-order.md)
+Each of these is in [What did not translate](not-translated.md) with the full reasoning and what to do about it by hand.
 
 ## Notes (1)
 

@@ -513,8 +513,16 @@ func (b *bundle) conversionReport() string {
 		m.h(2, "Entries")
 		m.p("The converter had nothing to flag: no note, no approximation, no refusal. Read %s anyway; a clean report means the tool understood the constructs it saw, not that the resulting Go is the Go you would have written.", link("the walkthrough", rel(fileReport, fileWalk)))
 	} else {
-		b.entrySection(m, fileReport, report.Refuse, "Refused", "Nothing was generated for these. The program does not do what the original did until you write them yourself, though it does still run: each one stands in for the value its position wanted and names itself on standard error when it is reached.")
-		b.entrySection(m, fileReport, report.Warn, "Approximated", "Go was generated for these, but it differs from the original in a way you need to know about.")
+		// Refusals and approximations are work, and the work list is
+		// not-translated.md. Repeating their full entries here made the two
+		// documents near-identical copies; the report keeps the one-line
+		// account and the reader follows one link for the reasoning.
+		refused := b.entrySummarySection(m, report.Refuse, "Refused", "Nothing was generated for these. The program does not do what the original did until you write them yourself, though it does still run: each one stands in for the value its position wanted and names itself on standard error when it is reached.")
+		approximated := b.entrySummarySection(m, report.Warn, "Approximated", "Go was generated for these, but it differs from the original in a way you need to know about.")
+		if refused || approximated {
+			m.p("Each of these is in %s with the full reasoning and what to do about it by hand.",
+				link("What did not translate", rel(fileReport, fileNotTrans)))
+		}
 		b.entrySection(m, fileReport, report.Note, "Notes", "These converted cleanly. They are here because the difference between the two languages is worth pointing out at this spot.")
 	}
 
@@ -567,6 +575,43 @@ func (b *bundle) verificationLines() []string {
 	}
 
 	return out
+}
+
+// entrySummarySection renders one severity group as a compact list: the code,
+// the construct, where, and the first sentence of what happened. The full
+// reasoning and the what-to-do live in not-translated.md, which the section
+// ends by pointing at; writing both documents in full made them copies of
+// each other, read twice by anyone following the suggested order. It reports
+// whether it wrote anything, so the caller adds the pointer once.
+func (b *bundle) entrySummarySection(m *md, sev report.Severity, title, intro string) bool {
+	var group []report.Entry
+	for _, e := range b.entries {
+		if e.Severity == sev {
+			group = append(group, e)
+		}
+	}
+	if len(group) == 0 {
+		return false
+	}
+
+	grouped := groupEntries(group)
+	m.h(2, "%s (%d)", title, len(grouped))
+	m.p("%s", intro)
+	for _, g := range grouped {
+		construct := g.Construct
+		if construct == "" {
+			construct = "unnamed construct"
+		}
+		head := construct + linesSuffix(g.lines, "")
+		if g.Code != "" {
+			head = "**" + g.Code + "**: " + head
+		}
+		if summary := sentence(firstParagraph(g.Message)); summary != "" {
+			head += ". " + capitalise(summary)
+		}
+		m.bullet("%s", head)
+	}
+	return true
 }
 
 // entrySection renders one severity group of report entries.
@@ -712,7 +757,7 @@ func (b *bundle) entrySites(m *md, g groupedEntry) {
 		return
 	case len(sites) == 1:
 		m.p("The original:")
-		m.fence("perl", dedent(sites[0].perl))
+		m.fence("perl", clipSource(dedent(sites[0].perl)))
 		return
 	}
 
@@ -726,7 +771,7 @@ func (b *bundle) entrySites(m *md, g groupedEntry) {
 		where := strings.TrimPrefix(linesSuffix(s.lines, ""), " ")
 		if strings.Contains(text, "\n") {
 			m.p("%s:", capitalise(where))
-			m.fence("perl", text)
+			m.fence("perl", clipSource(text))
 			continue
 		}
 		m.bullet("`%s`%s", text, linesSuffix(s.lines, ""))
@@ -734,6 +779,19 @@ func (b *bundle) entrySites(m *md, g groupedEntry) {
 	if len(sites) > len(shown) {
 		m.bullet("and %d more like these", len(sites)-len(shown))
 	}
+}
+
+// clipSource caps a quoted region of the original. A diagnostic about a
+// construct sometimes carries the whole block the construct heads, and a
+// thirty-line quote buries the entries around it; the head names the
+// construct and the reader has the file.
+func clipSource(text string) string {
+	const limit, keep = 16, 12
+	lines := strings.Split(text, "\n")
+	if len(lines) <= limit {
+		return text
+	}
+	return strings.Join(lines[:keep], "\n") + fmt.Sprintf("\n# ... %d more lines", len(lines)-keep)
 }
 
 // symbolSection lists the variables type inference could not resolve, which is
@@ -1731,9 +1789,9 @@ func linesSuffix(lines []int, script string) string {
 	case len(known) == 1:
 		return fmt.Sprintf(" at line %s", known[0])
 	case len(known) > spell && script != "":
-		return fmt.Sprintf(" at %d lines of `%s`, %s", len(known), script, where)
+		return fmt.Sprintf(" at %d places in `%s`, lines %s", len(known), script, where)
 	case len(known) > spell:
-		return fmt.Sprintf(" at %d lines, %s", len(known), where)
+		return fmt.Sprintf(" at %d places, lines %s", len(known), where)
 	case script != "":
 		return fmt.Sprintf(" at lines %s of `%s`", where, script)
 	default:

@@ -486,11 +486,20 @@ func TestReportRendersEveryEntry(t *testing.T) {
 	}
 	body := docs[fileReport]
 
+	work := docs[fileNotTrans]
 	for _, e := range in.Report.Entries {
 		mustContain(t, body, e.Code)
 		mustContain(t, body, e.Construct)
-		mustContain(t, body, strings.TrimSpace(e.Perl))
-		mustContain(t, body, strings.TrimSpace(e.Advice))
+		if e.Severity == report.Note {
+			// A note lives in the report in full; it is not work.
+			mustContain(t, body, strings.TrimSpace(e.Perl))
+			mustContain(t, body, strings.TrimSpace(e.Advice))
+			continue
+		}
+		// Work is listed in the report and spelled out once, on the work
+		// list, so the two documents stop being copies of each other.
+		mustContain(t, work, strings.TrimSpace(e.Perl))
+		mustContain(t, work, strings.TrimSpace(e.Advice))
 	}
 	mustContain(t, body, "| Statements found | 24 |")
 	mustContain(t, body, "Dynamic fallback rate: 29%")
@@ -498,7 +507,6 @@ func TestReportRendersEveryEntry(t *testing.T) {
 	mustContain(t, body, "the value comes from a construct that was refused")
 
 	// Refusals and approximations are also on the work list, notes are not.
-	work := docs[fileNotTrans]
 	mustContain(t, work, "P2G3410")
 	mustContain(t, work, "P2G2104")
 	if strings.Contains(work, "P2G1120") {
