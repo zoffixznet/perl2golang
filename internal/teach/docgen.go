@@ -1181,10 +1181,10 @@ func (b *bundle) defaultExercises() []Exercise {
 	// only worth setting when the construct is actually in the output.
 	if hits := exitCalls(b.in.GoSource); hits != "" {
 		task := fmt.Sprintf("The generated code stops the program by calling %s.", hits)
-		if hasFunc {
+		if exitOutsideMain(b.in.GoSource) {
 			task += " Pick a call site that is not in `main`, and change the function it sits in so that it returns an `error` as its last result."
 		} else {
-			task += " Everything is in `main` today, so start by moving the work that can fail into a function of its own, and have that function return an `error` as its last result."
+			task += " Every one of those calls is in `main` today, so start by moving the work that decides to stop into a function of its own, and have that function return an `error` as its last result."
 		}
 		out = append(out, Exercise{
 			Title:    "Return an error instead of exiting",
@@ -1214,11 +1214,20 @@ func (b *bundle) defaultExercises() []Exercise {
 		} else if strings.TrimSpace(e.Message) != "" {
 			task += " " + strings.TrimSpace(e.Message)
 		}
-		task += " Implement it by hand in the generated code and delete the TODO that marks it."
+		// A refusal leaves a TODO in the code; an approximation leaves
+		// working code that is wrong in a known way and marks nothing, so
+		// only the first has a marker to hunt down and delete.
+		success := "The program compiles and you have a test that pins the behaviour you decided on: one that fails against the generated version wherever you concluded the difference matters."
+		if e.Severity == report.Refuse {
+			task += " Implement it by hand in the generated code and delete the TODO that marks it."
+			success = "The TODO is gone, the program compiles, and you have a test that fails against the version without your fix."
+		} else {
+			task += " Decide whether the difference matters for your data, and where it does, implement the original behaviour by hand."
+		}
 		out = append(out, Exercise{
 			Title:    unfinishedTitle(e.Severity, construct),
 			Task:     task,
-			Success:  "The TODO is gone, the program compiles, and you have a test that fails against the version without your fix. If you conclude the original behaviour was not worth reproducing, write that decision down in a comment; that is a valid answer, and an undocumented one is not.",
+			Success:  success + " If you conclude the original behaviour was not worth reproducing, write that decision down in a comment; that is a valid answer, and an undocumented one is not.",
 			Concepts: e.Concepts,
 		})
 	}
@@ -1673,6 +1682,33 @@ func exitCalls(src string) string {
 		}
 	}
 	return joinList(found)
+}
+
+// exitOutsideMain reports whether any of those calls sits in a function other
+// than main, so the exercise that says "pick a call site that is not in main"
+// only says it when there is one.
+func exitOutsideMain(src string) bool {
+	fn := ""
+	for _, line := range strings.Split(src, "\n") {
+		if rest, ok := strings.CutPrefix(line, "func "); ok {
+			rest = strings.TrimSpace(rest)
+			if strings.HasPrefix(rest, "(") { // a method: skip the receiver
+				if close := strings.IndexByte(rest, ')'); close >= 0 {
+					rest = strings.TrimSpace(rest[close+1:])
+				}
+			}
+			fn = rest
+			if i := strings.IndexAny(fn, "([ "); i >= 0 {
+				fn = fn[:i]
+			}
+		}
+		for _, call := range []string{"os.Exit", "log.Fatal", "panic("} {
+			if strings.Contains(line, call) && fn != "main" && fn != "" {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // hasLoop reports whether the generated code contains a loop, so that a task

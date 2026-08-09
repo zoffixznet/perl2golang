@@ -24,7 +24,7 @@ Lessons: [nil is not undef, and nothing autovivifies](concepts/nil-vs-undef.md)
 
 ## 3. Return an error instead of exiting
 
-The generated code stops the program by calling `os.Exit`. Pick a call site that is not in `main`, and change the function it sits in so that it returns an `error` as its last result. Propagate the error up with `fmt.Errorf("doing the thing: %w", err)` at each level, and let `main` be the only function that decides to stop the program. `defer` statements do not run when `os.Exit` is called, so this change also fixes cleanup you may not have noticed was being skipped.
+The generated code stops the program by calling `os.Exit`. Every one of those calls is in `main` today, so start by moving the work that decides to stop into a function of its own, and have that function return an `error` as its last result. Propagate the error up with `fmt.Errorf("doing the thing: %w", err)` at each level, and let `main` be the only function that decides to stop the program. `defer` statements do not run when `os.Exit` is called, so this change also fixes cleanup you may not have noticed was being skipped.
 
 Done when: Only `main` calls `os.Exit` (or nothing does, and `main` simply returns). `go vet ./...` is silent, the program still exits with a non-zero status on the failure path (check with `go run . ; echo $?`), and the error message now says what was being attempted, not just what went wrong.
 
