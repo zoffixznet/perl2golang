@@ -1,0 +1,8 @@
+label: nightly
+total: 42
+pass:  30
+fail:  12
+mark first
+step 1
+mark second
+step 2

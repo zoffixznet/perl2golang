@@ -43,6 +43,17 @@ func TestUnpackTemplate(t *testing.T) {
 	}
 }
 
+func TestUnpackText(t *testing.T) {
+	got := unpackText("a3 A8 A10", "HDR20240601Main St   ")
+	want := []string{"HDR", "20240601", "Main St"}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("unpackText = %#v, want %#v", got, want)
+	}
+	if got := unpackText("", "abc"); len(got) != 0 {
+		t.Errorf("unpackText on an empty template = %#v, want none", got)
+	}
+}
+
 func TestUnpackTemplateRoundTrip(t *testing.T) {
 	// The native-order codes have no fixed byte expectations, so they are
 	// checked the way they are used: whatever pack lays down, unpack reads

@@ -62,6 +62,20 @@ var packSize = map[byte]int{
 	'q': 8, 'Q': 8,
 }
 
+// unpackText reads fields out of data with a template whose every code
+// produces text, which is what a fixed-width record of columns uses. It is
+// unpackTemplate with the result kept as the strings it already is, so the
+// fields need no conversion on the way out.
+func unpackText(template, data string) []string {
+	fields := unpackTemplate(template, data)
+	out := make([]string, len(fields))
+	for i, f := range fields {
+		s, _ := f.(string)
+		out[i] = s
+	}
+	return out
+}
+
 // unpackTemplate reads fields out of data: the template says what each
 // stretch of bytes is, and the result holds one value per field, in order.
 //

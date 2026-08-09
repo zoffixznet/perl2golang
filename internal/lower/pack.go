@@ -73,6 +73,71 @@ func describePackCode(template string, i int) (byte, string, bool) {
 	return c, meaning, false
 }
 
+// unpackKinds reads the value kinds a written-out unpack template produces,
+// in order: one string per text code, one int per integer code repetition.
+// It reports ok as false when a code is outside the supported set or a
+// repeated integer code has no fixed count, since the positions after such
+// a code cannot be known here.
+func unpackKinds(template string) (kinds []*ir.Type, ok bool) {
+	for i := 0; i < len(template); i++ {
+		c := template[i]
+		count, star := 0, false
+		read := func() {
+			for i+1 < len(template) {
+				next := template[i+1]
+				if next == '*' {
+					star = true
+					i++
+					continue
+				}
+				if next >= '0' && next <= '9' {
+					count = count*10 + int(next-'0')
+					i++
+					continue
+				}
+				break
+			}
+		}
+		switch {
+		case c == ' ' || c == '\t' || c == '\n':
+		case strings.IndexByte("aAZhH", c) >= 0:
+			read()
+			kinds = append(kinds, ir.TString)
+		case c == 'x':
+			read()
+		case strings.IndexByte("cCsSlLnNvV", c) >= 0:
+			read()
+			if star {
+				return nil, false
+			}
+			if count == 0 {
+				count = 1
+			}
+			for range count {
+				kinds = append(kinds, ir.TInt)
+			}
+		default:
+			// q and Q included: Q comes back a uint64, which is not a kind
+			// the caller can fold into the others.
+			return nil, false
+		}
+	}
+	return kinds, true
+}
+
+// allStrings reports whether every kind in the list is text.
+func allStrings(kinds []*ir.Type) bool {
+	if len(kinds) == 0 {
+		return false
+	}
+	for _, k := range kinds {
+		if k.Kind != ir.String {
+			return false
+		}
+	}
+	return true
+}
+
 // unpackCall lowers `unpack TEMPLATE, DATA` to a call of the emitted template
 // interpreter. The result is a list of values whose kinds only the template
 // knows, so it comes back as a slice of any.
@@ -125,6 +190,15 @@ func (l *Lowerer) packLike(n *ast.Call, name string) ir.Expr {
 
 	template := l.argStr(n, 0)
 	if name == "unpack" {
+		// A written-out template says what each field is. When every code
+		// produces text, the whole result is text, and saying so is the
+		// difference between a []string and a slice of any.
+		if tpl, isStatic := staticString(args[0]); isStatic {
+			if kinds, ok := unpackKinds(tpl); ok && allStrings(kinds) {
+				helper = hUnpackText
+				ret = ir.SliceOf(ir.TString)
+			}
+		}
 		out := l.helperCall(helper, ret, template, l.argStr(n, 1))
 		l.explainPackLike(n, name, out)
 		return out

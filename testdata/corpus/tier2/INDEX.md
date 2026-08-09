@@ -149,6 +149,8 @@ Two entries exit non-zero on purpose: **27** (65) and **32** (1). The rest exit 
 | 100 | `100-a-byte-level-decoder` | A Q-encoding decoder built from multi-statement /e, byte-wise chr, and interpolated named captures | `s{...}{ several; statements; }ge`, `chr hex $1` building UTF-8 bytes, `"$+{key}"`, undef placeholders in a split unpack |
 | 101 | `101-a-table-with-one-signature` | Closures sharing a slot that can keep one written signature | mixed-arity dispatch table, a `$_[0]` member, an int position, a `\|\|` fallback sub, a pipeline array, a counter typed only by its calls |
 | 102 | `102-named-subs-in-a-table` | A dispatch table of `\&named_sub` references, which does not type yet | `\&clean_case` values, a `\|\| \&clean_passthrough` fallback, calls through the table |
+| 103 | `103-text-and-numbers-in-one-slot` | Slots fed both text and numbers, resolved to the scalar's string form | a mixed config hash, `$carried += 34` on a quoted number, a label/count list, arithmetic on an unpack field |
+| 104 | `104-a-number-beside-a-hash` | Mixes of shape rather than of scalar kind, which honestly stay dynamic | a count beside a hashref in one hash, strings and hashrefs alternating in one list, `ref` dispatch |
 
 ## Coverage map
 

@@ -1,0 +1,7 @@
+endpoint: localhost:8080
+give up after: 6 tries
+bumped port: 8081
+carried: 1240
+report: widgets|12|gadgets|3
+tag=ORD item=widget-blue
+double qty: 84

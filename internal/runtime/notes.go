@@ -656,6 +656,11 @@ var notes = map[string]string{
 		"designed around, and a code outside the set it documents stops the " +
 		"program at the call that used it, naming the template.",
 
+	"unpackText": "The all-text templates, a3 A8 A10 and their kind, produce " +
+		"nothing but strings, so this wrapper keeps the result a []string and " +
+		"the fields need no conversion on the way out. The template still " +
+		"documents the record layout the way the original did.",
+
 	"packTemplate": "The writing half of unpackTemplate, for the same reason: " +
 		"the record layout lives in a template string the program was built " +
 		"around. New Go code writes binary data with encoding/binary and " +

@@ -79,6 +79,7 @@ const (
 	hFloatList        = "floatList"        // []T -> []float64, when the elements have to carry fractions
 
 	hUnpackTemplate = "unpackTemplate" // unpack, interpreting the template at run time
+	hUnpackText     = "unpackText"     // unpack for the all-text templates, kept []string
 	hPackTemplate   = "packTemplate"   // pack, the writing half of the same interpreter
 
 	hDumpValues = "dumpValues" // a structure rendered as Go source

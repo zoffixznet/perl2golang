@@ -159,4 +159,19 @@ One trap on the way across, and it is a compile error rather than a wrong answer
 
 Four rules replace the coercion instinct. One: `T(v)` is the universal conversion syntax, and *even `int` to `int64` requires it* — same-shaped integer types are still distinct types, which matters constantly because `len()` returns `int` while `time.Duration` and file sizes are `int64`. Prefer plain `int` (64-bit on modern platforms) unless an API or a serialisation format dictates otherwise. Two: `/` on two integers is integer division — `7 / 2` is `3`, and Perl's answer needs `float64(a) / float64(b)`; this is the single most common numeric porting bug. Three: string-to-number never happens implicitly and never partially — `strconv.Atoi("10 apples")` returns an *error*, not `10` (see `strconv-parsing`), and `==` works for both numbers and strings because types, not operators, disambiguate — the `==`/`eq` split is gone. Four: untyped *constants* are the one place Go feels Perl-flexible — `7.0 / 2` works, and `const k = 1 << 20` can initialise an `int64` or a `float64` — but a constant that cannot be represented exactly is a compile error (`int(2.99)` with a constant literal refuses to compile), so the flexibility never becomes coercion.
 
+## When one variable held both
+
+Perl let a single variable hold `"localhost"` at one moment and `8080` the next, and a hash mix text values with numeric ones freely. Go has to pick one type for the slot, and the pick worth knowing about is `string`: every Perl scalar has a faithful string form, so a slot fed both kinds comes across as text, with the numbers converted where they were assigned and read back out where arithmetic needs them.
+
+```go
+conf := map[string]string{"host": "localhost", "port": "8080", "debug": "1"}
+port, _ := strconv.Atoi(conf["port"])
+fmt.Println(conf["host"]+":"+conf["port"], port+1)
+```
+```
+localhost:8080 8081
+```
+
+Read the conversions at the seams as a to-do list rather than a style. Each one marks a place where the original never decided whether the value was a number or a name for one, and the decision is now cheap to make: if `port` is only ever arithmetic, declare it an `int` and move the one `Atoi` to where the text enters the program; if it is only ever printed and compared, it was a string all along and the conversions disappear. A slot that mixes more than scalar kinds, a number here and a whole hash there, has no such escape: it stays `any`, and every use pays an assertion, which is the language's way of saying the two things never belonged in one variable.
+
 Further reading: https://go.dev/ref/spec#Conversions and https://go.dev/blog/constants

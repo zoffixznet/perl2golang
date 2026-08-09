@@ -704,6 +704,28 @@ func (l *Lowerer) hashFromPairs(src ir.Expr, at ast.Node) ir.Expr {
 func (l *Lowerer) listAssign(targets []ast.Expr, rhs ast.Expr, n *ast.Assign, declare bool) []ir.Stmt {
 	sources := flatten(rhs)
 
+	// `my ($tag, $seq, $cents) = unpack 'a3 A6 A10', $line` knows each
+	// position's kind from the template, so the targets are typed here even
+	// where the transported list itself cannot say.
+	if len(sources) == 1 && allScalarTargets(targets) {
+		if c, ok := sources[0].(*ast.Call); ok && c.Name == "unpack" {
+			if cargs := flatten(argList(c)); len(cargs) > 0 {
+				if tpl, isStatic := staticString(cargs[0]); isStatic {
+					if kinds, kok := unpackKinds(tpl); kok {
+						for i, tg := range targets {
+							if i >= len(kinds) {
+								break
+							}
+							if v, isVar := tg.(*ast.Var); isVar && v.Sigil == '$' {
+								l.observe(l.bindingFor(v, declare), kinds[i])
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
 	// The clean case: as many values as targets, each one its own expression.
 	// This is what Go's multiple assignment was made for.
 	//
