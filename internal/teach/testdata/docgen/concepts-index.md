@@ -8,14 +8,14 @@ A lesson marked as a trap describes something that produces a crash or wrong dat
 
 Something in `summarise.pl` triggered each of these directly. Each lesson says at the top which part of your file pulled it in.
 
-1. [The compiler is the first test suite](compile-time-mindset.md). Errors you are used to discovering in production at 3 a.m. — a typoed function name, a call into a module that never loaded, a variable you meant to use but did not — do not exist in a running Go...
+1. [The compiler is the first test suite](compile-time-mindset.md). Errors you are used to discovering in production at 3 a.m.
 2. [nil is not undef, and nothing autovivifies](nil-vs-undef.md) (trap). `undef` is a universal value any scalar can hold.
 3. [range gives you the index first, and the element is a copy](range-is-not-foreach.md) (easy to get wrong). Two habits from `foreach` will produce wrong Go on day one.
 4. [Sorting is a function call, and the default is numeric-aware](sort-slice.md). Perl's `sort` is a builtin that returns a new list and defaults to string comparison, which is why `sort { $a <=> $b }` is muscle memory for every Perl programmer alive.
 5. [Map order is randomised per loop, on purpose](map-iteration-order.md) (easy to get wrong). You already know hashes are unordered — Perl has randomised per-process since 5.18 — but Go goes a step further that will break a specific class of ported code.
 6. [Errors are return values, not exceptions](errors-are-values.md). Go has no exceptions in the working sense.
-7. [strconv turns strings into numbers, and refuses to guess](strconv-parsing.md). Every place your Perl relied on a string quietly becoming a number — reading a config value, a CGI parameter, a column from a file — becomes an explicit `strconv` call in Go that returns a value...
-8. [FindStringSubmatch replaces $1, and no-match returns nil](submatch-and-named-groups.md) (easy to get wrong). There are no match variables: `$1`, `$&`, `%+`, `@-` all vanish, replaced by methods returning slices — `FindStringSubmatch` gives `[$&, $1, $2, ...]` as a `[]string`, and the family of `Find*`...
+7. [strconv turns strings into numbers, and refuses to guess](strconv-parsing.md). Every place your Perl relied on a string quietly becoming a number.
+8. [FindStringSubmatch replaces $1, and no-match returns nil](submatch-and-named-groups.md) (easy to get wrong). There are no match variables: `$1`, `$&`, `%+`, `@-` all vanish, replaced by methods returning slices.
 9. [bufio.Scanner reads lines, and gives up on long ones](bufio-scanner-limit.md) (trap). `while (my $line = <$fh>)` has no length limit and no error to check.
 10. [printf survives the port, but the verbs are typed now](fmt-and-verbs.md) (easy to get wrong). `printf` is the one Perl builtin that arrives in Go almost intact.
 11. [Go regexp is RE2 - no backreferences, no lookaround](regexp-is-re2.md) (trap). Go's `regexp` package implements RE2, not PCRE.
@@ -27,7 +27,7 @@ Nothing in your file triggered them directly. They are here because the lessons 
 1. [Every variable has a type and is never uninitialised](static-types-and-zero-values.md). In Perl, a freshly declared variable holds `undef` and its "type" is whatever you use it as next.
 2. [Capitalisation is the entire privacy system](packages-and-exported-names.md). Go has no `Exporter`, no `@EXPORT_OK`, no `use Pkg qw(func)`, and no convention-only privacy.
 3. [Structs replace hashrefs, and embedding is not inheritance](structs-and-embedding.md). The blessed hashref — Perl's universal object — becomes a struct.
-4. [Slices are views with capacity, arrays are values](slices-not-arrays.md) (easy to get wrong). Perl's `@array` maps to Go's *slice* (`[]int`), not Go's array (`[3]int`) — an array in Go has its length baked into its type, is copied wholesale on assignment, and you will rarely declare one on...
+4. [Slices are views with capacity, arrays are values](slices-not-arrays.md) (easy to get wrong). Perl's `@array` maps to Go's *slice* (`[]int`), not Go's array (`[3]int`).
 5. [A nil slice works; writing to a nil map panics](nil-slices-vs-nil-maps.md) (trap). In Perl, `my @list` and `my %hash` are both immediately usable.
 6. [Comma-ok replaces exists, and defined has no seat at the table](comma-ok-idiom.md). A Go map lookup always succeeds: `m[k]` on a missing key quietly returns the zero value, so `visits["bob"]` is `0` whether bob visited zero times or was never seen at all.
 7. [Declaring variables, := versus var, and the shadowing trap](var-vs-short-declaration.md) (easy to get wrong). Go has two ways to declare a variable, and picking between them is mechanical, not stylistic.

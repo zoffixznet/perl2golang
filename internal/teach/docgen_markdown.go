@@ -329,6 +329,16 @@ func sentence(text string) string {
 		return balanceTicks(text) + "."
 	}
 	trimmed := text[:maxLen]
+	// A sentence that runs long usually has a clause break before the cap,
+	// and ending at one reads as a summary where a mid-phrase ellipsis reads
+	// as an accident.
+	if i := strings.Index(trimmed, " — "); i >= minCut {
+		head := strings.TrimRight(trimmed[:i], " ,;:")
+		if !strings.HasSuffix(head, ".") {
+			head += "."
+		}
+		return balanceTicks(head)
+	}
 	if i := strings.LastIndexByte(trimmed, ' '); i > minCut {
 		trimmed = trimmed[:i]
 	}
