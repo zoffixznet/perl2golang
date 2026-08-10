@@ -411,6 +411,18 @@ func (l *Lowerer) orValue(n *ast.BinOp, definedOr bool) ir.Expr {
 		t = ir.TAny
 	}
 
+	// `$x || 0` over a number is an identity: the fallback is the one value
+	// the test fires on. Emitting the guard produced `if v == 0 { v = 0 }`,
+	// which a Go reader can only stare at.
+	if zeroDefault(t, rx) && typeOrAny(lx).Kind == t.Kind {
+		out := l.assignable(lx, t, n.L)
+		l.note(out, "The || here defaulted to the value a false operand already is: "+
+			"a Perl number is false exactly when it is zero, so `|| 0` changes "+
+			"nothing and the Go reads the value directly.",
+			"static-types-and-zero-values")
+		return out
+	}
+
 	name := l.tmp(defaultName(n.L))
 	decl := &ir.DeclStmt{Names: []string{name}, Type: t, Values: []ir.Expr{l.assignable(lx, t, n.L)}}
 	l.setProv(decl, n)
@@ -424,6 +436,23 @@ func (l *Lowerer) orValue(n *ast.BinOp, definedOr bool) ir.Expr {
 	l.emit(decl)
 	l.emit(guard)
 	return ir.NewIdent(name, t)
+}
+
+// zeroDefault reports whether a fallback is the number zero applied to a
+// numeric slot, which makes the whole default a no-op.
+func zeroDefault(t *ir.Type, rx ir.Expr) bool {
+	if t == nil || (t.Kind != ir.Int && t.Kind != ir.Float) {
+		return false
+	}
+	lit, ok := rx.(*ir.Lit)
+	if !ok {
+		return false
+	}
+	switch lit.Value {
+	case "0", "0.0", "0.", ".0":
+		return true
+	}
+	return false
 }
 
 // definedProbe is one operand of a // chain: how to read it, how to ask whether
