@@ -921,8 +921,15 @@ func (l *Lowerer) joinCall(n *ast.Call) ir.Expr {
 		list = l.listValue(parts, t)
 	}
 	out := l.stringsJoin(list, sep)
-	l.note(out, "strings.Join is join with the arguments the other way round: the "+
-		"slice comes first, the separator second.")
+	if t := typeOrAny(list); t.Kind == ir.Slice && t.Elem != nil && t.Elem.Kind == ir.String {
+		l.note(out, "strings.Join is join with the arguments the other way round: the "+
+			"slice comes first, the separator second.")
+	} else {
+		l.note(out, "join in Go is strings.Join, with the slice first and the separator "+
+			"second, but it takes only a slice of strings. This list holds something "+
+			"else, so a helper renders each element the way Perl would and joins the "+
+			"results.")
+	}
 	return out
 }
 
