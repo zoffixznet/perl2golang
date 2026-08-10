@@ -986,8 +986,9 @@ func (l *Lowerer) reverseText(n *ast.Call) ir.Expr {
 		}
 		if typeOrAny(x).Kind != ir.Slice {
 			out := l.helperCall(hReverseStr, ir.TString, l.toStr(x, args[0]))
-			l.note(out, "reverse read for one value reverses the characters of its "+
-				"argument rendered as text, whatever it was held as.",
+			l.note(out, "The argument here is not text, so it is rendered as a string "+
+				"first, which is what Perl was doing silently, and the characters of "+
+				"that string are what get reversed.",
 				"strings-are-bytes", "context-is-gone")
 			return out
 		}

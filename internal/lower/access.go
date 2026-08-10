@@ -241,9 +241,10 @@ func (l *Lowerer) hashPartsField(n *ast.HashIndex) (m ir.Expr, key ir.Expr, elem
 		// $+{name} reads a named capture group.
 		if k, ok := staticString(n.Key); ok {
 			if x, found := l.namedCapture(k); found {
-				l.note(x, "A named capture is still just a numbered group in Go. "+
-					"regexp.SubexpIndex looks the number up by name when the pattern is "+
-					"not known at conversion time.",
+				l.note(x, "A named capture is still just a numbered group in Go, so "+
+					"$+{"+k+"} became the group's index in the submatch slice, worked "+
+					"out from the pattern. Code that keeps the names at run time asks "+
+					"the compiled pattern with SubexpIndex(\""+k+"\") instead.",
 					"submatch-and-named-groups")
 				return x, nil, ir.TString, nil
 			}
