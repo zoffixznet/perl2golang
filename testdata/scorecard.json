@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T19:35:39Z",
+  "recorded": "2026-08-15T20:15:07Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -5965,7 +5965,7 @@
       "stages": {
         "compiled": {
           "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:181:54: cannot use i (variable of type int) as string value in map index"
+          "reason": "the generated Go does not compile: ./main.go:180:54: cannot use i (variable of type int) as string value in map index"
         },
         "emitted": {
           "outcome": "pass"

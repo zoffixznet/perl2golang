@@ -252,25 +252,50 @@ func (l *Lowerer) lowerComparatorSub(s *Sub, sd *ast.SubDecl) {
 }
 
 // subDoc builds the Go doc comment for a generated function, preferring the
-// developer's own comment above the sub.
+// developer's own comment above the sub. A banner line ("---- helpers ----")
+// is a section divider in the original, not documentation of this sub, so it
+// is dropped. A sub with nothing real above it gets no doc comment at all: an
+// unexported Go function may go without one, and a generated sentence that
+// carries no information reads worse than silence.
 func (l *Lowerer) subDoc(s *Sub) []string {
-	if len(s.Doc) > 0 {
-		out := make([]string, 0, len(s.Doc)+1)
-		// A Go doc comment starts with the name of the thing it documents. When
-		// the developer's first line begins with an article the two fit
-		// together; otherwise their words are left exactly as written, with the
-		// naming line added above them.
-		first := s.Doc[0]
-		if rest, ok := cutArticle(first); ok {
-			out = append(out, s.Go+" is "+rest)
-			out = append(out, s.Doc[1:]...)
-			return out
-		}
-		out = append(out, s.Go+" is defined as follows.")
-		out = append(out, s.Doc...)
-		return out
+	doc := withoutBanners(s.Doc)
+	if len(doc) == 0 {
+		return nil
 	}
-	return []string{s.Go + " performs one step of the program's work."}
+	// A Go doc comment starts with the name of the thing it documents. When
+	// the developer's first line begins with an article the two fit together;
+	// otherwise their words are left exactly as written.
+	if rest, ok := cutArticle(doc[0]); ok {
+		return append([]string{s.Go + " is " + rest}, doc[1:]...)
+	}
+	return doc
+}
+
+// withoutBanners drops the decoration lines a developer boxes sections with.
+func withoutBanners(doc []string) []string {
+	var out []string
+	for _, line := range doc {
+		if !isBanner(line) {
+			out = append(out, line)
+		}
+	}
+	return out
+}
+
+// isBanner reports whether a comment line is decoration: a run of punctuation
+// at both ends, or nothing but punctuation.
+func isBanner(line string) bool {
+	const deco = "-=*#~_"
+	t := strings.TrimSpace(line)
+	if t == "" {
+		return false
+	}
+	lead := len(t) - len(strings.TrimLeft(t, deco))
+	if lead == len(t) {
+		return true
+	}
+	trail := len(t) - len(strings.TrimRight(t, deco))
+	return lead >= 3 && trail >= 3
 }
 
 // cutArticle reports whether a sentence starts with an article, and returns it

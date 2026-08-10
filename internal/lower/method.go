@@ -508,13 +508,15 @@ func (l *Lowerer) promotedAccessorDecl(s *Sub, sd *ast.SubDecl) {
 	s.irDecl = fn
 }
 
-// methodDoc writes the doc comment for a generated method or constructor.
+// methodDoc writes the doc comment for a generated method or constructor. An
+// ordinary method with no developer comment gets none: the receiver already
+// says whose method it is, and a sentence restating that carries nothing.
 func (l *Lowerer) methodDoc(s *Sub) []string {
-	if len(s.Doc) > 0 {
-		if rest, ok := cutArticle(s.Doc[0]); ok {
-			return append([]string{s.Go + " is " + rest}, s.Doc[1:]...)
+	if doc := withoutBanners(s.Doc); len(doc) > 0 {
+		if rest, ok := cutArticle(doc[0]); ok {
+			return append([]string{s.Go + " is " + rest}, doc[1:]...)
 		}
-		return append([]string{s.Go + " is defined as follows."}, s.Doc...)
+		return doc
 	}
 	switch s.Kind {
 	case SubCtor:
@@ -523,7 +525,7 @@ func (l *Lowerer) methodDoc(s *Sub) []string {
 		return []string{s.Go + " is a class method of " + s.Class.Perl + ": it belongs to the " +
 			"type rather than to any one value, so it is a plain function here."}
 	}
-	return []string{s.Go + " is a method of " + s.Class.Go + "."}
+	return nil
 }
 
 // explainMethod attaches the lesson a generated method deserves.

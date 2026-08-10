@@ -656,8 +656,12 @@ func (l *Lowerer) classDecl(c *Class) ir.Decl {
 			return d
 		}
 	}
-	if len(c.Doc) > 0 {
-		d.Doc = append([]string{c.Go + " is defined as follows."}, c.Doc...)
+	if doc := withoutBanners(c.Doc); len(doc) > 0 {
+		if rest, ok := cutArticle(doc[0]); ok {
+			d.Doc = append([]string{c.Go + " is " + rest}, doc[1:]...)
+		} else {
+			d.Doc = doc
+		}
 	}
 	if l.pass == 2 && c.Options {
 		ir.Annotate(d, "The option block names every key this hash will ever hold and "+
