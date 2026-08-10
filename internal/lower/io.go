@@ -1,6 +1,7 @@
 package lower
 
 import (
+	"slices"
 	"strings"
 
 	"perl2golang/internal/ir"
@@ -609,12 +610,22 @@ func (l *Lowerer) readLoop(n *ast.While) ([]ir.Stmt, bool) {
 			ir.Raw("[]byte", nil), ir.IntLit("0"), ir.Raw("64*1024", ir.TInt)),
 		ir.Raw("1024*1024", ir.TInt)))
 
-	// The body decides whether the newline has to be kept.
+	// The body decides whether the newline has to be kept. The chomp is
+	// usually the first statement, but a counter bump or another statement
+	// that cannot be reading the line often precedes it, and missing the
+	// chomp there means adding the newline back only to trim it off again,
+	// with a note claiming the body never chomps.
 	body := n.Body
 	chomped := false
-	if len(body) > 0 && isChompOf(body[0], target) {
-		chomped = true
-		body = body[1:]
+	for i, st := range body {
+		if isChompOf(st, target) {
+			chomped = true
+			body = append(slices.Clone(body[:i]), body[i+1:]...)
+			break
+		}
+		if !ignoresLine(st, target) {
+			break
+		}
 	}
 
 	var b *Binding
@@ -908,6 +919,34 @@ func isChompOf(st ast.Stmt, target *readTarget) bool {
 	want := targetVar(target.declNode)
 	got, ok := args[0].(*ast.Var)
 	return ok && want != nil && got.Sigil == want.Sigil && got.Name == want.Name
+}
+
+// ignoresLine reports whether a statement certainly does not read the loop's
+// line variable, so a chomp after it still governs the newline. It recognises
+// only the shapes that are trivially safe, the common one being a counter
+// bump like $lines++ between the read and the chomp.
+func ignoresLine(st ast.Stmt, target *readTarget) bool {
+	es, ok := st.(*ast.ExprStmt)
+	if !ok {
+		return false
+	}
+	un, ok := es.X.(*ast.UnOp)
+	if !ok || (un.Op != "++" && un.Op != "--") {
+		return false
+	}
+	v, ok := un.X.(*ast.Var)
+	if !ok {
+		return false
+	}
+	if target == nil {
+		// The loop reads into $_, which the bump must not touch.
+		return !(v.Sigil == '$' && v.Name == "_")
+	}
+	want := targetVar(target.declNode)
+	if want == nil {
+		return false
+	}
+	return v.Sigil != want.Sigil || v.Name != want.Name
 }
 
 // targetVar pulls the variable out of a read loop's assignment target.
