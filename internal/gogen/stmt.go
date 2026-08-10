@@ -411,7 +411,7 @@ func (e *Emitter) inline(s ir.Stmt) string {
 	if s == nil {
 		return ""
 	}
-	sub := &Emitter{mode: Clean, imports: e.imports, atLineStart: true, saidBefore: e.saidBefore}
+	sub := &Emitter{mode: Clean, imports: e.imports, atLineStart: true, saidBefore: e.saidBefore, quotedPerl: e.quotedPerl}
 	sub.stmt(s)
 
 	// Drop any comment line: inside a header it would run to the end of the

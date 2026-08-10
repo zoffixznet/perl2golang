@@ -34,6 +34,11 @@ type Emitter struct {
 	// explanation at every occurrence buries the code it is meant to explain,
 	// so each note is written once, where it first applies.
 	saidBefore map[string]bool
+	// quotedPerl records the multi-line source quotes already written. One
+	// Perl loop lowers to several Go statements that all carry it as their
+	// provenance, and quoting a twenty-line loop in full at each of them
+	// buries the program; the repeats quote the first line and an ellipsis.
+	quotedPerl map[string]bool
 	// fragment marks an emitter rendering a bare expression for a document
 	// rather than a whole file. There is no statement above it to hold a TODO,
 	// so in that one case the marker is written inside the expression.
@@ -42,7 +47,8 @@ type Emitter struct {
 
 // New returns an emitter for the given rendering mode.
 func New(mode Mode) *Emitter {
-	return &Emitter{mode: mode, imports: NewImports(), atLineStart: true, saidBefore: map[string]bool{}}
+	return &Emitter{mode: mode, imports: NewImports(), atLineStart: true,
+		saidBefore: map[string]bool{}, quotedPerl: map[string]bool{}}
 }
 
 // firstMention reports whether text has not been written into this file yet,
@@ -75,7 +81,8 @@ func (e *Emitter) File(f *ir.File) ([]byte, error) {
 	// (an import request, say) does not leave a stray blank line behind.
 	var parts []string
 	for _, d := range f.Decls {
-		sub := &Emitter{mode: e.mode, imports: e.imports, atLineStart: true, saidBefore: e.saidBefore}
+		sub := &Emitter{mode: e.mode, imports: e.imports, atLineStart: true,
+			saidBefore: e.saidBefore, quotedPerl: e.quotedPerl}
 		sub.decl(d)
 		if text := sub.sb.String(); strings.TrimSpace(text) != "" {
 			parts = append(parts, text)
@@ -164,11 +171,19 @@ func (e *Emitter) notes(n ir.Annotated) {
 		return
 	}
 	if m.Prov.Valid() && m.Prov.Text != "" {
-		for i, l := range strings.Split(m.Prov.Text, "\n") {
-			if i == 0 {
-				e.line(commentLine("Perl: " + l))
-			} else {
-				e.line(commentLine("      " + l))
+		lines := strings.Split(m.Prov.Text, "\n")
+		if len(lines) > 1 && e.quotedPerl[m.Prov.Text] {
+			// This construct was quoted in full where its first statement
+			// came out; the reminder is enough here.
+			e.line(commentLine("Perl: " + lines[0] + " ..."))
+		} else {
+			e.quotedPerl[m.Prov.Text] = true
+			for i, l := range lines {
+				if i == 0 {
+					e.line(commentLine("Perl: " + l))
+				} else {
+					e.line(commentLine("      " + l))
+				}
 			}
 		}
 	}

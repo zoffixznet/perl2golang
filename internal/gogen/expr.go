@@ -325,7 +325,7 @@ func multiline(parts []string) bool {
 }
 
 func (e *Emitter) funcLit(x *ir.FuncLit) string {
-	body := &Emitter{mode: e.mode, imports: e.imports, indent: e.indent + 1, atLineStart: true, saidBefore: e.saidBefore}
+	body := &Emitter{mode: e.mode, imports: e.imports, indent: e.indent + 1, atLineStart: true, saidBefore: e.saidBefore, quotedPerl: e.quotedPerl}
 	if x.Body != nil {
 		body.prologue(x.Body)
 		for _, s := range x.Body.Stmts {
