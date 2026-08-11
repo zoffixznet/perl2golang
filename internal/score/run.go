@@ -271,6 +271,7 @@ func (r *runner) runEntry(ctx context.Context, e Entry) EntryResult {
 		SymbolsTyped:   class.SymbolsTyped,
 		Refusals:       class.Refusals,
 		Approximations: class.Approximations,
+		Dropped:        class.Dropped,
 	}
 
 	compiled, bins := r.compile(ctx, e, conv, class)

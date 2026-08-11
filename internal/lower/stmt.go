@@ -8,6 +8,41 @@ import (
 	"perl2golang/internal/perl/ast"
 )
 
+// mayVanish reports whether a statement can honestly lower to nothing at all.
+// A sub or package declaration is lowered elsewhere; a use has its effect at
+// compile time; a declaration lowers to nothing when its variables were
+// hoisted to package level; and an expression with no effect, such as the
+// bare `1;` that ends a module, has nothing worth keeping.
+func mayVanish(st ast.Stmt) bool {
+	switch n := st.(type) {
+	case nil, *ast.SubDecl, *ast.PackageDecl, *ast.Use:
+		return true
+	case *ast.ExprStmt:
+		if _, isDecl := n.X.(*ast.My); isDecl {
+			return true
+		}
+		return effectFree(n.X)
+	}
+	return false
+}
+
+// effectFree reports whether evaluating an expression for effect and keeping
+// nothing could change anything: literals and bare variable reads cannot.
+func effectFree(e ast.Expr) bool {
+	switch n := e.(type) {
+	case *ast.NumberLit, *ast.StrLit, *ast.QwLit, *ast.Var:
+		return true
+	case *ast.List:
+		for _, part := range n.Elems {
+			if !effectFree(part) {
+				return false
+			}
+		}
+		return true
+	}
+	return false
+}
+
 // stmts lowers a statement list, flushing whatever setup each statement needed.
 func (l *Lowerer) stmts(list []ast.Stmt) []ir.Stmt {
 	var out []ir.Stmt
@@ -20,11 +55,26 @@ func (l *Lowerer) stmts(list []ast.Stmt) []ir.Stmt {
 		l.errVar = ""
 
 		lead := leadComments(st)
+		entriesBefore := len(l.rep.Entries)
 		body := l.stmt(st)
 		body = l.applyDestroyPlan(st, body)
 		pre := l.takePre()
 		l.pre = savedPre
 		l.errVar = savedErr
+
+		// The safety net under every lowering rule: a statement that produced
+		// no code and no diagnostic has simply vanished, and a vanished
+		// statement is a silent change of meaning, the one wrong this tool
+		// promises never to commit. Any lowering path that gives up must
+		// either emit something or say something; when one does neither, the
+		// statement is marked here rather than dropped.
+		if l.pass == 2 && len(pre) == 0 && len(body) == 0 &&
+			len(l.rep.Entries) == entriesBefore && !mayVanish(st) {
+			body = []ir.Stmt{l.todoStmt(st, "P2G3598", "statement",
+				"this statement's behaviour is missing",
+				"This statement lowered to nothing: no Go came out of it, and no other diagnostic explains why.",
+				"Translate the statement by hand. The original is quoted above the marker.")}
+		}
 
 		if len(lead) > 0 {
 			out = append(out, &ir.CommentStmt{Lines: lead})

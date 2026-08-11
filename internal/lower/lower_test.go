@@ -203,6 +203,38 @@ func codesOf(res *Result) []string {
 	return out
 }
 
+// TestNoStatementVanishesSilently covers the safety net under the lowering: a
+// statement that produces no code must leave a diagnostic, because a statement
+// that simply disappears is a silent change of meaning. The close of a
+// non-handle is a statement no rule produces anything for, so the net has to
+// catch it.
+func TestNoStatementVanishesSilently(t *testing.T) {
+	src := []byte("my $x = 1;\nclose $x;\nprint \"$x\\n\";\n")
+	res := Lower(parser.Parse(src), src, Options{File: "t.pl", Program: "t", Module: "t"})
+	for _, e := range res.Report.Entries {
+		if e.Code == "P2G3598" {
+			if e.Line != 2 {
+				t.Errorf("the vanished statement was reported at line %d, want 2", e.Line)
+			}
+			return
+		}
+	}
+	t.Errorf("a statement lowered to nothing and nothing was reported; got %v", codesOf(res))
+}
+
+// TestHonestVanishingIsNotFlagged covers the statements that are allowed to
+// lower to nothing: declarations hoisted to package level, a module's trailing
+// `1;`, and sub and package declarations, which are lowered elsewhere.
+func TestHonestVanishingIsNotFlagged(t *testing.T) {
+	src := []byte("package M;\nmy %memo;\nsub f { $memo{a} = 1; }\n1;\n")
+	res := Lower(parser.Parse(src), src, Options{File: "t.pl", Program: "t", Module: "t"})
+	for _, e := range res.Report.Entries {
+		if e.Code == "P2G3598" {
+			t.Errorf("a statement that may lower to nothing was flagged: %q at line %d", e.Perl, e.Line)
+		}
+	}
+}
+
 // TestLowerNeverPanics runs a set of deliberately awkward inputs through the
 // whole pass. A panic here is a defect in the tool, not a problem with the
 // input, so the test exists to catch one early.

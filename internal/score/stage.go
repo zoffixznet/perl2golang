@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"perl2golang/internal/diag"
 	"perl2golang/internal/report"
 )
 
@@ -130,6 +131,12 @@ type Classification struct {
 	// Approximations counts constructs translated with a reported change in
 	// meaning.
 	Approximations int
+	// Dropped counts statements the lowering's safety net caught vanishing:
+	// they produced no code and no diagnostic of their own, and were marked
+	// rather than silently skipped. Each one is also a refusal, but the count
+	// is kept apart because every drop is a converter defect with a known
+	// site, not a considered refusal.
+	Dropped int
 	// ParseErrors counts front-end diagnostics.
 	ParseErrors int
 	// Todos counts the TODO markers left in the generated code.
@@ -178,6 +185,9 @@ func Classify(rep *report.Report) Classification {
 		switch e.Severity {
 		case report.Refuse:
 			c.Refusals++
+			if e.Code == string(diag.StatementVanished) {
+				c.Dropped++
+			}
 		case report.Warn:
 			c.Approximations++
 		}

@@ -245,6 +245,11 @@ const (
 	// FlipFlopState: the scalar range operator's hidden state became a
 	// declared variable.
 	FlipFlopState Code = "P2G3560"
+	// StatementVanished: a statement lowered to no code and no diagnostic.
+	// This is the safety net under every lowering rule: a path that gives up
+	// must either emit something or say something, and when one does neither
+	// the statement is marked with this code instead of silently disappearing.
+	StatementVanished Code = "P2G3598"
 	// ConstructNoRule: a construct has no lowering rule in the converter.
 	ConstructNoRule Code = "P2G3599"
 )
@@ -1203,6 +1208,13 @@ var catalogue = map[Code]Entry{
 		Cost:      "the state is now visible and shared the way a package variable is, rather than attached to the operator",
 		Converted: "the emitted code calls a method on a per-occurrence state variable and keeps the sequence values, \"1\" up to the final \"NE0\"",
 		Concepts:  []string{"context-is-gone"},
+	},
+	StatementVanished: {
+		Severity:  report.Refuse,
+		Message:   "this statement lowered to nothing: no Go came out of it, and no other diagnostic explains why",
+		Short:     "statement's behaviour is missing",
+		Advice:    "translate the statement by hand; the original is quoted above the marker",
+		Converted: "the statement is not converted; the marker is there so the omission is visible",
 	},
 	ConstructNoRule: {
 		Severity:  report.Refuse,

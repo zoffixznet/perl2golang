@@ -127,6 +127,13 @@ func renderQuality(w io.Writer, sc *Scorecard) {
 	fmt.Fprintf(w, "  dynamic fallback         %d of %d symbols (%.1f%%)\n", dynamic, q.Symbols, 100*q.DynamicRate())
 	fmt.Fprintf(w, "  constructs refused       %d\n", q.Refusals)
 	fmt.Fprintf(w, "  constructs approximated  %d\n", q.Approximations)
+	fmt.Fprintf(w, "  statements that vanished %d\n", q.Dropped)
+	for _, e := range sc.Entries {
+		if e.Quality.Dropped > 0 {
+			fmt.Fprintf(w, "    %s: %s lowered to no code and no diagnostic of their own\n",
+				e.ID(), plural(e.Quality.Dropped, "statement"))
+		}
+	}
 	fmt.Fprintf(w, "  programs that panicked   %d\n", q.Crashes)
 	var crashed []EntryResult
 	for _, e := range sc.Entries {

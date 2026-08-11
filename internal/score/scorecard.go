@@ -80,6 +80,12 @@ type Quality struct {
 	// Refusals and Approximations count reported constructs across the run.
 	Refusals       int `json:"refusals"`
 	Approximations int `json:"approximations"`
+	// Dropped counts statements that lowered to no code and no diagnostic of
+	// their own and were caught by the lowering's safety net. Every one is a
+	// converter defect at a known site: the marker it leaves is honest, but
+	// the number belongs at zero, reached by teaching the site to either
+	// translate the statement or refuse it for its own stated reason.
+	Dropped int `json:"dropped"`
 	// Crashes counts the programs that built and then stopped on a runtime
 	// panic instead of running to the end. A refusal that leaves a program
 	// unable to finish is worth less than the same refusal that lets the
@@ -221,6 +227,7 @@ func Summarize(results []EntryResult) ([]TierScore, TierScore) {
 		t.Quality.SymbolsTyped += r.Quality.SymbolsTyped
 		t.Quality.Refusals += r.Quality.Refusals
 		t.Quality.Approximations += r.Quality.Approximations
+		t.Quality.Dropped += r.Quality.Dropped
 		t.Quality.Crashes += r.Quality.Crashes
 	}
 
