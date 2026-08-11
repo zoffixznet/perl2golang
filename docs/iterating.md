@@ -24,29 +24,46 @@ out, runs it beside real `perl`, and prints a table:
   tier1        37   30/37 (81%)   17/37 (46%)  37/37 (100%)  36/37 (97%)   11/37 (30%)          -
 ```
 
-Each column counts entries that got that far.
+Each column counts entries that got that far. Knowing what a column proves
+matters less than knowing what it does not, because a defect no column can
+express is invisible however many rounds stare at the table.
 
-| Column | An entry passes when |
-|---|---|
-| `translated` | every construct in it had a translation, so a single refusal fails the file |
-| `typed` | no variable fell back to the dynamic value type |
-| `emitted` | valid Go came out |
-| `compiled` | the Go toolchain built it |
-| `equivalent` | the built program printed what `perl` printed, byte for byte, and exited the same way |
-| `honest` | tier 4 only: the tool said something true about a construct it cannot translate |
+| Column | An entry passes when | What that does not prove |
+|---|---|---|
+| `translated` | every construct produced either code or a diagnostic; a single refusal fails the file | nothing about whether the code is right, only that none of it went missing unannounced |
+| `typed` | no variable fell back to the dynamic value type | not that the types are the best ones, only that inference never gave up |
+| `emitted` | valid Go came out | validity is `go/parser`'s standard, not the compiler's |
+| `compiled` | the Go toolchain built it | a program can build and still be wrong everywhere |
+| `equivalent` | the built program matched `perl` byte for byte on stdout, on exit status, and on every file it wrote; stderr wording too, unless the entry sanctions stderr, where only its presence must agree | equivalence on this entry's input only: an approximation that diverges on inputs the entry never feeds it passes clean |
+| `honest` | tier 4 only: the entry's own standard held, and every `report-must-contain` line in its expectation was satisfied by the report's own words | the report said the required true thing; whether it says it well is a reading judgment, not a column |
 
 Tier 4 is judged by `honest` and not by `equivalent`, because those entries
 exist to prove the tool fails well. A skipped check never counts as a pass.
+An entry whose output legitimately differs run to run carries a `verify.pl`
+invariant oracle and is judged by it instead of a byte diff; one with
+neither an `expected_stdout` nor an oracle cannot be checked at all, and the
+scorecard says so in a corpus note rather than skipping in silence.
 
 Under the table:
 
 - **Quality** counts TODOs left in the output, how often type inference gave up,
-  how many constructs were refused or approximated, and how many built programs
-  stopped on a runtime panic instead of running to the end. That last number is
-  the one that says whether a partial conversion is usable: a program that dies
-  on its fourth line teaches nothing about the forty lines below it, however
-  well they converted. Drive it towards zero even when it costs nothing on the
-  other columns.
+  how many constructs were refused or approximated, how many statements
+  vanished, and how many built programs stopped on a runtime panic instead of
+  running to the end.
+
+  *Statements that vanished* is the safety net under the lowering: a statement
+  that produced no code and no diagnostic of its own was silently dropped, the
+  one wrong this tool promises never to commit, and the net marks it (P2G3598)
+  instead of letting it disappear. Each marked statement also fails
+  `translated`, but the count is kept apart because every one is a converter
+  defect with a known site: some lowering path returned nothing without saying
+  so, and the fix is to teach that path to either translate the statement or
+  refuse it for its own stated reason.
+
+  *Programs that panicked* is the number that says whether a partial conversion
+  is usable: a program that dies on its fourth line teaches nothing about the
+  forty lines below it, however well they converted. Drive both of these
+  towards zero even when it costs nothing on the other columns.
 - **Where entries fall over first** groups every failing entry under the
   earliest stage it failed, with the reason. This is the list to pick from.
 - **Corpus notes** appear when an entry's own files contradict its row in
@@ -82,12 +99,15 @@ make score ARGS="-short"                      # skip the equivalence stage, the 
 
 Roughly in this order:
 
-1. Entries that fail `equivalent`. The Go builds and runs and gets a different
+1. Statements that vanished, and programs that panicked. Both are converter
+   defects with a known site, both are listed by entry under Quality, and
+   both undermine every other number until they are zero.
+2. Entries that fail `equivalent`. The Go builds and runs and gets a different
    answer, which is the worst outcome and usually the most specific bug.
-2. Entries that fail `compiled`. The reason names the file and line.
-3. A high dynamic-fallback rate, which is type inference giving up.
-4. A refusal that shows up across many entries.
-5. A construct that converts but reads nothing like Go.
+3. Entries that fail `compiled`. The reason names the file and line.
+4. A high dynamic-fallback rate, which is type inference giving up.
+5. A refusal that shows up across many entries.
+6. A construct that converts but reads nothing like Go.
 
 Prefer the smallest fix that is still at the right level. Improving type
 inference beats special-casing an expression; adding an analysis pass beats
@@ -130,6 +150,58 @@ twice, refusing to record an entry whose two runs disagree.
 `testdata/corpus/README.md` describes the layout and the rules an entry has to
 follow, the most important being that it must be deterministic and must not
 depend on where the repository lives.
+
+## What the numbers do not measure
+
+The table is a floor, not a verdict, and some of what matters most has no
+column on purpose. Know the list, so a good-looking table is read as "the
+measured things held" and nothing more:
+
+- **The teaching bundle has no metric.** By this project's own thesis the
+  bundle is the product, and its quality is prose quality: whether a Perl
+  expert would actually learn Go from it. The suite holds the floor
+  mechanically (every sample compiles, samples with output blocks run and
+  match them, every cited lesson exists), but above that floor the only
+  honest measurement is reading a full bundle as the target reader and
+  fixing what fails the reading. Nothing on the scorecard moves when an
+  explanation is muddy.
+- **Idiomatic Go is measured only at the floor.** Everything emitted is
+  gofmt-shaped by construction, `compiled` holds, and `go vet` has been
+  checked against generated output and currently finds nothing the build
+  does not. Whether the Go reads like Go, the difference between a struct
+  and a `map[string]any`, is a review judgment.
+- **Approximations are only tested where the corpus feeds them.** 1200-odd
+  reported approximations are honest notes, and `equivalent` proves each
+  entry's own input unaffected. Which of them bite on other inputs is
+  unmeasured.
+- **stdout/stderr interleaving is not compared.** The two streams are
+  captured separately, so a program that writes the right bytes to each in
+  the wrong relative order still matches.
+- **Resources are not audited.** Nothing checks that handles are closed or
+  files are cleaned up unless the difference reaches output, exit status, or
+  the files-written comparison.
+
+## Corpus health: measure against Perl you did not write
+
+Every corpus entry was written for this corpus, so the corpus can only ask
+questions its authors thought of. A corpus that has stopped discriminating
+looks exactly like rising scores. The antidote is to sample real Perl from
+outside the project, the machine's own installed modules and scripts are
+right there, run it through the converter, and compare the failure profile
+with what the corpus predicts. When the profiles disagree, the corpus is
+missing a shape, and the fix is a new distilled entry, never a copy of
+someone else's file.
+
+One such pass, over 59 installed modules and scripts, found what the corpus
+could not: a parser loop that never terminated on a legal trailing comma
+above an `__END__` marker, hex literals in float company killing whole
+conversions, a sub named `init` colliding with Go's runtime-called function,
+Latin-1 source reaching the emitter, and a compile rate of 58% against the
+corpus's 98%. The corpus now carries entries distilled from those shapes,
+and the gap between the two numbers is the honest measure of how much the
+corpus flatters the tool: the corpus is script-shaped by design, while
+module-heavy code leans on OO and export machinery that mostly does not
+convert yet.
 
 ## The other half of the round
 
