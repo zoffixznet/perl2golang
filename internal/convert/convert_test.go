@@ -315,6 +315,42 @@ func TestUnimprovedConversionRendersDocumentsOnce(t *testing.T) {
 // number by another and `@items + 0` counts the items. Reading the parentheses
 // as a one-element list instead produces Go that compiles and then computes
 // something else entirely, which is the worst kind of wrong answer.
+// TestConvertRefusesNonUTF8Input covers the library path the CLI's own gate
+// does not: any caller handing Convert bytes in another encoding must get a
+// refusal naming the byte, not generated Go the toolchain rejects as illegal
+// UTF-8 twenty steps later.
+func TestConvertRefusesNonUTF8Input(t *testing.T) {
+	src := []byte("my $name = \"caf\xe9\";\nprint \"$name\\n\";\n")
+	_, err := convert.Convert(src, convert.Options{Path: "latin1.pl", NoDocs: true})
+	if err == nil {
+		t.Fatal("Convert accepted Latin-1 input")
+	}
+	for _, want := range []string{"not valid UTF-8", "byte 15", "transcoded"} {
+		if !strings.Contains(err.Error(), want) {
+			t.Errorf("error %q does not mention %q", err, want)
+		}
+	}
+}
+
+// TestSubNamedInitIsRenamed covers a name Go reserves in behaviour rather
+// than in the grammar: a package-level func init runs by itself and cannot be
+// called, so a Perl sub named init has to take another name the way a sub
+// named main already does.
+func TestSubNamedInitIsRenamed(t *testing.T) {
+	res, err := convert.Convert([]byte("sub init { print \"ready\\n\"; }\ninit();\n"),
+		convert.Options{Path: "t.pl", NoDocs: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	clean := string(res.Clean["main.go"])
+	if strings.Contains(clean, "func init()") {
+		t.Error("the sub became func init, which the Go runtime calls and no one else can")
+	}
+	if !strings.Contains(clean, "func init2()") || !strings.Contains(clean, "init2()") {
+		t.Errorf("expected the sub and its call renamed to init2; got:\n%s", clean)
+	}
+}
+
 func TestParenthesesAroundOneValueAreOnlyParentheses(t *testing.T) {
 	tests := []struct {
 		name   string

@@ -417,6 +417,10 @@ func lowerOnce(res parser.Result, src []byte, opts Options, sticky bool) (*Resul
 	}
 	// main and the package name are taken; nothing else may claim them.
 	l.names.reserve("main")
+	// init is not a keyword, but a package-level func init is run by the
+	// runtime and cannot be called or referenced, so a Perl sub named init
+	// must take another name the way a sub named main does.
+	l.names.reserve("init")
 	l.names.reserve("err")
 	// So is every package the generated files may import. Imports are
 	// file-scoped, but a package-level identifier conflicts with any file's
