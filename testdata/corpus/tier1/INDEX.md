@@ -76,6 +76,7 @@ sensitive formatting, or unsorted hash iteration order.
 | 43 | `43-case-folding-and-squeeze` | `\u` `\L` `\U` inside a replacement and `tr///s`, neither of which converts yet, with the counting form of `tr` as the contrast |
 | 44 | `44-defined-and-defaults` | `//` against `\|\|` over 0 and the empty string, `defined` on a variable that always has a value, and `//` on a hash key that is missing, zero or empty |
 | 45 | `45-undef-inside-a-container` | `undef` stored as a value in a hash and an array, `grep { defined }`, and a chain of defaults over a stored 0, none of which converts yet |
+| 46 | `46-a-comma-before-the-brace` | a trailing comma inside an if condition and a `for` list, plus an `__END__` data section, the pairing that once kept the parser from finishing at all |
 
 ## Entries with non-zero exit status
 

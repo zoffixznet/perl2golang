@@ -3243,5 +3243,17 @@
     "expected_exit": 0,
     "deterministic": true,
     "kind": "convert"
+  },
+  {
+    "tier": "tier1",
+    "name": "46-a-comma-before-the-brace",
+    "path": "testdata/corpus/tier1/46-a-comma-before-the-brace",
+    "args": [],
+    "has_stdin": false,
+    "has_files": false,
+    "allow_stderr": false,
+    "expected_exit": 0,
+    "deterministic": true,
+    "kind": "convert"
   }
 ]

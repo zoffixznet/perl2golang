@@ -620,10 +620,15 @@ func (p *parser) parseBareBlock(label string) ast.Stmt {
 }
 
 // parseBlockBody parses `{ stmt... }`.
+//
+// The loop stops at the __END__ marker as well as at EOF, because both end
+// the program. parseStatement returns nil at either without consuming it, so
+// a block left unclosed above a data section would otherwise ask for the next
+// statement forever and the parse would never finish.
 func (p *parser) parseBlockBody() []ast.Stmt {
 	p.expect(token.LBrace, "{")
 	var body []ast.Stmt
-	for p.kind() != token.RBrace && p.kind() != token.EOF {
+	for p.kind() != token.RBrace && p.kind() != token.EOF && p.kind() != token.Data {
 		st := p.parseStatement()
 		if st != nil {
 			body = append(body, st)
