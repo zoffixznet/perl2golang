@@ -1,6 +1,6 @@
 # Tier 1 corpus -- fundamentals
 
-45 self-contained Perl programs covering the core of the language: scalars,
+48 self-contained Perl programs covering the core of the language: scalars,
 numbers, comparison, booleans, arrays, hashes, control flow, sorting, strings,
 and output. Every entry runs clean under `use strict; use warnings;` with no
 output on stderr (except the two entries marked below, which write to stderr on
@@ -78,6 +78,7 @@ sensitive formatting, or unsorted hash iteration order.
 | 45 | `45-undef-inside-a-container` | `undef` stored as a value in a hash and an array, `grep { defined }`, and a chain of defaults over a stored 0, none of which converts yet |
 | 46 | `46-a-comma-before-the-brace` | a trailing comma inside an if condition and a `for` list, plus an `__END__` data section, the pairing that once kept the parser from finishing at all |
 | 47 | `47-a-hex-number-beside-a-float` | a hex literal compared against and added to a float, which needs a spelling change at the boundary because Go has no plain hex float |
+| 48 | `48-printing-a-list` | `print @a` against `print "@a"`: the two separators are different variables with different defaults, plus `$,` set for the prints beside it |
 
 ## Entries with non-zero exit status
 
@@ -131,6 +132,6 @@ against real observed behaviour.
 - **`redo` and lvalue ternaries** (22, 19): no Go construct maps to them.
 - **`die` exits 255, not 1** (35), and `exit` must flush buffered output (34).
 - **`$,` / `$\` / `$"` are dynamically scoped globals affecting every `print`**
-  (31).
+  (31), and `print @a` uses a different one from `"@a"` (48).
 - **Heredocs queued from a single line** (30): the lexer needs a pending-heredoc
   queue, not one-token lookahead.

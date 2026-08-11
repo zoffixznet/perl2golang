@@ -398,6 +398,11 @@ const (
 	SeparatorFolded Code = "P2G6019"
 	// AutoflushNoOp: `$| = 1` has nothing to disable in the emitted code.
 	AutoflushNoOp Code = "P2G6020"
+	// SeparatorNotSeenBySubs: a separator set here is folded into the calls
+	// around it, so the subs the file declares keep the old one.
+	SeparatorNotSeenBySubs Code = "P2G6021"
+	// FilenameGlob: the glob operator is not implemented.
+	FilenameGlob Code = "P2G6022"
 	// FileTest: a `-f` style file test became os.Stat.
 	FileTest Code = "P2G6030"
 	// StatReuse: the `_` handle reuses the previous test's stat, and the
@@ -1906,6 +1911,22 @@ var catalogue = map[Code]Entry{
 		Advice:    "defer a `Flush` if a `bufio.Writer` is added later, or the last lines go missing",
 		Converted: "the assignment was dropped, because `os.Stdout` in Go is not buffered",
 		Concepts:  []string{"io-reader-writer", "defer-timing"},
+	},
+	SeparatorNotSeenBySubs: {
+		Severity:  report.Warn,
+		Message:   "a separator variable is folded into the calls around it, so a sub called after this keeps the old one",
+		Short:     "the subs here keep the old separator",
+		Advice:    "pass the separator into the sub, or join the sub's pieces at the call site",
+		Converted: "each call carries the separator in force where the call was written",
+		Concepts:  []string{"small-stdlib-philosophy"},
+	},
+	FilenameGlob: {
+		Severity:  report.Refuse,
+		Message:   "the glob operator expands a shell-style pattern into filenames, and has no rule here yet",
+		Short:     "filename globbing is not implemented",
+		Advice:    "`filepath.Glob` returns the matches and an error, and does not sort out `~` for you",
+		Converted: "the stand-in reports the gap and yields nothing",
+		Concepts:  []string{"filepath-and-paths"},
 	},
 	FileTest: {
 		Severity:  report.Note,

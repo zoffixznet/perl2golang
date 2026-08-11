@@ -155,6 +155,9 @@ func (l *Lowerer) lowerSubDecl(sd *ast.SubDecl) {
 	if s == nil {
 		return
 	}
+	// Which subs have been lowered already is what decides whether a
+	// separator set further down the file can still reach them.
+	l.subsLowered++
 
 	savedScope, savedSub, savedClass, savedFile := l.scope, l.curSub, l.curClass, l.curFile
 	// A sub body is a lexical scope like any other, so `use integer` inside

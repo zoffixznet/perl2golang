@@ -154,6 +154,24 @@ func (l *Lowerer) setSeparator(name string, value ast.Expr, n ast.Node, scoped b
 	}
 
 	l.inform(n, "P2G6019", "$"+name, separatorExplanation(name, l.seps))
+	// A separator is folded into the calls it governs as they are lowered,
+	// and a sub's body is lowered once, where it is written. So a sub called
+	// after this line keeps whatever the separator was where the sub was
+	// defined, which is the default unless the sub sits below an assignment.
+	// In Perl the sub would see this value, and nothing about the difference
+	// is visible in the output until it is wrong.
+	if !scoped && l.subsLowered > 0 {
+		l.approximate(n, "P2G6021", "$"+name+" set for a sub to see",
+			"the new separator does not reach the subs written above this line",
+			"Perl reads $"+name+" out of a global while the program runs, so a sub "+
+				"called after this line sees the new value however far away it was "+
+				"written. The generated code has the separator written into each call "+
+				"instead, decided where the call is, and the calls inside a sub written "+
+				"above this line were decided before this line was reached.",
+			"Pass the separator to the sub as an argument, or have the sub return its "+
+				"pieces and join them at the call site, which is what the Go here does.",
+			"small-stdlib-philosophy", "context-is-gone")
+	}
 	if scoped {
 		l.approximate(n, "P2G6019", "local $"+name,
 			"the separator applies to the reads and writes in this block",

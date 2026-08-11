@@ -308,6 +308,10 @@ type Lowerer struct {
 	// first pass. More than one means they share the line counter and each
 	// has to start it again.
 	readLoops int
+	// subsLowered counts the sub bodies this pass has already lowered, which
+	// is what a separator assignment consults to know whether any sub could
+	// still be carrying the value it is replacing.
+	subsLowered int
 	// readLoopSeq numbers the loops as the current pass emits them, so only
 	// the second and later ones reset the shared counter: a reset before the
 	// first would erase what a single read above it already counted.
@@ -510,6 +514,7 @@ func lowerOnce(res parser.Result, src []byte, opts Options, sticky bool) (*Resul
 	l.scope = newScope(nil)
 	l.seps = defaultSeparators()
 	l.readLoopSeq = 0
+	l.subsLowered = 0
 	l.tmpSeq = 0
 	l.tmpNames = newNameSet()
 	for _, b := range l.decls {

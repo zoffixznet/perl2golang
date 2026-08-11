@@ -93,6 +93,52 @@ The `cannot open` line is on standard error and the rest is on standard output; 
 
 Two of those lines repay a second look. `map[a:1 b:2]` is sorted: `fmt` sorts map keys before printing, so `%v` on a map is deterministic even though ranging over it is not (`map-iteration-order`). And `fmt.Print` inserts a space only between operands that are *both* non-strings, which is a rule nobody remembers correctly; if you care about the spacing, use `Printf` and say what you mean.
 
+## Printing a list is not interpolating one
+
+`print @words` and `print "@words"` differ by two characters and by a separator that is not the same variable. Printing a list flattens it into the argument list and puts `$,` between the pieces, which is nothing at all by default. Interpolating an array into a string joins the elements with `$"`, which is a space. Nobody thinks about this while writing Perl, and it decides whether `print @lines` reproduces a file or shreds it.
+
+```go
+package main
+
+import (
+	"fmt"
+	"strings"
+)
+
+func main() {
+	words := []string{"alpha", "beta", "gamma"}
+
+	// `print @words` puts the elements in the argument list one after
+	// another with nothing between them, which is $, at its default.
+	fmt.Print(strings.Join(words, ""), "\n")
+
+	// `"@words"` is a different operation with a different separator: $",
+	// which is a space.
+	fmt.Printf("%s\n", strings.Join(words, " "))
+
+	// Which is why `print @lines` is the idiom for lines that already end
+	// in a newline. A space between them would be wrong every time.
+	lines := []string{"first\n", "second\n"}
+	fmt.Print(strings.Join(lines, ""))
+
+	// Handing the slice itself to fmt is a third thing again: it formats
+	// the value, brackets and all.
+	fmt.Print(words, "\n")
+	fmt.Println(words)
+}
+```
+
+```
+alphabetagamma
+alpha beta gamma
+first
+second
+[alpha beta gamma]
+[alpha beta gamma]
+```
+
+Go makes you pick one of the three every time, which is the whole point: `strings.Join` with the separator you meant, or `%v` when the bracketed form is genuinely what you want to see. The habit worth building is to reach for `strings.Join` the moment a list is going into output, and to leave `%v` on a slice for debugging, where its brackets are a feature.
+
 ## The mismatch
 
 The verb table, where Perl and Go disagree. `%s` in Go means "a string, a `[]byte`, or something with a `String() string` method" and nothing else; give it a number and you get `%!s(int=42)` embedded in your output. `%d` given a float is `%!d(float64=42.9)`, where Perl would have truncated to `42`, so every `printf "%d", $x` over a possibly fractional value needs a decision at translation time: `int(x)` truncates like Perl, `%.0f` rounds half to even. `%v` has no Perl equivalent and is the verb you will use most, because it prints any value in a sensible default form; `%+v` on a struct adds the field names and is the closest thing to `Data::Dumper` for a quick look, with `%#v` giving re-pastable Go syntax. Perl's `%v` is a different thing entirely (a version-vector flag: `sprintf "%vd", v1.22.333` yields `1.22.333`), so a format string carrying `%vd` is one of the few that means something in both languages and something different in each.

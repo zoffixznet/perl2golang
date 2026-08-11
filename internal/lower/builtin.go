@@ -715,7 +715,15 @@ func (l *Lowerer) printCall(n *ast.Call, newline bool) []ir.Stmt {
 		if x == nil {
 			continue
 		}
-		if t := typeOrAny(x); t.Kind == ir.Float || t.Kind == ir.Bool || t.Kind == ir.Slice || t.Kind == ir.Any {
+		if t := typeOrAny(x); t.Kind == ir.Slice {
+			// An array in a print is flattened into the argument list, so
+			// what goes between its elements is `$,`, the same as between
+			// the arguments, and not the `$"` that separates them inside a
+			// double-quoted string. The two are different variables with
+			// different defaults, and printing a list with the wrong one is
+			// a difference nothing announces.
+			x = l.printedList(x, ofs, a)
+		} else if t.Kind == ir.Float || t.Kind == ir.Bool || t.Kind == ir.Any {
 			x = l.toStr(x, a)
 		}
 		if ofs != "" && len(parts) > 0 {
@@ -744,6 +752,29 @@ func (l *Lowerer) printCall(n *ast.Call, newline bool) []ir.Stmt {
 		"unless two of them are both non-strings, which is why the newline is passed "+
 		"explicitly. fmt.Println would add spaces and a newline of its own.")
 	return []ir.Stmt{st}
+}
+
+// printedList renders an array that is being printed, joined by whatever `$,`
+// holds rather than by the `$"` that separates elements inside a string.
+//
+// The default of `$,` is nothing at all, so `print @lines` prints the lines
+// with nothing between them. Perl developers rely on that for a list of lines
+// that already end in newlines, and a space between them would be wrong
+// everywhere it appeared.
+func (l *Lowerer) printedList(x ir.Expr, ofs string, at ast.Node) ir.Expr {
+	out := l.stringsJoin(x, ir.Str(quote(ofs)))
+	if ofs == "" {
+		l.note(out, "print flattens an array into its argument list and writes the "+
+			"elements one after another, with nothing between them unless `$,` says "+
+			"otherwise. The join says the same thing, and the empty separator is the "+
+			"part worth reading: it is not the space that appears when an array is "+
+			"interpolated into a string.")
+	} else {
+		l.note(out, "`$,` goes between the things print writes, including between the "+
+			"elements of an array it flattened, so the separator appears in the join "+
+			"here rather than in a global the call has to consult.")
+	}
+	return out
 }
 
 // printfFromInterp turns `print "text $x\n"` into fmt.Printf, which keeps the

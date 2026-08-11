@@ -1,0 +1,8 @@
+default:
+idnamesize
+tab separated:
+id	name	size
+comma separated:
+id,name,size
+back to nothing:
+idnamesize

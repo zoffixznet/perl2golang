@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T23:07:35Z",
+  "recorded": "2026-08-15T23:19:08Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -10,43 +10,43 @@
   "tiers": [
     {
       "tier": "tier1",
-      "entries": 47,
+      "entries": 48,
       "stages": {
         "compiled": {
-          "pass": 47,
+          "pass": 48,
           "fail": 0,
           "skip": 0
         },
         "emitted": {
-          "pass": 47,
+          "pass": 48,
           "fail": 0,
           "skip": 0
         },
         "equivalent": {
-          "pass": 44,
+          "pass": 45,
           "fail": 3,
           "skip": 0
         },
         "translated": {
-          "pass": 46,
+          "pass": 47,
           "fail": 1,
           "skip": 0
         },
         "typed": {
-          "pass": 37,
+          "pass": 38,
           "fail": 10,
           "skip": 0
         }
       },
       "equivalent_annotated": {
-        "pass": 44,
+        "pass": 45,
         "fail": 3,
         "skip": 0
       },
       "quality": {
         "todos": 2,
-        "symbols": 497,
-        "symbols_typed": 480,
+        "symbols": 501,
+        "symbols_typed": 484,
         "refusals": 2,
         "approximations": 91,
         "dropped": 0,
@@ -145,30 +145,30 @@
     },
     {
       "tier": "tier4",
-      "entries": 41,
+      "entries": 42,
       "stages": {
         "compiled": {
-          "pass": 40,
+          "pass": 41,
           "fail": 1,
           "skip": 0
         },
         "emitted": {
-          "pass": 41,
+          "pass": 42,
           "fail": 0,
           "skip": 0
         },
         "honest": {
-          "pass": 34,
+          "pass": 35,
           "fail": 7,
           "skip": 0
         },
         "translated": {
-          "pass": 26,
+          "pass": 27,
           "fail": 15,
           "skip": 0
         },
         "typed": {
-          "pass": 27,
+          "pass": 28,
           "fail": 14,
           "skip": 0
         }
@@ -180,10 +180,10 @@
       },
       "quality": {
         "todos": 46,
-        "symbols": 184,
-        "symbols_typed": 146,
+        "symbols": 185,
+        "symbols_typed": 147,
         "refusals": 46,
-        "approximations": 81,
+        "approximations": 84,
         "dropped": 0,
         "crashes": 0
       }
@@ -236,60 +236,60 @@
   ],
   "total": {
     "tier": "TOTAL",
-    "entries": 261,
+    "entries": 263,
     "stages": {
       "compiled": {
-        "pass": 257,
+        "pass": 259,
         "fail": 4,
         "skip": 0
       },
       "emitted": {
-        "pass": 261,
+        "pass": 263,
         "fail": 0,
         "skip": 0
       },
       "equivalent": {
-        "pass": 171,
+        "pass": 172,
         "fail": 49,
         "skip": 0
       },
       "honest": {
-        "pass": 34,
+        "pass": 35,
         "fail": 7,
         "skip": 0
       },
       "translated": {
-        "pass": 227,
+        "pass": 229,
         "fail": 34,
         "skip": 0
       },
       "typed": {
-        "pass": 170,
+        "pass": 172,
         "fail": 91,
         "skip": 0
       }
     },
     "equivalent_annotated": {
-      "pass": 171,
+      "pass": 172,
       "fail": 49,
       "skip": 0
     },
     "quality": {
       "todos": 112,
-      "symbols": 4118,
-      "symbols_typed": 3855,
+      "symbols": 4123,
+      "symbols_typed": 3860,
       "refusals": 113,
-      "approximations": 1257,
+      "approximations": 1260,
       "dropped": 0,
       "crashes": 0
     }
   },
   "quality": {
     "todos": 112,
-    "symbols": 4118,
-    "symbols_typed": 3855,
+    "symbols": 4123,
+    "symbols_typed": 3860,
     "refusals": 113,
-    "approximations": 1257,
+    "approximations": 1260,
     "dropped": 0,
     "crashes": 0
   },
@@ -2044,6 +2044,43 @@
         "todos": 0,
         "symbols": 2,
         "symbols_typed": 2,
+        "refusals": 0,
+        "approximations": 0,
+        "dropped": 0,
+        "crashes": 0
+      }
+    },
+    {
+      "tier": "tier1",
+      "name": "48-printing-a-list",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "pass"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "pass"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 4,
+        "symbols_typed": 4,
         "refusals": 0,
         "approximations": 0,
         "dropped": 0,
@@ -9373,6 +9410,46 @@
         "symbols_typed": 5,
         "refusals": 0,
         "approximations": 2,
+        "dropped": 0,
+        "crashes": 0
+      }
+    },
+    {
+      "tier": "tier4",
+      "name": "42-a-separator-set-for-a-sub",
+      "kind": "honest-failure",
+      "categories": [
+        "approximate"
+      ],
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "n/a"
+        },
+        "honest": {
+          "outcome": "pass"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "n/a"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 1,
+        "symbols_typed": 1,
+        "refusals": 0,
+        "approximations": 3,
         "dropped": 0,
         "crashes": 0
       }

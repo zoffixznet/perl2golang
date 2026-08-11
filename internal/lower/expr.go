@@ -91,7 +91,7 @@ func (l *Lowerer) exprInner(e ast.Expr) ir.Expr {
 	case *ast.BacktickCmd:
 		return l.backtickCmd(n, false)
 	case *ast.GlobExpr:
-		return l.todoExpr(n, "P2G6020", "glob",
+		return l.todoExpr(n, "P2G6022", "glob",
 			"filename globbing is not implemented",
 			"The glob operator expands a shell-style pattern into filenames.",
 			"Use path/filepath.Glob, which returns the matches and an error.",
