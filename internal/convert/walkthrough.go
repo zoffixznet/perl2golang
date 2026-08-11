@@ -344,13 +344,19 @@ func collectNotes(nodes []ir.Annotated) ([]teach.SegmentNote, []string) {
 				concepts = append(concepts, c)
 			}
 		}
-		if m.Todo != nil {
-			text := "Not converted: " + m.Todo.Message
+		todo := m.Todo
+		if ts, isTodo := n.(*ir.TodoStmt); isTodo {
+			// A refusal stub keeps its Todo beside the stand-in expression
+			// rather than in the shared metadata.
+			todo = &ts.Info
+		}
+		if todo != nil && todo.Message != "" {
+			text := "Not converted: " + todo.Message
 			if !seenText[text] {
 				seenText[text] = true
 				tl, tp := line, perl
-				if m.Todo.Prov.Valid() {
-					tl, tp = noteAnchor(m.Todo.Prov)
+				if todo.Prov.Valid() {
+					tl, tp = noteAnchor(todo.Prov)
 				}
 				out = append(out, teach.SegmentNote{Line: tl, Perl: tp, Text: text})
 			}
