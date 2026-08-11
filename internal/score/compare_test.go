@@ -80,11 +80,25 @@ func TestCompare(t *testing.T) {
 			contains: []string{"stderr differs"},
 		},
 		{
-			name:  "stderr is ignored when the entry sanctions it",
+			name:  "stderr wording is ignored when the entry sanctions it",
 			want:  perl("a\n", "usage: prog\n", 0),
 			got:   perl("a\n", "different message\n", 0),
 			opts:  CompareOptions{AllowStderr: true},
 			equal: true,
+		},
+		{
+			name:     "a sanctioned stderr message that disappears is still a difference",
+			want:     perl("a\n", "warning: watch out\n", 0),
+			got:      perl("a\n", "", 0),
+			opts:     CompareOptions{AllowStderr: true},
+			contains: []string{"wrote nothing to stderr", "warning: watch out"},
+		},
+		{
+			name:     "stderr appearing only in the Go is still a difference for a sanctioned entry",
+			want:     perl("a\n", "", 0),
+			got:      perl("a\n", "oops\n", 0),
+			opts:     CompareOptions{AllowStderr: true},
+			contains: []string{"where the Perl wrote nothing"},
 		},
 		{
 			name:  "matching stderr is a match",

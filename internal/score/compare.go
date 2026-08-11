@@ -70,8 +70,24 @@ func Compare(want, got Output, opts CompareOptions) Diff {
 	if !opts.SkipStdout && !bytes.Equal(want.Stdout, got.Stdout) {
 		reasons = append(reasons, "stdout differs: "+describeBytes(want.Stdout, got.Stdout))
 	}
-	if !opts.AllowStderr && (len(want.Stderr) > 0 || len(got.Stderr) > 0) && !bytes.Equal(want.Stderr, got.Stderr) {
-		reasons = append(reasons, "stderr differs: "+describeStderr(want.Stderr, got.Stderr))
+	switch {
+	case !opts.AllowStderr:
+		if (len(want.Stderr) > 0 || len(got.Stderr) > 0) && !bytes.Equal(want.Stderr, got.Stderr) {
+			reasons = append(reasons, "stderr differs: "+describeStderr(want.Stderr, got.Stderr))
+		}
+	case (len(want.Stderr) > 0) != (len(got.Stderr) > 0):
+		// The entry sanctions stderr output, so its wording is not compared:
+		// a die message and its Go counterpart legitimately phrase themselves
+		// differently. A deliberate message disappearing entirely is not a
+		// wording difference, and letting it pass would score a program that
+		// dropped its own error reporting as equivalent.
+		if len(got.Stderr) == 0 {
+			reasons = append(reasons, gotLabel+" wrote nothing to stderr, where "+
+				wantLabel+" wrote "+quoteFirstLine(want.Stderr))
+		} else {
+			reasons = append(reasons, gotLabel+" wrote "+quoteFirstLine(got.Stderr)+
+				" to stderr, where "+wantLabel+" wrote nothing")
+		}
 	}
 	if opts.WantFiles != nil || opts.GotFiles != nil {
 		if d := describeFileDiff(opts.WantFiles, opts.GotFiles); d != "" {
