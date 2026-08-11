@@ -417,6 +417,8 @@ const (
 	// CloseDynamic: a close whose handle has no settled type asks the value
 	// at run time whether it can be closed.
 	CloseDynamic Code = "P2G6044"
+	// GlobHandle: a glob naming a filehandle becomes the handle itself.
+	GlobHandle Code = "P2G6046"
 	// UnlinkReturnsError: `unlink` counts removals and `os.Remove` returns an
 	// error.
 	UnlinkReturnsError Code = "P2G6045"
@@ -1451,6 +1453,14 @@ var catalogue = map[Code]Entry{
 		Advice:    "to abandon the rest of a file, break out of the loop reading it",
 		Converted: "the emitted code sets the line counter back to zero",
 		Concepts:  []string{"io-reader-writer"},
+	},
+	GlobHandle: {
+		Severity:  report.Note,
+		Message:   "a glob naming a filehandle becomes the handle itself, since Go has no symbol table to point into",
+		Short:     "the glob became the handle",
+		Advice:    "pass the handle value itself; a lexical handle and this one are now the same kind of thing",
+		Converted: "the emitted code names the handle where the glob was",
+		Concepts:  []string{"pointers-vs-references"},
 	},
 	CloseDynamic: {
 		Severity:  report.Warn,

@@ -415,6 +415,10 @@ func (l *Lowerer) varExpr(v *ast.Var) ir.Expr {
 				"closures-and-loop-capture")
 			return out
 		}
+	case '*':
+		if x := l.globHandle(v.Name, v); x != nil {
+			return x
+		}
 	}
 
 	if x := l.specialVar(v); x != nil {
@@ -423,6 +427,58 @@ func (l *Lowerer) varExpr(v *ast.Var) ir.Expr {
 
 	b := l.lookup(v.Sigil, v.Name, v)
 	return l.ident(b)
+}
+
+// globHandle lowers a glob that names a filehandle, which is the only part of
+// a glob a script normally wants.
+//
+// A glob is an entry in a symbol table, and `\*STDOUT` is a reference to that
+// entry. Go has no symbol table to point at, and the thing being passed around
+// was always the handle, so the glob, the reference to it, and the handle all
+// collapse into one value here: `os.Stdout`, or whatever the program opened
+// under that name. It returns nil for a glob that names something else, which
+// is left to the rules that handle symbol-table assignment.
+func (l *Lowerer) globHandle(name string, at ast.Node) ir.Expr {
+	var out ir.Expr
+	switch name {
+	case "STDIN":
+		out = ir.Pkg("os", "os", "Stdin", fileType)
+	case "STDOUT":
+		out = ir.Pkg("os", "os", "Stdout", fileType)
+	case "STDERR":
+		out = ir.Pkg("os", "os", "Stderr", fileType)
+	default:
+		b := l.findHandle(name)
+		if b == nil || !(b.Type.Equal(fileType) || b.Type.Equal(pipeType)) {
+			return nil
+		}
+		b.Reads++
+		out = l.ident(b)
+	}
+	l.note(out, "A glob is a name in a symbol table and a glob reference points at "+
+		"that name, which is how a handle was passed around before lexical "+
+		"filehandles existed. Go has no symbol table to point at: the handle is an "+
+		"ordinary value, so the value itself is what gets passed, and the two "+
+		"spellings mean the same thing here.",
+		"pointers-vs-references", "io-reader-writer")
+	l.inform(at, "P2G6046", "a glob naming a filehandle",
+		"`*"+name+"` names a handle, and the handle itself is what the generated code "+
+			"passes, because Go has no symbol table for a reference to point into")
+	return out
+}
+
+// findHandle returns the binding a bareword filehandle name already has,
+// without creating one. A glob only names a handle if the program opened one
+// under that name.
+func (l *Lowerer) findHandle(name string) *Binding {
+	key := varKey('$', name)
+	if b, ok := l.scope.lookup(key); ok {
+		return b
+	}
+	if b, ok := l.globalSeen[key]; ok {
+		return b
+	}
+	return nil
 }
 
 // specialVar maps Perl's own variables onto their Go counterparts. It returns

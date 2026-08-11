@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T22:49:13Z",
+  "recorded": "2026-08-15T23:07:35Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -55,45 +55,45 @@
     },
     {
       "tier": "tier2",
-      "entries": 108,
+      "entries": 111,
       "stages": {
         "compiled": {
-          "pass": 106,
-          "fail": 2,
+          "pass": 110,
+          "fail": 1,
           "skip": 0
         },
         "emitted": {
-          "pass": 108,
+          "pass": 111,
           "fail": 0,
           "skip": 0
         },
         "equivalent": {
-          "pass": 77,
+          "pass": 80,
           "fail": 31,
           "skip": 0
         },
         "translated": {
-          "pass": 100,
-          "fail": 8,
+          "pass": 102,
+          "fail": 9,
           "skip": 0
         },
         "typed": {
-          "pass": 74,
+          "pass": 77,
           "fail": 34,
           "skip": 0
         }
       },
       "equivalent_annotated": {
-        "pass": 77,
+        "pass": 80,
         "fail": 31,
         "skip": 0
       },
       "quality": {
-        "todos": 17,
-        "symbols": 1598,
-        "symbols_typed": 1520,
-        "refusals": 17,
-        "approximations": 540,
+        "todos": 20,
+        "symbols": 1626,
+        "symbols_typed": 1547,
+        "refusals": 20,
+        "approximations": 548,
         "dropped": 0,
         "crashes": 0
       }
@@ -236,20 +236,20 @@
   ],
   "total": {
     "tier": "TOTAL",
-    "entries": 258,
+    "entries": 261,
     "stages": {
       "compiled": {
-        "pass": 253,
-        "fail": 5,
+        "pass": 257,
+        "fail": 4,
         "skip": 0
       },
       "emitted": {
-        "pass": 258,
+        "pass": 261,
         "fail": 0,
         "skip": 0
       },
       "equivalent": {
-        "pass": 168,
+        "pass": 171,
         "fail": 49,
         "skip": 0
       },
@@ -259,37 +259,37 @@
         "skip": 0
       },
       "translated": {
-        "pass": 225,
-        "fail": 33,
+        "pass": 227,
+        "fail": 34,
         "skip": 0
       },
       "typed": {
-        "pass": 167,
+        "pass": 170,
         "fail": 91,
         "skip": 0
       }
     },
     "equivalent_annotated": {
-      "pass": 168,
+      "pass": 171,
       "fail": 49,
       "skip": 0
     },
     "quality": {
-      "todos": 109,
-      "symbols": 4090,
-      "symbols_typed": 3828,
-      "refusals": 110,
-      "approximations": 1249,
+      "todos": 112,
+      "symbols": 4118,
+      "symbols_typed": 3855,
+      "refusals": 113,
+      "approximations": 1257,
       "dropped": 0,
       "crashes": 0
     }
   },
   "quality": {
-    "todos": 109,
-    "symbols": 4090,
-    "symbols_typed": 3828,
-    "refusals": 110,
-    "approximations": 1249,
+    "todos": 112,
+    "symbols": 4118,
+    "symbols_typed": 3855,
+    "refusals": 113,
+    "approximations": 1257,
     "dropped": 0,
     "crashes": 0
   },
@@ -2742,15 +2742,13 @@
       "kind": "convert",
       "stages": {
         "compiled": {
-          "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:16:13: cannot use out (variable of type *any) as io.Writer value in argument to fmt.Fprint: *any does not implement io.Writer (type *any is pointer..."
+          "outcome": "pass"
         },
         "emitted": {
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "the generated program did not compile"
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
@@ -2759,20 +2757,55 @@
           "outcome": "pass"
         },
         "typed": {
-          "outcome": "fail",
-          "reason": "2 variables left dynamic out of 10"
+          "outcome": "pass"
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "the generated program did not compile"
+        "outcome": "pass"
       },
       "quality": {
         "todos": 0,
-        "symbols": 10,
-        "symbols_typed": 8,
+        "symbols": 9,
+        "symbols_typed": 9,
         "refusals": 0,
         "approximations": 1,
+        "dropped": 0,
+        "crashes": 0
+      }
+    },
+    {
+      "tier": "tier2",
+      "name": "109-handles-kept-in-a-hash",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "pass"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "pass"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 14,
+        "symbols_typed": 14,
+        "refusals": 0,
+        "approximations": 2,
         "dropped": 0,
         "crashes": 0
       }
@@ -2812,6 +2845,84 @@
         "symbols_typed": 33,
         "refusals": 0,
         "approximations": 6,
+        "dropped": 0,
+        "crashes": 0
+      }
+    },
+    {
+      "tier": "tier2",
+      "name": "110-a-handle-in-a-record",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "pass"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "pass"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 7,
+        "symbols_typed": 7,
+        "refusals": 0,
+        "approximations": 4,
+        "dropped": 0,
+        "crashes": 0
+      }
+    },
+    {
+      "tier": "tier2",
+      "name": "111-readline-as-a-function",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "stdout differs: line 1, byte 12: got \"\\nread 1 line(s) in one go\\n\", wanted \"alpha\\nline 2: beta\\nline 3: gamma...\"; stderr differs: unexpected \"TODO P2G3599: the readline function is not implemented\""
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "fail",
+          "reason": "3 untranslated constructs"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "3 variables left dynamic out of 8"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "stdout differs: line 1, byte 12: got \"\\nread 1 line(s) in one go\\n\", wanted \"alpha\\nline 2: beta\\nline 3: gamma...\"; stderr differs: unexpected \"TODO P2G3599: the readline function is not implemented\""
+      },
+      "quality": {
+        "todos": 3,
+        "symbols": 8,
+        "symbols_typed": 5,
+        "refusals": 3,
+        "approximations": 2,
         "dropped": 0,
         "crashes": 0
       }

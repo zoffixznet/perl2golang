@@ -60,13 +60,20 @@ func (l *Lowerer) openStatements(n *ast.Call, onFail func(errName string) []ir.S
 		return nil, false
 	}
 
-	handle := l.openHandle(args[0])
+	// What the handle will hold decides what a container it is stored in
+	// holds, so the pipe modes are recognised before the target is resolved.
+	pipeMode, isPipe := staticString(args[1])
+	isPipe = isPipe && (pipeMode == "-|" || pipeMode == "|-")
+	want := fileType
+	if isPipe {
+		want = pipeType
+	}
+	handle, place := l.openTarget(args[0], want)
 	if handle == nil {
 		return nil, false
 	}
-
-	if mode, ok := staticString(args[1]); ok && (mode == "-|" || mode == "|-") {
-		return l.openPipe(handle, mode, args[2:], n, onFail)
+	if isPipe {
+		return l.openPipe(handle, place, pipeMode, args[2:], n, onFail)
 	}
 
 	mode, path, ok := l.openMode(args, n)
@@ -152,7 +159,9 @@ func (l *Lowerer) openStatements(n *ast.Call, onFail func(errName string) []ir.S
 		"if-err-nil-rhythm")
 
 	out := []ir.Stmt{openStmt, check}
-	if !handle.Closed {
+	if place != nil {
+		out = append(out, l.storeHandle(place, handle, n))
+	} else if !handle.Closed {
 		closeStmt := &ir.Defer{Call: ir.CallOf(selector(ir.NewIdent(handle.Go, fileType), "Close", nil), ir.TError)}
 		l.note(closeStmt, "defer runs this when the surrounding function returns, "+
 			"however it returns. Perl closes a lexical handle when it goes out of "+
@@ -161,6 +170,46 @@ func (l *Lowerer) openStatements(n *ast.Call, onFail func(errName string) []ir.S
 		out = append(out, closeStmt)
 	}
 	return out, true
+}
+
+// openTarget resolves the first argument of open into the binding the opened
+// handle is bound to, plus the place to store it in when the handle is going
+// into a container rather than into a variable of its own.
+//
+// `open $log{$name}, '>', $path` is ordinary Perl and has no variable to
+// declare: the handle belongs to a slot. Go can only get a file out of os.Open
+// alongside an error, so the pair goes into a temporary, the error is checked
+// there, and the file is put in the slot afterwards.
+func (l *Lowerer) openTarget(e ast.Expr, want *ir.Type) (*Binding, ir.Expr) {
+	if b := l.openHandle(e); b != nil {
+		return b, nil
+	}
+	place := l.assignTarget(e)
+	if place == nil {
+		return nil, nil
+	}
+	l.observeTargetValue(e, want)
+	return &Binding{
+		Perl:  "handle",
+		Sigil: '$',
+		Kind:  KindLocal,
+		Line:  posLine(e),
+		Type:  want,
+		Go:    l.tmp("fh"),
+	}, place
+}
+
+// storeHandle puts a freshly opened handle into the place the open named.
+func (l *Lowerer) storeHandle(place ir.Expr, handle *Binding, n ast.Node) ir.Stmt {
+	st := assign("=", []ir.Expr{place}, []ir.Expr{ir.NewIdent(handle.Go, handle.Type)})
+	l.setProv(st, n)
+	l.note(st, "The handle is being kept in a container rather than in a variable of "+
+		"its own. Go hands back the file and the error together and there is nowhere "+
+		"to put an error inside a collection of files, so the pair lands in a "+
+		"temporary, the error is dealt with there, and the file goes into the slot "+
+		"once it is known to be a file.",
+		"errors-are-values", "multiple-return-values")
+	return st
 }
 
 // openHandle resolves the first argument of open into a binding.
@@ -232,33 +281,61 @@ func (l *Lowerer) openMode(args []ast.Expr, n *ast.Call) (string, ir.Expr, bool)
 //
 // Go's if-with-an-init clause is made for this: the error is created, tested
 // and forgotten in one statement, and it is the only thing $! could sensibly
-// have meant.
+// have meant. What is being closed still decides the call inside it, the same
+// way it does for an unguarded close.
 func (l *Lowerer) closeGuarded(n *ast.Call, onFail ast.Expr) ([]ir.Stmt, bool) {
 	args := flatten(argList(n))
 	if len(args) == 0 {
 		return nil, false
 	}
-	b := l.handleBinding(args[0])
-	if b == nil {
+	handle, kind := l.handleToClose(args[0])
+	if handle == nil || kind == closeIsArgv {
 		return nil, false
 	}
-	b.Closed = true
+	if b := l.handleBinding(args[0]); b != nil {
+		b.Closed = true
+	}
 
 	errName := l.tmp("err")
 	saved := l.errVar
+	// A close through the helper has no error value for $! to name, so the
+	// failure branch is lowered with nothing bound to it rather than with a
+	// name that would not exist.
 	l.errVar = errName
+	if kind == closeIsUnknown {
+		l.errVar = ""
+	}
 	savedPre := l.pre
 	l.pre = nil
 	body := l.exprStatement(onFail)
 	inner := l.takePre()
 	l.pre = savedPre
 	l.errVar = saved
+	fail := &ir.Block{Stmts: append(inner, body...)}
 
+	// A handle of no fixed type is closed through the helper, which answers
+	// with success rather than with an error, so the test is a plain negation
+	// and there is no error for the failure branch to report.
+	if kind == closeIsUnknown {
+		st := &ir.If{
+			Cond: ir.Un("!", l.helperCall(hCloseHandle, ir.TBool, handle), ir.TBool),
+			Then: fail,
+		}
+		l.setProv(st, n)
+		l.note(st, "What this handle holds is not known until the program runs, so the "+
+			"close asks the value whether it can be closed at all. The answer is a plain "+
+			"bool rather than an error, because there is nothing more specific to say "+
+			"about a value that turned out not to be a handle.",
+			"implicit-interfaces", "type-assertions-and-switches")
+		return []ir.Stmt{st}, true
+	}
+
+	var out []ir.Stmt
 	st := &ir.If{
 		Init: assign(":=", []ir.Expr{ir.NewIdent(errName, ir.TError)},
-			[]ir.Expr{ir.CallOf(selector(ir.NewIdent(b.Go, fileType), "Close", nil), ir.TError)}),
+			[]ir.Expr{ir.CallOf(selector(handle, "Close", nil), ir.TError)}),
 		Cond: ir.Bin("!=", ir.NewIdent(errName, ir.TError), ir.Nil(ir.TError), ir.TBool),
-		Then: &ir.Block{Stmts: append(inner, body...)},
+		Then: fail,
 	}
 	l.setProv(st, n)
 	l.note(st, "Close returns an error because a buffered write can fail when the "+
@@ -266,7 +343,69 @@ func (l *Lowerer) closeGuarded(n *ast.Call, onFail ast.Expr) ([]ir.Stmt, bool) {
 		"reached the disk. The init clause of the if scopes the error to the check "+
 		"itself, which is the usual shape for an error nothing else needs.",
 		"errors-are-values", "if-err-nil-rhythm", "var-vs-short-declaration")
-	return []ir.Stmt{st}, true
+	out = append(out, st)
+
+	// A guarded pipe close still has to leave the child's status behind, and
+	// the status only exists once Close has waited, so it is read after the
+	// check rather than inside it.
+	if kind == closeIsPipe {
+		if _, wanted := l.globalSeen["$?"]; wanted {
+			status := l.childStatus(n)
+			set := assign("=", []ir.Expr{l.identFor(status)},
+				[]ir.Expr{ir.CallOf(selector(handle, "Status", nil), ir.TInt)})
+			status.Writes++
+			l.setProv(set, n)
+			l.note(set, "The status of the program behind the pipe is only known once "+
+				"the close has waited for it, which is why this line comes after the "+
+				"check rather than inside it.",
+				"os-exec")
+			out = append(out, set)
+		}
+	}
+	return out, true
+}
+
+// closeKind says which of the four closes a handle expression asks for.
+type closeKind int
+
+const (
+	closeIsFile closeKind = iota
+	closeIsPipe
+	closeIsArgv
+	closeIsUnknown
+)
+
+// handleToClose resolves the argument of a close into the value to close and
+// the kind of close it is. It returns a nil expression when the argument is
+// not something this rule can name at all.
+func (l *Lowerer) handleToClose(arg ast.Expr) (ir.Expr, closeKind) {
+	if fh, ok := arg.(*ast.FileHandle); ok {
+		switch fh.Name {
+		case "ARGV":
+			return ir.Nil(ir.TAny), closeIsArgv
+		case "STDIN", "STDOUT", "STDERR":
+			return l.fileHandleExpr(fh), closeIsFile
+		}
+	}
+	if b := l.handleBinding(arg); b != nil {
+		switch {
+		case b.Type.Equal(fileType):
+			return ir.NewIdent(b.Go, fileType), closeIsFile
+		case b.Type.Equal(pipeType):
+			return ir.NewIdent(b.Go, pipeType), closeIsPipe
+		}
+	}
+	x := l.scalar(arg)
+	if x == nil {
+		return nil, closeIsUnknown
+	}
+	switch t := typeOrAny(x); {
+	case t.Equal(fileType):
+		return x, closeIsFile
+	case t.Equal(pipeType):
+		return x, closeIsPipe
+	}
+	return x, closeIsUnknown
 }
 
 // closeCall lowers close.
@@ -282,32 +421,29 @@ func (l *Lowerer) closeCall(n *ast.Call) []ir.Stmt {
 	if len(args) == 0 {
 		return nil
 	}
-	if fh, ok := args[0].(*ast.FileHandle); ok {
-		switch fh.Name {
-		case "ARGV":
-			return l.closeArgv(n)
-		case "STDIN", "STDOUT", "STDERR":
-			return l.closeStandard(fh, n)
-		}
+	handle, kind := l.handleToClose(args[0])
+	if handle == nil {
+		return nil
 	}
 	if b := l.handleBinding(args[0]); b != nil {
-		switch {
-		case b.Type.Equal(fileType):
-			b.Closed = true
-			st := exprStmt(ir.CallOf(selector(ir.NewIdent(b.Go, fileType), "Close", nil), ir.TError))
-			l.setProv(st, n)
-			l.note(st, "Close returns an error, because a buffered write can fail when "+
-				"the buffer is flushed. For a file that was only read the error is safe to "+
-				"ignore; for one that was written it is the last chance to notice that the "+
-				"data did not reach the disk.",
-				"errors-are-values")
-			return []ir.Stmt{st}
-		case b.Type.Equal(pipeType):
-			b.Closed = true
-			return l.closePipe(ir.NewIdent(b.Go, pipeType), n)
-		}
+		b.Closed = true
 	}
-	return l.closeValue(args[0], n)
+	switch kind {
+	case closeIsArgv:
+		return l.closeArgv(n)
+	case closeIsPipe:
+		return l.closePipe(handle, n)
+	case closeIsFile:
+		st := exprStmt(ir.CallOf(selector(handle, "Close", nil), ir.TError))
+		l.setProv(st, n)
+		l.note(st, "Close returns an error, because a buffered write can fail when "+
+			"the buffer is flushed. For a file that was only read the error is safe to "+
+			"ignore; for one that was written it is the last chance to notice that the "+
+			"data did not reach the disk.",
+			"errors-are-values")
+		return []ir.Stmt{st}
+	}
+	return l.closeValue(handle, n)
 }
 
 // closePipe closes a pipe and collects the status of the program on the other
@@ -378,23 +514,10 @@ func (l *Lowerer) closeStandard(fh *ast.FileHandle, n *ast.Call) []ir.Stmt {
 	return []ir.Stmt{st}
 }
 
-// closeValue lowers a close whose handle is an expression rather than a
-// declared handle: a field of an object, an element of a list of handles, a
-// value passed into a sub.
-func (l *Lowerer) closeValue(arg ast.Expr, n *ast.Call) []ir.Stmt {
-	x := l.scalar(arg)
-	if x == nil {
-		return nil
-	}
-	if t := typeOrAny(x); t != nil && (t.Equal(fileType) || t.Equal(pipeType)) {
-		st := exprStmt(ir.CallOf(selector(x, "Close", nil), ir.TError))
-		l.setProv(st, n)
-		l.note(st, "The handle came out of a container rather than from an open on "+
-			"this line, and it is still a file: Go carries the type along with the value, "+
-			"so the close is the same call it would be anywhere else.",
-			"errors-are-values")
-		return []ir.Stmt{st}
-	}
+// closeValue lowers a close whose handle never settled on a handle type: a
+// field of an object, an element of a list of things, a value passed into a
+// sub.
+func (l *Lowerer) closeValue(x ir.Expr, n *ast.Call) []ir.Stmt {
 	st := exprStmt(l.helperCall(hCloseHandle, ir.TBool, x))
 	l.setProv(st, n)
 	l.note(st, "What this handle holds is not known until the program runs, so the "+

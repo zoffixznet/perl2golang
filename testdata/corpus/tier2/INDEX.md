@@ -1,6 +1,6 @@
 # Tier 2 corpus - script-shaped Perl programs
 
-108 entries. Each is a self-contained, realistic Perl script of the kind a
+111 entries. Each is a self-contained, realistic Perl script of the kind a
 sysadmin or data wrangler actually writes, not a snippet.
 
 ## Layout of an entry
@@ -155,6 +155,9 @@ Two entries exit non-zero on purpose: **27** (65) and **32** (1). The rest exit 
 | 106 | `106-exists-on-an-env-var` | exists on %ENV for values "0", empty, unset, and deleted | `exists $ENV{K}` vs truthiness, set-to-"0" and set-to-empty both existing, delete then exists |
 | 107 | `107-closing-every-kind-of-handle` | Every kind of close a script performs, and what each one is really for | `close` on a written file checked with `or die`, on a read file, on a pipe leaving `$?`, on handles walked out of an array |
 | 108 | `108-a-handle-passed-as-a-glob` | The pre-lexical way of passing a handle around, which module code still uses | `\*STDOUT`, a glob reference passed to a sub, `print {$fh}` through it, a lexical handle through the same sub |
+| 109 | `109-handles-kept-in-a-hash` | Three log files open at once, with the handles filed under names in a hash | `open($h{k}, ...)` straight into a slot, `print { $h{k} }`, a close walking the keys, `-s` on what was written |
+| 110 | `110-a-handle-in-a-record` | A handle as one field of a record beside a path and a counter | `open($r->{fh}, ...)`, `print { $r->{fh} }`, a record mixing a handle with text and a number |
+| 111 | `111-readline-as-a-function` | The spelling of a read that works on a handle kept in a container | `readline($h{in})` in scalar and list context, and why `<$h{in}>` is a glob instead |
 
 ## Coverage map
 
@@ -164,7 +167,7 @@ Two entries exit non-zero on purpose: **27** (65) and **32** (1). The rest exit 
 - **Autovivification (load-bearing)** - **09, 10, 62, 63**; incidental in 07, 22, 24, 29
 - **Closures** - 11, 12, 25, 54, 55, 64, 65; complex `map`/`grep`/`sort` blocks in 13
 - **Regex** - 14, 15, 16, 17, 18; applied in 23, 28, 29, 30
-- **File I/O** - 19, 20, 21, 22, 107, 108; STDIN in 23 and 28; `<>` in 24
+- **File I/O** - 19, 20, 21, 22, 107, 108, 109, 110, 111; STDIN in 23 and 28; `<>` in 24
 - **Command line** - 23, 24, 25, 26, 27
 - **Text-processing shapes** - 06, 28, 29, 30 (and the filter in 23)
 - **Error handling** - 31, 32; `die` as an assertion in 30

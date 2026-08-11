@@ -127,4 +127,87 @@ One caution when mixing layers: a position belongs to the underlying file, and a
 
 The same read-ahead is why a program that reads one handle in several shapes needs **one buffered reader per handle, made once and used everywhere**. Perl let you write `my $header = <$fh>` and then `while (<$fh>)` and then a slurp of the rest, and every read continued exactly where the last stopped, because the position was the handle's own. Wrap the same `*os.File` in a fresh `bufio.Reader` or `Scanner` at each of those sites and each wrapper reads ahead into its private buffer: the header read buffers 4KB, the loop's scanner starts from wherever the file position really is, and lines silently vanish into the first buffer. The shape that works is to make the `bufio.Reader` next to the `Open` and pass *it* around — it is an `io.Reader` too, so everything downstream accepts it — and to read single lines with `r.ReadString('\n')`, which keeps the newline the way `<$fh>` did and returns what it has plus an error at the end of input.
 
+## A handle is a value, so put it wherever values go
+
+Perl's filehandles started out as names in a symbol table, which is why `*STDOUT`, `\*STDOUT` and `*STDOUT{IO}` all exist and why passing one around used to mean passing the glob. Go has no symbol table to point into: `os.Stdout` is a `*os.File`, a value, and every one of those spellings collapses to that same value on the way across. Once that lands, a whole category of Perl awkwardness disappears, because a value goes anywhere a value goes: into a map, into a struct field, into a slice, into a function parameter.
+
+```go
+package main
+
+import (
+	"fmt"
+	"os"
+	"path/filepath"
+)
+
+// sink is a record with an open file in it, beside the ordinary fields. A
+// handle is a value like any other, so it goes in a field like any other.
+type sink struct {
+	path    string
+	written int
+	file    *os.File
+}
+
+func main() {
+	dir, err := os.MkdirTemp("", "streams")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer os.RemoveAll(dir)
+
+	// A collection of open files is an ordinary map. The file and the error
+	// arrive together, so the error is dealt with in a temporary and only a
+	// file ever reaches the map.
+	out := map[string]*os.File{}
+	for _, name := range []string{"access", "error"} {
+		f, err := os.Create(filepath.Join(dir, name+".log"))
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		out[name] = f
+	}
+	fmt.Fprintln(out["access"], "GET /index.html 200")
+	fmt.Fprintln(out["error"], "permission denied")
+	for _, f := range out {
+		if err := f.Close(); err != nil {
+			fmt.Println("close:", err)
+		}
+	}
+
+	// The same value in a struct field, filled after the record exists.
+	s := &sink{path: filepath.Join(dir, "audit.log")}
+	if s.file, err = os.Create(s.path); err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Fprintln(s.file, "audit trail")
+	s.written++
+	s.file.Close()
+
+	// os.Stdout is one of these values too, not a name in a table.
+	for _, w := range []*os.File{os.Stdout} {
+		fmt.Fprintln(w, "and standard output is just another one")
+	}
+	for _, name := range []string{"access", "error", "audit"} {
+		info, err := os.Stat(filepath.Join(dir, name+".log"))
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		fmt.Printf("%s: %d bytes\n", name, info.Size())
+	}
+}
+```
+
+```
+and standard output is just another one
+access: 20 bytes
+error: 18 bytes
+audit: 12 bytes
+```
+
+The one shape worth copying out of that is the three-step open into a container. `open($out{$name}, '>', $path) or die` is one statement in Perl because the handle is the only thing being produced; in Go the call produces two things and a map slot holds one, so it becomes: open into a temporary, check the error there, store the file. Skipping the middle step is not possible in a way the compiler will accept, which is the point. Declare the map as `map[string]*os.File` rather than `map[string]any` while you are there: the assertion you save at every use is worth more than the flexibility you give up, and if the collection really does hold several kinds of handle, `map[string]io.Writer` says that better than `any` does.
+
 Further reading: https://pkg.go.dev/io#Reader

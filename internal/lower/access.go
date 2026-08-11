@@ -686,6 +686,12 @@ func (l *Lowerer) refGen(n *ast.RefGen) ir.Expr {
 					"variadic-and-no-defaults")
 				return out
 			}
+		case '*':
+			// A reference to a glob and the glob itself both stand for the
+			// handle, which is the value Go passes around.
+			if x := l.globHandle(inner.Name, inner); x != nil {
+				return x
+			}
 		case '$':
 			b := l.lookup('$', inner.Name, inner)
 			out := ir.Un("&", l.ident(b), ir.PointerTo(b.Type))

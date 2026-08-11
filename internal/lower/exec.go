@@ -149,7 +149,7 @@ func (l *Lowerer) backtickCmd(n *ast.BacktickCmd, list bool) ir.Expr {
 var pipeType = ir.NamedType("*pipeHandle", "")
 
 // openPipe lowers `open $fh, '-|', PROG, ARGS` and its writing twin.
-func (l *Lowerer) openPipe(handle *Binding, mode string, words []ast.Expr, n *ast.Call, onFail func(string) []ir.Stmt) ([]ir.Stmt, bool) {
+func (l *Lowerer) openPipe(handle *Binding, place ir.Expr, mode string, words []ast.Expr, n *ast.Call, onFail func(string) []ir.Stmt) ([]ir.Stmt, bool) {
 	if len(words) == 0 {
 		return nil, false
 	}
@@ -216,7 +216,9 @@ func (l *Lowerer) openPipe(handle *Binding, mode string, words []ast.Expr, n *as
 		"if-err-nil-rhythm", "errors-are-values")
 
 	out := []ir.Stmt{open, check}
-	if !handle.Closed {
+	if place != nil {
+		out = append(out, l.storeHandle(place, handle, n))
+	} else if !handle.Closed {
 		closeStmt := &ir.Defer{Call: ir.CallOf(selector(ir.NewIdent(handle.Go, pipeType), "Close", nil), ir.TError)}
 		l.note(closeStmt, "Closing a pipe waits for the program at the other end, which "+
 			"is the part a file close does not do. Without it this program could finish "+
