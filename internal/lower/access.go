@@ -985,6 +985,23 @@ func (l *Lowerer) fileHandleExpr(n *ast.FileHandle) ir.Expr {
 func (l *Lowerer) existsExpr(x ast.Expr, at ast.Node) ir.Expr {
 	switch n := x.(type) {
 	case *ast.HashIndex:
+		if v, isVar := n.Base.(*ast.Var); isVar && !n.Arrow && v.Sigil == '$' && v.Name == "ENV" {
+			// exists $ENV{X} asks whether the variable is set at all, which
+			// is a different question from whether its value is true or even
+			// non-empty: a variable holding "" exists. os.Getenv cannot ask
+			// it, and os.LookupEnv exists precisely because of that.
+			k := l.toStr(l.expr(n.Key), n.Key)
+			okName := l.tmp("ok")
+			st := assign(":=", []ir.Expr{ir.NewIdent("_", nil), ir.NewIdent(okName, ir.TBool)},
+				[]ir.Expr{call("os", "os", "LookupEnv", ir.TString, k)})
+			l.setProv(st, at)
+			l.note(st, "os.Getenv returns the empty string both for an unset variable "+
+				"and for one set to the empty string. os.LookupEnv's second result is "+
+				"the answer exists was asking for: whether the variable is set at all.",
+				"comma-ok-idiom")
+			l.emit(st)
+			return ir.NewIdent(okName, ir.TBool)
+		}
 		m, key, elem := l.hashParts(n)
 		if m != nil && key != nil {
 			okName := l.tmp("ok")

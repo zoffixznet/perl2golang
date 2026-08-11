@@ -1,0 +1,4 @@
+set: plum
+delete returned: plum
+read after delete: (gone)
+double delete is quiet

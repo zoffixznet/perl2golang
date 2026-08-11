@@ -1,6 +1,6 @@
 # Tier 2 corpus - script-shaped Perl programs
 
-87 entries. Each is a self-contained, realistic Perl script of the kind a
+106 entries. Each is a self-contained, realistic Perl script of the kind a
 sysadmin or data wrangler actually writes, not a snippet.
 
 ## Layout of an entry
@@ -151,6 +151,8 @@ Two entries exit non-zero on purpose: **27** (65) and **32** (1). The rest exit 
 | 102 | `102-named-subs-in-a-table` | A dispatch table of `\&named_sub` references, which does not type yet | `\&clean_case` values, a `\|\| \&clean_passthrough` fallback, calls through the table |
 | 103 | `103-text-and-numbers-in-one-slot` | Slots fed both text and numbers, resolved to the scalar's string form | a mixed config hash, `$carried += 34` on a quoted number, a label/count list, arithmetic on an unpack field |
 | 104 | `104-a-number-beside-a-hash` | Mixes of shape rather than of scalar kind, which honestly stay dynamic | a count beside a hashref in one hash, strings and hashrefs alternating in one list, `ref` dispatch |
+| 105 | `105-an-env-var-deleted` | %ENV edited in place: set, delete with the value kept, read through a default | `$ENV{K} = v`, `my $x = delete $ENV{K}`, `// '(gone)'` after removal, delete of an unset name |
+| 106 | `106-exists-on-an-env-var` | exists on %ENV for values "0", empty, unset, and deleted | `exists $ENV{K}` vs truthiness, set-to-"0" and set-to-empty both existing, delete then exists |
 
 ## Coverage map
 
