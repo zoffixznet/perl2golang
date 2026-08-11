@@ -249,7 +249,8 @@ func (p *parser) parseStatementInner() ast.Stmt {
 		return p.parseBareBlock("")
 	case t.Kind == token.Ident:
 		// Label?
-		if p.peekAt(1).Kind == token.Colon && isLabelName(t.Text) && p.peekAt(2).Kind != token.Colon {
+		if p.peekAt(1).Kind == token.Colon && p.peekAt(2).Kind != token.Colon &&
+			(isLabelName(t.Text) || labelsAStatement(p.peekAt(2))) {
 			label := t.Text
 			p.next() // label
 			p.next() // colon
@@ -299,9 +300,29 @@ func isLabelName(s string) bool {
 		}
 		return false
 	}
-	// Labels are conventionally upper-case; requiring that avoids
-	// misreading `key: value` style text.
+	// Labels are conventionally upper-case, and requiring that avoids
+	// misreading `key: value` style text. A label spelled any other way is
+	// still a label when what follows the colon can carry one, which
+	// labelsAStatement decides.
 	return strings.ToUpper(s) == s
+}
+
+// labelsAStatement reports whether a token can begin the statement a label is
+// attached to. Only a loop or a bare block can carry a label in Perl, so a
+// name in front of a colon followed by one of these is a label whatever its
+// spelling, and a name in front of anything else is left alone.
+func labelsAStatement(t token.Token) bool {
+	if t.Kind == token.LBrace {
+		return true
+	}
+	if t.Kind != token.Ident {
+		return false
+	}
+	switch t.Text {
+	case "for", "foreach", "while", "until", "do":
+		return true
+	}
+	return false
 }
 
 func (p *parser) parseLabeledStatement(label string) ast.Stmt {
@@ -542,7 +563,11 @@ func (p *parser) parseLoopCtl() ast.Stmt {
 	op := p.cur().Text
 	p.next()
 	n := &ast.LoopCtl{Op: op}
-	if p.kind() == token.Ident && isLabelName(p.cur().Text) && !isStatementModifierKeyword(p.cur()) {
+	// `next`, `last` and `redo` take a label and nothing else, so a bare
+	// identifier after one is a label whatever its spelling. The only names
+	// that are not are the statement modifiers, which is what `next if ...`
+	// is made of.
+	if p.kind() == token.Ident && !isStatementModifierKeyword(p.cur()) {
 		n.Label = p.cur().Text
 		p.next()
 	}

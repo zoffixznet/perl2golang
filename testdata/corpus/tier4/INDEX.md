@@ -85,6 +85,7 @@ notes and checked by replaying the program under `2>&1`.
 | 40-a-guard-that-escapes | a DESTROY object whose reference outlives its block | report at the construction site that the destructor is not called automatically; the block-shaped lifetimes convert exactly and this one belongs to the reference count. |
 | 41-local-reaches-a-called-sub | local $/ seen by a sub compiled elsewhere | state the lexical-folding approximation at the local: the called sub keeps the default, and the note says how to pass the separator explicitly. |
 | 42-a-separator-set-for-a-sub | a plain assignment to $, changing what a sub already lowered prints | warn at each assignment a sub written above it could still be carrying the old separator past, and stay quiet where the fold is complete. |
+| 43-a-glob-slot-on-a-handle | a handle keeping its fields in the HASH slot of a glob | refuse each read and write, naming the symbol table and the struct that replaces it; the data model, not the expression, is what does not carry across. |
 
 ## Priority ranking — what matters for real scripts
 

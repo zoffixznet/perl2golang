@@ -77,6 +77,13 @@ func (l *Lowerer) statementFormOK(n *ast.Call) ([]ir.Stmt, bool) {
 	case "print", "say", "printf", "push", "unshift", "chomp", "chop", "die", "warn",
 		"exit", "delete", "close", "open", "return", "opendir", "closedir", "local":
 		return l.statementOnly(n), true
+	case "bless":
+		// `bless $self, $class;` on a line of its own, with the constructor
+		// returning $self afterwards, is how half the constructors in the
+		// world are written. The value already has its type here, so there is
+		// nothing to emit, and saying that is what keeps the statement from
+		// simply disappearing.
+		return l.blessStatement(n), true
 	case "splice":
 		// The value is thrown away, so the call stands on its own line and
 		// nothing names what it removed.

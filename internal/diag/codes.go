@@ -481,6 +481,9 @@ const (
 	Bless Code = "P2G7001"
 	// DynamicInvocant: a value of unknown class was asserted before a call.
 	DynamicInvocant Code = "P2G7002"
+	// BlessOnItsOwnLine: a bless whose value is discarded, in a constructor
+	// that returns the variable afterwards.
+	BlessOnItsOwnLine Code = "P2G7006"
 	// IsaPredicate: `isa` became a predicate listing the concrete types.
 	IsaPredicate Code = "P2G7003"
 	// ClassForwarder: a class method forwarding to $class->new is inlined.
@@ -653,6 +656,9 @@ const (
 	GlobAssignment Code = "P2G8020"
 	// GlobComputed: the typeglob target is built at run time.
 	GlobComputed Code = "P2G8021"
+	// GlobSlot: a slot of a glob, which is where a handle kept its fields
+	// before objects existed.
+	GlobSlot Code = "P2G8022"
 	// AutoloadExpanded: AUTOLOAD was expanded into the methods this file calls.
 	AutoloadExpanded Code = "P2G8030"
 	// AutoloadOpen: AUTOLOAD answers names that are not visible here.
@@ -2099,6 +2105,14 @@ var catalogue = map[Code]Entry{
 		Converted: "each call builds the type it named",
 		Concepts:  []string{"methods-and-receivers", "compile-time-mindset"},
 	},
+	BlessOnItsOwnLine: {
+		Severity:  report.Note,
+		Message:   "the value already has its type, so a `bless` on its own line has nothing left to emit",
+		Short:     "the bless is already done",
+		Advice:    "the constructor returns `*T`, and every method on T is reachable from it",
+		Converted: "no code is emitted for the bless itself",
+		Concepts:  []string{"methods-and-receivers", "structs-and-embedding"},
+	},
 	MultipleInheritance: {
 		Severity:  report.Warn,
 		Message:   "`@ISA` lists %d parents, and Go embedding has no method resolution order",
@@ -2682,6 +2696,14 @@ var catalogue = map[Code]Entry{
 		Advice:    "replace the glob with an explicit dispatch table of `func` values",
 		Converted: "the assignment is not converted; the call site panics with the original Perl text",
 		Concepts:  []string{"compile-time-mindset"},
+	},
+	GlobSlot: {
+		Severity:  report.Refuse,
+		Message:   "a glob has one slot per sigil in the symbol table, and Go has no symbol table to reach into",
+		Short:     "a glob's slots have no counterpart",
+		Advice:    "put the fields on a struct: a handle with state becomes a struct holding the `*os.File`",
+		Converted: "the stand-in reports the gap and yields the zero value",
+		Concepts:  []string{"structs-and-embedding"},
 	},
 	AutoloadExpanded: {
 		Severity:  report.Warn,

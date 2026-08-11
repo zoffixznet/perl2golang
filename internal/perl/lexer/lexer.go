@@ -438,6 +438,11 @@ func (lx *lexer) scanStar() bool {
 	lx.pos++ // *
 	b := lx.byte(lx.pos)
 	switch {
+	case b == '$':
+		// `*$fh` is the glob a scalar names, which is how a handle carried
+		// its own fields before objects. The sigil stands alone here and the
+		// scalar after it is scanned as itself.
+		lx.emitSimple(token.GlobVar, start, expectTerm)
 	case b == '{':
 		if end, ok := lx.braceName(lx.pos + 1); ok {
 			lx.pos = end

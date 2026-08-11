@@ -157,6 +157,69 @@ or just read the field: 3
 
 Two habits to bring across and one to drop. Bring across: the constructor sets every field that has a non-zero starting value, and says nothing about the ones that start at zero, because Go already did. Bring across: `NewCounter` returns `*Counter` rather than `Counter`, so every caller is on the pointer side and the mutating methods work without a surprise (`methods-and-receivers` has the rule). Drop: the accessor. `Total` earns its place only when it computes something or when an interface has to promise it; a plain field is already a public interface in Go, and adding a method later changes no caller.
 
+### When the last thing in the sub is an if
+
+The awkward version of that rule is a sub whose whole body is a conditional, which is how a classifier gets written when nobody wants to type `return` four times:
+
+```perl
+sub classify {
+    my ($n) = @_;
+    if    ($n < 0)  { 'negative' }
+    elsif ($n == 0) { 'zero' }
+    else            { 'positive' }
+}
+```
+
+There is no `do` here and no assignment: the `if` is the sub's last statement, so the branch that runs is the sub's answer. In Go the `if` is a statement and has no answer, so the `return` moves inside each branch, which is where the value always was.
+
+```go
+package main
+
+import "fmt"
+
+// classify is what a sub ending in an if/elsif/else becomes: the return moves
+// inside each branch, which is where the value always was.
+func classify(n int) string {
+	if n < 0 {
+		return "negative"
+	} else if n == 0 {
+		return "zero"
+	}
+	return "positive"
+}
+
+// The same decision written for a function that has more to do afterwards.
+// One variable, assigned on every path, and the compiler checks that.
+func bucket(n int) string {
+	label := "small"
+	switch {
+	case n > 100:
+		label = "huge"
+	case n > 10:
+		label = "big"
+	}
+	return label
+}
+
+func main() {
+	for _, n := range []int{-4, 0, 7} {
+		fmt.Print(classify(n), " ")
+	}
+	fmt.Println()
+	for _, n := range []int{5, 50, 500} {
+		fmt.Print(bucket(n), " ")
+	}
+	fmt.Println()
+}
+```
+
+```
+negative zero positive 
+small big huge 
+```
+
+Both shapes are worth having. Early returns suit a function that is deciding and nothing else, and the trailing `return "positive"` with no `else` above it is the form Go developers write, because the last case is not really a case. The single variable assigned on every path suits a function that carries on afterwards, and it is the shape that survives someone adding a fourth arm.
+
 ## What the operator hands back
 
 Separating statements from expressions has a second consequence, and it is the one that produces wrong answers rather than compile errors: several Perl operators hand back a value that Go's nearest equivalent does not.

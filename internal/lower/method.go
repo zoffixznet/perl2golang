@@ -1629,6 +1629,44 @@ func (l *Lowerer) blessCall(n *ast.Call) (ir.Expr, bool) {
 	return nil, false
 }
 
+// blessStatement lowers a bless whose value is thrown away.
+//
+// In Go the value was built as its type and cannot become another one, so the
+// line has nothing to translate into. That is a real answer rather than an
+// absence, and it is the most instructive part of the whole OO transform, so
+// it is said rather than left out.
+func (l *Lowerer) blessStatement(n *ast.Call) []ir.Stmt {
+	x, ok := l.blessCall(n)
+	if !ok {
+		l.refuse(n, "P2G7001", "bless",
+			"bless has no Go equivalent",
+			"bless marks a reference as belonging to a class, which is how Perl "+
+				"builds objects. Go has no such operation: methods are declared on a "+
+				"named type, and a value's type never changes. What this bless names "+
+				"did not resolve to a class the file declares.",
+			"Declare a struct type and give it methods with a receiver. The "+
+				"constructor becomes an ordinary function returning that type.",
+			"methods-and-receivers", "structs-and-embedding")
+		return nil
+	}
+	l.inform(n, "P2G7006", "bless on its own line",
+		"The value this blesses was built as its own type a few lines up, and a Go "+
+			"value cannot change type afterwards, so there is nothing left for the "+
+			"bless to do. The constructor returns a *"+l.blessTypeName(n)+" and every "+
+			"method declared on it is reachable from that value.",
+		"methods-and-receivers", "structs-and-embedding")
+	_ = x
+	return nil
+}
+
+// blessTypeName names the Go type a bless produces, for the note.
+func (l *Lowerer) blessTypeName(n *ast.Call) string {
+	if c := l.blessTarget(n); c != nil {
+		return c.Go
+	}
+	return "T"
+}
+
 // blessTarget works out which class a bless names.
 func (l *Lowerer) blessTarget(n *ast.Call) *Class {
 	if len(n.Args) > 1 {

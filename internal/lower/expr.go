@@ -519,6 +519,16 @@ func (l *Lowerer) listParts(es []ast.Expr) ([]ir.Expr, *ir.Type) {
 				seen = append(seen, elemOf(typeOrAny(x)))
 				return
 			}
+			// A sub that returns nothing contributes nothing to a list. Perl's
+			// bare `return;` is the empty list here and undef in scalar
+			// context, and the difference is load bearing: one element of a
+			// hash constructor's list shifts every pair after it.
+			if sub, known := l.findSub(n.Name); known && len(sub.Results) == 0 && n.Block == nil {
+				if x := l.expr(e); x != nil {
+					_ = x
+				}
+				return
+			}
 			// An eval block in a list hands the list on: its value is the
 			// block's last expression evaluated in the caller's context, and
 			// a die inside leaves the empty list, not one undef.

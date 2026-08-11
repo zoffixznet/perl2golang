@@ -562,6 +562,20 @@ func (p *parser) parsePostfix(x ast.Expr) ast.Expr {
 				x = n
 				continue
 			}
+			// `&name(...)` is the old spelling of an ordinary call, still
+			// everywhere in module code. Without this the argument list is
+			// left behind and the name alone reads as a reference to the
+			// sub, so the call becomes a function value and the arguments
+			// vanish.
+			if v, ok := x.(*ast.Var); ok && v.Sigil == '&' {
+				p.next()
+				args := p.parseCommaList(token.RParen)
+				p.expect(token.RParen, ")")
+				n := &ast.Call{Name: v.Name, Args: args, Paren: true}
+				setSpan(n, x.Pos(), p.prevEnd())
+				x = n
+				continue
+			}
 			// $cr->(...) is handled by the Arrow case; (expr)(args) is not
 			// a Perl call form.
 			return x

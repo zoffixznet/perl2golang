@@ -202,6 +202,28 @@ func indexOffset(e ast.Expr) (*ast.Var, int, bool) {
 	return nil, 0, false
 }
 
+// globSlot reports whether an expression names a slot of a glob, which is
+// where a filehandle kept its own fields before objects existed: `*$self->{X}`
+// reads the HASH slot of the symbol table entry $self points at.
+func globSlot(e ast.Expr) bool {
+	d, ok := e.(*ast.Deref)
+	return ok && d.Sigil == '*'
+}
+
+// globSlotRefusal is the one answer for reading or writing a glob's slot.
+func (l *Lowerer) globSlotRefusal(n ast.Node) ir.Expr {
+	return l.todoExpr(n, "P2G8022", "a slot of a glob",
+		"a glob's slots have no Go counterpart",
+		"A glob is one entry in the symbol table, with a separate slot for the "+
+			"scalar, the array, the hash, the code and the handle of that name, and "+
+			"this reads or writes one of those slots. Go has no symbol table to reach "+
+			"into: a name refers to one thing, decided when the program is compiled.",
+		"Put the fields on a struct. A handle that carries state becomes a struct "+
+			"holding an *os.File beside the flags, and every slot of the glob becomes "+
+			"a field of it.",
+		"structs-and-embedding", "packages-and-exported-names")
+}
+
 // negativeIndexNote records that an index counting from the end was written
 // out as arithmetic.
 //
@@ -420,6 +442,9 @@ func (l *Lowerer) tolerantAs(x ir.Expr, want *ir.Type) *ir.Call {
 
 // hashExpr lowers $h{k} and $ref->{k}.
 func (l *Lowerer) hashExpr(n *ast.HashIndex) ir.Expr {
+	if globSlot(n.Base) {
+		return l.globSlotRefusal(n)
+	}
 	m, key, elem := l.hashParts(n)
 	if m == nil {
 		return ir.Nil(ir.TAny)

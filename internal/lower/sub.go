@@ -569,35 +569,7 @@ func (l *Lowerer) implicitReturn(s *Sub, block *ir.Block, body []ast.Stmt) {
 	if block == nil || len(block.Stmts) == 0 {
 		return
 	}
-	last := block.Stmts[len(block.Stmts)-1]
-	if es, ok := last.(*ir.ExprStmt); ok {
-		// A sub whose last statement throws or exits produces no value at
-		// all, and returning the result of a call that never returns is not
-		// Go.
-		if terminatingCall(es.X) {
-			return
-		}
-		// Nor does a statement that produces nothing, or one whose Go form
-		// hands back several values, such as a print.
-		if t := es.X.Type(); t == nil || t.Kind == ir.Void || t.Kind == ir.Invalid {
-			return
-		}
-		if l.pass == 1 {
-			s.ResultEvidence = append(s.ResultEvidence, []*ir.Type{typeOrAny(es.X)})
-			return
-		}
-		if len(s.Results) == 0 {
-			return
-		}
-		ret := &ir.Return{Results: []ir.Expr{l.assignable(es.X, s.Results[0], nil)}}
-		ret.Meta = es.Meta
-		l.note(ret, "A Perl sub with no return statement yields the value of the last "+
-			"expression it evaluated. Go requires the return to be written, which is "+
-			"one fewer thing to remember when reading the code.")
-		block.Stmts[len(block.Stmts)-1] = ret
-		return
-	}
-	if _, isRet := last.(*ir.Return); isRet {
+	if l.returnFromTail(s, block) {
 		return
 	}
 	// A sub ending in an assignment yields a value too: `$memo{$t} //= ...`
@@ -629,6 +601,75 @@ func (l *Lowerer) implicitReturn(s *Sub, block *ir.Block, body []ast.Stmt) {
 		"The Go form stores first and then reads the place back, which says the "+
 		"same thing in statements.")
 	block.Stmts = append(block.Stmts, ret)
+}
+
+// returnFromTail turns the value a block ends with into a return, and reports
+// whether it found one.
+//
+// The recursion into an if is the part worth knowing. Perl's if is an
+// expression: a sub whose body ends in `if (...) { 'big' } else { 'small' }`
+// returns whichever word the branch taken evaluated, and the branches are
+// where the values are, not the if. A conversion that only looked at the last
+// statement found a statement with no value there, left both branches out,
+// and produced a sub that silently returned nothing.
+func (l *Lowerer) returnFromTail(s *Sub, block *ir.Block) bool {
+	if block == nil || len(block.Stmts) == 0 {
+		return false
+	}
+	switch last := block.Stmts[len(block.Stmts)-1].(type) {
+	case *ir.Return:
+		return true
+	case *ir.ExprStmt:
+		// A sub whose last statement throws or exits produces no value at
+		// all, and returning the result of a call that never returns is not
+		// Go.
+		if terminatingCall(last.X) {
+			return false
+		}
+		// Nor does a statement that produces nothing, or one whose Go form
+		// hands back several values, such as a print.
+		if t := last.X.Type(); t == nil || t.Kind == ir.Void || t.Kind == ir.Invalid {
+			return false
+		}
+		if l.pass == 1 {
+			s.ResultEvidence = append(s.ResultEvidence, []*ir.Type{typeOrAny(last.X)})
+			return true
+		}
+		if len(s.Results) == 0 {
+			return false
+		}
+		ret := &ir.Return{Results: []ir.Expr{l.assignable(last.X, s.Results[0], nil)}}
+		ret.Meta = last.Meta
+		l.note(ret, "A Perl sub with no return statement yields the value of the last "+
+			"expression it evaluated. Go requires the return to be written, which is "+
+			"one fewer thing to remember when reading the code.")
+		block.Stmts[len(block.Stmts)-1] = ret
+		return true
+	case *ir.If:
+		// Both branches are ends of the sub, and a missing else is a branch
+		// that falls through to whatever comes after the if, which for a
+		// function that promises a result is the zero value ensureReturn
+		// writes.
+		found := l.returnFromTail(s, last.Then)
+		switch other := last.Else.(type) {
+		case *ir.Block:
+			if l.returnFromTail(s, other) {
+				found = true
+			}
+		case *ir.If:
+			if l.returnFromTail(s, &ir.Block{Stmts: []ir.Stmt{other}}) {
+				found = true
+			}
+		}
+		if found && l.pass == 2 {
+			l.note(last, "Perl's if is an expression: a sub ending in one yields "+
+				"whatever the branch taken evaluated. Go's if is a statement and yields "+
+				"nothing, so the return moves inside each branch, which is where the "+
+				"value always was.")
+		}
+		return found
+	}
+	return false
 }
 
 // assignedPlace reports the scalar place a body's final statement assigns to,
@@ -679,6 +720,13 @@ func (l *Lowerer) ensureReturn(s *Sub, block *ir.Block) {
 		switch last := block.Stmts[n-1].(type) {
 		case *ir.Return:
 			return
+		case *ir.If:
+			// Go's own rule: an if with an else, both of whose branches end
+			// in a return, is itself a terminating statement, so nothing
+			// needs to follow it.
+			if terminatingIf(last) {
+				return
+			}
 		case *ir.ExprStmt:
 			// Go's rule for a terminating statement names panic and not
 			// os.Exit, so a function ending in an exit still needs a return
@@ -701,6 +749,41 @@ func (l *Lowerer) ensureReturn(s *Sub, block *ir.Block) {
 		"what that turns into.",
 		"static-types-and-zero-values")
 	block.Stmts = append(block.Stmts, ret)
+}
+
+// terminatingIf reports whether an if statement always leaves the function,
+// which is Go's rule: it needs an else, and every branch has to end in a
+// statement that terminates.
+func terminatingIf(n *ir.If) bool {
+	if n == nil || n.Else == nil {
+		return false
+	}
+	if !terminatingBlock(n.Then) {
+		return false
+	}
+	switch other := n.Else.(type) {
+	case *ir.Block:
+		return terminatingBlock(other)
+	case *ir.If:
+		return terminatingIf(other)
+	}
+	return false
+}
+
+// terminatingBlock reports whether a block always leaves the function.
+func terminatingBlock(b *ir.Block) bool {
+	if b == nil || len(b.Stmts) == 0 {
+		return false
+	}
+	switch last := b.Stmts[len(b.Stmts)-1].(type) {
+	case *ir.Return:
+		return true
+	case *ir.If:
+		return terminatingIf(last)
+	case *ir.ExprStmt:
+		return terminatingCall(last.X)
+	}
+	return false
 }
 
 // terminatingCall reports whether an expression is a call that never comes
@@ -1256,6 +1339,15 @@ func valueTail(body []ast.Stmt) []ast.Stmt {
 	if len(body) == 0 {
 		return body
 	}
+	// Perl's if is an expression, so a sub ending in one returns whatever the
+	// branch taken evaluated. The value is at the end of each branch rather
+	// than at the end of the sub, and a bare value in the middle of a block
+	// is dead code that gets dropped, so without this the branches lower to
+	// nothing and the sub silently returns nothing.
+	if n, isIf := body[len(body)-1].(*ast.If); isIf {
+		branchValueTails(n)
+		return body
+	}
 	es, ok := body[len(body)-1].(*ast.ExprStmt)
 	if !ok || !yieldsValue(es.X) {
 		return body
@@ -1266,6 +1358,22 @@ func valueTail(body []ast.Stmt) []ast.Stmt {
 	copy(out, body)
 	out[len(out)-1] = ret
 	return out
+}
+
+// branchValueTails turns the value each branch of an if/elsif/else chain ends
+// with into a return, in place.
+//
+// It is idempotent: a branch whose tail is already a return is left alone, so
+// the discovery pass and the pass that emits code see the same tree.
+func branchValueTails(n *ast.If) {
+	if n == nil {
+		return
+	}
+	n.Then = valueTail(n.Then)
+	for i := range n.ElseIfs {
+		n.ElseIfs[i].Then = valueTail(n.ElseIfs[i].Then)
+	}
+	n.Else = valueTail(n.Else)
 }
 
 // yieldsValue reports whether an expression is one that exists only for its

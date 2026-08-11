@@ -1667,6 +1667,18 @@ func (l *Lowerer) hashBindingOf(n *ast.HashIndex) *Binding {
 // assignToHash lowers `$h{k} = v`, including the nested form that Perl
 // autovivifies.
 func (l *Lowerer) assignToHash(lhs *ast.HashIndex, n *ast.Assign) []ir.Stmt {
+	if globSlot(lhs.Base) {
+		return []ir.Stmt{l.todoStmt(n, "P2G8022", "a slot of a glob",
+			"a glob's slots have no Go counterpart",
+			"A glob is one entry in the symbol table, with a separate slot for the "+
+				"scalar, the array, the hash, the code and the handle of that name, and "+
+				"this writes one of those slots. Go has no symbol table to reach into: a "+
+				"name refers to one thing, decided when the program is compiled.",
+			"Put the fields on a struct. A handle that carries state becomes a struct "+
+				"holding an *os.File beside the flags, and every slot of the glob becomes "+
+				"a field of it.",
+			"structs-and-embedding", "packages-and-exported-names")}
+	}
 	var out []ir.Stmt
 	out = append(out, l.autovivify(lhs)...)
 

@@ -1,0 +1,3 @@
+strict: 1
+errno:  42
+is a glob ref: yes
