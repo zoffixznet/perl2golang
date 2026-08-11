@@ -26,6 +26,7 @@ func walkthrough(low *lower.Result, src []byte) []teach.Segment {
 	}
 	file := low.Program.Files[0]
 
+	var funcs []funcSpan
 	for _, d := range file.Decls {
 		fn, isFunc := d.(*ir.FuncDecl)
 		if !isFunc {
@@ -40,10 +41,52 @@ func walkthrough(low *lower.Result, src []byte) []teach.Segment {
 		}
 		if seg, ok := declSegment(fn, lines); ok {
 			seg.Title = "The " + fn.Name + " function"
+			funcs = append(funcs, funcSpan{name: fn.Name, from: seg.PerlFrom, to: seg.PerlTo,
+				head: firstLine(seg.Perl)})
 			out = append(out, seg)
 		}
 	}
+	crossReferenceSubs(out, funcs)
 	return out
+}
+
+// funcSpan is where one sub sits in the original, and the section it gets.
+type funcSpan struct {
+	name     string
+	from, to int
+	head     string
+}
+
+// crossReferenceSubs adds a remark to any main-flow region whose quoted Perl
+// contains a sub definition. Perl interleaves subs with top-level statements,
+// so a region quotes them as part of its contiguous range while their Go
+// lives in a section of its own; without a pointer the reader hunts the
+// region's Go for a function that is not there.
+func crossReferenceSubs(segs []teach.Segment, funcs []funcSpan) {
+	for i := range segs {
+		seg := &segs[i]
+		if strings.HasPrefix(seg.Title, "The ") && strings.HasSuffix(seg.Title, " function") {
+			continue
+		}
+		for _, f := range funcs {
+			if f.from < seg.PerlFrom || f.to > seg.PerlTo {
+				continue
+			}
+			seg.Notes = append(seg.Notes, teach.SegmentNote{
+				Line: f.from,
+				Perl: f.head,
+				Text: "The sub defined here becomes the function " + f.name +
+					", which has a section of its own below.",
+			})
+		}
+		seg.Explain = explainText(seg.Notes)
+	}
+}
+
+// firstLine returns the first line of a source region, trimmed.
+func firstLine(src string) string {
+	first, _, _ := strings.Cut(src, "\n")
+	return strings.TrimSpace(first)
 }
 
 // declSegment builds one segment for a whole declaration.
