@@ -83,6 +83,7 @@ func (l *Lowerer) indexExpr(n *ast.Index) ir.Expr {
 			"an index that is out of range while Go panics, which is louder and, on "+
 			"balance, kinder.",
 			"slices-not-arrays")
+		l.negativeIndexNote(n)
 		if isNullable(elem) {
 			out = l.readNullable(out, elem)
 		}
@@ -199,6 +200,26 @@ func indexOffset(e ast.Expr) (*ast.Var, int, bool) {
 		return v, off + k, true
 	}
 	return nil, 0, false
+}
+
+// negativeIndexNote records that an index counting from the end was written
+// out as arithmetic.
+//
+// The arithmetic is the right translation and it is not the same operation.
+// Perl answers undef for an index off either end of the array; `a[len(a)-5]`
+// on a four-element slice stops the program. That is the better behaviour and
+// it is still a behaviour change, so it is said out loud at each site.
+func (l *Lowerer) negativeIndexNote(n ast.Node) {
+	l.approximate(n, "P2G5563", "a negative index",
+		"the index counts from the end, written out as arithmetic",
+		"A negative index counts back from the end of the array, which Go has no "+
+			"rule for: a negative constant index does not compile and a negative "+
+			"variable index panics. The generated code subtracts from the length "+
+			"instead, so it reaches the same element for an array long enough to have "+
+			"one, and stops the program where Perl would have read undef.",
+		"Check the length before indexing where the array may be shorter than the "+
+			"offset reaches.",
+		"slices-not-arrays")
 }
 
 // negativeLiteral reports whether an index is a negative constant, and returns

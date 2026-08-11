@@ -67,11 +67,9 @@ func (l *Lowerer) sortCall(n *ast.Call) ir.Expr {
 		case native:
 			l.emit(exprStmt(call("slices", "slices", "Sort", ir.TVoid, target)))
 		case numeric:
-			l.emit(exprStmt(call("slices", "slices", "SortFunc", ir.TVoid, target,
-				l.numericComparator(elem, false))))
+			l.emit(l.stableSort(target, l.numericComparator(elem, false), n))
 		default:
-			l.emit(exprStmt(call("slices", "slices", "SortFunc", ir.TVoid, target,
-				l.textComparator(elem, false))))
+			l.emit(l.stableSort(target, l.textComparator(elem, false), n))
 		}
 	case ok && kind == cmpDescending:
 		var fn ir.Expr
@@ -83,13 +81,13 @@ func (l *Lowerer) sortCall(n *ast.Call) ir.Expr {
 		default:
 			fn = l.textComparator(elem, true)
 		}
-		l.emit(exprStmt(call("slices", "slices", "SortFunc", ir.TVoid, target, fn)))
+		l.emit(l.stableSort(target, fn, n))
 	default:
 		fn := l.blockComparator(n, elem)
 		if fn == nil {
 			return target
 		}
-		st := exprStmt(call("slices", "slices", "SortFunc", ir.TVoid, target, fn))
+		st := l.stableSort(target, fn, n)
 		l.note(st, "A Go comparator takes the two values as parameters and returns a "+
 			"negative number, zero, or a positive one. Perl passes them in the package "+
 			"globals $a and $b instead, which is why a Perl comparator cannot be an "+
@@ -98,6 +96,35 @@ func (l *Lowerer) sortCall(n *ast.Call) ir.Expr {
 		l.emit(st)
 	}
 	return target
+}
+
+// stableSort emits a sort that keeps equal elements in the order they arrived,
+// which is what Perl's sort does and what every script sorting records on one
+// field depends on without ever saying so.
+//
+// `slices.SortFunc` promises nothing about ties. It is pdqsort, which runs
+// insertion sort on a short slice and so looks stable on five records and
+// stops looking stable on five hundred: a test passes, the report is silent,
+// and the order changes in production. `slices.SortStableFunc` promises what
+// the original delivered, and the cost of the promise is a slower sort on
+// large inputs, which is the trade Perl already made.
+func (l *Lowerer) stableSort(target, fn ir.Expr, n ast.Node) ir.Stmt {
+	st := exprStmt(call("slices", "slices", "SortStableFunc", ir.TVoid, target, fn))
+	l.setProv(st, n)
+	l.note(st, "Perl's sort keeps elements that compare equal in the order they "+
+		"arrived, so a sort on one field of a record leaves records with the same "+
+		"value in their original order. Go asks which of the two sorts you want: "+
+		"slices.SortFunc is faster and says nothing about ties, and "+
+		"slices.SortStableFunc keeps them, which is what the original relied on.",
+		"sort-slice")
+	l.inform(n, "P2G5545", "sort",
+		"Perl's sort keeps elements that compare equal in the order they arrived, so "+
+			"the emitted code uses `slices.SortStableFunc`, which promises the same. "+
+			"`slices.SortFunc` is the faster sort and makes no promise about ties, and "+
+			"it looks stable on a short list, so a comparator that ignores a field is "+
+			"worth a second look before switching to it.",
+		"sort-slice")
+	return st
 }
 
 // sortByName lowers `sort byname @list`, where the comparator is a named sub
@@ -133,7 +160,7 @@ func (l *Lowerer) sortByName(n *ast.Call) ir.Expr {
 	l.emit(clone)
 	target := ir.NewIdent(name, t)
 
-	st := exprStmt(call("slices", "slices", "SortFunc", ir.TVoid, target, ir.NewIdent(s.Go, nil)))
+	st := l.stableSort(target, ir.NewIdent(s.Go, nil), n)
 	l.note(st, "A named comparator becomes an ordinary function passed by name. In "+
 		"Perl it read its two values out of the package globals $a and $b, which is "+
 		"why it could not simply be called; in Go they are its parameters, so it is "+
@@ -205,8 +232,7 @@ func (l *Lowerer) sortByRef(n *ast.Call) ir.Expr {
 	}}
 	fn := funcLit([]ir.Param{{Name: xn, Type: elem}, {Name: yn, Type: elem}},
 		[]*ir.Type{ir.TInt}, body)
-	st := exprStmt(call("slices", "slices", "SortFunc", ir.TVoid, target, fn))
-	l.setProv(st, n)
+	st := l.stableSort(target, fn, n)
 	l.note(st, "A comparator held in a variable reads its two values out of the "+
 		"globals $a and $b rather than taking them as arguments, so it cannot be "+
 		"handed to slices.SortFunc directly. The wrapper sets those two variables "+
@@ -247,7 +273,7 @@ func (l *Lowerer) defaultSort(target ir.Expr, elem *ir.Type, n *ast.Call) ir.Stm
 		}},
 	}}
 	fn := funcLit([]ir.Param{{Name: a, Type: elem}, {Name: b, Type: elem}}, []*ir.Type{ir.TInt}, body)
-	st := exprStmt(call("slices", "slices", "SortFunc", ir.TVoid, target, fn))
+	st := l.stableSort(target, fn, n)
 	l.approximate(n, "P2G5540", "sort with no comparator",
 		"the default sort compares as text, not as numbers",
 		"Perl's sort with no block compares its values as strings, so (10, 9, 100) "+

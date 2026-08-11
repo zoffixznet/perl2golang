@@ -62,6 +62,7 @@ const (
 	hIsExecutable     = "isExecutable"     // -x
 	hDirNames         = "dirNames"         // opendir plus readdir, as a list of names
 	hCloseHandle      = "closeHandle"      // close on a value whose handle type is only known at run time
+	hErrnoText        = "errnoText"        // an error rendered the way $! rendered it
 	hNextMatch        = "nextMatch"        // one step of a scalar-context //g scan
 	hMatchAhead       = "matchAhead"       // a match with a trailing lookaround
 	hReplaceAhead     = "replaceAhead"     // a substitution with a trailing lookaround

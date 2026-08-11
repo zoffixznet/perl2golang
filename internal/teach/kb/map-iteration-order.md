@@ -159,6 +159,53 @@ almost no program wanted. A bare `each %h` outside a loop is a different
 matter: it is a call that advances a cursor, and there is nothing in Go it can
 become.
 
+## When two passes have to agree
+
+The per-process against per-iteration difference has one everyday consequence: a script that walks a hash, prints something, then walks it again and prints something keyed the same way, produced two agreeing lists in Perl and produces two disagreeing ones in Go. Nothing warns, and on a three-key map it may agree by luck for a long time.
+
+Both fixes are one line. Sort, when the output is read by a person or compared by a test. Capture the order once and share it, when the order genuinely does not matter but has to be the same order twice.
+
+```go
+package main
+
+import (
+	"fmt"
+	"maps"
+	"slices"
+)
+
+func main() {
+	stock := map[string]int{"alpha": 1, "beta": 2, "gamma": 3, "delta": 4}
+
+	// Two separate ranges over one untouched map are two separate random
+	// orders. Capturing the order once is what makes a second pass line up
+	// with the first, and it stays random from run to run, which is what the
+	// original did too.
+	order := slices.Collect(maps.Keys(stock))
+
+	first := make([]string, 0, len(order))
+	for _, k := range order {
+		first = append(first, k)
+	}
+	second := make([]string, 0, len(order))
+	for _, k := range order {
+		second = append(second, k)
+	}
+	fmt.Println("the two passes agree:", slices.Equal(first, second))
+
+	// Sorting is the other answer, and the one to reach for the moment the
+	// output is read by a person or compared by a test.
+	fmt.Println("sorted:", slices.Sorted(maps.Keys(stock)))
+}
+```
+
+```
+the two passes agree: true
+sorted: [alpha beta delta gamma]
+```
+
+Prefer sorting. The captured order is the honest translation of a program that was already relying on something it should not have, and it keeps that program's behaviour rather than improving it; a sorted walk is the version you would write today. The one case where the capture is genuinely right is a large map where sorting costs more than the order is worth and the only requirement is internal consistency.
+
 ## The mismatch
 
 The Go runtime randomises order specifically so nobody can ship code that accidentally depends on it — it is a deliberate compatibility-protection device, the same reasoning as Perl 5.18's hash randomisation but applied per iteration rather than per process. Practical audit list for ported code: any test asserting on the serialised form of a ranged map (fix: sort keys, or rely on `encoding/json`, which sorts map keys itself — `encoding-json`); any pair of loops assumed to align; any "first key" grab (`(keys %h)[0]`) — meaningless in Go, and its randomness will faithfully expose that it was meaningless in Perl too. When insertion order itself must be preserved, a map cannot do it: keep a companion `[]string` of keys in insertion order, the honest equivalent of `Tie::IxHash`.

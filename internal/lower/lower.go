@@ -308,6 +308,17 @@ type Lowerer struct {
 	// first pass. More than one means they share the line counter and each
 	// has to start it again.
 	readLoops int
+	// keyPlan holds the `keys` and `values` call sites that may share one
+	// captured iteration order, and keyCaptures holds the variable each
+	// hash's order was captured into, for as long as that variable is in
+	// scope.
+	keyPlan     map[*ast.Call]string
+	keyCaptures map[string]string
+	// errFallback names the error variable $! stands for after a call whose
+	// failure the program kept as a value rather than acted on. It lasts to
+	// the end of the block, which is exactly as far as the variable holding
+	// it is in scope.
+	errFallback string
 	// subsLowered counts the sub bodies this pass has already lowered, which
 	// is what a separator assignment consults to know whether any sub could
 	// still be carrying the value it is replacing.
@@ -464,6 +475,16 @@ func lowerOnce(res parser.Result, src []byte, opts Options, sticky bool) (*Resul
 	l.curFile = l.mainFile
 
 	l.collectClasses()
+
+	// Which hashes the file walks more than once without changing them, which
+	// is decided from the whole file and read one call site at a time.
+	var all []ast.Stmt
+	for _, u := range l.units {
+		all = append(all, u.st)
+	}
+	l.keyPlan = planKeyOrder(all)
+	l.keyCaptures = map[string]string{}
+
 	l.collectOptions()
 	l.collectRecordHashes()
 	l.markShared()
@@ -515,6 +536,7 @@ func lowerOnce(res parser.Result, src []byte, opts Options, sticky bool) (*Resul
 	l.seps = defaultSeparators()
 	l.readLoopSeq = 0
 	l.subsLowered = 0
+	l.keyCaptures = map[string]string{}
 	l.tmpSeq = 0
 	l.tmpNames = newNameSet()
 	for _, b := range l.decls {

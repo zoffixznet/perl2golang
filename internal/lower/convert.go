@@ -114,16 +114,38 @@ func (l *Lowerer) toFloat(x ir.Expr, n ast.Node) ir.Expr {
 	case t.Kind == ir.Slice, t.Kind == ir.Map:
 		return conversion(ir.TFloat, l.elementCount(x))
 	case t.Kind == ir.String:
-		out := l.helperCall(hParseNum, ir.TFloat, x)
-		l.note(out, "Perl reads the longest numeric prefix of a string and calls the "+
-			"rest zero, so \"12abc\" + 0 is 12 and \"abc\" + 0 is 0. Go's "+
-			"strconv.ParseFloat returns an error instead. "+hParseNum+" keeps Perl's rule; "+
-			"if the input is really always a number, strconv.ParseFloat with a checked "+
-			"error is the better Go.",
-			"strconv-parsing", "explicit-conversions-no-coercion")
-		return out
+		return l.numifyString(x, n)
 	}
 	return l.helperCall(hToNum, ir.TFloat, x)
+}
+
+// numifyString turns text into a number the way Perl does, and says so.
+//
+// The rule is worth stating every time it is used, because it is the one
+// coercion that produces a plausible wrong answer rather than an error:
+// "0x10" is zero, "010" is ten, "3abc" is three, and a line of input that was
+// never a number at all is zero rather than a failure anyone notices.
+func (l *Lowerer) numifyString(x ir.Expr, n ast.Node) ir.Expr {
+	out := l.helperCall(hParseNum, ir.TFloat, x)
+	l.note(out, "Perl reads the longest numeric prefix of a string and calls the "+
+		"rest zero, so \"12abc\" + 0 is 12 and \"abc\" + 0 is 0. Go's "+
+		"strconv.ParseFloat returns an error instead. "+hParseNum+" keeps Perl's rule; "+
+		"if the input is really always a number, strconv.ParseFloat with a checked "+
+		"error is the better Go.",
+		"strconv-parsing", "explicit-conversions-no-coercion")
+	l.approximate(n, "P2G5502", "text used as a number",
+		"the coercion reads a numeric prefix and ignores the rest",
+		"Perl's string-to-number coercion takes the longest numeric prefix of the "+
+			"text and treats the rest as absent, so \"3abc\" is 3, \" 12 \" is 12, "+
+			"\"0x10\" is 0 because the prefix stops at the x, and text with no number "+
+			"in front of it is 0. The emitted helper keeps that rule exactly, which "+
+			"means a value that was never a number still produces an answer here "+
+			"rather than an error.",
+		"Where the text really is always a number, strconv.ParseFloat or "+
+			"strconv.Atoi with the error checked says so and turns bad input into a "+
+			"failure you can see.",
+		"strconv-parsing", "explicit-conversions-no-coercion")
+	return out
 }
 
 // elementCount is an array or a hash in numeric context, which in Perl is how many
@@ -187,7 +209,7 @@ func (l *Lowerer) toInt(x ir.Expr, n ast.Node) ir.Expr {
 			"is what Perl's int() does too.")
 		return out
 	case t.Kind == ir.String:
-		return conversion(ir.TInt, l.helperCall(hParseNum, ir.TFloat, x))
+		return conversion(ir.TInt, l.numifyString(x, n))
 	}
 	return conversion(ir.TInt, l.helperCall(hToNum, ir.TFloat, x))
 }

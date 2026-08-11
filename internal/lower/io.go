@@ -172,6 +172,88 @@ func (l *Lowerer) openStatements(n *ast.Call, onFail func(errName string) []ir.S
 	return out, true
 }
 
+// openValue lowers an open whose truth value the program keeps.
+//
+// `my $ok = open(...)` and `if (open(...))` are a different program from
+// `open(...) or die`. The failure is a value the script carries and acts on
+// itself, and the script runs on either way, reading nothing out of a handle
+// that was never opened. Go's zero *os.File behaves the same: its Read
+// answers with an error rather than stopping the program, so the translation
+// is the error test and nothing more.
+func (l *Lowerer) openValue(n *ast.Call) (ir.Expr, bool) {
+	args := flatten(argList(n))
+	if len(args) < 2 {
+		return nil, false
+	}
+	// The pipe forms start a program, which is a statement whatever is done
+	// with the answer.
+	if mode, ok := staticString(args[1]); ok && (mode == "-|" || mode == "|-") {
+		return nil, false
+	}
+	handle, place := l.openTarget(args[0], fileType)
+	if handle == nil {
+		return nil, false
+	}
+	mode, path, ok := l.openMode(args, n)
+	if !ok {
+		return nil, false
+	}
+	var opener ir.Expr
+	switch mode {
+	case "<":
+		opener = call("os", "os", "Open", fileType, path)
+	case ">":
+		opener = call("os", "os", "Create", fileType, path)
+	case ">>":
+		opener = ir.CallOf(ir.Pkg("os", "os", "OpenFile", nil), fileType, path,
+			ir.Bin("|", ir.Bin("|", ir.Pkg("os", "os", "O_APPEND", ir.TInt),
+				ir.Pkg("os", "os", "O_CREATE", ir.TInt), ir.TInt),
+				ir.Pkg("os", "os", "O_WRONLY", ir.TInt), ir.TInt),
+			ir.Raw("0o644", ir.TInt))
+	default:
+		return nil, false
+	}
+
+	handle.Type = fileType
+	l.observe(handle, fileType)
+	errName := l.tmp("err")
+	openStmt := assign(":=", []ir.Expr{ir.NewIdent(handle.Go, fileType), ir.NewIdent(errName, ir.TError)},
+		[]ir.Expr{opener})
+	l.setProv(openStmt, n)
+	l.note(openStmt, "Go returns the file and an error together. Here the program "+
+		"wanted the truth value the open answered with, so the error becomes that "+
+		"truth value on the next line and the file is whatever the call produced: "+
+		"a usable file, or a nil one whose reads answer with an error rather than "+
+		"stopping the program.",
+		"errors-are-values", "multiple-return-values", "nil-vs-undef")
+	l.emit(openStmt)
+	if place != nil {
+		l.emit(l.storeHandle(place, handle, n))
+	}
+	// $! means this error for the rest of the block, which is as far as the
+	// variable holding it is in scope.
+	l.errFallback = errName
+
+	l.approximate(n, "P2G6006", "an open whose result is used as a value",
+		"the failure is a value the program carries, and the open is otherwise unchecked",
+		"The result of the open is kept rather than acted on, so the program "+
+			"carries on whether or not the file opened, and the reads below run "+
+			"against a handle that was never opened. Perl answered those reads with "+
+			"nothing; a nil *os.File answers them with an error, which comes to the "+
+			"same thing here and is visible if it is ever looked at.",
+		"Act on the failure where it happens: `if err != nil` next to the open is "+
+			"the shape that stops a later line from working with a file that is not "+
+			"there.",
+		"errors-are-values", "if-err-nil-rhythm")
+
+	out := ir.Bin("==", ir.NewIdent(errName, ir.TError), ir.Nil(ir.TError), ir.TBool)
+	l.note(out, "The open's truth value in Perl was whether it worked. Go says the "+
+		"same thing by comparing the error against nil, which is the one test every "+
+		"Go program is built out of.",
+		"errors-are-values", "if-err-nil-rhythm")
+	return out, true
+}
+
 // openTarget resolves the first argument of open into the binding the opened
 // handle is bound to, plus the place to store it in when the handle is going
 // into a container rather than into a variable of its own.

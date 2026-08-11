@@ -460,6 +460,11 @@ var notes = map[string]string{
 		"gives \".1\". Matching a pattern against the end of the name is how " +
 		"you say which extension you meant.",
 
+	"errnoText": "An error in Go says what failed as well as why: " +
+		"*fs.PathError carries the operation and the path around the errno. " +
+		"Printing err rather than errnoText(err) is the better habit, and " +
+		"the difference is only that the line stops matching the old one.",
+
 	"closeHandle": "A type assertion against io.Closer is how Go asks a " +
 		"value whether it can be closed. Nothing had to declare that it " +
 		"implements the interface: having a Close method is the whole of it, " +

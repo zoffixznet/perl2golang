@@ -278,7 +278,20 @@ func (l *Lowerer) builtin(n *ast.Call) ir.Expr {
 		}
 		return ir.BoolLit(true)
 
-	case "close", "open", "print", "printf", "say", "die", "warn", "exit":
+	case "open":
+		// `my $ok = open(...)` and `if (open(...))` use the truth value the
+		// open answered with, which is a different program from `open ... or
+		// die`: the failure is a value the script carries, and the script
+		// keeps running either way.
+		if x, ok := l.openValue(n); ok {
+			return x
+		}
+		for _, st := range l.statementForm(n) {
+			l.emit(st)
+		}
+		return ir.BoolLit(true)
+
+	case "close", "print", "printf", "say", "die", "warn", "exit":
 		// These reach expression position because of the `X or die` idiom.
 		// Perl's answer there is a truth value, so the statements run first
 		// and the value they produce is success. Only names the statement
@@ -990,13 +1003,56 @@ func (l *Lowerer) keysCall(n *ast.Call, wantValues bool) ir.Expr {
 		elem = elemOf(t)
 	}
 	iter := call("maps", "maps", fn, nil, m)
-	out := call("slices", "slices", "Collect", ir.SliceOf(elem), iter)
+	out := ir.Expr(call("slices", "slices", "Collect", ir.SliceOf(elem), iter))
 	l.note(out, "maps.Keys hands back an iterator rather than a slice, because most "+
 		"loops never need the slice. slices.Collect materialises it when, as here, a "+
 		"list is what was wanted. The order is deliberately randomised in Go, exactly "+
 		"as it is in Perl, so sort it if the output has to be stable.",
 		"map-iteration-order")
+	l.hashOrderNote(n)
+	if shared, ok := l.keyPlan[n]; ok {
+		out = l.captureKeyOrder(shared, out, ir.SliceOf(elem), n)
+	}
 	return out
+}
+
+// hashOrderNote records that an unsorted iteration is about to decide the
+// order of something. A sorted one goes through a different path and says
+// nothing, because there is nothing left to say.
+func (l *Lowerer) hashOrderNote(n ast.Node) {
+	l.inform(n, "P2G5550", "an unsorted iteration over a hash",
+		"the iteration order of a hash is randomised in both languages, and randomised "+
+			"differently: Perl fixes an order once per process, so two passes over an "+
+			"unchanged hash agree with each other, and Go picks a fresh order for every "+
+			"iteration, so they do not. Wherever that order reaches the output, sorting "+
+			"the keys is what makes the output the same twice",
+		"map-iteration-order", "sort-slice")
+}
+
+// captureKeyOrder takes one hash's iteration order into a variable the passes
+// over it share, so that two iterations of an unmodified hash agree with each
+// other the way they did before.
+func (l *Lowerer) captureKeyOrder(name string, out ir.Expr, t *ir.Type, n ast.Node) ir.Expr {
+	if have, ok := l.keyCaptures[name]; ok {
+		x := ir.NewIdent(have, t)
+		l.note(x, "This is the same order the earlier pass over the hash used. Perl "+
+			"fixes a hash's order once and every pass sees it; Go picks a fresh one per "+
+			"iteration, so the passes only agree if they share a list.",
+			"map-iteration-order")
+		return x
+	}
+	held := l.tmp("order")
+	decl := assign(":=", []ir.Expr{ir.NewIdent(held, t)}, []ir.Expr{out})
+	l.setProv(decl, n)
+	l.note(decl, "The file walks this hash more than once and never changes it, and "+
+		"in Perl those walks all came out in the same order. Go randomises each "+
+		"iteration separately, so the order is taken once here and the later walks "+
+		"use this list. It is still a different order on every run, which was true "+
+		"of the original too.",
+		"map-iteration-order")
+	l.emit(decl)
+	l.keyCaptures[name] = held
+	return ir.NewIdent(held, t)
 }
 
 // reverseText is reverse read for one value: everything joined and then

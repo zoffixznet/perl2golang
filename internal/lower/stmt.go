@@ -94,6 +94,16 @@ func (l *Lowerer) stmts(list []ast.Stmt) []ir.Stmt {
 func (l *Lowerer) block(list []ast.Stmt) *ir.Block {
 	saved := l.scope
 	savedSeps := l.seps
+	// The error variable $! stands for is declared in this block, so it stops
+	// meaning anything on the way out. A captured key order is the same: the
+	// variable holding it goes out of scope here, so the next iteration of
+	// that hash captures the order again.
+	savedErrFallback := l.errFallback
+	savedKeyCaptures := l.keyCaptures
+	l.keyCaptures = map[string]string{}
+	for k, v := range savedKeyCaptures {
+		l.keyCaptures[k] = v
+	}
 	// `use integer` is lexical: it changes what / and % mean until the end of
 	// the enclosing block and no further, which is exactly what makes the
 	// pragma usable at all.
@@ -114,6 +124,8 @@ func (l *Lowerer) block(list []ast.Stmt) *ir.Block {
 	l.scope = saved
 	l.seps = savedSeps
 	l.integerPragma = savedInteger
+	l.errFallback = savedErrFallback
+	l.keyCaptures = savedKeyCaptures
 	return b
 }
 

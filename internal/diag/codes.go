@@ -332,7 +332,9 @@ const (
 	// FloatFormatting: Perl and Go print floats to different precision.
 	FloatFormatting Code = "P2G5501"
 	// ModuloSign: `%` takes its sign from a different operand in each language.
-	ModuloSign Code = "P2G5520"
+	// NumericCoercion: text used as a number is read as far as it parses.
+	NumericCoercion Code = "P2G5502"
+	ModuloSign      Code = "P2G5520"
 	// DefaultSortIsStringwise: `sort` with no comparator sorts as strings.
 	DefaultSortIsStringwise Code = "P2G5540"
 	// SortStability: the comparator ties, so stability is observable.
@@ -340,6 +342,9 @@ const (
 	// HashOrder: hash iteration order is randomised, differently in each.
 	HashOrder Code = "P2G5550"
 	// ArrayLengthAssignment: assigning to `$#array` sets the array's length.
+	// NegativeIndex: a negative index counts from the end, written out as
+	// arithmetic that Go will panic on rather than answer with undef.
+	NegativeIndex         Code = "P2G5563"
 	ArrayLengthAssignment Code = "P2G5560"
 	// AssignPastEnd: an assignment writes past the end of an array.
 	AssignPastEnd Code = "P2G5561"
@@ -429,6 +434,9 @@ const (
 	UnlinkReturnsError Code = "P2G6045"
 	// WriteErrorChecked: print errors are silent in Perl and checked in Go.
 	WriteErrorChecked Code = "P2G6040"
+	// OpenResultAsValue: the open's truth value is kept and the failure is
+	// not acted on.
+	OpenResultAsValue Code = "P2G6006"
 	// EncodingLayer: an `:encoding` layer has no Go counterpart.
 	EncodingLayer Code = "P2G6060"
 	// EnvAssignment: writing to `%ENV` becomes os.Setenv, which returns an
@@ -1658,6 +1666,15 @@ var catalogue = map[Code]Entry{
 		Converted: "the emitted code formats floats with `%.15g`",
 		Concepts:  []string{"strconv-parsing", "explicit-conversions-no-coercion"},
 	},
+	NumericCoercion: {
+		Severity:  report.Warn,
+		Message:   "string-to-number coercion reads the longest numeric prefix and treats the rest as absent",
+		Short:     "a numeric prefix, not a parse",
+		Advice:    "`strconv.ParseFloat` with the error checked turns text that was never a number into a failure",
+		Cost:      "`\"0x10\"` is 0, `\"010\"` is 10, `\"3abc\"` is 3, and text with no digits in front is 0",
+		Converted: "the emitted helper reproduces the prefix rule",
+		Concepts:  []string{"strconv-parsing", "explicit-conversions-no-coercion"},
+	},
 	ModuloSign: {
 		Severity:  report.Warn,
 		Message:   "`%%` takes the sign of its right operand in Perl and of its left operand in Go",
@@ -1677,10 +1694,10 @@ var catalogue = map[Code]Entry{
 		Concepts:  []string{"sort-slice", "explicit-conversions-no-coercion"},
 	},
 	SortStability: {
-		Severity:  report.Warn,
-		Message:   "the comparator returns 0 for entries that are not equal, and `slices.SortFunc` is not stable",
-		Short:     "sort stability had to be chosen",
-		Advice:    "keep `slices.SortStableFunc`, or add a tie-breaker to the comparator so the order is total",
+		Severity:  report.Note,
+		Message:   "the original sort keeps equal elements in the order they arrived, and `slices.SortFunc` does not",
+		Short:     "the sort emitted is the stable one",
+		Advice:    "`slices.SortFunc` is faster and reorders ties, so switch only where no two elements compare equal",
 		Converted: "the emitted code uses `slices.SortStableFunc`, which matches Perl's mergesort",
 		Concepts:  []string{"sort-slice"},
 	},
@@ -1700,6 +1717,15 @@ var catalogue = map[Code]Entry{
 		Cost:      "a larger value padded the Perl array with undef, which the reslice cannot do",
 		Converted: "the emitted code reslices, which shortens exactly as the Perl did",
 		Concepts:  []string{"slices-not-arrays", "slice-aliasing-and-copy"},
+	},
+	NegativeIndex: {
+		Severity:  report.Warn,
+		Message:   "a negative index counts back from the end, and Go has no such rule, so the arithmetic is written out",
+		Short:     "a negative index became arithmetic",
+		Advice:    "check the length first where the index may reach past the front, which Go answers with a panic",
+		Cost:      "Perl reads undef for an index off either end and the emitted Go stops the program",
+		Converted: "the emitted code indexes at `len(slice) - n`",
+		Concepts:  []string{"slices-not-arrays"},
 	},
 	AssignPastEnd: {
 		Severity:  report.Warn,
@@ -1942,6 +1968,15 @@ var catalogue = map[Code]Entry{
 		Short:     "write errors are now checked",
 		Advice:    "keep the check; drop it only where losing the output is acceptable",
 		Converted: "every write returns an error that the emitted code handles",
+		Concepts:  []string{"errors-are-values", "if-err-nil-rhythm"},
+	},
+	OpenResultAsValue: {
+		Severity:  report.Warn,
+		Message:   "the open's result is kept as a value, so the lines below it run whether or not the file opened",
+		Short:     "the open's failure is not acted on",
+		Advice:    "put `if err != nil` next to the open, so a later line cannot work with a file that is not there",
+		Cost:      "reads through a nil file answer with an error instead of nothing",
+		Converted: "the emitted code compares the error against nil and carries on",
 		Concepts:  []string{"errors-are-values", "if-err-nil-rhythm"},
 	},
 	EncodingLayer: {

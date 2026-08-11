@@ -587,12 +587,29 @@ func (l *Lowerer) specialVar(v *ast.Var) ir.Expr {
 		// Inside a failure branch, $! is the error the call actually returned.
 		// Everywhere else there is nothing for it to name: Go keeps no global
 		// record of the last failure.
+		if l.errVar == "" && l.errFallback != "" {
+			// The last call whose failure the program kept as a value, which
+			// is what $! named at this point in the original too.
+			out := l.helperCall(hErrnoText, ir.TString, ir.NewIdent(l.errFallback, ir.TError))
+			l.note(out, "$! is a global holding the last system error, and the last "+
+				"call that could have set it is the one above. Go has no such global: "+
+				"the error is the value that call returned, still in scope here, so "+
+				"this reads it by name.",
+				"errors-are-values")
+			return out
+		}
 		if l.errVar != "" {
-			out := ir.NewIdent(l.errVar, ir.TError)
+			// $! held the errno and nothing else, while a Go error names the
+			// operation and the file too, so the helper renders the one out of
+			// the other and a message built around $! comes out reading as it
+			// did before.
+			out := l.helperCall(hErrnoText, ir.TString, ir.NewIdent(l.errVar, ir.TError))
 			l.note(out, "$! is a global holding the last system error, which any "+
 				"later call can overwrite before you read it. Go hands the error back "+
-				"from the call that failed, so this one belongs to this open and to "+
-				"nothing else.",
+				"from the call that failed, so this one belongs to this call and to "+
+				"nothing else. It also says more than $! did: the operation and the "+
+				"path are in the error text, which is why the helper takes them back "+
+				"out to keep this message the length it was.",
 				"errors-are-values")
 			return out
 		}

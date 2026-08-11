@@ -1506,6 +1506,7 @@ func (l *Lowerer) arrayPlace(lhs *ast.Index) (ir.Expr, []ir.Stmt, *ir.Type) {
 			"error and a negative variable is a panic. The arithmetic is written out "+
 			"instead, which is what Go asks for.",
 			"slices-not-arrays")
+		l.negativeIndexNote(lhs)
 		return out, nil, elem
 	}
 	if pre, place, t, ok := l.growPath(lhs); ok {
