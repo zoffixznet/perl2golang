@@ -150,6 +150,17 @@ one of six categories:
 `expectation.md` also lists the tripwires: the specific output lines that
 separate a correct conversion from a plausible-looking wrong one.
 
+Lines of the form `- report-must-contain:` are machine-checked, and every
+one of them must hold for the entry to pass, whatever its category decided:
+a report can refuse one construct while silently mistranslating the one the
+entry is about, so "the tool reported something" is not the standard. Each
+such line is one requirement; the backticked phrases on the line are
+alternatives, so a line naming `truth` and `boolean` is satisfied by either
+word, matched case-insensitively anywhere in a report entry's text. Prose on
+the line outside backticks is for the human reader and never matched, which
+is also why a file or line reference on a requirement line must not be
+backticked.
+
 ## MANIFEST.json
 
 `MANIFEST.json` is the machine-readable index of the corpus and the file the

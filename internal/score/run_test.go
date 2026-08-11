@@ -199,6 +199,8 @@ func TestHonest(t *testing.T) {
 	tests := []struct {
 		name       string
 		categories []string
+		reqs       []Requirement
+		reportText []string
 		class      Classification
 		compiled   StageResult
 		clean      StageResult
@@ -206,6 +208,46 @@ func TestHonest(t *testing.T) {
 		want       Outcome
 		contains   string
 	}{
+		{
+			name:       "a report-must-contain line is satisfied by the report's own words",
+			categories: []string{CatConvertVerify},
+			reqs:       []Requirement{{"iteration order"}, {"output"}},
+			reportText: []string{"hash iteration order reaches the program's output"},
+			class:      emitted, compiled: pass(), clean: pass(), annotated: pass(),
+			want: Pass,
+		},
+		{
+			name:       "a report-must-contain line fails the entry when the report never says it",
+			categories: []string{CatConvertVerify},
+			reqs:       []Requirement{{"iteration order"}},
+			reportText: []string{"something else entirely"},
+			class:      emitted, compiled: pass(), clean: pass(), annotated: pass(),
+			want: Fail, contains: "never says `iteration order`",
+		},
+		{
+			name:       "alternatives on one line are satisfied by either word",
+			categories: []string{CatConvertVerify},
+			reqs:       []Requirement{{"truth", "boolean"}},
+			reportText: []string{"perl and go disagree about boolean context here"},
+			class:      emitted, compiled: pass(), clean: pass(), annotated: pass(),
+			want: Pass,
+		},
+		{
+			name:       "an unmet requirement fails the entry even where equivalence never ran",
+			categories: []string{CatConvertVerify},
+			reqs:       []Requirement{{"iteration order"}},
+			reportText: nil,
+			class:      emitted, compiled: pass(), clean: skip("short mode"), annotated: skip("short mode"),
+			want: Fail, contains: "never says",
+		},
+		{
+			name:       "a refusal in the report does not satisfy a requirement about other words",
+			categories: []string{CatRefuseStatement},
+			reqs:       []Requirement{{"stable"}},
+			reportText: []string{"string eval has no go form"},
+			class:      refused, compiled: pass(), clean: fail("differs"), annotated: fail("differs"),
+			want: Fail, contains: "never says `stable`",
+		},
 		{
 			name:       "an entry that must refuse passes by refusing",
 			categories: []string{CatRefuseStatement},
@@ -282,7 +324,7 @@ func TestHonest(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := honest(tt.categories, tt.class, tt.compiled, tt.clean, tt.annotated)
+			got := honest(tt.categories, tt.reqs, tt.reportText, tt.class, tt.compiled, tt.clean, tt.annotated)
 			if got.Outcome != tt.want {
 				t.Fatalf("outcome = %s (%s), want %s", got.Outcome, got.Reason, tt.want)
 			}

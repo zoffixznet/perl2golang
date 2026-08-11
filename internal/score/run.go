@@ -246,8 +246,10 @@ func (r *runner) runEntry(ctx context.Context, e Entry) EntryResult {
 	for _, note := range fixture.Disagreements {
 		res.Notes = append(res.Notes, steady(note))
 	}
+	var requirements []Requirement
 	if e.Kind == KindHonestFailure {
 		res.Categories = loadCategories(fixture.Dir)
+		requirements = loadRequirements(fixture.Dir)
 	}
 
 	// Conversion. A failure here is a failure of every stage, because there
@@ -292,7 +294,7 @@ func (r *runner) runEntry(ctx context.Context, e Entry) EntryResult {
 	if e.Kind == KindHonestFailure {
 		set(StageEquivalent, notApplicable())
 		res.EquivalentAnnotated = notApplicable()
-		set(StageHonest, honest(res.Categories, class, compiled, clean, annotated))
+		set(StageHonest, honest(res.Categories, requirements, reportTexts(conv), class, compiled, clean, annotated))
 	} else {
 		set(StageEquivalent, clean)
 		res.EquivalentAnnotated = steadyResult(annotated)
@@ -647,7 +649,13 @@ func driftNotes(f *Fixture, got Output) []string {
 // passes by converting and reporting the difference; one marked convert-verify
 // is held to full behavioural equivalence like any other tier. An entry that
 // names several acceptable categories passes on any of them.
-func honest(categories []string, class Classification, compiled, clean, annotated StageResult) StageResult {
+//
+// The expectation's report-must-contain lines then bind whatever the category
+// decided: a report can refuse one construct while silently mistranslating
+// the construct the entry is actually about, so passing the category standard
+// with the wrong report entry is not passing. Every requirement must be
+// satisfied by the report's own words.
+func honest(categories []string, reqs []Requirement, reportText []string, class Classification, compiled, clean, annotated StageResult) StageResult {
 	reported := class.Refusals + class.Approximations + class.Todos
 	emitted := class.Emitted.passed()
 
@@ -655,13 +663,13 @@ func honest(categories []string, class Classification, compiled, clean, annotate
 		categories = []string{"reported"}
 	}
 	var why []string
+	catPass := false
 	for _, cat := range categories {
 		switch cat {
 		case CatConvertVerify:
-			if clean.passed() && annotated.passed() {
-				return pass()
-			}
 			switch {
+			case clean.passed() && annotated.passed():
+				catPass = true
 			case clean.Outcome == Skip:
 				why = append(why, "convert-verify: "+clean.Reason)
 			case !clean.passed():
@@ -670,10 +678,9 @@ func honest(categories []string, class Classification, compiled, clean, annotate
 				why = append(why, "convert-verify: the annotated program differs: "+annotated.Reason)
 			}
 		case CatRefuseFile, CatRefuseStatement:
-			if emitted && class.Refusals > 0 {
-				return pass()
-			}
 			switch {
+			case emitted && class.Refusals > 0:
+				catPass = true
 			case !emitted:
 				why = append(why, cat+": no valid Go was emitted")
 			default:
@@ -682,21 +689,54 @@ func honest(categories []string, class Classification, compiled, clean, annotate
 		default:
 			// todo, shim, approximate, and the general standard: valid
 			// Go, and a report entry that admits the difference.
-			if emitted && reported > 0 {
-				return pass()
-			}
 			switch {
+			case emitted && reported > 0:
+				catPass = true
 			case !emitted:
 				why = append(why, cat+": no valid Go was emitted")
 			default:
 				why = append(why, cat+": the conversion reported nothing about the construct")
 			}
 		}
+		if catPass {
+			break
+		}
 	}
-	if allSkipped(clean, categories) {
+
+	var missing []string
+	for _, req := range reqs {
+		if !req.satisfiedBy(reportText) {
+			missing = append(missing, req.describe())
+		}
+	}
+
+	switch {
+	case catPass && len(missing) == 0:
+		return pass()
+	case catPass:
+		return fail(strings.Join(missing, "; "))
+	case len(missing) > 0:
+		// The requirements are report-based and were really checked, so an
+		// entry that fails them fails even where the behavioural half of its
+		// standard could not run.
+		return fail(strings.Join(append(why, missing...), "; "))
+	case allSkipped(clean, categories):
 		return skip(strings.Join(why, "; "))
 	}
 	return fail(strings.Join(why, "; "))
+}
+
+// reportTexts renders each report entry as one lowercased string, for the
+// report-must-contain requirements to search.
+func reportTexts(conv *convert.Result) []string {
+	if conv == nil || conv.Report == nil {
+		return nil
+	}
+	out := make([]string, 0, len(conv.Report.Entries))
+	for _, e := range conv.Report.Entries {
+		out = append(out, strings.ToLower(e.Construct+"\n"+e.Short+"\n"+e.Message+"\n"+e.Advice))
+	}
+	return out
 }
 
 // contains reports whether a list of strings holds one.

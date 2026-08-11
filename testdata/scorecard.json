@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T21:24:51Z",
+  "recorded": "2026-08-15T21:34:29Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -158,8 +158,8 @@
           "skip": 0
         },
         "honest": {
-          "pass": 37,
-          "fail": 4,
+          "pass": 34,
+          "fail": 7,
           "skip": 0
         },
         "translated": {
@@ -254,8 +254,8 @@
         "skip": 0
       },
       "honest": {
-        "pass": 37,
-        "fail": 4,
+        "pass": 34,
+        "fail": 7,
         "skip": 0
       },
       "translated": {
@@ -8438,7 +8438,7 @@
         },
         "honest": {
           "outcome": "fail",
-          "reason": "convert-verify: the entry's check rejects what the clean program prints: the report says nothing about iteration order reaching the output"
+          "reason": "convert-verify: the entry's check rejects what the clean program prints: the report says nothing about iteration order reaching the output; the report never says `iteration order`; the report never says `output`"
         },
         "translated": {
           "outcome": "pass"
@@ -8478,7 +8478,8 @@
           "outcome": "n/a"
         },
         "honest": {
-          "outcome": "pass"
+          "outcome": "fail",
+          "reason": "the report never says `stable`"
         },
         "translated": {
           "outcome": "pass"
@@ -8598,7 +8599,8 @@
           "outcome": "n/a"
         },
         "honest": {
-          "outcome": "pass"
+          "outcome": "fail",
+          "reason": "the report never says `coercion` or `numify`; the report never says `prefix`"
         },
         "translated": {
           "outcome": "pass"
@@ -8638,7 +8640,8 @@
           "outcome": "n/a"
         },
         "honest": {
-          "outcome": "pass"
+          "outcome": "fail",
+          "reason": "the report never says `negative`; the report never says `index`"
         },
         "translated": {
           "outcome": "pass"
@@ -8719,7 +8722,7 @@
         },
         "honest": {
           "outcome": "fail",
-          "reason": "convert-verify: stdout differs: line 2, byte 23: got \"0\u003e\\ndefined: no\\nbool: false\\nundef...\", wanted \"\u003e\\ndefined: no\\nbool: false\\nundef ...\""
+          "reason": "convert-verify: stdout differs: line 2, byte 23: got \"0\u003e\\ndefined: no\\nbool: false\\nundef...\", wanted \"\u003e\\ndefined: no\\nbool: false\\nundef ...\"; the report never says `truth` or `boolean`"
         },
         "translated": {
           "outcome": "pass"
@@ -8760,7 +8763,7 @@
         },
         "honest": {
           "outcome": "fail",
-          "reason": "convert-verify: stdout differs: line 1, byte 15: got \"1 elements\\nundef in list: 1 elem...\", wanted \"0 elements\\nundef in list: 1 elem...\""
+          "reason": "convert-verify: stdout differs: line 1, byte 15: got \"1 elements\\nundef in list: 1 elem...\", wanted \"0 elements\\nundef in list: 1 elem...\"; the report never says `empty list`"
         },
         "translated": {
           "outcome": "pass"
@@ -8802,7 +8805,7 @@
         },
         "honest": {
           "outcome": "fail",
-          "reason": "convert-verify: exit status 255, wanted 0; stdout differs: 105 byte(s) missing after line 1, expected \"open ok? no (No such file or dir...\"; stderr differs: unexpected \"open /nonexistent/config.txt: no such file or directory\""
+          "reason": "convert-verify: exit status 255, wanted 0; stdout differs: 105 byte(s) missing after line 1, expected \"open ok? no (No such file or dir...\"; stderr differs: unexpected \"open /nonexistent/config.txt: no such file or directory\"; the report never says `not checked` or `unchecked`"
         },
         "translated": {
           "outcome": "fail",

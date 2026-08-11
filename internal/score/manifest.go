@@ -320,6 +320,56 @@ func loadCategories(dir string) []string {
 	return out
 }
 
+// Requirement is one report-must-contain line from a tier 4 expectation: a
+// set of alternative phrases, any one of which must appear in the conversion
+// report for the requirement to hold.
+type Requirement []string
+
+// loadRequirements reads the report-must-contain lines of an entry's
+// expectation.md. Each such line is one requirement and every requirement
+// must be satisfied; the backticked phrases on one line are alternatives, so
+// a line naming `truth` and `boolean` is satisfied by either word. A phrase
+// matches anywhere in any report entry's text, case-insensitively.
+func loadRequirements(dir string) []Requirement {
+	data, err := os.ReadFile(filepath.Join(dir, "expectation.md"))
+	if err != nil {
+		return nil
+	}
+	var out []Requirement
+	for _, line := range strings.Split(string(data), "\n") {
+		trimmed := strings.TrimSpace(line)
+		if !strings.HasPrefix(trimmed, "- report-must-contain:") {
+			continue
+		}
+		if terms := backticked(trimmed); len(terms) > 0 {
+			out = append(out, terms)
+		}
+	}
+	return out
+}
+
+// satisfiedBy reports whether any of the requirement's phrases appears in any
+// of the report texts. The texts are already lowercased.
+func (r Requirement) satisfiedBy(texts []string) bool {
+	for _, t := range texts {
+		for _, term := range r {
+			if strings.Contains(t, strings.ToLower(term)) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// describe names the requirement in a failure reason.
+func (r Requirement) describe() string {
+	quoted := make([]string, len(r))
+	for i, term := range r {
+		quoted[i] = "`" + term + "`"
+	}
+	return "the report never says " + strings.Join(quoted, " or ")
+}
+
 // backticked returns the words wrapped in single backticks in a line.
 func backticked(s string) []string {
 	var out []string
