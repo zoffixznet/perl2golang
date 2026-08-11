@@ -14,6 +14,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"unicode/utf8"
 
 	"perl2golang/internal/perl/ast"
 
@@ -28,6 +29,19 @@ import (
 
 // Version is the tool's version, stamped into generated documents.
 const Version = "0.1.0"
+
+// utf8ErrorOffset finds the first byte where the input stops being UTF-8.
+func utf8ErrorOffset(src []byte) int {
+	offset := 0
+	for offset < len(src) {
+		r, size := utf8.DecodeRune(src[offset:])
+		if r == utf8.RuneError && size <= 1 {
+			break
+		}
+		offset += size
+	}
+	return offset
+}
 
 // Options configure one conversion.
 type Options struct {
@@ -104,6 +118,16 @@ func Convert(src []byte, opts Options) (result *Result, err error) {
 				"this is a bug in perl2golang; please report it with the input that caused it", opts.Path, r)
 		}
 	}()
+
+	// Source in another encoding cannot go through the pipeline: the bytes
+	// would be copied into Go string literals the Go toolchain rejects as
+	// illegal UTF-8, twenty steps from the actual problem. The CLI refuses
+	// such input at its own front door; this is the same refusal for every
+	// other caller, phrased from the same facts.
+	if !utf8.Valid(src) {
+		return nil, fmt.Errorf("%s is not valid UTF-8 at byte %d; Perl source in another encoding (Latin-1 is common) must be transcoded to UTF-8 before it can be converted",
+			displayPath(opts.Path), utf8ErrorOffset(src))
+	}
 
 	name := opts.Name
 	if name == "" {
