@@ -182,6 +182,9 @@ const (
 	// HashSliceDelete: `delete @h{...}` removes several keys and answers with
 	// the values it removed.
 	HashSliceDelete Code = "P2G2532"
+	// DeleteTargetShape: the container a delete removes from has no lowering
+	// rule.
+	DeleteTargetShape Code = "P2G2534"
 	// AssignTargetShape: the left side of an assignment has no lowering rule.
 	AssignTargetShape Code = "P2G2540"
 	// MutateWhileIterating: a collection is modified inside its own loop.
@@ -990,6 +993,14 @@ var catalogue = map[Code]Entry{
 		Advice:    "nothing to change: the loop is what the one-line Perl was doing",
 		Cost:      "the removal is a loop, because Go's delete takes one key and returns nothing",
 		Converted: "the emitted code reads each value out before deleting its key",
+		Concepts:  []string{"nil-slices-vs-nil-maps"},
+	},
+	DeleteTargetShape: {
+		Severity:  report.Refuse,
+		Message:   "the container this `delete` removes from has no rule in the converter",
+		Short:     "delete target has no rule",
+		Advice:    "remove the entry by hand: Go's built-in `delete(m, k)` for a map, `os.Unsetenv` for the environment",
+		Converted: "the delete is not converted; the statement marks itself and removes nothing",
 		Concepts:  []string{"nil-slices-vs-nil-maps"},
 	},
 	AssignTargetShape: {

@@ -1835,6 +1835,21 @@ func (l *Lowerer) deleteValue(n *ast.Call) (ir.Expr, bool) {
 	if !ok {
 		return nil, false
 	}
+	if v, isVar := hi.Base.(*ast.Var); isVar && !hi.Arrow && v.Sigil == '$' && v.Name == "ENV" {
+		k := l.toStr(l.expr(hi.Key), hi.Key)
+		name := l.tmp("removed")
+		decl := assign(":=", []ir.Expr{ir.NewIdent(name, ir.TString)},
+			[]ir.Expr{call("os", "os", "Getenv", ir.TString, k)})
+		l.setProv(decl, n)
+		l.note(decl, "Perl's delete answers with the value it removed, and the "+
+			"environment has no one-call form for that in Go: the value is read "+
+			"first, then the variable is removed with os.Unsetenv.")
+		l.emit(decl)
+		unset := exprStmt(call("os", "os", "Unsetenv", ir.TVoid, k))
+		l.setProv(unset, n)
+		l.emit(unset)
+		return ir.NewIdent(name, ir.TString), true
+	}
 	m, key, elem := l.hashParts(hi)
 	if m == nil || key == nil {
 		return nil, false
@@ -1856,19 +1871,24 @@ func (l *Lowerer) deleteValue(n *ast.Call) (ir.Expr, bool) {
 func (l *Lowerer) deleteCall(n *ast.Call) []ir.Stmt {
 	args := flatten(argList(n))
 	if len(args) != 1 {
-		return nil
+		return l.deleteRefusal(n)
 	}
 	if sl, isSlice := args[0].(*ast.Slice); isSlice {
-		sts, _, _ := l.deleteSlice(sl, n, false)
-		return sts
+		if sts, _, ok := l.deleteSlice(sl, n, false); ok {
+			return sts
+		}
+		return l.deleteRefusal(n)
 	}
 	hi, ok := args[0].(*ast.HashIndex)
 	if !ok {
-		return nil
+		return l.deleteRefusal(n)
+	}
+	if st, isEnv := l.envUnset(hi, n); isEnv {
+		return []ir.Stmt{st}
 	}
 	m, key, _ := l.hashParts(hi)
 	if m == nil || key == nil {
-		return nil
+		return l.deleteRefusal(n)
 	}
 	st := exprStmt(ir.CallOf(ir.NewIdent("delete", nil), ir.TVoid, m, key))
 	l.setProv(st, n)
@@ -1876,6 +1896,34 @@ func (l *Lowerer) deleteCall(n *ast.Call) []ir.Stmt {
 		"that is not there is not an error, and delete returns nothing, where Perl's "+
 		"returns the removed value.")
 	return []ir.Stmt{st}
+}
+
+// envUnset lowers `delete $ENV{NAME}`. Removing a key from the environment
+// hash removes the variable from the process environment, which Go says with
+// os.Unsetenv.
+func (l *Lowerer) envUnset(hi *ast.HashIndex, n ast.Node) (ir.Stmt, bool) {
+	v, ok := hi.Base.(*ast.Var)
+	if !ok || hi.Arrow || v.Sigil != '$' || v.Name != "ENV" {
+		return nil, false
+	}
+	k := l.toStr(l.expr(hi.Key), hi.Key)
+	st := exprStmt(call("os", "os", "Unsetenv", ir.TVoid, k))
+	l.setProv(st, n)
+	l.note(st, "Deleting a key from %ENV removes the variable from the process "+
+		"environment. Go's word for that is os.Unsetenv; like Setenv it returns an "+
+		"error, unread here as it was in the original.")
+	return st, true
+}
+
+// deleteRefusal marks a delete whose target has no lowering rule. Dropping
+// the statement would leave the entry in place with nothing saying so, which
+// is the one kind of wrong this tool must never be.
+func (l *Lowerer) deleteRefusal(n *ast.Call) []ir.Stmt {
+	return []ir.Stmt{l.todoStmt(n, "P2G2534", "delete",
+		"delete target has no rule",
+		"The container this delete removes from has no rule in the converter, so nothing was removed.",
+		"Remove the entry by hand: Go's built-in delete(m, k) for a map, os.Unsetenv for the environment.",
+		"nil-slices-vs-nil-maps")}
 }
 
 // deleteSlice lowers `delete @h{...}`, which removes several keys at once and
