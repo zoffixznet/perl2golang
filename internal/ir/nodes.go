@@ -1,6 +1,9 @@
 package ir
 
-import "strings"
+import (
+	"strconv"
+	"strings"
+)
 
 // File is one emitted Go source file.
 type File struct {
@@ -515,7 +518,17 @@ func IntLit(text string) *Lit { return &Lit{typed: typed{T: TInt}, Kind: LitInt,
 // an untyped constant from how it is written: `x := 0` declares an int and
 // `x := 0.0` declares a float64, and a float literal that prints as `0` would
 // quietly produce the wrong one.
+//
+// A hex, octal or binary spelling is re-spelled in decimal first. Go has no
+// plain hex float: `0xFF.0` needs a p exponent to parse at all, and `0xEE`
+// left alone would type as an int, so the radix cannot survive the trip.
 func FloatLit(text string) *Lit {
+	if lower := strings.ToLower(text); strings.HasPrefix(lower, "0x") ||
+		strings.HasPrefix(lower, "0o") || strings.HasPrefix(lower, "0b") {
+		if n, err := strconv.ParseUint(text, 0, 64); err == nil {
+			text = strconv.FormatUint(n, 10)
+		}
+	}
 	if text != "" && !strings.ContainsAny(text, ".eEpP") && text != "0" {
 		text += ".0"
 	} else if text == "0" {
