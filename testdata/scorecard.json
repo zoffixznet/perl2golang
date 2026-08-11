@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T20:42:21Z",
+  "recorded": "2026-08-15T20:48:03Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -5800,10 +5800,7 @@
         "refusals": 0,
         "approximations": 2,
         "crashes": 0
-      },
-      "notes": [
-        "the directory has a stdin file but the manifest says it has none"
-      ]
+      }
     },
     {
       "tier": "tier2",
@@ -8872,10 +8869,7 @@
         "refusals": 0,
         "approximations": 2,
         "crashes": 0
-      },
-      "notes": [
-        "the directory has a files directory but the manifest says it has none"
-      ]
+      }
     },
     {
       "tier": "domain",
@@ -9792,9 +9786,5 @@
         "crashes": 0
       }
     }
-  ],
-  "notes": [
-    "tier2/98-reads-of-every-shape: the directory has a stdin file but the manifest says it has none",
-    "tier4/41-local-reaches-a-called-sub: the directory has a files directory but the manifest says it has none"
   ]
 }
