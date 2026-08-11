@@ -93,13 +93,14 @@ func TestLoadManifestFields(t *testing.T) {
 func TestLoadFixtureBelievesTheDirectory(t *testing.T) {
 	root := filepath.Join("testdata", "fixture")
 	tests := []struct {
-		name      string
-		entry     Entry
-		wantStdin string
-		wantArgs  []string
-		wantExit  int
-		wantErr   bool
-		wantNotes []string
+		name       string
+		entry      Entry
+		wantStdin  string
+		wantArgs   []string
+		wantExit   int
+		wantErr    bool
+		wantNotes  []string
+		wantVerify bool
 	}{
 		{
 			name: "an entry that matches its manifest row has nothing to say",
@@ -107,6 +108,11 @@ func TestLoadFixtureBelievesTheDirectory(t *testing.T) {
 				HasStdin: true, ExpectedExit: 2, Deterministic: true},
 			wantStdin: "fed in\n",
 			wantExit:  2,
+		},
+		{
+			name:       "a verify.pl beside the program is noticed",
+			entry:      Entry{Tier: "tier4", Name: "withverify", Path: "withverify"},
+			wantVerify: true,
 		},
 		{
 			name: "the files win when the manifest disagrees",
@@ -159,6 +165,9 @@ func TestLoadFixtureBelievesTheDirectory(t *testing.T) {
 			}
 			if f.ExpectedExit != tt.wantExit {
 				t.Errorf("expected exit = %d, want %d", f.ExpectedExit, tt.wantExit)
+			}
+			if f.HaveVerify != tt.wantVerify {
+				t.Errorf("HaveVerify = %v, want %v", f.HaveVerify, tt.wantVerify)
 			}
 			if len(f.Disagreements) != len(tt.wantNotes) {
 				t.Fatalf("disagreements = %v, want %d of them", f.Disagreements, len(tt.wantNotes))

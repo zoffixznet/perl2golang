@@ -2,6 +2,7 @@ package score
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -285,7 +286,7 @@ func (r *runner) runEntry(ctx context.Context, e Entry) EntryResult {
 	// equivalence.
 	clean, annotated := notApplicable(), notApplicable()
 	if e.Kind != KindHonestFailure || contains(res.Categories, CatConvertVerify) {
-		clean, annotated = r.equivalence(ctx, e, fixture, compiled, bins, &res)
+		clean, annotated = r.equivalence(ctx, e, fixture, conv, compiled, bins, &res)
 	}
 
 	if e.Kind == KindHonestFailure {
@@ -389,7 +390,7 @@ func (r *runner) goBuild(ctx context.Context, dir, out, pkg string) (string, err
 }
 
 // equivalence runs the Perl and both generated programs and compares them.
-func (r *runner) equivalence(ctx context.Context, e Entry, f *Fixture, compiled StageResult, bins *binaries, res *EntryResult) (clean, annotated StageResult) {
+func (r *runner) equivalence(ctx context.Context, e Entry, f *Fixture, conv *convert.Result, compiled StageResult, bins *binaries, res *EntryResult) (clean, annotated StageResult) {
 	switch {
 	case r.opts.Short:
 		s := skip("equivalence was not checked in short mode")
@@ -409,7 +410,15 @@ func (r *runner) equivalence(ctx context.Context, e Entry, f *Fixture, compiled 
 	case !e.Deterministic || !f.HaveStdout:
 		// An entry whose stdout is different every run cannot be
 		// compared byte for byte, and calling the exit status alone a
-		// match would be scoring a weaker check as a pass.
+		// match would be scoring a weaker check as a pass. Such an entry
+		// supplies a verify.pl instead, and is checked against its own
+		// invariants; without one, nothing about it can be checked at
+		// all, which is a hole in the corpus worth a note.
+		if f.HaveVerify {
+			return r.oracleEquivalence(ctx, f, conv, bins, res)
+		}
+		res.Notes = append(res.Notes,
+			"the entry's stdout is not reproducible and it has no verify.pl, so no run of it can be checked")
 		s := skip("the entry's stdout is not reproducible run to run")
 		return s, s
 	}
@@ -450,6 +459,120 @@ func (r *runner) equivalence(ctx context.Context, e Entry, f *Fixture, compiled 
 		return pass()
 	}
 	return run("clean", bins.clean, "the clean program"), run("annotated", bins.annotated, "the annotated program")
+}
+
+// oracleRuns is how many times each program is run past an entry's verify.pl.
+// The oracle checks invariants within one run of a program whose output is
+// legitimately different every run, and an invariant that only holds by luck
+// can hold for one run; five runs make a lucky pass rare enough that the
+// committed scorecard does not flap.
+const oracleRuns = 5
+
+// oracleEquivalence judges the generated programs by the entry's own
+// verify.pl instead of a byte diff, for an entry whose output is legitimately
+// different every run.
+//
+// The oracle reads one run's stdout on its standard input. Checking a
+// generated program it also receives the path to the conversion report and to
+// the generated main.go, so it can insist on a report entry or reject a shape
+// of code; checking perl's own output it receives no arguments. Exit 0 is a
+// pass, and anything the oracle says on stderr becomes the reason.
+func (r *runner) oracleEquivalence(ctx context.Context, f *Fixture, conv *convert.Result, bins *binaries, res *EntryResult) (clean, annotated StageResult) {
+	reportPath := filepath.Join(bins.dir, "report.json")
+	data, err := json.MarshalIndent(conv.Report, "", "  ")
+	if err != nil {
+		s := fail("the conversion report would not serialise: " + err.Error())
+		return s, s
+	}
+	if err := os.WriteFile(reportPath, data, 0o644); err != nil {
+		s := fail("could not write the conversion report for verify.pl: " + err.Error())
+		return s, s
+	}
+	mainGo := filepath.Join(bins.dir, "build", "main.go")
+
+	baseline, err := snapshot(f.Dir)
+	if err != nil {
+		s := fail("could not read the entry directory: " + err.Error())
+		return s, s
+	}
+
+	// The oracle has to accept what perl itself prints before its word
+	// counts against a conversion; one that rejects the original is a broken
+	// entry, not a broken conversion.
+	perlOut, _, err := r.runIn(ctx, bins.dir, "perl", f, "perl", append([]string{"input.pl"}, f.Args...), baseline)
+	switch {
+	case err != nil:
+		s := fail(err.Error())
+		return s, s
+	case perlOut.TimedOut:
+		s := fail("perl ran out of time")
+		return s, s
+	case perlOut.Err != nil:
+		s := fail("perl would not run: " + perlOut.Err.Error())
+		return s, s
+	}
+	if why, ok := r.oracle(ctx, bins.dir, "perl", perlOut.Stdout, nil); !ok {
+		res.Notes = append(res.Notes, "the entry's verify.pl rejects what perl itself prints: "+steady(why))
+		s := skip("the entry's own check rejects what perl prints, which makes the entry broken rather than the conversion")
+		return s, s
+	}
+
+	args := []string{reportPath, mainGo}
+	run := func(sub, bin, label string) StageResult {
+		for i := 0; i < oracleRuns; i++ {
+			out, _, err := r.runIn(ctx, bins.dir, sub, f, bin, f.Args, baseline)
+			if err != nil {
+				return fail(err.Error())
+			}
+			if sub == "clean" && panicked(out) && res.Quality.Crashes == 0 {
+				res.Quality.Crashes++
+				res.Quality.Panic = panicLine(out)
+			}
+			switch {
+			case out.TimedOut:
+				return fail(label + " ran out of time")
+			case out.Err != nil:
+				return fail(label + " would not run: " + out.Err.Error())
+			case out.Exit != perlOut.Exit:
+				return fail(fmt.Sprintf("exit status %d, wanted %d", out.Exit, perlOut.Exit))
+			}
+			if why, ok := r.oracle(ctx, bins.dir, sub, out.Stdout, args); !ok {
+				return fail("the entry's check rejects what " + label + " prints: " + why)
+			}
+		}
+		return pass()
+	}
+	return run("clean", bins.clean, "the clean program"), run("annotated", bins.annotated, "the annotated program")
+}
+
+// oracle feeds one run's stdout to the entry's verify.pl and returns its
+// verdict. It runs in the same directory the program ran in, so anything the
+// program wrote is there to inspect.
+func (r *runner) oracle(ctx context.Context, root, sub string, stdout []byte, args []string) (why string, ok bool) {
+	out := runProgram(ctx, runSpec{
+		Dir:     filepath.Join(root, "work-"+sub),
+		Name:    "perl",
+		Args:    append([]string{"verify.pl"}, args...),
+		Stdin:   stdout,
+		Timeout: r.opts.Timeout,
+	})
+	switch {
+	case out.TimedOut:
+		return "the entry's verify.pl ran out of time", false
+	case out.Err != nil:
+		return "the entry's verify.pl would not run: " + out.Err.Error(), false
+	case out.Exit == 0:
+		return "", true
+	}
+	// Only the first complaint is recorded, with no marker for how many
+	// followed it: which invariants fail can depend on how the run's random
+	// values came out, and a recorded reason that grew an ellipsis whenever a
+	// second complaint happened to fire would change the scorecard on its own.
+	why = strings.TrimSpace(strings.SplitN(string(out.Stderr), "\n", 2)[0])
+	if why == "" {
+		why = fmt.Sprintf("verify.pl exited %d and said nothing", out.Exit)
+	}
+	return truncate(why, 160), false
 }
 
 // runIn gives one program a private copy of the entry's directory and runs it

@@ -44,6 +44,7 @@ NN-short-slug/
   expected_stdout   byte-exact stdout
   expected_exit     exit status, a bare integer plus a newline
   allow_stderr      present only when writing to stderr is intentional
+  verify.pl         invariant oracle for output that differs run to run
   notes.md          what the entry exercises and what it costs to convert
   expectation.md    tier4 only: what the tool must report about this file
 ```
@@ -85,8 +86,44 @@ them, and no program depends on where it is checked out.
 
 One entry is exempt: `tier4/25-hash-order` prints hash keys in Perl's
 per-process random order on purpose, so it has an `expected_exit` but no
-`expected_stdout`. It is checked against invariants described in its
-`expectation.md` instead of a byte diff.
+`expected_stdout`. It carries a `verify.pl` instead and is checked against
+invariants rather than a byte diff.
+
+## verify.pl: the invariant oracle
+
+An entry whose output is legitimately different every run cannot record an
+`expected_stdout`, and without one nothing about its behaviour could be
+checked at all. Such an entry supplies a `verify.pl` beside its program, and
+the harness judges each run by it instead of by a byte diff. Like `cmd` and
+`stdin` the file's presence is the switch; nothing matches on the entry's
+name.
+
+The contract:
+
+- `verify.pl` receives one run's stdout on its standard input.
+- Checking a generated program, it also receives two arguments: the path to
+  the conversion report as JSON, and the path to the generated `main.go`. So
+  it can insist the report admits something, or reject a shape of code.
+- Checking perl's own output, it receives no arguments and must judge the
+  output alone.
+- It runs with the working directory the program ran in, so files the
+  program wrote are there to inspect.
+- Exit 0 is a pass. Anything else is a failure, and the first line the
+  oracle printed to stderr becomes the recorded reason.
+- Complaints must not quote values that differ run to run, such as the key
+  order that made the entry need an oracle at all: the recorded reason has
+  to read the same on every run that fails the same way, or the saved
+  scorecard changes on its own. Put deterministic checks (the report, the
+  generated code) before the ones about the run's own output, name the
+  broken invariant, and leave the values to a human rerunning the program.
+
+The harness checks the oracle against perl's own output first; an oracle
+that rejects what perl prints marks the entry broken (a corpus note, like
+recorded-output drift), never the conversion. Each generated program is then
+run several times and every run must satisfy the oracle, because an
+invariant that only holds by luck can hold for one run. The oracle replaces
+the stdout and stderr comparison but not the exit-status check, which is
+still made against what perl's run exited with.
 
 ## Tier 4: honest failure
 
@@ -173,4 +210,6 @@ records `expected_stdout` and `expected_exit` by running perl. Then:
 
 An entry that cannot be made deterministic does not belong in tiers 1-3 or
 `domain`. If the non-determinism is the point, it belongs in `tier4/` with an
-`expectation.md` describing the invariants to check instead of a byte diff.
+`expectation.md` saying so and a `verify.pl` checking the invariants that
+replace the byte diff, because an entry with neither an `expected_stdout`
+nor an oracle cannot be checked at all and the scorecard says so in a note.

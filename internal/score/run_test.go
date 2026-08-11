@@ -365,11 +365,14 @@ func TestRunMiniCorpus(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if len(sc.Entries) != 2 {
-		t.Fatalf("scored %d entries, want 2", len(sc.Entries))
+	if len(sc.Entries) != 3 {
+		t.Fatalf("scored %d entries, want 3", len(sc.Entries))
 	}
-	if sc.Entries[0].ID() != "tier1/01-hello" || sc.Entries[1].ID() != "tier4/01-eval" {
-		t.Fatalf("entries are not in tier order: %s, %s", sc.Entries[0].ID(), sc.Entries[1].ID())
+	wantOrder := []string{"tier1/01-hello", "tier4/01-eval", "tier4/02-hash-order"}
+	for i, want := range wantOrder {
+		if sc.Entries[i].ID() != want {
+			t.Fatalf("entry %d is %s, want %s", i, sc.Entries[i].ID(), want)
+		}
 	}
 	for _, e := range sc.Entries {
 		for _, s := range Stages() {
@@ -393,7 +396,9 @@ func TestRunMiniCorpus(t *testing.T) {
 	}
 	if haveTool("perl") && haveTool("go") {
 		// With both tools present every stage was actually measured, so a
-		// skip would mean the harness quietly gave up on one.
+		// skip would mean the harness quietly gave up on one. That includes
+		// the entry whose output differs run to run: its verify.pl is what
+		// keeps it measurable at all.
 		for _, e := range sc.Entries {
 			for _, s := range Stages() {
 				if got := e.Stage(s); got.Outcome == Skip {
@@ -401,9 +406,17 @@ func TestRunMiniCorpus(t *testing.T) {
 				}
 			}
 		}
+		// The oracle entry's program satisfies its own invariants however the
+		// keys come out, so the honest stage must be a real pass, proving the
+		// verify.pl path ran rather than skipped.
+		oracle := sc.Entries[2]
+		if got := oracle.Stage(StageHonest); got.Outcome != Pass {
+			t.Errorf("%s honest = %s (%s), want a pass through its verify.pl",
+				oracle.ID(), got.Outcome, got.Reason)
+		}
 	}
-	if sc.Total.Entries != 2 {
-		t.Errorf("total entries = %d, want 2", sc.Total.Entries)
+	if sc.Total.Entries != 3 {
+		t.Errorf("total entries = %d, want 3", sc.Total.Entries)
 	}
 
 	// The scorecard must survive a trip through its own file, because that

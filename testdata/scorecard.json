@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T21:13:18Z",
+  "recorded": "2026-08-15T21:24:51Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -159,8 +159,8 @@
         },
         "honest": {
           "pass": 37,
-          "fail": 3,
-          "skip": 1
+          "fail": 4,
+          "skip": 0
         },
         "translated": {
           "pass": 26,
@@ -255,8 +255,8 @@
       },
       "honest": {
         "pass": 37,
-        "fail": 3,
-        "skip": 1
+        "fail": 4,
+        "skip": 0
       },
       "translated": {
         "pass": 220,
@@ -8437,8 +8437,8 @@
           "outcome": "n/a"
         },
         "honest": {
-          "outcome": "skip",
-          "reason": "convert-verify: the entry's stdout is not reproducible run to run"
+          "outcome": "fail",
+          "reason": "convert-verify: the entry's check rejects what the clean program prints: the report says nothing about iteration order reaching the output"
         },
         "translated": {
           "outcome": "pass"

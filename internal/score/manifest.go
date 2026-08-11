@@ -120,6 +120,10 @@ type Fixture struct {
 	ExpectedExit int
 	// AllowStderr reflects the entry's own allow_stderr marker file.
 	AllowStderr bool
+	// HaveVerify is true when the entry carries a verify.pl, the invariant
+	// oracle that stands in for a byte diff when the entry's output is
+	// legitimately different every run.
+	HaveVerify bool
 	// Disagreements lists the places where the entry's directory contradicts
 	// the manifest. The directory is believed; this is the note that says so.
 	Disagreements []string
@@ -200,6 +204,9 @@ func loadFixture(root string, e Entry) (*Fixture, error) {
 	} else if e.HasFiles {
 		f.note("the manifest promises a files directory that is not in the directory")
 	}
+
+	_, verifyErr := os.Stat(filepath.Join(dir, "verify.pl"))
+	f.HaveVerify = verifyErr == nil
 
 	_, statErr := os.Stat(filepath.Join(dir, "allow_stderr"))
 	f.AllowStderr = statErr == nil
