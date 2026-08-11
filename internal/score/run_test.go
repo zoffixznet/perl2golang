@@ -10,6 +10,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"perl2golang/internal/convert"
 )
 
 // The exec tests need a program that behaves exactly as they ask. Rather than
@@ -474,6 +476,28 @@ func TestRunMiniCorpus(t *testing.T) {
 	if d := sc.Compare(back); !d.Comparable || len(d.Changes) != 0 {
 		t.Errorf("a run compared against itself should show no change, got %+v", d)
 	}
+}
+
+func TestWithDeadline(t *testing.T) {
+	t.Run("a finished conversion is returned as it is", func(t *testing.T) {
+		res, err := withDeadline(context.Background(), time.Minute, func() (*convert.Result, error) {
+			return &convert.Result{Name: "done"}, nil
+		})
+		if err != nil || res == nil || res.Name != "done" {
+			t.Fatalf("got %+v, %v", res, err)
+		}
+	})
+	t.Run("a stuck conversion becomes a failure with a reason", func(t *testing.T) {
+		blocked := make(chan struct{})
+		defer close(blocked)
+		_, err := withDeadline(context.Background(), 50*time.Millisecond, func() (*convert.Result, error) {
+			<-blocked
+			return nil, nil
+		})
+		if err == nil || !strings.Contains(err.Error(), "ran out of time") {
+			t.Fatalf("err = %v, want a timeout with a reason", err)
+		}
+	})
 }
 
 func TestRunShortModeSkipsEquivalence(t *testing.T) {

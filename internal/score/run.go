@@ -23,6 +23,11 @@ import (
 const (
 	DefaultTimeout      = 5 * time.Second
 	DefaultBuildTimeout = 90 * time.Second
+	// DefaultConvertTimeout bounds one conversion. A corpus conversion takes
+	// well under a second, so a minute is two orders of magnitude of headroom;
+	// past it the converter is stuck, and one stuck entry must cost the run a
+	// failure with a reason, never the whole scorecard.
+	DefaultConvertTimeout = time.Minute
 )
 
 // Options configure one scorecard run.
@@ -44,6 +49,8 @@ type Options struct {
 	Timeout time.Duration
 	// BuildTimeout bounds one compile.
 	BuildTimeout time.Duration
+	// ConvertTimeout bounds one conversion.
+	ConvertTimeout time.Duration
 	// Progress, when set, is called once per finished entry from a single
 	// goroutine, in completion order.
 	Progress func(done, total int, r EntryResult)
@@ -68,6 +75,9 @@ func (o *Options) withDefaults() error {
 	}
 	if o.BuildTimeout <= 0 {
 		o.BuildTimeout = DefaultBuildTimeout
+	}
+	if o.ConvertTimeout <= 0 {
+		o.ConvertTimeout = DefaultConvertTimeout
 	}
 	return nil
 }
@@ -253,10 +263,15 @@ func (r *runner) runEntry(ctx context.Context, e Entry) EntryResult {
 	}
 
 	// Conversion. A failure here is a failure of every stage, because there
-	// is nothing further to measure.
-	conv, cerr := convert.Convert(fixture.Source, convert.Options{
-		Path:    "input.pl",
-		Modules: convert.FilesBeside(fixture.Dir),
+	// is nothing further to measure. The deadline is what keeps one stuck
+	// conversion from hanging the whole scorecard: an infinite loop anywhere
+	// in the converter would otherwise be invisible to the very measurement
+	// that exists to catch it.
+	conv, cerr := withDeadline(ctx, r.opts.ConvertTimeout, func() (*convert.Result, error) {
+		return convert.Convert(fixture.Source, convert.Options{
+			Path:    "input.pl",
+			Modules: convert.FilesBeside(fixture.Dir),
+		})
 	})
 	var class Classification
 	if cerr != nil {
@@ -301,6 +316,33 @@ func (r *runner) runEntry(ctx context.Context, e Entry) EntryResult {
 		set(StageHonest, notApplicable())
 	}
 	return finish()
+}
+
+// withDeadline runs one conversion under a time limit.
+//
+// The conversion is a plain function call with no context to cancel, so on a
+// timeout the goroutine running it is abandoned rather than stopped. That is
+// the acceptable cost: a stuck conversion holds one goroutine and one core
+// until the run exits, while the alternative holds the entire scorecard
+// forever.
+func withDeadline(ctx context.Context, d time.Duration, work func() (*convert.Result, error)) (*convert.Result, error) {
+	type answer struct {
+		res *convert.Result
+		err error
+	}
+	ch := make(chan answer, 1)
+	go func() {
+		res, err := work()
+		ch <- answer{res, err}
+	}()
+	select {
+	case a := <-ch:
+		return a.res, a.err
+	case <-ctx.Done():
+		return nil, fmt.Errorf("the run was interrupted before the conversion finished")
+	case <-time.After(d):
+		return nil, fmt.Errorf("the conversion ran out of time after %s", d)
+	}
 }
 
 // binaries are the two built programs, empty when nothing was built.
