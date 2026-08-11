@@ -411,6 +411,12 @@ const (
 	DirRead Code = "P2G6042"
 	// DirClosed: the directory was read in one call, so closedir was dropped.
 	DirClosed Code = "P2G6041"
+	// CloseArgv: `close ARGV` restarts the line counter, and the loop itself
+	// decides when to leave the file.
+	CloseArgv Code = "P2G6043"
+	// CloseDynamic: a close whose handle has no settled type asks the value
+	// at run time whether it can be closed.
+	CloseDynamic Code = "P2G6044"
 	// UnlinkReturnsError: `unlink` counts removals and `os.Remove` returns an
 	// error.
 	UnlinkReturnsError Code = "P2G6045"
@@ -1437,6 +1443,22 @@ var catalogue = map[Code]Entry{
 		Short:     "closedir was dropped",
 		Advice:    "nothing leaks: `os.ReadDir` closes the directory before it returns",
 		Converted: "the call is not emitted",
+	},
+	CloseArgv: {
+		Severity:  report.Warn,
+		Message:   "`close ARGV` restarts the line counter, and the generated loop decides for itself when to leave a file",
+		Short:     "the line counter restarts here",
+		Advice:    "to abandon the rest of a file, break out of the loop reading it",
+		Converted: "the emitted code sets the line counter back to zero",
+		Concepts:  []string{"io-reader-writer"},
+	},
+	CloseDynamic: {
+		Severity:  report.Warn,
+		Message:   "the handle being closed has no settled type, so the close asks the value whether it is closeable",
+		Short:     "closed if it turns out to be closeable",
+		Advice:    "give the variable holding the handle a type and the close becomes a direct call",
+		Converted: "the emitted helper asserts the value against `io.Closer`",
+		Concepts:  []string{"implicit-interfaces"},
 	},
 	UnlinkReturnsError: {
 		Severity:  report.Warn,

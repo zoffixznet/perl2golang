@@ -3267,5 +3267,29 @@
     "expected_exit": 0,
     "deterministic": true,
     "kind": "convert"
+  },
+  {
+    "tier": "tier2",
+    "name": "107-closing-every-kind-of-handle",
+    "path": "testdata/corpus/tier2/107-closing-every-kind-of-handle",
+    "args": [],
+    "has_stdin": false,
+    "has_files": false,
+    "allow_stderr": false,
+    "expected_exit": 0,
+    "deterministic": true,
+    "kind": "convert"
+  },
+  {
+    "tier": "tier2",
+    "name": "108-a-handle-passed-as-a-glob",
+    "path": "testdata/corpus/tier2/108-a-handle-passed-as-a-glob",
+    "args": [],
+    "has_stdin": false,
+    "has_files": false,
+    "allow_stderr": false,
+    "expected_exit": 0,
+    "deterministic": true,
+    "kind": "convert"
   }
 ]

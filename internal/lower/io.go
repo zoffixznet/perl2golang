@@ -270,23 +270,147 @@ func (l *Lowerer) closeGuarded(n *ast.Call, onFail ast.Expr) ([]ir.Stmt, bool) {
 }
 
 // closeCall lowers close.
+//
+// Which close this is depends on what the handle turned out to be. A file
+// closes; a pipe closes and waits for the program on the other end, leaving its
+// status in $?; the diamond's ARGV restarts the line counter; and a handle
+// whose type is only known while the program runs goes through a helper. None
+// of them may go missing, because a close that vanished is a file left open or
+// a status never collected.
 func (l *Lowerer) closeCall(n *ast.Call) []ir.Stmt {
 	args := flatten(argList(n))
 	if len(args) == 0 {
 		return nil
 	}
-	if b := l.handleBinding(args[0]); b != nil && b.Type.Equal(fileType) {
-		b.Closed = true
-		st := exprStmt(ir.CallOf(selector(ir.NewIdent(b.Go, fileType), "Close", nil), ir.TError))
+	if fh, ok := args[0].(*ast.FileHandle); ok {
+		switch fh.Name {
+		case "ARGV":
+			return l.closeArgv(n)
+		case "STDIN", "STDOUT", "STDERR":
+			return l.closeStandard(fh, n)
+		}
+	}
+	if b := l.handleBinding(args[0]); b != nil {
+		switch {
+		case b.Type.Equal(fileType):
+			b.Closed = true
+			st := exprStmt(ir.CallOf(selector(ir.NewIdent(b.Go, fileType), "Close", nil), ir.TError))
+			l.setProv(st, n)
+			l.note(st, "Close returns an error, because a buffered write can fail when "+
+				"the buffer is flushed. For a file that was only read the error is safe to "+
+				"ignore; for one that was written it is the last chance to notice that the "+
+				"data did not reach the disk.",
+				"errors-are-values")
+			return []ir.Stmt{st}
+		case b.Type.Equal(pipeType):
+			b.Closed = true
+			return l.closePipe(ir.NewIdent(b.Go, pipeType), n)
+		}
+	}
+	return l.closeValue(args[0], n)
+}
+
+// closePipe closes a pipe and collects the status of the program on the other
+// end, which is the half of a pipe close a file close does not have.
+func (l *Lowerer) closePipe(handle ir.Expr, n *ast.Call) []ir.Stmt {
+	st := exprStmt(ir.CallOf(selector(handle, "Close", nil), ir.TError))
+	l.setProv(st, n)
+	l.note(st, "Closing a pipe waits for the program at the other end, so this line "+
+		"is where the program's own running time is spent and where its exit status "+
+		"becomes known. A file close has nothing to wait for; this one does.",
+		"os-exec", "errors-are-values")
+	out := []ir.Stmt{st}
+
+	// $? is only worth writing when the program reads it. The binding exists
+	// by the second pass if the file mentions $? anywhere, whether above this
+	// close or below it.
+	if _, wanted := l.globalSeen["$?"]; wanted {
+		status := l.childStatus(n)
+		set := assign("=", []ir.Expr{l.identFor(status)},
+			[]ir.Expr{ir.CallOf(selector(handle, "Status", nil), ir.TInt)})
+		status.Writes++
+		l.setProv(set, n)
+		l.note(set, "Perl leaves the status of the program behind a closed pipe in $?, "+
+			"with the exit code in the high byte. Go keeps it on the handle, so it is "+
+			"read from there into the variable the lines below this one use.",
+			"os-exec")
+		out = append(out, set)
+	}
+	return out
+}
+
+// closeArgv lowers `close ARGV`, the diamond operator's own close.
+//
+// Its purpose in a real script is almost never to release a handle. It is the
+// line that makes `$.` count from one again in the next file, which is why it
+// is nearly always written as `close ARGV if eof`.
+func (l *Lowerer) closeArgv(n *ast.Call) []ir.Stmt {
+	counter := l.lineCounter(n)
+	st := assign("=", []ir.Expr{l.identFor(counter)}, []ir.Expr{ir.IntLit("0")})
+	counter.Writes++
+	l.setProv(st, n)
+	l.note(st, "Perl's line counter is shared by every handle and keeps counting "+
+		"across the files the diamond reads, so closing ARGV is how a script restarts "+
+		"the numbering at each file. The generated loop keeps that count in a variable "+
+		"of its own, and restarting it is an assignment.",
+		"io-reader-writer")
+	l.approximate(n, "P2G6043", "close ARGV",
+		"the line counter restarts and the file is left to the loop",
+		"`close ARGV` closes whichever input the diamond is reading, which restarts "+
+			"the line counter and abandons the rest of that file. The counter is reset "+
+			"here; the generated loop moves to the next file when the current one runs "+
+			"out, so the two agree for the usual `close ARGV if eof` and differ if the "+
+			"close was meant to skip the rest of a file.",
+		"To skip the rest of a file, break out of the loop that reads it.",
+		"io-reader-writer")
+	return []ir.Stmt{st}
+}
+
+// closeStandard lowers a close of one of the three standard streams.
+func (l *Lowerer) closeStandard(fh *ast.FileHandle, n *ast.Call) []ir.Stmt {
+	st := exprStmt(ir.CallOf(selector(l.fileHandleExpr(fh), "Close", nil), ir.TError))
+	l.setProv(st, n)
+	l.note(st, "The standard streams are ordinary *os.File values in Go, so closing "+
+		"one is the same call as closing any other file. A script that closes standard "+
+		"output usually does it to find out whether the last write reached the far end, "+
+		"and the error this returns is that answer.",
+		"errors-are-values")
+	return []ir.Stmt{st}
+}
+
+// closeValue lowers a close whose handle is an expression rather than a
+// declared handle: a field of an object, an element of a list of handles, a
+// value passed into a sub.
+func (l *Lowerer) closeValue(arg ast.Expr, n *ast.Call) []ir.Stmt {
+	x := l.scalar(arg)
+	if x == nil {
+		return nil
+	}
+	if t := typeOrAny(x); t != nil && (t.Equal(fileType) || t.Equal(pipeType)) {
+		st := exprStmt(ir.CallOf(selector(x, "Close", nil), ir.TError))
 		l.setProv(st, n)
-		l.note(st, "Close returns an error, because a buffered write can fail when "+
-			"the buffer is flushed. For a file that was only read the error is safe to "+
-			"ignore; for one that was written it is the last chance to notice that the "+
-			"data did not reach the disk.",
+		l.note(st, "The handle came out of a container rather than from an open on "+
+			"this line, and it is still a file: Go carries the type along with the value, "+
+			"so the close is the same call it would be anywhere else.",
 			"errors-are-values")
 		return []ir.Stmt{st}
 	}
-	return nil
+	st := exprStmt(l.helperCall(hCloseHandle, ir.TBool, x))
+	l.setProv(st, n)
+	l.note(st, "What this handle holds is not known until the program runs, so the "+
+		"close asks the value whether it can be closed. That question is Go's type "+
+		"assertion against io.Closer, which is how a program works with a value it "+
+		"knows only by what it can do.",
+		"implicit-interfaces", "type-assertions-and-switches")
+	l.approximate(n, "P2G6044", "close on a handle of unknown type",
+		"the value is closed if it turns out to be closeable",
+		"The value being closed did not settle on a handle type at conversion time, "+
+			"so the generated code asks at run time whether it implements io.Closer and "+
+			"closes it if it does.",
+		"Give the variable holding the handle a type, or open it where it is used, "+
+			"and the close becomes a direct call.",
+		"implicit-interfaces")
+	return []ir.Stmt{st}
 }
 
 // ---------------------------------------------------------------------------

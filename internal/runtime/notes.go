@@ -460,6 +460,11 @@ var notes = map[string]string{
 		"gives \".1\". Matching a pattern against the end of the name is how " +
 		"you say which extension you meant.",
 
+	"closeHandle": "A type assertion against io.Closer is how Go asks a " +
+		"value whether it can be closed. Nothing had to declare that it " +
+		"implements the interface: having a Close method is the whole of it, " +
+		"which is why files, pipes and connections all qualify.",
+
 	"dirNames": "Reading a directory hands back entries rather than names, " +
 		"and it never includes \".\" or \"..\", so a filter written for those " +
 		"two silently does nothing. The order is sorted, which the system call " +

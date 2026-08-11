@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"perl2golang/internal/gogen"
 	"perl2golang/internal/ir"
 	"perl2golang/internal/perl/parser"
 )
@@ -205,11 +206,15 @@ func codesOf(res *Result) []string {
 
 // TestNoStatementVanishesSilently covers the safety net under the lowering: a
 // statement that produces no code must leave a diagnostic, because a statement
-// that simply disappears is a silent change of meaning. The close of a
-// non-handle is a statement no rule produces anything for, so the net has to
-// catch it.
+// that simply disappears is a silent change of meaning.
+//
+// The statement used here is the last index of an anonymous array, read and
+// thrown away, which no lowering rule produces anything for. If a later round
+// teaches the lowering a rule for it, this test needs another statement the
+// lowering cannot translate; weakening it instead would leave the net
+// untested.
 func TestNoStatementVanishesSilently(t *testing.T) {
-	src := []byte("my $x = 1;\nclose $x;\nprint \"$x\\n\";\n")
+	src := []byte("my $x = 1;\n$#{[]};\nprint \"$x\\n\";\n")
 	res := Lower(parser.Parse(src), src, Options{File: "t.pl", Program: "t", Module: "t"})
 	for _, e := range res.Report.Entries {
 		if e.Code == "P2G3598" {
@@ -220,6 +225,46 @@ func TestNoStatementVanishesSilently(t *testing.T) {
 		}
 	}
 	t.Errorf("a statement lowered to nothing and nothing was reported; got %v", codesOf(res))
+}
+
+// TestEveryCloseSaysSomething covers the four closes, which look identical in
+// Perl and are four different operations underneath. Each has to leave code
+// behind: a close that lowered to nothing is a file left unflushed or a child
+// status never collected, and neither failure announces itself.
+func TestEveryCloseSaysSomething(t *testing.T) {
+	tests := []struct {
+		name string
+		perl string
+		want string
+	}{
+		{"a file", "open my $fh, '<', 'f' or die; close $fh;", "fh.Close()"},
+		{"a pipe", "open my $p, '-|', 'ls' or die; my @l = <$p>; close $p;", "p.Close()"},
+		{"the status a pipe close leaves",
+			"open my $p, '-|', 'ls' or die; my @l = <$p>; close $p; print $? >> 8;",
+			"= p.Status()"},
+		{"standard output", "close STDOUT;", "os.Stdout.Close()"},
+		{"the diamond's own handle", "while (<>) { print; close ARGV if eof; }", "lineNo = 0"},
+		{"a handle of no fixed type", "my $x = 1; close $x;", "closeHandle(x)"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			src := []byte(tt.perl)
+			res := Lower(parser.Parse(src), src, Options{File: "t.pl", Program: "t", Module: "t"})
+			var got strings.Builder
+			for _, st := range res.TopLevel {
+				got.WriteString(gogen.RenderStmt(gogen.Clean, st))
+				got.WriteString("\n")
+			}
+			if !strings.Contains(got.String(), tt.want) {
+				t.Errorf("the close did not emit %q; got:\n%s", tt.want, got.String())
+			}
+			for _, e := range res.Report.Entries {
+				if e.Code == "P2G3598" {
+					t.Errorf("a statement vanished at line %d: %q", e.Line, e.Perl)
+				}
+			}
+		})
+	}
 }
 
 // TestHonestVanishingIsNotFlagged covers the statements that are allowed to

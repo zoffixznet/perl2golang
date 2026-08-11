@@ -1,0 +1,5 @@
+written through a glob reference
+a handle passed to a sub
+the sub wrote 24 characters
+the file holds: a lexical handle passed the same way
+both references name one handle: yes

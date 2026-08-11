@@ -1,6 +1,6 @@
 # Tier 2 corpus - script-shaped Perl programs
 
-106 entries. Each is a self-contained, realistic Perl script of the kind a
+108 entries. Each is a self-contained, realistic Perl script of the kind a
 sysadmin or data wrangler actually writes, not a snippet.
 
 ## Layout of an entry
@@ -153,6 +153,8 @@ Two entries exit non-zero on purpose: **27** (65) and **32** (1). The rest exit 
 | 104 | `104-a-number-beside-a-hash` | Mixes of shape rather than of scalar kind, which honestly stay dynamic | a count beside a hashref in one hash, strings and hashrefs alternating in one list, `ref` dispatch |
 | 105 | `105-an-env-var-deleted` | %ENV edited in place: set, delete with the value kept, read through a default | `$ENV{K} = v`, `my $x = delete $ENV{K}`, `// '(gone)'` after removal, delete of an unset name |
 | 106 | `106-exists-on-an-env-var` | exists on %ENV for values "0", empty, unset, and deleted | `exists $ENV{K}` vs truthiness, set-to-"0" and set-to-empty both existing, delete then exists |
+| 107 | `107-closing-every-kind-of-handle` | Every kind of close a script performs, and what each one is really for | `close` on a written file checked with `or die`, on a read file, on a pipe leaving `$?`, on handles walked out of an array |
+| 108 | `108-a-handle-passed-as-a-glob` | The pre-lexical way of passing a handle around, which module code still uses | `\*STDOUT`, a glob reference passed to a sub, `print {$fh}` through it, a lexical handle through the same sub |
 
 ## Coverage map
 
@@ -162,7 +164,7 @@ Two entries exit non-zero on purpose: **27** (65) and **32** (1). The rest exit 
 - **Autovivification (load-bearing)** - **09, 10, 62, 63**; incidental in 07, 22, 24, 29
 - **Closures** - 11, 12, 25, 54, 55, 64, 65; complex `map`/`grep`/`sort` blocks in 13
 - **Regex** - 14, 15, 16, 17, 18; applied in 23, 28, 29, 30
-- **File I/O** - 19, 20, 21, 22; STDIN in 23 and 28; `<>` in 24
+- **File I/O** - 19, 20, 21, 22, 107, 108; STDIN in 23 and 28; `<>` in 24
 - **Command line** - 23, 24, 25, 26, 27
 - **Text-processing shapes** - 06, 28, 29, 30 (and the filter in 23)
 - **Error handling** - 31, 32; `die` as an assertion in 30
@@ -178,7 +180,7 @@ Two entries exit non-zero on purpose: **27** (65) and **32** (1). The rest exit 
 - **Time** - 47, 48
 - **Serialisation** - 51, 52, 53
 - **Callbacks as values** - 54, 55; also 12, 25
-- **Processes** - 57, 67, 68
+- **Processes** - 57, 67, 68; the status a pipe close leaves in 107
 - **Regex in list context** - 58, 59, 83, 84
 - **Option blocks** - 26, 37, 60, 61; manual parsing in 25
 - **Absence: undef against missing** - 71, 72, 78; the tier1 study of it in 45

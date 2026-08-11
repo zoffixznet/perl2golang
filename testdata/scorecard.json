@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-15T22:21:03Z",
+  "recorded": "2026-08-15T22:49:13Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -55,46 +55,46 @@
     },
     {
       "tier": "tier2",
-      "entries": 106,
+      "entries": 108,
       "stages": {
         "compiled": {
-          "pass": 105,
-          "fail": 1,
+          "pass": 106,
+          "fail": 2,
           "skip": 0
         },
         "emitted": {
-          "pass": 106,
+          "pass": 108,
           "fail": 0,
           "skip": 0
         },
         "equivalent": {
-          "pass": 75,
+          "pass": 77,
           "fail": 31,
           "skip": 0
         },
         "translated": {
-          "pass": 96,
-          "fail": 10,
+          "pass": 100,
+          "fail": 8,
           "skip": 0
         },
         "typed": {
           "pass": 74,
-          "fail": 32,
+          "fail": 34,
           "skip": 0
         }
       },
       "equivalent_annotated": {
-        "pass": 75,
+        "pass": 77,
         "fail": 31,
         "skip": 0
       },
       "quality": {
-        "todos": 24,
-        "symbols": 1569,
-        "symbols_typed": 1494,
-        "refusals": 24,
-        "approximations": 534,
-        "dropped": 7,
+        "todos": 17,
+        "symbols": 1598,
+        "symbols_typed": 1520,
+        "refusals": 17,
+        "approximations": 540,
+        "dropped": 0,
         "crashes": 0
       }
     },
@@ -236,20 +236,20 @@
   ],
   "total": {
     "tier": "TOTAL",
-    "entries": 256,
+    "entries": 258,
     "stages": {
       "compiled": {
-        "pass": 252,
-        "fail": 4,
+        "pass": 253,
+        "fail": 5,
         "skip": 0
       },
       "emitted": {
-        "pass": 256,
+        "pass": 258,
         "fail": 0,
         "skip": 0
       },
       "equivalent": {
-        "pass": 166,
+        "pass": 168,
         "fail": 49,
         "skip": 0
       },
@@ -259,38 +259,38 @@
         "skip": 0
       },
       "translated": {
-        "pass": 221,
-        "fail": 35,
+        "pass": 225,
+        "fail": 33,
         "skip": 0
       },
       "typed": {
         "pass": 167,
-        "fail": 89,
+        "fail": 91,
         "skip": 0
       }
     },
     "equivalent_annotated": {
-      "pass": 166,
+      "pass": 168,
       "fail": 49,
       "skip": 0
     },
     "quality": {
-      "todos": 116,
-      "symbols": 4061,
-      "symbols_typed": 3802,
-      "refusals": 117,
-      "approximations": 1243,
-      "dropped": 7,
+      "todos": 109,
+      "symbols": 4090,
+      "symbols_typed": 3828,
+      "refusals": 110,
+      "approximations": 1249,
+      "dropped": 0,
       "crashes": 0
     }
   },
   "quality": {
-    "todos": 116,
-    "symbols": 4061,
-    "symbols_typed": 3802,
-    "refusals": 117,
-    "approximations": 1243,
-    "dropped": 7,
+    "todos": 109,
+    "symbols": 4090,
+    "symbols_typed": 3828,
+    "refusals": 110,
+    "approximations": 1249,
+    "dropped": 0,
     "crashes": 0
   },
   "entries": [
@@ -2700,6 +2700,85 @@
     },
     {
       "tier": "tier2",
+      "name": "107-closing-every-kind-of-handle",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "pass"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "1 variable left dynamic out of 19"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "pass"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 19,
+        "symbols_typed": 18,
+        "refusals": 0,
+        "approximations": 4,
+        "dropped": 0,
+        "crashes": 0
+      }
+    },
+    {
+      "tier": "tier2",
+      "name": "108-a-handle-passed-as-a-glob",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "fail",
+          "reason": "the generated Go does not compile: ./main.go:16:13: cannot use out (variable of type *any) as io.Writer value in argument to fmt.Fprint: *any does not implement io.Writer (type *any is pointer..."
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "fail",
+          "reason": "the generated program did not compile"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "fail",
+          "reason": "2 variables left dynamic out of 10"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "fail",
+        "reason": "the generated program did not compile"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 10,
+        "symbols_typed": 8,
+        "refusals": 0,
+        "approximations": 1,
+        "dropped": 0,
+        "crashes": 0
+      }
+    },
+    {
+      "tier": "tier2",
       "name": "11-closures-and-generators",
       "kind": "convert",
       "stages": {
@@ -3211,8 +3290,7 @@
           "outcome": "n/a"
         },
         "translated": {
-          "outcome": "fail",
-          "reason": "1 untranslated construct"
+          "outcome": "pass"
         },
         "typed": {
           "outcome": "pass"
@@ -3223,12 +3301,12 @@
         "reason": "stdout differs: line 1, byte 9: got \"/tmp/perl2golang-score-TMP/annot...\", wanted \"input.pl\\ninputs:  files/site-a.l...\""
       },
       "quality": {
-        "todos": 1,
+        "todos": 0,
         "symbols": 17,
         "symbols_typed": 17,
-        "refusals": 1,
-        "approximations": 8,
-        "dropped": 1,
+        "refusals": 0,
+        "approximations": 9,
+        "dropped": 0,
         "crashes": 0
       }
     },
@@ -4463,7 +4541,7 @@
         },
         "translated": {
           "outcome": "fail",
-          "reason": "3 untranslated constructs"
+          "reason": "1 untranslated construct"
         },
         "typed": {
           "outcome": "fail",
@@ -4475,12 +4553,12 @@
         "reason": "exit status 255, wanted 0; stdout differs: line 2, byte 32: got \"0 bytes and 0 lines\\nas a list: \\n...\", wanted \"11 bytes and 2 lines\\nas a list: ...\"; stderr differs: unexpected \"TODO P2G6504: the interpreter that ran the original is not here ...\""
       },
       "quality": {
-        "todos": 3,
+        "todos": 1,
         "symbols": 12,
         "symbols_typed": 11,
-        "refusals": 3,
+        "refusals": 1,
         "approximations": 3,
-        "dropped": 2,
+        "dropped": 0,
         "crashes": 0
       }
     },
@@ -4836,31 +4914,28 @@
           "outcome": "pass"
         },
         "equivalent": {
-          "outcome": "fail",
-          "reason": "stderr differs: unexpected \"TODO P2G3598: this statement's behaviour is missing\""
+          "outcome": "pass"
         },
         "honest": {
           "outcome": "n/a"
         },
         "translated": {
-          "outcome": "fail",
-          "reason": "2 untranslated constructs"
+          "outcome": "pass"
         },
         "typed": {
           "outcome": "pass"
         }
       },
       "equivalent_annotated": {
-        "outcome": "fail",
-        "reason": "stderr differs: unexpected \"TODO P2G3598: this statement's behaviour is missing\""
+        "outcome": "pass"
       },
       "quality": {
-        "todos": 2,
+        "todos": 0,
         "symbols": 12,
         "symbols_typed": 12,
-        "refusals": 2,
+        "refusals": 0,
         "approximations": 2,
-        "dropped": 2,
+        "dropped": 0,
         "crashes": 0
       }
     },
@@ -4877,14 +4952,14 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "exit status 255, wanted 0; stdout differs: line 3, byte 97: got \"0\\n-- keeping the two streams apa...\", wanted \"7\\n-- keeping the two streams apa...\"; stderr differs: unexpected \"TODO P2G3598: this statement's behaviour is missing ...\""
+          "reason": "exit status 255, wanted 0; stdout differs: 93 byte(s) missing after line 8, expected \"child exited with 3\\n-- the inter...\"; stderr differs: unexpected \"TODO P2G6520: fork has no Go counterpart ...\""
         },
         "honest": {
           "outcome": "n/a"
         },
         "translated": {
           "outcome": "fail",
-          "reason": "6 untranslated constructs"
+          "reason": "4 untranslated constructs"
         },
         "typed": {
           "outcome": "fail",
@@ -4893,15 +4968,15 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "exit status 255, wanted 0; stdout differs: line 3, byte 97: got \"0\\n-- keeping the two streams apa...\", wanted \"7\\n-- keeping the two streams apa...\"; stderr differs: unexpected \"TODO P2G3598: this statement's behaviour is missing ...\""
+        "reason": "exit status 255, wanted 0; stdout differs: 93 byte(s) missing after line 8, expected \"child exited with 3\\n-- the inter...\"; stderr differs: unexpected \"TODO P2G6520: fork has no Go counterpart ...\""
       },
       "quality": {
-        "todos": 6,
+        "todos": 4,
         "symbols": 8,
         "symbols_typed": 7,
-        "refusals": 6,
+        "refusals": 4,
         "approximations": 2,
-        "dropped": 2,
+        "dropped": 0,
         "crashes": 0
       }
     },
