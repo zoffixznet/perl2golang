@@ -32,7 +32,7 @@ const (
 	hUcFirst          = "ucFirst"
 	hLcFirst          = "lcFirst"
 	hOrd              = "ord"
-	hChr              = "chr" // chr(), one byte below 256
+	hChr              = "chr"    // chr(), one byte below 256
 	hPowInt           = "powInt" // ** on two integers, staying integral
 	hFileExists       = "fileExists"
 	hStrRange         = "strRange" // the string form of the range operator
@@ -84,13 +84,13 @@ const (
 	hUnpackText     = "unpackText"     // unpack for the all-text templates, kept []string
 	hPackTemplate   = "packTemplate"   // pack, the writing half of the same interpreter
 
-	hDumpValues = "dumpValues" // a structure rendered as Go source
-	hScalarOf   = "scalarOf"   // one value wanted where a list may be
-	hAsList     = "asList"     // a list wanted where the value's type is unknown
+	hDumpValues    = "dumpValues"    // a structure rendered as Go source
+	hScalarOf      = "scalarOf"      // one value wanted where a list may be
+	hAsList        = "asList"        // a list wanted where the value's type is unknown
 	hFlatPairs     = "flatPairs"     // a keyed collection read where a list is wanted
 	hFlatPairsText = "flatPairsText" // the same for a map of text, kept []string
-	hCallFn     = "callFn"     // calling a function held in an untyped value
-	hAs         = "as"         // reading an untyped value as a type, without panicking
+	hCallFn        = "callFn"        // calling a function held in an untyped value
+	hAs            = "as"            // reading an untyped value as a type, without panicking
 
 	// Data formats.
 	hJSONCodec    = "jsonCodec"    // the type a configured encoder becomes
