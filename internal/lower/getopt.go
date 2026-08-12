@@ -669,14 +669,23 @@ func (l *Lowerer) optionAliasNote(at ast.Node, spec optionSpec) {
 
 // configureNote reports what a Getopt::Long::Configure call changes.
 func (l *Lowerer) configureNote(n *ast.Call) bool {
+	// `Configure(qw(bundling pass_through))` is the usual spelling, so the
+	// words of a qw list are modes like any others.
 	var modes []string
 	for _, a := range flatten(argList(n)) {
-		if s, ok := staticString(a); ok {
-			modes = append(modes, s)
-		}
+		modes = append(modes, staticStrings(a)...)
 	}
 	if len(modes) == 0 {
-		return false
+		l.approximate(n, "P2G7509", "Configure with modes worked out at run time",
+			"the option parser's configuration is not known here",
+			"Configure changes how the option parser reads a command line, and what "+
+				"it was told is not a list of words this file writes out. The generated "+
+				"option block is the default parser, which reads options and operands in "+
+				"any order and stops at the first option it does not know.",
+			"Write the modes out as words, or register the options by hand with the "+
+				"flag package, where each of these settings is a line rather than a mode.",
+			"flag-package")
+		return true
 	}
 	for _, m := range modes {
 		switch m {

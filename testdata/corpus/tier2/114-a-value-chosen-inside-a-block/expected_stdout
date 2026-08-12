@@ -1,0 +1,6 @@
+utf8     -> from_to
+koi8-r   -> fallback
+undef    -> default
+shown: 'a' BB CCC
+counter: 10 11 12
+kept: a ccc

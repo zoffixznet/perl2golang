@@ -838,6 +838,44 @@ func (l *Lowerer) tieRefusal(n *ast.Call) ir.Expr {
 		"compile-time-mindset", "methods-and-receivers")
 }
 
+// growsThroughParam reports a length change made through a parameter that
+// arrived as a reference to the caller's array.
+//
+// Perl's reference reaches the caller's array itself, so a push inside the sub
+// is visible outside it. A Go slice parameter carries a copy of the length and
+// a pointer to the same elements: writing an element the array already has is
+// visible outside, and making a new one is not. That is the one half of the
+// reference that does not carry across, it is invisible in the output until
+// the caller looks at its array, and so it is said at every site that does it.
+func (l *Lowerer) growsThroughParam(target ast.Expr, n ast.Node, op string) {
+	d, ok := target.(*ast.Deref)
+	if !ok || d.Sigil != '@' {
+		return
+	}
+	v, ok := d.X.(*ast.Var)
+	if !ok || v.Sigil != '$' {
+		return
+	}
+	b, found := l.scope.lookup(varKey('$', v.Name))
+	if !found || b.Kind != KindParam {
+		return
+	}
+	if t := typeOr(b.Type, ir.TAny); t.Kind != ir.Slice {
+		return
+	}
+	l.approximate(n, "P2G5562", op+" through a reference parameter",
+		"the change of length does not reach the caller",
+		"The caller's array and this parameter share their elements, so writing an "+
+			"element the array already has is visible outside. Changing how many "+
+			"elements there are is different: a Go slice parameter is a copy of the "+
+			"length and a pointer, so a "+op+" here changes this function's copy and "+
+			"nothing the caller can see, where Perl's reference changed the caller's "+
+			"array.",
+		"Return the changed slice and assign it at the call site, or take *[]T when "+
+			"the function's job is to change the length.",
+		"slice-aliasing-and-copy", "pointers-vs-references")
+}
+
 // printedList renders an array that is being printed, joined by whatever `$,`
 // holds rather than by the `$"` that separates elements inside a string.
 //
@@ -1203,6 +1241,7 @@ func (l *Lowerer) pushCall(n *ast.Call) []ir.Stmt {
 	// level above it too. Go makes nothing on its own, and writing into a nil
 	// map is a panic rather than a growth.
 	l.autovivifyTarget(args[0])
+	l.growsThroughParam(args[0], n, "push")
 	target := l.assignTarget(args[0])
 	if target == nil {
 		target = l.expr(args[0])
@@ -1281,6 +1320,7 @@ func (l *Lowerer) unshiftCall(n *ast.Call) []ir.Stmt {
 	if len(args) < 2 {
 		return nil
 	}
+	l.growsThroughParam(args[0], n, "unshift")
 	target := l.assignTarget(args[0])
 	if target == nil {
 		return nil
@@ -1315,6 +1355,11 @@ func (l *Lowerer) popCall(n *ast.Call, front bool) ir.Expr {
 	var target ir.Expr
 	if targetNode != nil {
 		l.forgetLength(l.bindingOfTarget(targetNode))
+		op := "pop"
+		if front {
+			op = "shift"
+		}
+		l.growsThroughParam(targetNode, n, op)
 		target = l.assignTarget(targetNode)
 	}
 	if target == nil && l.curSub != nil && l.curSub.VarArgs != nil {

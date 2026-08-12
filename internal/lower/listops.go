@@ -416,12 +416,22 @@ func (l *Lowerer) blockValueCtx(block []ast.Stmt, wantList bool) ([]ir.Stmt, ir.
 // ifYieldsValue reports whether every branch of an if ends in an expression,
 // which is what lets the whole statement stand where a value is wanted.
 func ifYieldsValue(n *ast.If) bool {
-	ends := func(body []ast.Stmt) bool {
+	// A branch that ends in another if yields a value when that if does,
+	// which is what `do { if (a) { if (b) { x } else { y } } else { z } }`
+	// needs: the shape is ordinary in code that picks a value out of nested
+	// conditions, and each level is answered the same way.
+	var ends func(body []ast.Stmt) bool
+	ends = func(body []ast.Stmt) bool {
 		if len(body) == 0 {
 			return false
 		}
-		_, ok := body[len(body)-1].(*ast.ExprStmt)
-		return ok
+		switch last := body[len(body)-1].(type) {
+		case *ast.ExprStmt:
+			return true
+		case *ast.If:
+			return !last.Modifier && ifYieldsValue(last)
+		}
+		return false
 	}
 	if !ends(n.Then) || !ends(n.Else) {
 		return false
@@ -720,9 +730,19 @@ func (l *Lowerer) blockLoopTail(n *ast.Call) (src ir.Expr, item ir.Expr, body []
 	// expression rather than as a statement: a statement layer would discard
 	// exactly the thing the block exists to produce.
 	lead := block
-	if last, isExpr := block[len(block)-1].(*ast.ExprStmt); isExpr {
+	var tailIf *ast.If
+	switch last := block[len(block)-1].(type) {
+	case *ast.ExprStmt:
 		lead = block[:len(block)-1]
 		tail = last.X
+	case *ast.If:
+		// The block's value is an if, which in Perl is an expression: the
+		// branch that runs is what the block produced. `map { if (...) { a }
+		// else { b } }` is ordinary in code that formats two ways.
+		if !last.Modifier && ifYieldsValue(last) {
+			lead = block[:len(block)-1]
+			tailIf = last
+		}
 	}
 
 	savedPre := l.pre
@@ -730,6 +750,12 @@ func (l *Lowerer) blockLoopTail(n *ast.Call) (src ir.Expr, item ir.Expr, body []
 	body = l.stmts(lead)
 	if tail != nil {
 		value = l.expr(tail)
+	}
+	if tailIf != nil {
+		sts, v := l.ifValue(tailIf, false)
+		body = append(body, sts...)
+		value = v
+		tail = tailIf.Cond
 	}
 	inner := l.takePre()
 	l.pre = savedPre

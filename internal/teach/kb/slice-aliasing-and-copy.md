@@ -71,6 +71,66 @@ BOOT copied
 
 Rewire the instinct completely: in Perl, slicing copies and you take references to share; in Go, slicing *shares* and you copy to isolate. Audit three patterns when porting. One: any function that receives a slice and appends to it may be corrupting the caller's data if the caller later uses the original — return the appended slice or copy first. Two: "keep the first N, drop the rest" (`@kept = @lines[0..$n]`) as `kept := lines[:n]` pins the *entire* original backing array in memory and stays writable through future appends — for long-lived results, clone. Three: `copy(dst, src)` copies only `min(len(dst), len(src))` elements and returns that count — copying into an empty (`len` 0) destination copies *nothing*, a quiet off-by-everything for people who expect `dst` to grow; `make` the destination with the right length first, as above. The compensation for all this danger: sub-slicing is O(1), which is why Go parsers and tokenisers slice with abandon — safely, because they treat slices as read-only views. Adopt that discipline: share for reading, clone for keeping or writing.
 
+## The other direction: a sub that grows the caller's array
+
+Perl's `sub add { my ($list, $v) = @_; push @$list, $v }` reaches the caller's array, because the reference *is* the array. The same function in Go receives a copy of the slice header, so the element it appends belongs to the function alone and the caller sees nothing. Nothing warns, the code compiles, and the caller's array is simply shorter than it should be. This is the most common Perl sub idiom there is, and it is the one place where "slices share their data" stops being true.
+
+```go
+package main
+
+import "fmt"
+
+// grows takes a copy of the slice header: the elements are shared, the length
+// is not, so the caller never sees the element this adds.
+func grows(xs []string) {
+	xs = append(xs, "new")
+	_ = xs
+}
+
+// returnsGrown is the shape to reach for first, and the one a Go developer
+// expects to read.
+func returnsGrown(xs []string) []string {
+	return append(xs, "new")
+}
+
+// takesPointer is the shape when growing the caller's slice is the whole job.
+func takesPointer(xs *[]string) {
+	*xs = append(*xs, "new")
+}
+
+// writeFirst changes an element the slice already has, which does reach the
+// caller. That is the half that makes the other half surprising.
+func writeFirst(xs []string) {
+	if len(xs) > 0 {
+		xs[0] = "CHANGED"
+	}
+}
+
+func main() {
+	a := []string{"one"}
+	grows(a)
+	fmt.Println("after grows:      ", a)
+
+	a = returnsGrown(a)
+	fmt.Println("after returnsGrown:", a)
+
+	takesPointer(&a)
+	fmt.Println("after takesPointer:", a)
+
+	writeFirst(a)
+	fmt.Println("after writeFirst: ", a)
+}
+```
+
+```
+after grows:       [one]
+after returnsGrown: [one new]
+after takesPointer: [one new new]
+after writeFirst:  [CHANGED new new]
+```
+
+Prefer the returning form. `*[]T` is correct and is what the standard library reaches for only rarely, because a function that both takes and returns the slice reads at the call site as what it is: `list = add(list, v)` says the list changed, where `add(&list, v)` says it only if you know the signature. The pointer form earns its place when the slice is a field being appended to from several methods, and at that point the honest move is usually a small type with an `Add` method on a pointer receiver.
+
 ## The plainest case, and the one that gets ported first
 
 Before any of the slicing subtleties, there is the assignment:

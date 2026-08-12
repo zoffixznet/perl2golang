@@ -1394,12 +1394,16 @@ func yieldsValue(e ast.Expr) bool {
 		return true
 	case *ast.NumberLit, *ast.StrLit, *ast.InterpLit, *ast.QwLit, *ast.Ternary,
 		*ast.Index, *ast.HashIndex, *ast.Slice, *ast.Deref, *ast.RefGen,
-		*ast.AnonArray, *ast.AnonHash, *ast.MethodCall:
+		*ast.AnonArray, *ast.AnonHash, *ast.AnonSub, *ast.MethodCall:
 		return true
 	case *ast.Var:
 		return true
 	case *ast.UnOp:
-		return n.Op != "++" && n.Op != "--"
+		// An increment is an expression in Perl and a statement in Go, and a
+		// sub ending in one hands its value back: `sub { $n++ }` is the
+		// counter closure everyone writes. The lowering knows how to produce
+		// the value and the increment separately.
+		return true
 	case *ast.Call:
 		// A call is the sub's value too, which matters most for the
 		// one-line constructor `sub new { bless {}, shift }`: `bless` becomes

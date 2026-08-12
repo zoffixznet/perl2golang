@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-16T00:37:08Z",
+  "recorded": "2026-08-16T00:53:28Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -55,45 +55,45 @@
     },
     {
       "tier": "tier2",
-      "entries": 113,
+      "entries": 114,
       "stages": {
         "compiled": {
-          "pass": 112,
+          "pass": 113,
           "fail": 1,
           "skip": 0
         },
         "emitted": {
-          "pass": 113,
+          "pass": 114,
           "fail": 0,
           "skip": 0
         },
         "equivalent": {
-          "pass": 82,
+          "pass": 83,
           "fail": 31,
           "skip": 0
         },
         "translated": {
-          "pass": 104,
+          "pass": 105,
           "fail": 9,
           "skip": 0
         },
         "typed": {
-          "pass": 79,
+          "pass": 80,
           "fail": 34,
           "skip": 0
         }
       },
       "equivalent_annotated": {
-        "pass": 82,
+        "pass": 83,
         "fail": 31,
         "skip": 0
       },
       "quality": {
         "todos": 20,
-        "symbols": 1649,
-        "symbols_typed": 1570,
+        "symbols": 1658,
+        "symbols_typed": 1579,
         "refusals": 20,
-        "approximations": 662,
+        "approximations": 668,
         "dropped": 0,
         "crashes": 0
       }
@@ -138,7 +138,7 @@
         "symbols": 896,
         "symbols_typed": 781,
         "refusals": 45,
-        "approximations": 380,
+        "approximations": 381,
         "dropped": 0,
         "crashes": 0
       }
@@ -236,20 +236,20 @@
   ],
   "total": {
     "tier": "TOTAL",
-    "entries": 266,
+    "entries": 267,
     "stages": {
       "compiled": {
-        "pass": 262,
+        "pass": 263,
         "fail": 4,
         "skip": 0
       },
       "emitted": {
-        "pass": 266,
+        "pass": 267,
         "fail": 0,
         "skip": 0
       },
       "equivalent": {
-        "pass": 174,
+        "pass": 175,
         "fail": 49,
         "skip": 0
       },
@@ -259,37 +259,37 @@
         "skip": 0
       },
       "translated": {
-        "pass": 231,
+        "pass": 232,
         "fail": 35,
         "skip": 0
       },
       "typed": {
-        "pass": 174,
+        "pass": 175,
         "fail": 92,
         "skip": 0
       }
     },
     "equivalent_annotated": {
-      "pass": 174,
+      "pass": 175,
       "fail": 49,
       "skip": 0
     },
     "quality": {
       "todos": 119,
-      "symbols": 4154,
-      "symbols_typed": 3890,
+      "symbols": 4163,
+      "symbols_typed": 3899,
       "refusals": 121,
-      "approximations": 1588,
+      "approximations": 1595,
       "dropped": 0,
       "crashes": 0
     }
   },
   "quality": {
     "todos": 119,
-    "symbols": 4154,
-    "symbols_typed": 3890,
+    "symbols": 4163,
+    "symbols_typed": 3899,
     "refusals": 121,
-    "approximations": 1588,
+    "approximations": 1595,
     "dropped": 0,
     "crashes": 0
   },
@@ -2279,7 +2279,7 @@
         "symbols": 30,
         "symbols_typed": 27,
         "refusals": 0,
-        "approximations": 10,
+        "approximations": 11,
         "dropped": 0,
         "crashes": 0
       }
@@ -3040,6 +3040,43 @@
     },
     {
       "tier": "tier2",
+      "name": "114-a-value-chosen-inside-a-block",
+      "kind": "convert",
+      "stages": {
+        "compiled": {
+          "outcome": "pass"
+        },
+        "emitted": {
+          "outcome": "pass"
+        },
+        "equivalent": {
+          "outcome": "pass"
+        },
+        "honest": {
+          "outcome": "n/a"
+        },
+        "translated": {
+          "outcome": "pass"
+        },
+        "typed": {
+          "outcome": "pass"
+        }
+      },
+      "equivalent_annotated": {
+        "outcome": "pass"
+      },
+      "quality": {
+        "todos": 0,
+        "symbols": 9,
+        "symbols_typed": 9,
+        "refusals": 0,
+        "approximations": 3,
+        "dropped": 0,
+        "crashes": 0
+      }
+    },
+    {
+      "tier": "tier2",
       "name": "12-dispatch-table",
       "kind": "convert",
       "stages": {
@@ -3073,7 +3110,7 @@
         "symbols": 41,
         "symbols_typed": 28,
         "refusals": 0,
-        "approximations": 17,
+        "approximations": 19,
         "dropped": 0,
         "crashes": 0
       }
@@ -6994,7 +7031,7 @@
         "symbols": 18,
         "symbols_typed": 11,
         "refusals": 3,
-        "approximations": 15,
+        "approximations": 16,
         "dropped": 0,
         "crashes": 0
       }

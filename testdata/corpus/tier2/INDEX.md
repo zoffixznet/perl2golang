@@ -1,6 +1,6 @@
 # Tier 2 corpus - script-shaped Perl programs
 
-113 entries. Each is a self-contained, realistic Perl script of the kind a
+114 entries. Each is a self-contained, realistic Perl script of the kind a
 sysadmin or data wrangler actually writes, not a snippet.
 
 ## Layout of an entry
@@ -160,6 +160,7 @@ Two entries exit non-zero on purpose: **27** (65) and **32** (1). The rest exit 
 | 111 | `111-readline-as-a-function` | The spelling of a read that works on a handle kept in a container | `readline($h{in})` in scalar and list context, and why `<$h{in}>` is a glob instead |
 | 112 | `112-a-stable-sort-and-a-checked-open` | Ties keeping their arrival order through three sorts, and an open whose failure is a value | `sort { $a->{k} <=> $b->{k} }` with ties, descending and `cmp` forms, `my $ok = open(...)`, `$!` printed by the script |
 | 113 | `113-the-older-spellings` | Ampersand calls, a lower-case loop label, and an if/else as a sub's last word | `&name(...)`, `each_batch:` with `next`/`last` naming it, an if/elsif/else tail returning its branch, one nested |
+| 114 | `114-a-value-chosen-inside-a-block` | Four blocks whose value is decided inside them, one of them nested | `do { if { if } else } }`, a `map` block ending in if/else, a `grep` block ending in one, `sub { $n++ }` as a sub's last statement |
 
 ## Coverage map
 
