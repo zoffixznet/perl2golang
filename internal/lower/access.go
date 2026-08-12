@@ -667,6 +667,16 @@ func (l *Lowerer) sliceExpr(n *ast.Slice) ir.Expr {
 		return l.pickElements(container, parts, elem, n.Hash)
 	}
 
+	// A slice of a named array, or of a literal, reads as plain indexing:
+	// that is the line a person would write, and the array is the program's
+	// own data. A container built by an expression is different: what a
+	// split or a sort hands back is however long the input made it, Perl
+	// reads undef past its end, and a Go index expression panics there. So
+	// those reads go through the helper that tolerates a short list, which
+	// also takes a negative index directly.
+	_, baseVar := n.Base.(*ast.Var)
+	_, baseLit := container.(*ir.CompositeLit)
+	countable := baseVar || baseLit
 	var elems []ir.Expr
 	for _, one := range indexes {
 		if n.Hash {
@@ -674,11 +684,19 @@ func (l *Lowerer) sliceExpr(n *ast.Slice) ir.Expr {
 			continue
 		}
 		if text, neg := negativeLiteral(one); neg {
-			elems = append(elems, index(container,
-				ir.Bin("-", lenOf(container), ir.IntLit(text), ir.TInt), elem))
+			if countable {
+				elems = append(elems, index(container,
+					ir.Bin("-", lenOf(container), ir.IntLit(text), ir.TInt), elem))
+			} else {
+				elems = append(elems, l.helperCall(hAt, elem, container, ir.IntLit("-"+text)))
+			}
 			continue
 		}
-		elems = append(elems, index(container, l.toInt(l.expr(one), one), elem))
+		if countable {
+			elems = append(elems, index(container, l.toInt(l.expr(one), one), elem))
+			continue
+		}
+		elems = append(elems, l.helperCall(hAt, elem, container, l.toInt(l.expr(one), one)))
 	}
 	out := composite(ir.SliceOf(elem), nil, elems)
 	l.note(out, "A Perl slice picks several elements at once and yields a list. Go "+
