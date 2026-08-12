@@ -129,6 +129,12 @@ func (l *Lowerer) statementOnly(n *ast.Call) []ir.Stmt {
 		return l.closeCall(n)
 	case "open":
 		return l.openCall(n)
+	case "return":
+		// `EXPR or return 0` puts return in expression position, where the
+		// parser reads it as a call. It is the same statement it always was.
+		ret := &ast.Return{Exprs: n.Args}
+		ret.SetSpan(n.Pos(), n.End())
+		return l.returnStmt(ret)
 	case "opendir":
 		return l.opendirCall(n)
 	case "closedir":
