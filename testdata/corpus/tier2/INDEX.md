@@ -1,6 +1,6 @@
 # Tier 2 corpus - script-shaped Perl programs
 
-115 entries. Each is a self-contained, realistic Perl script of the kind a
+118 entries. Each is a self-contained, realistic Perl script of the kind a
 sysadmin or data wrangler actually writes, not a snippet.
 
 ## Layout of an entry
@@ -162,6 +162,9 @@ Two entries exit non-zero on purpose: **27** (65) and **32** (1). The rest exit 
 | 113 | `113-the-older-spellings` | Ampersand calls, a lower-case loop label, and an if/else as a sub's last word | `&name(...)`, `each_batch:` with `next`/`last` naming it, an if/elsif/else tail returning its branch, one nested |
 | 114 | `114-a-value-chosen-inside-a-block` | Four blocks whose value is decided inside them, one of them nested | `do { if { if } else } }`, a `map` block ending in if/else, a `grep` block ending in one, `sub { $n++ }` as a sub's last statement |
 | 115 | `115-a-tree-grown-through-a-cursor` | A tree grown from flat paths by a cursor, with no line that creates a node | `$node = \%{ $node->{$part} }`, autovivification through a reference, `ref` telling a branch from a leaf, recursive render |
+| 116 | `116-a-slice-picked-for-a-default` | A list slice read for one value inside the operators that pass one on | `(sort ...)[-1] // 'none'`, `(split ...)[1] || 'filled'`, a slice in a ternary arm and in a concatenation, a read past the end of a short list |
+| 117 | `117-a-shift-inside-a-choice` | The optional leading argument, and defaults whose fallback is a call that prints | `@ARGV && $ARGV[0] =~ /^\d+$/ ? shift @ARGV : 3`, `//` and `||` with an observable sub call on the right |
+| 118 | `118-a-match-that-fails-or-returns` | A sub that leaves early when its match found nothing | `my (...) = $x =~ /re/ or return 0`, bare `or return`, captures fed to arithmetic only after the guard |
 
 ## Coverage map
 

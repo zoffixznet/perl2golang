@@ -3411,5 +3411,46 @@
     "expected_exit": 0,
     "deterministic": true,
     "kind": "convert"
+  },
+  {
+    "tier": "tier2",
+    "name": "118-a-match-that-fails-or-returns",
+    "path": "testdata/corpus/tier2/118-a-match-that-fails-or-returns",
+    "args": [],
+    "has_stdin": false,
+    "has_files": false,
+    "allow_stderr": false,
+    "expected_exit": 0,
+    "deterministic": true,
+    "kind": "convert"
+  },
+  {
+    "tier": "tier2",
+    "name": "117-a-shift-inside-a-choice",
+    "path": "testdata/corpus/tier2/117-a-shift-inside-a-choice",
+    "args": [
+      "7",
+      "nightly",
+      "extra1",
+      "extra2"
+    ],
+    "has_stdin": false,
+    "has_files": false,
+    "allow_stderr": false,
+    "expected_exit": 0,
+    "deterministic": true,
+    "kind": "convert"
+  },
+  {
+    "tier": "tier2",
+    "name": "116-a-slice-picked-for-a-default",
+    "path": "testdata/corpus/tier2/116-a-slice-picked-for-a-default",
+    "args": [],
+    "has_stdin": false,
+    "has_files": false,
+    "allow_stderr": false,
+    "expected_exit": 0,
+    "deterministic": true,
+    "kind": "convert"
   }
 ]
