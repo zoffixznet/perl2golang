@@ -49,7 +49,7 @@ func (l *Lowerer) exprInner(e ast.Expr) ir.Expr {
 	case *ast.UnOp:
 		return l.unop(n)
 	case *ast.Ternary:
-		return l.ternary(n)
+		return l.ternary(n, false)
 	case *ast.List:
 		return l.listLit(n)
 	case *ast.Call:
@@ -112,6 +112,22 @@ func (l *Lowerer) exprInner(e ast.Expr) ir.Expr {
 // long it is rather than what is in it.
 func (l *Lowerer) scalar(e ast.Expr) ir.Expr {
 	switch n := e.(type) {
+	case *ast.Ternary:
+		// The arms inherit the caller's context, so a slice read in either
+		// one yields its element here, not a one-element list.
+		return l.ternary(n, true)
+	case *ast.BinOp:
+		// The value forms of the logical operators hand back an operand, and
+		// the operand is read in the caller's context: `(sort @a)[-1] // ''`
+		// is the last element or the default, never a list.
+		switch n.Op {
+		case "&&", "and":
+			return l.andValue(n, true)
+		case "||", "or":
+			return l.orValue(n, false, true)
+		case "//":
+			return l.orValue(n, true, true)
+		}
 	case *ast.Var:
 		if n.Sigil == '@' || n.Sigil == '%' {
 			x := l.expr(e)

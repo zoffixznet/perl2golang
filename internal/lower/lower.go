@@ -963,6 +963,19 @@ func (l *Lowerer) takePre() []ir.Stmt {
 	return out
 }
 
+// diverted lowers an expression while holding back the statements it emits,
+// and returns them beside the result. It exists for operands that only
+// sometimes run: the arm of a ternary owns its side effects, so `shift` in
+// one arm must move the array inside that branch, not before the test.
+func (l *Lowerer) diverted(fn func() ir.Expr) (ir.Expr, []ir.Stmt) {
+	saved := l.pre
+	l.pre = nil
+	x := fn()
+	sts := l.pre
+	l.pre = saved
+	return x, sts
+}
+
 // ---------------------------------------------------------------------------
 // Report assembly
 

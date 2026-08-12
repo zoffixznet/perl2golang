@@ -107,13 +107,13 @@ func (l *Lowerer) binop(n *ast.BinOp) ir.Expr {
 		return call("strings", "strings", "Compare", ir.TInt, lx, rx)
 
 	case "&&", "and":
-		return l.andValue(n)
+		return l.andValue(n, false)
 
 	case "||", "or":
-		return l.orValue(n, false)
+		return l.orValue(n, false, false)
 
 	case "//":
-		return l.orValue(n, true)
+		return l.orValue(n, true, false)
 
 	case "xor":
 		return ir.Bin("!=", l.cond(n.L), l.cond(n.R), ir.TBool)
@@ -364,20 +364,28 @@ func isListish(e ast.Expr) bool {
 // Go's || is strictly boolean, so the Perl idiom `my $name = $arg || 'default'`
 // has no operator form. Writing it out as an if is what a Go developer does,
 // and it is clearer about what is being tested.
-func (l *Lowerer) orValue(n *ast.BinOp, definedOr bool) ir.Expr {
+//
+// one says the surrounding expression wants a single value, Perl's scalar
+// context, which the operands inherit: `(sort @a)[-1] // ”` reads the last
+// element, not a one-element list.
+func (l *Lowerer) orValue(n *ast.BinOp, definedOr, one bool) ir.Expr {
+	ev := l.expr
+	if one {
+		ev = l.scalar
+	}
 	if !definedOr {
 		if out, ok := l.orderingChain(n); ok {
 			return out
 		}
 	}
 	if definedOr {
-		return l.definedOrChain(n)
+		return l.definedOrChain(n, one)
 	}
 	// `my $x = f() || die ...` never reads a value from the right side: the
 	// die is what happens when there is no value. Lowering it as a value
 	// would run it before the test, so it becomes the body of the guard.
 	if sts, diverts := l.divertingStmts(n.R); diverts {
-		lx := l.expr(n.L)
+		lx := ev(n.L)
 		t := typeOrAny(lx)
 		name := l.tmp(defaultName(n.L))
 		decl := &ir.DeclStmt{Names: []string{name}, Type: t, Values: []ir.Expr{lx}}
@@ -392,8 +400,10 @@ func (l *Lowerer) orValue(n *ast.BinOp, definedOr bool) ir.Expr {
 		l.emit(guard)
 		return target
 	}
-	lx := l.expr(n.L)
-	rx := l.expr(n.R)
+	lx := ev(n.L)
+	// The right side only runs when the left side is false, so any statements
+	// it needs are held back and placed inside the guard.
+	rx, rxPre := l.diverted(func() ir.Expr { return ev(n.R) })
 	t := join(typeOrAny(lx), typeOrAny(rx))
 	// Evidence about one variable treats `any` as an absence of information,
 	// because a later observation can still settle it. The two sides of a
@@ -414,7 +424,7 @@ func (l *Lowerer) orValue(n *ast.BinOp, definedOr bool) ir.Expr {
 	// `$x || 0` over a number is an identity: the fallback is the one value
 	// the test fires on. Emitting the guard produced `if v == 0 { v = 0 }`,
 	// which a Go reader can only stare at.
-	if zeroDefault(t, rx) && typeOrAny(lx).Kind == t.Kind {
+	if zeroDefault(t, rx) && len(rxPre) == 0 && typeOrAny(lx).Kind == t.Kind {
 		out := l.assignable(lx, t, n.L)
 		l.note(out, "The || here defaulted to the value a false operand already is: "+
 			"a Perl number is false exactly when it is zero, so `|| 0` changes "+
@@ -427,7 +437,7 @@ func (l *Lowerer) orValue(n *ast.BinOp, definedOr bool) ir.Expr {
 	decl := &ir.DeclStmt{Names: []string{name}, Type: t, Values: []ir.Expr{l.assignable(lx, t, n.L)}}
 	l.setProv(decl, n)
 	target := ir.NewIdent(name, t)
-	body := &ir.Block{Stmts: []ir.Stmt{assign("=", []ir.Expr{target}, []ir.Expr{l.assignable(rx, t, n.R)})}}
+	body := &ir.Block{Stmts: append(rxPre, assign("=", []ir.Expr{target}, []ir.Expr{l.assignable(rx, t, n.R)}))}
 	guard := &ir.If{Cond: negated(l.toBool(target, n.L)), Then: body}
 	l.note(decl, "Perl's || returns the first true operand, not a bool, which is "+
 		"why it works for defaulting. Go's || is strictly boolean, so the default "+
@@ -476,10 +486,15 @@ type definedProbe struct {
 // to put that second answer. Taking the run as a unit lets each operand keep
 // its own way of asking the question, which for a hash element is the
 // two-result index form and never a test against zero: a stored 0 is defined.
-func (l *Lowerer) definedOrChain(n *ast.BinOp) ir.Expr {
+func (l *Lowerer) definedOrChain(n *ast.BinOp, one bool) ir.Expr {
+	ev := l.expr
+	if one {
+		ev = l.scalar
+	}
 	operands := flattenDefinedOr(n)
 	var probes []definedProbe
 	var fallback ir.Expr
+	var fallbackPre []ir.Stmt
 	var fallbackStmts []ir.Stmt
 	for i, x := range operands {
 		if i == len(operands)-1 {
@@ -490,10 +505,10 @@ func (l *Lowerer) definedOrChain(n *ast.BinOp) ir.Expr {
 				fallbackStmts = sts
 				break
 			}
-			fallback = l.expr(x)
+			fallback, fallbackPre = l.diverted(func() ir.Expr { return ev(x) })
 			break
 		}
-		p := l.definedProbeOf(x, n)
+		p := l.definedProbeOf(x, n, one)
 		if p.last {
 			// This operand always has a value, so nothing after it in the
 			// chain can be reached and it becomes the answer.
@@ -506,7 +521,7 @@ func (l *Lowerer) definedOrChain(n *ast.BinOp) ir.Expr {
 		}
 		probes = append(probes, p)
 	}
-	return l.buildDefinedOr(probes, fallback, fallbackStmts, n)
+	return l.buildDefinedOr(probes, fallback, fallbackPre, fallbackStmts, n)
 }
 
 // divertingStmts recognises an operand that can never yield a value because
@@ -524,7 +539,7 @@ func (l *Lowerer) divertingStmts(e ast.Expr) ([]ir.Stmt, bool) {
 // undefined, and the last operand as the else that always runs. A last
 // operand that leaves instead of answering, a die or an exit, arrives as
 // fallbackStmts and becomes the body of that else.
-func (l *Lowerer) buildDefinedOr(probes []definedProbe, fallback ir.Expr, fallbackStmts []ir.Stmt, n *ast.BinOp) ir.Expr {
+func (l *Lowerer) buildDefinedOr(probes []definedProbe, fallback ir.Expr, fallbackPre, fallbackStmts []ir.Stmt, n *ast.BinOp) ir.Expr {
 	if len(probes) == 0 {
 		if fallbackStmts != nil {
 			// Nothing before the die could miss, so the chain is just it.
@@ -532,6 +547,9 @@ func (l *Lowerer) buildDefinedOr(probes []definedProbe, fallback ir.Expr, fallba
 				l.emit(st)
 			}
 			return ir.Nil(ir.TAny)
+		}
+		for _, st := range fallbackPre {
+			l.emit(st)
 		}
 		return fallback
 	}
@@ -557,7 +575,7 @@ func (l *Lowerer) buildDefinedOr(probes []definedProbe, fallback ir.Expr, fallba
 		"nil-vs-undef", "comma-ok-idiom")
 	target := ir.NewIdent(name, t)
 
-	base := []ir.Stmt{assign("=", []ir.Expr{target}, []ir.Expr{l.assignable(fallback, t, n.R)})}
+	base := append(fallbackPre, assign("=", []ir.Expr{target}, []ir.Expr{l.assignable(fallback, t, n.R)}))
 	if fallbackStmts != nil {
 		base = fallbackStmts
 	}
@@ -594,13 +612,17 @@ func flattenDefinedOr(n *ast.BinOp) []ast.Expr {
 
 // definedProbeOf works out how to ask whether one operand of a // chain has a
 // value, choosing the exact question wherever the type allows one.
-func (l *Lowerer) definedProbeOf(x ast.Expr, at ast.Node) definedProbe {
+func (l *Lowerer) definedProbeOf(x ast.Expr, at ast.Node, one bool) definedProbe {
+	ev := l.expr
+	if one {
+		ev = l.scalar
+	}
 	// A literal, or arithmetic on literals, cannot be undef.
 	if definiteValue(x) {
-		return definedProbe{val: l.expr(x), last: true}
+		return definedProbe{val: ev(x), last: true}
 	}
 	if _, ok := l.alwaysDefined(x, at); ok {
-		return definedProbe{val: l.expr(x), last: true}
+		return definedProbe{val: ev(x), last: true}
 	}
 	if h, ok := x.(*ast.HashIndex); ok {
 		m, key, elem, field := l.hashPartsField(h)
@@ -631,7 +653,7 @@ func (l *Lowerer) definedProbeOf(x ast.Expr, at ast.Node) definedProbe {
 			}
 		}
 	}
-	lowered := l.expr(x)
+	lowered := ev(x)
 	t := typeOrAny(lowered)
 	if isNullable(t) {
 		name := l.tmp(defaultName(x))
@@ -678,13 +700,22 @@ func (l *Lowerer) definedProbeOf(x ast.Expr, at ast.Node) definedProbe {
 // the second one, which is why `$name && uc $name` is a defaulting idiom and
 // not a yes-or-no. Go's && is strictly boolean, so where the two sides are not
 // booleans the choice is written out.
-func (l *Lowerer) andValue(n *ast.BinOp) ir.Expr {
-	lx := l.expr(n.L)
-	rx := l.expr(n.R)
+func (l *Lowerer) andValue(n *ast.BinOp, one bool) ir.Expr {
+	ev := l.expr
+	if one {
+		ev = l.scalar
+	}
+	lx := ev(n.L)
+	// The right side only runs when the left side is true, so any statements
+	// it needs are held back and placed inside the guard.
+	rx, rxPre := l.diverted(func() ir.Expr { return ev(n.R) })
 	t := join(typeOrAny(lx), typeOrAny(rx))
 	if t == nil || t.Kind == ir.Bool || t.Kind == ir.Any {
 		// Two tests, or two values with nothing in common to hold the answer
 		// in. The boolean form is both correct and the one a reader expects.
+		for _, st := range rxPre {
+			l.emit(st)
+		}
 		return ir.Bin("&&", l.toBool(lx, n.L), l.toBool(rx, n.R), ir.TBool)
 	}
 	name := l.tmp(defaultName(n.L))
@@ -692,7 +723,7 @@ func (l *Lowerer) andValue(n *ast.BinOp) ir.Expr {
 	target := ir.NewIdent(name, t)
 	guard := &ir.If{
 		Cond: l.toBool(target, n.L),
-		Then: &ir.Block{Stmts: []ir.Stmt{assign("=", []ir.Expr{target}, []ir.Expr{l.assignable(rx, t, n.R)})}},
+		Then: &ir.Block{Stmts: append(rxPre, assign("=", []ir.Expr{target}, []ir.Expr{l.assignable(rx, t, n.R)}))},
 	}
 	l.setProv(decl, n)
 	l.note(decl, "Perl's && answers with an operand rather than with true or false: "+
@@ -1093,15 +1124,24 @@ func (l *Lowerer) cond(e ast.Expr) ir.Expr {
 // Go has no conditional operator. The Go answer is an if statement, and the
 // language designers left it out on purpose, so the generated form is the
 // idiomatic one rather than a workaround.
-func (l *Lowerer) ternary(n *ast.Ternary) ir.Expr {
+func (l *Lowerer) ternary(n *ast.Ternary, one bool) ir.Expr {
+	ev := l.expr
+	if one {
+		ev = l.scalar
+	}
 	// Two function literals as the arms of a ternary share one slot, exactly
 	// as two in a list or a table do, so they take the uniform closure
 	// signature: `my $cmp = $by_count ? sub {...} : sub {...}` is one variable
 	// and Go gives it one type.
 	saved := l.uniformFn
 	l.uniformFn = l.uniformFn || closureList([]ast.Expr{n.A, n.B})
-	a := l.expr(n.A)
-	b := l.expr(n.B)
+	// Perl evaluates the condition and then one arm, never both. Each arm's
+	// side effects are held back and placed inside its branch, so
+	// `@ARGV ? shift @ARGV : 3` moves the array only when the test passes,
+	// and only after the test has looked at it.
+	cond := l.cond(n.Cond)
+	a, aPre := l.diverted(func() ir.Expr { return ev(n.A) })
+	b, bPre := l.diverted(func() ir.Expr { return ev(n.B) })
 	l.uniformFn = saved
 	t := join(typeOrAny(a), typeOrAny(b))
 
@@ -1109,9 +1149,9 @@ func (l *Lowerer) ternary(n *ast.Ternary) ir.Expr {
 	decl := &ir.DeclStmt{Names: []string{name}, Type: t}
 	target := ir.NewIdent(name, t)
 	stmt := &ir.If{
-		Cond: l.cond(n.Cond),
-		Then: &ir.Block{Stmts: []ir.Stmt{assign("=", []ir.Expr{target}, []ir.Expr{l.assignable(a, t, n.A)})}},
-		Else: &ir.Block{Stmts: []ir.Stmt{assign("=", []ir.Expr{target}, []ir.Expr{l.assignable(b, t, n.B)})}},
+		Cond: cond,
+		Then: &ir.Block{Stmts: append(aPre, assign("=", []ir.Expr{target}, []ir.Expr{l.assignable(a, t, n.A)}))},
+		Else: &ir.Block{Stmts: append(bPre, assign("=", []ir.Expr{target}, []ir.Expr{l.assignable(b, t, n.B)}))},
 	}
 	l.setProv(decl, n)
 	l.note(decl, "Go has no ?: operator. It was left out deliberately, and the "+
