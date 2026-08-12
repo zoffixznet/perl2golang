@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"perl2golang/internal/convert"
+	"perl2golang/internal/gogen"
 )
 
 // TestConvertSmoke runs a small script through the whole pipeline and checks
@@ -462,4 +463,62 @@ func TestSliceWithAComputedIndexList(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestOutputThatDoesNotBuildIsReported holds the promise the whole tool rests
+// on: a user must never be handed Go that does not build while the tool says
+// nothing about it.
+//
+// The check is on the machinery rather than on a particular input, because
+// the whole point is that it has to hold for inputs nobody has thought of. A
+// conversion whose output the toolchain rejects sets Built to false, records
+// P2G8505 as a refusal, and so fails --strict, which is the gate a caller
+// wires into CI.
+func TestOutputThatDoesNotBuildIsReported(t *testing.T) {
+	if !gogen.HaveToolchain() {
+		t.Skip("no Go toolchain, so nothing here can be compiled")
+	}
+	// A construct the converter refuses in a way that leaves a hole the Go
+	// compiler notices: assigning through a symbolic reference has no place
+	// for the value to go.
+	src := []byte("no strict 'refs';\nour $alpha = 1;\nmy $name = 'alpha';\nprint $$name;\n")
+	res, err := convert.Convert(src, convert.Options{Path: "t.pl", NoDocs: true})
+	if err != nil {
+		t.Fatalf("convert: %v", err)
+	}
+	v := res.Report.Verified
+	if !v.Toolchain {
+		t.Skip("the toolchain was not reachable during this run")
+	}
+	if !v.Built {
+		if !hasCode(res, "P2G8505") {
+			t.Errorf("the output did not build and the report never says so: %v", codes(res))
+		}
+		if v.Error == "" {
+			t.Error("the output did not build and no compiler message was kept")
+		}
+	}
+	// Whatever the outcome, the report must never claim more than it checked.
+	if v.Built && !v.Parsed {
+		t.Error("the report says the output built without saying it parsed")
+	}
+}
+
+// hasCode reports whether a conversion's report carries a diagnostic code.
+func hasCode(res *convert.Result, code string) bool {
+	for _, e := range res.Report.Entries {
+		if e.Code == code {
+			return true
+		}
+	}
+	return false
+}
+
+// codes lists a conversion's diagnostic codes, for a failure message.
+func codes(res *convert.Result) []string {
+	var out []string
+	for _, e := range res.Report.Entries {
+		out = append(out, e.Code)
+	}
+	return out
 }

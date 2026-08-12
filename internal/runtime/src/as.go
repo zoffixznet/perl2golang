@@ -50,5 +50,15 @@ func as[T any](v any) T {
 			}
 		}
 	}
+	// A map's zero value is nil, and writing to a nil map stops the program.
+	// The whole point of asking rather than insisting is that the lines after
+	// this one still run, so an empty map goes back instead: reads answer
+	// nothing, writes land somewhere, and the value that was expected is
+	// still missing, which is what the caller has to deal with either way.
+	if rt := reflect.TypeOf(zero); rt != nil && rt.Kind() == reflect.Map {
+		if t, ok := reflect.MakeMap(rt).Interface().(T); ok {
+			return t
+		}
+	}
 	return zero
 }

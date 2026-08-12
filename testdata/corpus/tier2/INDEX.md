@@ -1,6 +1,6 @@
 # Tier 2 corpus - script-shaped Perl programs
 
-114 entries. Each is a self-contained, realistic Perl script of the kind a
+115 entries. Each is a self-contained, realistic Perl script of the kind a
 sysadmin or data wrangler actually writes, not a snippet.
 
 ## Layout of an entry
@@ -161,12 +161,13 @@ Two entries exit non-zero on purpose: **27** (65) and **32** (1). The rest exit 
 | 112 | `112-a-stable-sort-and-a-checked-open` | Ties keeping their arrival order through three sorts, and an open whose failure is a value | `sort { $a->{k} <=> $b->{k} }` with ties, descending and `cmp` forms, `my $ok = open(...)`, `$!` printed by the script |
 | 113 | `113-the-older-spellings` | Ampersand calls, a lower-case loop label, and an if/else as a sub's last word | `&name(...)`, `each_batch:` with `next`/`last` naming it, an if/elsif/else tail returning its branch, one nested |
 | 114 | `114-a-value-chosen-inside-a-block` | Four blocks whose value is decided inside them, one of them nested | `do { if { if } else } }`, a `map` block ending in if/else, a `grep` block ending in one, `sub { $n++ }` as a sub's last statement |
+| 115 | `115-a-tree-grown-through-a-cursor` | A tree grown from flat paths by a cursor, with no line that creates a node | `$node = \%{ $node->{$part} }`, autovivification through a reference, `ref` telling a branch from a leaf, recursive render |
 
 ## Coverage map
 
 - **Subroutines** - 01, 02, 03 (also 12, 25, 27 for code refs as values)
 - **References, all deref syntaxes** - 04, 05
-- **Nested data structures** - 06, 07, 08, 29, 30
+- **Nested data structures** - 06, 07, 08, 29, 30, 115
 - **Autovivification (load-bearing)** - **09, 10, 62, 63**; incidental in 07, 22, 24, 29
 - **Closures** - 11, 12, 25, 54, 55, 64, 65; complex `map`/`grep`/`sort` blocks in 13
 - **Regex** - 14, 15, 16, 17, 18; applied in 23, 28, 29, 30

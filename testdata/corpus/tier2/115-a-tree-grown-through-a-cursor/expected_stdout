@@ -1,0 +1,10 @@
+etc/
+  hosts (9)
+  ssh/
+    sshd_config (19)
+var/
+  log/
+    messages (16)
+    nginx/
+      access.log (24)
+top level: etc,var

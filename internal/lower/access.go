@@ -38,6 +38,15 @@ func (l *Lowerer) indexParts(n *ast.Index) (base ir.Expr, idx ir.Expr, elem *ir.
 	}
 	base = l.asSlice(base, n)
 	elem = elemOf(typeOrAny(base))
+	// A value that turned out to be a map is indexed by its key type, not by
+	// a number. This is what an array index on a value of mixed shape lands
+	// on: one branch of the original treated it as a list and another as a
+	// hash, and the type that settled is the hash. Perl's hash keys are text,
+	// so the number becomes text, which is what perl did too.
+	if typeOrAny(base).Kind == ir.Map {
+		idx = l.toStr(l.expr(n.Idx), n.Idx)
+		return base, idx, elem
+	}
 	idx = l.toInt(l.expr(n.Idx), n.Idx)
 	return base, idx, elem
 }
@@ -216,6 +225,47 @@ func (l *Lowerer) symbolicRefRefusal(n ast.Node) ir.Expr {
 			"out loud what the symbol table was doing quietly, and a name the program "+
 			"never anticipated becomes a missing key rather than a new variable.",
 		"compile-time-mindset", "packages-and-exported-names")
+}
+
+// makeReferencedElement creates the element a reference names, when the
+// element is a slot of a container that may not hold anything yet.
+//
+// `$node = \%{ $node->{$part} }` is the cursor idiom that grows a tree out of
+// nothing: taking the reference is what makes the level, and every path after
+// the first walks through the levels the earlier ones made. Go creates
+// nothing on its own, so the make is written out, once, in front of the read.
+func (l *Lowerer) makeReferencedElement(d *ast.Deref) {
+	hi, ok := d.X.(*ast.HashIndex)
+	if !ok {
+		return
+	}
+	m, key, elem, field := l.hashPartsField(hi)
+	if m == nil || key == nil || field != nil {
+		return
+	}
+	var fill ir.Expr
+	if d.Sigil == '%' {
+		fill = composite(ir.MapOf(ir.TAny), nil, nil)
+	} else {
+		fill = composite(ir.SliceOf(ir.TAny), nil, nil)
+	}
+	okName := l.tmp("ok")
+	check := assign(":=", []ir.Expr{ir.NewIdent("_", nil), ir.NewIdent(okName, ir.TBool)},
+		[]ir.Expr{indexComma(m, key, elem)})
+	create := &ir.If{
+		Cond: negated(ir.NewIdent(okName, ir.TBool)),
+		Then: &ir.Block{Stmts: []ir.Stmt{
+			assign("=", []ir.Expr{index(m, key, elem)}, []ir.Expr{fill}),
+		}},
+	}
+	l.setProv(check, d)
+	l.note(check, "Taking a reference to a hash element is what created it in Perl, "+
+		"which is how a tree gets grown by walking a cursor down it with no line "+
+		"anywhere that says make a node. Go creates nothing on its own, so the "+
+		"check and the make are written out.",
+		"nil-slices-vs-nil-maps", "comma-ok-idiom")
+	l.emit(check)
+	l.emit(create)
 }
 
 // globSlot reports whether an expression names a slot of a glob, which is
@@ -771,6 +821,27 @@ func (l *Lowerer) refGen(n *ast.RefGen) ir.Expr {
 				"pointers-vs-references", "nil-vs-undef")
 			return out
 		}
+	}
+	// `\%{ EXPR }` and `\@{ EXPR }` take a reference to the container the
+	// expression names. A Go map or slice already carries a reference to its
+	// data, so the value itself is the reference, whatever its static type
+	// happens to be: taking the address of a map element is not even legal Go.
+	if d, ok := n.X.(*ast.Deref); ok && (d.Sigil == '%' || d.Sigil == '@') {
+		// Taking the reference is what creates the level in Perl: the whole
+		// `$node = \%{ $node->{$part} }` cursor idiom builds the tree out of
+		// nothing that way. Go creates nothing on its own, so the level is
+		// made here, before the value is read out.
+		l.autovivifyTarget(d)
+		l.makeReferencedElement(d)
+		x := l.expr(n.X)
+		if x == nil {
+			return ir.Nil(ir.TAny)
+		}
+		l.note(x, "A reference to a hash or an array is the collection itself here. Go "+
+			"maps and slices already refer to their data, so there is no address to "+
+			"take and nothing for the dereference on the other side to undo.",
+			"pointers-vs-references")
+		return x
 	}
 	x := l.expr(n.X)
 	if x == nil {
