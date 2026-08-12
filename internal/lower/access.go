@@ -202,6 +202,22 @@ func indexOffset(e ast.Expr) (*ast.Var, int, bool) {
 	return nil, 0, false
 }
 
+// symbolicRefRefusal is the one answer for a name computed while the program
+// runs and looked up in the symbol table.
+func (l *Lowerer) symbolicRefRefusal(n ast.Node) ir.Expr {
+	return l.todoExpr(n, "P2G8011", "a symbolic reference",
+		"the name is worked out at run time and looked up in the symbol table",
+		"This is a symbolic reference: the string is the name of a variable, and "+
+			"perl finds that variable in the symbol table while the program runs. Go "+
+			"has no symbol table to search and no way to reach a variable by a name "+
+			"computed at run time; every name is resolved when the program is "+
+			"compiled, which is what makes the compiler able to check it at all.",
+		"Put the values in a map keyed by the same strings. The lookup then says "+
+			"out loud what the symbol table was doing quietly, and a name the program "+
+			"never anticipated becomes a missing key rather than a new variable.",
+		"compile-time-mindset", "packages-and-exported-names")
+}
+
 // globSlot reports whether an expression names a slot of a glob, which is
 // where a filehandle kept its own fields before objects existed: `*$self->{X}`
 // reads the HASH slot of the symbol table entry $self points at.
@@ -386,10 +402,11 @@ func (l *Lowerer) noteDeepRead(n *ast.HashIndex) {
 	}
 	l.approximate(n, "P2G2510", "a nested read",
 		"reading a nested key no longer creates the levels above it",
-		"Reading a deep path in Perl creates every level on the way to it, so a test "+
-			"that only looked at a key leaves that key behind. Go's map read creates "+
-			"nothing at all, so a later `exists` on the same path answers no where the "+
-			"original answered yes.",
+		"Reading a deep path in Perl autovivifies every level on the way to it, so a "+
+			"test that only looked at a key leaves that key behind. Go's map read "+
+			"creates nothing at all, so a later `exists` on the same path answers no "+
+			"where the original answered yes. Autovivification on read is the half of "+
+			"it nobody means to rely on.",
 		"Nothing to change unless the program relied on it. Where it did, assign the "+
 			"intermediate levels explicitly, which also says out loud what was happening.",
 		"nil-slices-vs-nil-maps", "comma-ok-idiom")
@@ -700,6 +717,13 @@ func (l *Lowerer) derefExpr(n *ast.Deref) ir.Expr {
 				"only needed for real pointers. Slices and maps do not need one.",
 				"pointers-vs-references")
 			return out
+		}
+		// Dereferencing text is a symbolic reference: the string names a
+		// variable and perl looks it up in the symbol table while the program
+		// runs. Reading the string itself, which is what falls out otherwise,
+		// is a different value entirely and nothing would say so.
+		if t.Kind == ir.String {
+			return l.symbolicRefRefusal(n)
 		}
 		return x
 	case '#':

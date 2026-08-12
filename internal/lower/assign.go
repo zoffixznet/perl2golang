@@ -54,6 +54,26 @@ func (l *Lowerer) assignStmts(n *ast.Assign) []ir.Stmt {
 	case *ast.Slice:
 		return l.assignToSlice(lhs, n)
 	case *ast.Deref:
+		// `${ $name . "_seen" } = 1` creates a variable whose name the program
+		// worked out, which Go has nowhere to put. The refusal is a statement
+		// of its own rather than an assignment to a stand-in, because a
+		// stand-in is not a place anything can be stored into.
+		if lhs.Sigil == '$' {
+			if inner := l.expr(lhs.X); inner != nil && typeOrAny(inner).Kind == ir.String {
+				return []ir.Stmt{l.todoStmt(n, "P2G8011", "a symbolic reference",
+					"the variable being created is named at run time",
+					"This assigns through a symbolic reference: the string is the name "+
+						"of a variable, and perl creates or finds that variable in the "+
+						"symbol table while the program runs. Go resolves every name when "+
+						"it compiles the program, so there is no symbol table to write a "+
+						"new name into.",
+					"Keep the values in a map keyed by the same strings. Writing a key is "+
+						"then the same operation the symbol table was performing, and the "+
+						"map can be read, ranged over and printed, which a symbol table "+
+						"cannot.",
+					"compile-time-mindset", "packages-and-exported-names")}
+			}
+		}
 		x := l.expr(lhs)
 		rhs := l.assignable(l.expr(n.RHS), typeOrAny(x), n.RHS)
 		return []ir.Stmt{assign("=", []ir.Expr{x}, []ir.Expr{rhs})}
@@ -1349,12 +1369,14 @@ func (l *Lowerer) assignToVar(v *ast.Var, n *ast.Assign) []ir.Stmt {
 	// Nothing in Go can be reached through a name at run time.
 	if v.Sigil == '*' {
 		return []ir.Stmt{l.todoStmt(n, "P2G8020", "*"+v.Name+" = ...",
-			"replacing a subroutine at run time has no Go equivalent",
-			"Assigning to `*"+v.Name+"` puts a new subroutine in the symbol table under "+
-				"that name, and every call site already written against it, including the "+
-				"ones in objects that already exist, starts running the new one from the "+
-				"next call onwards. Go resolves a call when it compiles the program and "+
-				"has no symbol table to write into.",
+			"rebinding a name at run time has no Go equivalent",
+			"Assigning to the typeglob `*"+v.Name+"` rebinds that name in the symbol "+
+				"table, and every call site already written against it, including the "+
+				"methods of objects that already exist, starts running the new "+
+				"subroutine from the next call onwards. A method rebound this way is "+
+				"the monkey patch; a variable rebound this way is an alias, and both "+
+				"are the same operation. Go resolves a call when it compiles the "+
+				"program and has no symbol table to rebind anything in.",
 			"Where the point was to vary behaviour, hold the function in a variable or "+
 				"a field and call through it, which makes the substitution visible at "+
 				"every call site that can see it. Where the point was to patch a package "+

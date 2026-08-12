@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "tool_version": "0.1.0",
-  "recorded": "2026-08-16T00:22:46Z",
+  "recorded": "2026-08-16T00:37:08Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -148,8 +148,8 @@
       "entries": 43,
       "stages": {
         "compiled": {
-          "pass": 41,
-          "fail": 2,
+          "pass": 42,
+          "fail": 1,
           "skip": 0
         },
         "emitted": {
@@ -163,8 +163,8 @@
           "skip": 0
         },
         "translated": {
-          "pass": 28,
-          "fail": 15,
+          "pass": 27,
+          "fail": 16,
           "skip": 0
         },
         "typed": {
@@ -179,10 +179,10 @@
         "skip": 0
       },
       "quality": {
-        "todos": 50,
+        "todos": 53,
         "symbols": 193,
         "symbols_typed": 154,
-        "refusals": 51,
+        "refusals": 54,
         "approximations": 96,
         "dropped": 0,
         "crashes": 0
@@ -239,8 +239,8 @@
     "entries": 266,
     "stages": {
       "compiled": {
-        "pass": 261,
-        "fail": 5,
+        "pass": 262,
+        "fail": 4,
         "skip": 0
       },
       "emitted": {
@@ -259,8 +259,8 @@
         "skip": 0
       },
       "translated": {
-        "pass": 232,
-        "fail": 34,
+        "pass": 231,
+        "fail": 35,
         "skip": 0
       },
       "typed": {
@@ -275,20 +275,20 @@
       "skip": 0
     },
     "quality": {
-      "todos": 116,
+      "todos": 119,
       "symbols": 4154,
       "symbols_typed": 3890,
-      "refusals": 118,
+      "refusals": 121,
       "approximations": 1588,
       "dropped": 0,
       "crashes": 0
     }
   },
   "quality": {
-    "todos": 116,
+    "todos": 119,
     "symbols": 4154,
     "symbols_typed": 3890,
-    "refusals": 118,
+    "refusals": 121,
     "approximations": 1588,
     "dropped": 0,
     "crashes": 0
@@ -7242,7 +7242,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "exit status 2, wanted 0; stdout differs: line 5, byte 66: got \"  leave root.2\\n  leave root\\nafte...\", wanted \"leave root.2\\nleave root\\nafter al...\"; stderr differs: unexpected \"TODO P2G3599: the goto function is not implemented ...\""
+          "reason": "exit status 2, wanted 0; stdout differs: line 5, byte 66: got \"  leave root.2\\n  leave root\\nafte...\", wanted \"leave root.2\\nleave root\\nafter al...\"; stderr differs: unexpected \"TODO P2G8080: the frame is replaced rather than added to ...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -7258,7 +7258,7 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "exit status 2, wanted 0; stdout differs: line 5, byte 66: got \"  leave root.2\\n  leave root\\nafte...\", wanted \"leave root.2\\nleave root\\nafter al...\"; stderr differs: unexpected \"TODO P2G3599: the goto function is not implemented ...\""
+        "reason": "exit status 2, wanted 0; stdout differs: line 5, byte 66: got \"  leave root.2\\n  leave root\\nafte...\", wanted \"leave root.2\\nleave root\\nafter al...\"; stderr differs: unexpected \"TODO P2G8080: the frame is replaced rather than added to ...\""
       },
       "quality": {
         "todos": 1,
@@ -7853,8 +7853,7 @@
       ],
       "stages": {
         "compiled": {
-          "outcome": "fail",
-          "reason": "the generated Go does not compile: ./main.go:27:3: cannot assign to name + \"_seen\" (neither addressable nor a map index expression)"
+          "outcome": "pass"
         },
         "emitted": {
           "outcome": "pass"
@@ -7866,7 +7865,8 @@
           "outcome": "pass"
         },
         "translated": {
-          "outcome": "pass"
+          "outcome": "fail",
+          "reason": "2 untranslated constructs"
         },
         "typed": {
           "outcome": "fail",
@@ -7877,11 +7877,11 @@
         "outcome": "n/a"
       },
       "quality": {
-        "todos": 0,
+        "todos": 2,
         "symbols": 9,
         "symbols_typed": 6,
-        "refusals": 0,
-        "approximations": 2,
+        "refusals": 2,
+        "approximations": 1,
         "dropped": 0,
         "crashes": 0
       }
@@ -8008,7 +8008,7 @@
         "symbols": 2,
         "symbols_typed": 1,
         "refusals": 3,
-        "approximations": 1,
+        "approximations": 2,
         "dropped": 0,
         "crashes": 0
       }
@@ -8613,7 +8613,7 @@
         },
         "translated": {
           "outcome": "fail",
-          "reason": "2 untranslated constructs"
+          "reason": "3 untranslated constructs"
         },
         "typed": {
           "outcome": "pass"
@@ -8623,10 +8623,10 @@
         "outcome": "n/a"
       },
       "quality": {
-        "todos": 2,
+        "todos": 3,
         "symbols": 4,
         "symbols_typed": 4,
-        "refusals": 2,
+        "refusals": 3,
         "approximations": 0,
         "dropped": 0,
         "crashes": 0

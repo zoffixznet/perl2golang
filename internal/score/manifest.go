@@ -325,11 +325,23 @@ func loadCategories(dir string) []string {
 // report for the requirement to hold.
 type Requirement []string
 
-// loadRequirements reads the report-must-contain lines of an entry's
-// expectation.md. Each such line is one requirement and every requirement
-// must be satisfied; the backticked phrases on one line are alternatives, so
-// a line naming `truth` and `boolean` is satisfied by either word. A phrase
-// matches anywhere in any report entry's text, case-insensitively.
+// loadRequirements reads the must-contain lines of an entry's expectation.md.
+// Every requirement must be satisfied, and a phrase matches anywhere in any
+// report entry's text, case-insensitively.
+//
+// Two spellings are read, because the corpus grew two conventions and both
+// say something the entry's author meant:
+//
+//   - `report-must-contain:` is one requirement per line, and the backticked
+//     phrases on it are alternatives, so a line naming `truth` and `boolean`
+//     is satisfied by either word.
+//   - `diagnostic-must-contain:` is a comma-separated list of requirements,
+//     all of which must hold, with any alternatives written inside one
+//     comma-separated piece as `depth-first` (or `DFS`). Commas inside
+//     backticks are part of the phrase, which is what `$,` is.
+//
+// A piece with no backticked phrase in it names something the check cannot
+// look for, such as "the sub name", and is skipped rather than guessed at.
 func loadRequirements(dir string) []Requirement {
 	data, err := os.ReadFile(filepath.Join(dir, "expectation.md"))
 	if err != nil {
@@ -338,14 +350,37 @@ func loadRequirements(dir string) []Requirement {
 	var out []Requirement
 	for _, line := range strings.Split(string(data), "\n") {
 		trimmed := strings.TrimSpace(line)
-		if !strings.HasPrefix(trimmed, "- report-must-contain:") {
-			continue
-		}
-		if terms := backticked(trimmed); len(terms) > 0 {
-			out = append(out, terms)
+		switch {
+		case strings.HasPrefix(trimmed, "- report-must-contain:"):
+			if terms := backticked(trimmed); len(terms) > 0 {
+				out = append(out, terms)
+			}
+		case strings.HasPrefix(trimmed, "- diagnostic-must-contain:"):
+			for _, piece := range splitOutsideBackticks(trimmed, ',') {
+				if terms := backticked(piece); len(terms) > 0 {
+					out = append(out, terms)
+				}
+			}
 		}
 	}
 	return out
+}
+
+// splitOutsideBackticks splits a line on a separator, ignoring separators
+// that fall inside a backticked phrase.
+func splitOutsideBackticks(s string, sep byte) []string {
+	var out []string
+	start, quoted := 0, false
+	for i := 0; i < len(s); i++ {
+		switch {
+		case s[i] == '`':
+			quoted = !quoted
+		case s[i] == sep && !quoted:
+			out = append(out, s[start:i])
+			start = i + 1
+		}
+	}
+	return append(out, s[start:])
 }
 
 // satisfiedBy reports whether any of the requirement's phrases appears in any

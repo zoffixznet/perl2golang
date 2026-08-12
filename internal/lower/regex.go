@@ -505,8 +505,10 @@ func unsupportedFeature(raw string) (reFeature, bool) {
 				"group was protecting against in the first place."}},
 		{"(?{", reFeature{"P2G4011", "embedded code",
 			"embedded code in a pattern has no Go equivalent",
-			"(?{ ... }) runs Perl code during matching. No Go regexp engine does " +
-				"anything like it.",
+			"(?{ ... }) runs Perl code during matching, so the pattern can count, " +
+				"accumulate, or decide as the engine moves through the input. No Go " +
+				"regexp engine does anything like it, and RE2's guarantee of linear " +
+				"time is exactly the promise that rules it out.",
 			"Match first, then run the code over the captures."}},
 		{"(?R)", reFeature{"P2G4010", "recursive pattern",
 			"a recursive pattern has no Go equivalent",
@@ -514,6 +516,20 @@ func unsupportedFeature(raw string) (reFeature, bool) {
 				"therefore backtracking.",
 			"Nested structure needs a parser. A short hand-written scanner over the " +
 				"input is both faster and easier to debug than the pattern was."}},
+		{"(?&", reFeature{"P2G4010", "recursive subpattern",
+			"a recursive subpattern has no Go equivalent",
+			"(?&name) matches the named group again, recursively, which is how a " +
+				"pattern matches nested brackets. Recursion needs a stack and therefore " +
+				"backtracking, and RE2 has neither: it is linear in the input precisely " +
+				"because it never backtracks.",
+			"Nested structure needs a parser. A short hand-written scanner counting " +
+				"the brackets is both faster and easier to debug than the recursive " +
+				"pattern was."}},
+		{"(?P>", reFeature{"P2G4010", "recursive subpattern",
+			"a recursive subpattern has no Go equivalent",
+			"(?P>name) matches the named group again, recursively, which needs a " +
+				"stack and therefore backtracking. RE2 has neither.",
+			"Nested structure needs a parser rather than a pattern."}},
 		{`\K`, reFeature{"P2G4014", `\K`,
 			`\K is not available in Go's regexp package`,
 			`\K discards everything matched so far, which is a backtracking control ` +

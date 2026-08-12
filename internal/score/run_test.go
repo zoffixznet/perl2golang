@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -540,5 +541,46 @@ func TestRunRejectsAnEmptySelection(t *testing.T) {
 	})
 	if err == nil {
 		t.Fatal("wanted an error when no entry matches the filter")
+	}
+}
+
+// TestLoadRequirementsReadsBothSpellings covers the two conventions tier 4
+// expectations are written in. The second one went unread for a long time,
+// and 28 of the 43 entries were being judged on their category alone as a
+// result, so the parsing of both is worth pinning down.
+func TestLoadRequirementsReadsBothSpellings(t *testing.T) {
+	dir := t.TempDir()
+	const doc = "# Pass criteria\n" +
+		"\n" +
+		"- category: `refuse-statement`\n" +
+		"- report-must-contain: `not checked` `unchecked` - either phrase\n" +
+		"- diagnostic-must-contain: `depth-first` (or `DFS`), `C3`, the method name\n" +
+		"- diagnostic-must-contain: the variable name (`$\"` / `$,` / `$\\`)\n" +
+		"- must-not: report a clean conversion\n"
+	if err := os.WriteFile(filepath.Join(dir, "expectation.md"), []byte(doc), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	got := loadRequirements(dir)
+	want := []Requirement{
+		{"not checked", "unchecked"},
+		{"depth-first", "DFS"},
+		{"C3"},
+		{"$\"", "$,", "$\\"},
+	}
+	if len(got) != len(want) {
+		t.Fatalf("read %d requirements, want %d: %v", len(got), len(want), got)
+	}
+	for i := range want {
+		if !slices.Equal(got[i], want[i]) {
+			t.Errorf("requirement %d = %v, want %v", i, got[i], want[i])
+		}
+	}
+	// The piece naming "the method name" has no backticked phrase in it, so
+	// there is nothing to look for and it must not become a requirement that
+	// can never be met.
+	for _, r := range got {
+		if len(r) == 0 {
+			t.Error("an empty requirement was read, which nothing can satisfy")
+		}
 	}
 }

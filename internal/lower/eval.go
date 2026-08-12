@@ -31,9 +31,12 @@ func (l *Lowerer) evalValue(n *ast.Call, wantList bool) ir.Expr {
 	if n.Block == nil {
 		return l.todoExpr(n, "P2G8001", "string eval",
 			"eval of a string is not implemented",
-			"The string form of eval compiles Perl source while the program runs. Go "+
-				"has no compiler at run time, so there is nothing to translate it into.",
-			"A fixed set of expressions becomes named functions selected from a map. "+
+			"`eval EXPR`, the string form, compiles Perl source while the program "+
+				"runs. Go has no compiler at run time, so there is nothing to translate "+
+				"it into, and the call site becomes a stub that reports the gap and "+
+				"yields nothing.",
+			"A fixed set of expressions becomes named functions selected from a map, "+
+				"which replaces the stub with a dispatch the compiler can check. "+
 				"Anything less fixed than that has no Go equivalent.",
 			"errors-are-values")
 	}

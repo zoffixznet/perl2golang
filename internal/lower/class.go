@@ -1,6 +1,7 @@
 package lower
 
 import (
+	"slices"
 	"strings"
 
 	"perl2golang/internal/ir"
@@ -1035,6 +1036,43 @@ func walkExprs(body []ast.Stmt, fn func(ast.Expr)) {
 	stmts(body)
 }
 
+// sharedMethodClause names the methods more than one parent answers to, which
+// are the calls the resolution order actually decides.
+//
+// A parent answers to a name if it declares it or inherits it, so the walk
+// goes up each parent's own chain. That is where the interesting case lives:
+// a diamond, where one parent declares the method and the other inherits it
+// from the class they share, and the two orders pick different ones.
+func (l *Lowerer) sharedMethodClause(c *Class) string {
+	parents := append([]string{c.ParentName}, c.ExtraParents...)
+	answers := make([]map[string]bool, 0, len(parents))
+	for _, name := range parents {
+		set := map[string]bool{}
+		for p, ok := l.classes[name], true; ok && p != nil; p, ok = l.classes[p.ParentName] {
+			for _, s := range p.Subs {
+				set[s.Name] = true
+			}
+			if p.ParentName == "" {
+				break
+			}
+		}
+		answers = append(answers, set)
+	}
+	var shared []string
+	for name := range answers[0] {
+		for _, other := range answers[1:] {
+			if other[name] && !slices.Contains(shared, name) {
+				shared = append(shared, name)
+			}
+		}
+	}
+	if len(shared) == 0 {
+		return ""
+	}
+	slices.Sort(shared)
+	return ", and both answer to " + strings.Join(shared, ", ")
+}
+
 // reportMultipleInheritance turns down an @ISA that names more than one class.
 //
 // Perl walks the list to find a method, and which one it finds depends on the
@@ -1050,11 +1088,15 @@ func (l *Lowerer) reportMultipleInheritance(c *Class, at ast.Node) {
 	l.refuse(at, "P2G7005", "@ISA with "+itoa(len(c.ExtraParents)+1)+" parents",
 		"only the first parent was carried over",
 		c.Perl+" inherits from "+c.ParentName+" and from "+
-			strings.Join(c.ExtraParents, ", ")+". Which of them a method comes from "+
-			"depends on the resolution order, and perl has two that disagree on this "+
-			"very shape. Go embeds types and has no resolution order: a name two "+
-			"embedded types both answer to is ambiguous and does not compile until the "+
-			"call site says which it means. Only "+c.ParentName+" is embedded here.",
+			strings.Join(c.ExtraParents, ", ")+l.sharedMethodClause(c)+". Which parent "+
+			"a method comes from depends on the method resolution order, and perl has "+
+			"two that disagree on exactly this shape: the default depth-first order "+
+			"searches the first parent and everything above it before looking at the "+
+			"second, and C3, which `use mro 'c3'` selects, searches the parents before "+
+			"anything they share. Go embeds types and has no resolution order at all: "+
+			"a name two embedded types both answer to is ambiguous and does not "+
+			"compile until the call site says which it means. Only "+c.ParentName+
+			" is embedded here.",
 		"Embed the other parents as well and name them at the calls that became "+
 			"ambiguous, or move the shared method into one type. Where the second "+
 			"parent was a mixin of behaviour rather than state, an interface plus a "+

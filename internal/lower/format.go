@@ -75,6 +75,16 @@ func (l *Lowerer) perlFormat(format string, args []ir.Expr, at ast.Node) (string
 			outArgs = append(outArgs, l.toFloat(a, at))
 		case 's':
 			out.WriteString(spec)
+			if t := typeOrAny(a); t.Kind == ir.Float {
+				l.inform(at, "P2G5501", "%s given a number",
+					"a number printed through %s takes its stringification, which is "+
+						"fifteen significant digits with the trailing zeros trimmed, the "+
+						"same as %.15g. Go's %v prints the shortest text that reads back as "+
+						"the same float64 instead, so 0.1 + 0.2 comes out as "+
+						"0.30000000000000004 rather than 0.3. The emitted code formats the "+
+						"number the way the original did",
+					"fmt-and-verbs", "explicit-conversions-no-coercion")
+			}
 			outArgs = append(outArgs, l.toStr(a, at))
 		case 'c':
 			out.WriteString(spec)

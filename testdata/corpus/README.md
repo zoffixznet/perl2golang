@@ -150,8 +150,8 @@ one of six categories:
 `expectation.md` also lists the tripwires: the specific output lines that
 separate a correct conversion from a plausible-looking wrong one.
 
-Lines of the form `- report-must-contain:` are machine-checked, and every
-one of them must hold for the entry to pass, whatever its category decided:
+Two kinds of line are machine-checked, and every one of them must hold for
+the entry to pass, whatever its category decided:
 a report can refuse one construct while silently mistranslating the one the
 entry is about, so "the tool reported something" is not the standard. Each
 such line is one requirement; the backticked phrases on the line are
@@ -160,6 +160,20 @@ word, matched case-insensitively anywhere in a report entry's text. Prose on
 the line outside backticks is for the human reader and never matched, which
 is also why a file or line reference on a requirement line must not be
 backticked.
+
+`- diagnostic-must-contain:` is the older spelling and reads the other way
+round: it is a comma-separated list of requirements, **all** of which must
+hold, with alternatives written inside one piece as `depth-first` (or
+`DFS`). A comma inside backticks is part of the phrase, which is what `$,`
+is, and a piece with no backticked phrase in it, such as "the sub name",
+names something the check cannot look for and is skipped rather than
+guessed at. Both spellings feed the same requirement list; the difference is
+only how one line is read.
+
+Until the checker learned the second spelling, 28 of the 43 tier 4 entries
+were passing `honest` on their category alone, because their expectations
+were written in the spelling nothing read. Prefer either form, and know that
+whichever you write will be enforced.
 
 ## MANIFEST.json
 

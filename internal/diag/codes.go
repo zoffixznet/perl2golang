@@ -667,6 +667,9 @@ const (
 	TieConverted Code = "P2G8040"
 	// TieEscapes: a tied variable is passed where the tie is invisible.
 	TieEscapes Code = "P2G8041"
+	// TieRefused: tie has no Go form at all, because Go has no hook on
+	// reading or writing a variable.
+	TieRefused Code = "P2G8042"
 	// OperatorOverload: an overloaded operator was resolved per call site.
 	OperatorOverload Code = "P2G8050"
 	// MonkeyPatch: a sub is replaced at run time.
@@ -2730,6 +2733,14 @@ var catalogue = map[Code]Entry{
 		Cost:      "each access is a method call, so a read that Perl wrote as an index is now two lines",
 		Converted: "the emitted code calls `Get`, `Set` and `Delete` at each access",
 		Concepts:  []string{"methods-and-receivers", "maps-of-slices"},
+	},
+	TieRefused: {
+		Severity:  report.Refuse,
+		Message:   "a tied variable runs `FETCH` on every read and `STORE` on every write, and Go has no hook on either",
+		Short:     "tie has no Go form",
+		Advice:    "a small type with `Get` and `Set` says the same thing, at every call site rather than behind them",
+		Converted: "the stand-in reports the gap and yields the zero value",
+		Concepts:  []string{"methods-and-receivers", "compile-time-mindset"},
 	},
 	TieEscapes: {
 		Severity:  report.Refuse,

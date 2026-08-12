@@ -129,6 +129,46 @@ func (l *Lowerer) block(list []ast.Stmt) *ir.Block {
 	return b
 }
 
+// phaseBlock reports whether a block label names one of perl's compilation
+// phases rather than a loop.
+func phaseBlock(label string) bool {
+	switch label {
+	case "BEGIN", "END", "INIT", "CHECK", "UNITCHECK":
+		return true
+	}
+	return false
+}
+
+// phaseBlockNote reports a phase block, whose whole point is when it runs.
+func (l *Lowerer) phaseBlockNote(n *ast.Block) {
+	if n.Label == "END" {
+		l.approximate(n, "P2G8095", "an END block",
+			"the block runs at the end of main rather than at interpreter shutdown",
+			"An END block runs as perl shuts down, after the program's last "+
+				"statement and after a die. The generated code runs it at the end of "+
+				"main instead, so a program that exits early or panics does not reach "+
+				"it.",
+			"A deferred call at the top of main runs on the way out of it, panic "+
+				"included, which is the closest Go equivalent and is visible where it "+
+				"is written.",
+			"defer-timing")
+		return
+	}
+	l.approximate(n, "P2G8090", "a "+n.Label+" block",
+		"the block runs in order with the rest of the program, not while the file is read",
+		"A "+n.Label+" block runs as soon as perl has finished parsing it, before the "+
+			"rest of the file is even parsed, which is how it can change how the lines "+
+			"below it parse: a sub declared or prototyped in a "+n.Label+" block "+
+			"changes the parse tree of every call to it further down. Go has no "+
+			"execution during compilation at all, so the block is emitted where it "+
+			"stands and runs in order with everything else.",
+		"Where the block only set things up, ordinary initialisation at the top of "+
+			"main says the same thing. Where it decided how the rest of the file "+
+			"parses, there is no Go equivalent and the two versions have to be "+
+			"separated by hand.",
+		"compile-time-mindset")
+}
+
 // leadComments extracts the developer's own comments above a statement. They
 // are carried into both output variants, because the developer wrote them and
 // they are usually the best documentation in the file.
@@ -202,6 +242,12 @@ func (l *Lowerer) stmt(st ast.Stmt) []ir.Stmt {
 	case *ast.Foreach:
 		return l.foreachStmt(n)
 	case *ast.Block:
+		// A phase block runs while perl is still reading the file, which is
+		// the one thing about it that matters and the one thing Go cannot
+		// reproduce.
+		if phaseBlock(n.Label) {
+			l.phaseBlockNote(n)
+		}
 		// A Perl bare block is a loop that runs once, which is why last and
 		// next work inside it. When the body uses them, the Go form has to be
 		// a real loop or the branch has nothing to leave.

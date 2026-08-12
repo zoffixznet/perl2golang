@@ -35,7 +35,7 @@ express is invisible however many rounds stare at the table.
 | `emitted` | valid Go came out | validity is `go/parser`'s standard, not the compiler's |
 | `compiled` | the Go toolchain built it | a program can build and still be wrong everywhere |
 | `equivalent` | the built program matched `perl` byte for byte on stdout, on exit status, and on every file it wrote; stderr wording too, unless the entry sanctions stderr, where only its presence must agree | equivalence on this entry's input only: an approximation that diverges on inputs the entry never feeds it passes clean |
-| `honest` | tier 4 only: the entry's own standard held, and every `report-must-contain` line in its expectation was satisfied by the report's own words | the report said the required true thing; whether it says it well is a reading judgment, not a column |
+| `honest` | tier 4 only: the entry's own standard held, and every `report-must-contain` and `diagnostic-must-contain` line in its expectation was satisfied by the report's own words | the report said the required true thing; whether it says it well is a reading judgment, not a column |
 
 Tier 4 is judged by `honest` and not by `equivalent`, because those entries
 exist to prove the tool fails well. A skipped check never counts as a pass.

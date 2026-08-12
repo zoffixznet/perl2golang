@@ -308,6 +308,12 @@ func (l *Lowerer) builtin(n *ast.Call) ir.Expr {
 		}
 		return ir.BoolLit(true)
 
+	case "goto":
+		return l.gotoRefusal(n)
+
+	case "tie", "untie", "tied":
+		return l.tieRefusal(n)
+
 	case "fork":
 		// A refusal rather than a guess, and a considered one: Go's runtime is
 		// threaded, so a bare fork without an exec is not survivable, and the
@@ -772,6 +778,64 @@ func (l *Lowerer) printCall(n *ast.Call, newline bool) []ir.Stmt {
 		"unless two of them are both non-strings, which is why the newline is passed "+
 		"explicitly. fmt.Println would add spaces and a newline of its own.")
 	return []ir.Stmt{st}
+}
+
+// gotoRefusal is the one answer for goto, whose only common form is the tail
+// call `goto &sub`.
+func (l *Lowerer) gotoRefusal(n *ast.Call) ir.Expr {
+	target := ""
+	if args := flatten(argList(n)); len(args) > 0 {
+		if v, ok := args[0].(*ast.Var); ok && v.Sigil == '&' {
+			target = " &" + v.Name
+		}
+	}
+	if target != "" {
+		return l.todoExpr(n, "P2G8080", "goto"+target,
+			"the frame is replaced rather than added to",
+			"`goto"+target+"` is a tail call: it hands this sub's arguments to the "+
+				"other one and takes this frame off the stack, so caller sees the "+
+				"original call site rather than this sub. Go has no tail call and no "+
+				"way to remove a frame; every call adds one, and the runtime is free "+
+				"to reuse it or not.",
+			"Return the other function's result instead. The answer is the same and "+
+				"the only difference is the extra frame, which matters to caller and to "+
+				"a stack trace and to nothing else.",
+			"compile-time-mindset")
+	}
+	return l.todoExpr(n, "P2G8080", "goto",
+		"a computed jump has no Go form",
+		"`goto` here jumps to a label or to a name worked out at run time. Go has a "+
+			"goto, and it only jumps to a label in the same function and cannot jump "+
+			"into a block, so most uses of this one have no counterpart.",
+		"Restructure the control flow: a loop with a labelled break, or an early "+
+			"return, covers what a jump backwards or forwards was doing.",
+		"compile-time-mindset")
+}
+
+// tieRefusal is the one answer for tie, which makes a plain-looking variable
+// run methods on every read and every write.
+func (l *Lowerer) tieRefusal(n *ast.Call) ir.Expr {
+	name := "the variable"
+	if args := flatten(argList(n)); len(args) > 0 {
+		if v, ok := args[0].(*ast.Var); ok {
+			name = string(v.Sigil) + v.Name
+		} else if my, ok := args[0].(*ast.My); ok {
+			if vars := declaredVars(my); len(vars) == 1 {
+				name = string(vars[0].Sigil) + vars[0].Name
+			}
+		}
+	}
+	return l.todoExpr(n, "P2G8042", "tie",
+		"a tied variable runs methods on every read and write",
+		"tie hands "+name+" to a class, and from then on every read of it calls that "+
+			"class's FETCH and every write calls its STORE, while the code around it "+
+			"goes on looking like ordinary variable access. Go has no hook on reading "+
+			"or writing a variable at all: what a name does is what its type does, "+
+			"decided when the program is compiled.",
+		"Make the access explicit. A pair of methods, Get and Set, on a small type "+
+			"says the same thing as FETCH and STORE and says it at every call site, "+
+			"which is the part the tie was hiding.",
+		"compile-time-mindset", "methods-and-receivers")
 }
 
 // printedList renders an array that is being printed, joined by whatever `$,`

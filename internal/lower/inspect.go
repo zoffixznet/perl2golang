@@ -257,7 +257,8 @@ func (l *Lowerer) localStmts(targets []ast.Expr, value ast.Expr, n ast.Node) []i
 		"defer-timing")
 	l.approximate(n, "P2G2001", "local",
 		"the old value comes back when the function returns, not when the block ends",
-		"local restores the previous value at the end of the enclosing block. Go's "+
+		"local is dynamic scoping: it restores the previous value at the end of the "+
+			"enclosing block, and every sub called meanwhile sees the new one. Go's "+
 			"defer runs when the enclosing function returns, so if this local sits "+
 			"inside a loop or an if, the restore happens later than it did in Perl, and "+
 			"a local inside a loop stacks up one deferred restore per turn.",

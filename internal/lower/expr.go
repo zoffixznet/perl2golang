@@ -750,8 +750,9 @@ func (l *Lowerer) noteNumericEdge(n *ast.NumberLit) {
 				"arithmetic near this size wraps in Go",
 				"Perl promotes a growing number through unsigned and then float "+
 					"representations, so adding 1 to the largest signed value stays "+
-					"exact. Go's int is 64-bit and wraps: the same addition lands at "+
-					"the most negative value, silently.",
+					"exact. Go's int is 64-bit and overflows by wrapping: the same "+
+					"addition lands at the most negative value, silently, and no "+
+					"check anywhere reports the overflow.",
 				"Where values genuinely reach this size, use math/big.Int, or "+
 					"uint64 when the range is one bit short.",
 				"explicit-conversions-no-coercion", "static-types-and-zero-values")

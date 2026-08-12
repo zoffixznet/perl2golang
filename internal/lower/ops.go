@@ -848,8 +848,9 @@ func (l *Lowerer) incDecExpr(n *ast.UnOp) ir.Expr {
 		l.approximate(n, "P2G5030", "magic string increment",
 			"++ on text uses Perl's magic increment",
 			"Incrementing a string in Perl increments it like an odometer when it "+
-				"looks like a word: 'aa' becomes 'ab', 'az' becomes 'ba', 'a9' becomes 'b0'. "+
-				"Go has no such operation.",
+				"looks like a word, carrying from one position into the next: 'aa' "+
+				"becomes 'ab', 'az' carries to 'ba', 'a9' carries to 'b0', and 'Zz' "+
+				"carries all the way out to 'AAa'. Go has no such operation.",
 			"If the value is really a counter, keep it in an int. If it is really a "+
 				"label sequence, the helper reproduces Perl's rule.")
 		// The value may have been read through a helper, which is not a
