@@ -23,7 +23,7 @@ Requires a Go toolchain, 1.24 or newer. The Go it generates needs 1.23.
 
 ```
 make build      # builds ./bin/perl2golang
-make install    # installs perl2golang into ~/.local/bin
+make install    # installs perl2golang into ~/.local/bin (set BINDIR for elsewhere)
 ```
 
 `make help` lists every target.
@@ -119,11 +119,11 @@ like in Go", and the answer is the same Go a file conversion would produce.
 
 ```
 $ perl2golang repl
-perl2golang 0.1.0  type Perl, see the Go. :help for commands, :quit to leave.
+perl2golang 1.0.0  type Perl, see the Go. :help for commands, :quit to leave.
 
 perl> my @nums = (3, 1, 4, 1, 5);
   nums := []int{3, 1, 4, 1, 5}
-  concepts: slices-not-arrays, var-vs-short-declaration  (:explain to expand)
+  concepts: var-vs-short-declaration, slices-not-arrays  (:explain to expand)
 
 perl> my %seen;
   seen := map[string]any{}
@@ -145,13 +145,12 @@ perl> sub trim {
  ...> }
   // pattern2 matches the pattern ^\s+|\s+$.
   var pattern2 = regexp.MustCompile("^\\s+|\\s+$")
-  // trim performs one step of the program's work.
   func trim(s any) any {
   	s = pattern2.ReplaceAllString(toText(s), "")
   	return s
   }
   (support code added: toText; :go full includes it)
-  concepts: replace-and-expansion, submatch-and-named-groups  (+2 more; :explain to expand)
+  concepts: replace-and-expansion, submatch-and-named-groups  (+2 more; :explain to expand, :diag for the full note)
 ```
 
 Three things in that transcript are the point of the feature:
@@ -263,6 +262,18 @@ until you have written the real code in its place.
 Pass `--strict` to make any refusal a nonzero exit status, which is what you
 want in a script.
 
+## What to expect
+
+Measured against the bundled corpus at this version: every conversion emits
+Go, 99% of it compiles, 87% of programs convert every statement, and 79% of
+the runnable ones match perl's output byte for byte. Those numbers flatter
+the tool exactly as much as the corpus resembles your code, and the corpus
+is script-shaped on purpose. On a sample of installed Perl modules and
+scripts the tool had never seen, about half compiled, because module-heavy
+code leans on export and OO machinery that is out of scope. The short
+version: an ordinary script converts and runs; a module tree mostly does
+not, and says why.
+
 ## Known limitations
 
 These are real and current, not oversights:
@@ -290,8 +301,8 @@ These are real and current, not oversights:
   common CPAN modules whose work the Go standard library does. A package that
   blesses a hash reference becomes a struct with methods on a pointer receiver,
   `@ISA` becomes embedding, and a module in a `.pm` file beside the script is
-  converted with it. `tie`, `format`, typeglobs, source filters, `AUTOLOAD`,
-  `DESTROY` and operator overloading are reported rather than converted.
+  converted with it. The constructs it refuses on principle are listed under
+  "Out of scope" below.
 - **Embedding is not inheritance**, and the one place that shows is a base
   class calling a method its subclasses override: Go resolves that call against
   the base and the override is never reached. Every such call site is reported
@@ -308,11 +319,34 @@ These are real and current, not oversights:
   script to compile and need a little hand-finishing, and expect one built on
   nested data structures or code references to need more: those are where type
   inference gives up and falls back to `any`, and the report says how often it
-  did. `make score` measures all of this against the bundled corpus, and the
-  numbers it prints are the real ones.
+  did.
 - **Perl is not required to run this tool**, and converting a file never runs
   it. Perl is only used by this repository's own test suite, against scripts in
   `testdata/corpus/`.
+
+## Out of scope
+
+Decided, not deferred. Issues asking for these will be met with a pointer to
+this list:
+
+- **Module and CPAN-scale conversion.** The unit of conversion is a script,
+  plus any `.pm` files sitting beside it. Pointing the tool at an installed
+  module tree produces well-labelled refusals, not a port.
+- **`use overload`.** An overloaded operator is refused by name, with the
+  method call to write in its place.
+- **`tie`, `format`/`write`, typeglobs, source filters, `AUTOLOAD`, `DESTROY`,
+  `fork`/`waitpid`, and writes through `@_` aliasing.** Each is refused with
+  an explanation of what to write instead. The refusal is the finished
+  feature, not a stopgap.
+- **A backtracking regex engine.** Backreferences and lookaround are refused
+  by name rather than approximated into something that matches different
+  text, and the generated project stays dependency-free rather than take on
+  an engine that provides them.
+- **Model-written explanations.** The lessons and reports are never generated
+  by a model, for the reason given under known limitations: a small local
+  model states falsehoods about your code with complete confidence. The
+  optional model names things, and that is the ceiling by design.
+- **Windows.** Linux, macOS and the BSDs are the targets.
 
 ## Working on perl2golang
 
@@ -334,10 +368,16 @@ for byte against what real `perl` produces. It writes the numbers to a file and
 prints the change since the previous run. `ARGS` narrows it, so
 `make score ARGS="-tier tier2 -v"` scores one tier and shows every entry.
 
-The corpus is tiered by difficulty. Tiers 1 and 2 are ordinary Perl and are what
-this release targets. Tiers 3 and 4 and the `domain/` set are harder material
-kept as a measure of where the tool stands, not as a bar it currently clears.
+The corpus is tiered by difficulty: tiers 1 and 2 are ordinary Perl, tier 3
+is object systems, parsers and process control, `domain/` is realistic
+sysadmin and data-wrangling scripts, and tier 4 holds adversarial constructs
+judged on whether the tool tells the truth about them rather than on whether
+they convert.
 
 [docs/iterating.md](docs/iterating.md) is the guide to improving the
 conversion: how to read the scorecard, how to pick what to work on, and the
 rules a change has to respect.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
