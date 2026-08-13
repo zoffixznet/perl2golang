@@ -1,0 +1,186 @@
+# Publishes a version. Pushing a tag like v1.2.3 is the whole trigger: the
+# suite runs first, and only then are the archives built and attached to the
+# release of that name.
+#
+# What this proves and what it does not. The suite, the static checks and the
+# corpus all run on Linux, because the corpus needs perl and a Go toolchain to
+# convert a script, run the Go, and compare its output with the original's.
+# Every published target is compiled and vetted from the same source, which
+# catches code that will not build somewhere, but compiling a program is not
+# running it: the macOS and Windows archives are built here and exercised by
+# whoever downloads them.
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  suite:
+    name: suite and corpus
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the tagged source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install the Go the module asks for
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          check-latest: true
+
+      - name: The tag has to name the version the tool reports
+        run: |
+          set -eu
+          want="${GITHUB_REF_NAME#v}"
+          line="$(go run ./cmd/perl2golang version)"
+          case "$line" in
+            "perl2golang $want "*) echo "$line" ;;
+            *)
+              echo "the tag says $want, the tool says: $line" >&2
+              echo "move the tag, or set Version in internal/convert/convert.go" >&2
+              exit 1
+              ;;
+          esac
+
+      - name: The tools the corpus measures against are present
+        run: |
+          set -eu
+          # Without perl the equivalence comparisons skip themselves and the
+          # suite passes without having measured anything, so a missing perl
+          # stops the release here rather than quietly weakening the gate.
+          perl -e 'printf "perl %vd\n", $^V'
+          go version
+
+      - name: Static checks
+        run: make lint
+
+      - name: Full suite
+        run: go test -timeout 30m ./...
+
+      - name: Every published target compiles and vets
+        run: |
+          set -eu
+          out="$(mktemp -d)"
+          for target in linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 windows/arm64; do
+            echo "== $target"
+            GOOS="${target%/*}" GOARCH="${target#*/}" CGO_ENABLED=0 go build -o "$out/" ./...
+            GOOS="${target%/*}" GOARCH="${target#*/}" CGO_ENABLED=0 go vet ./...
+          done
+
+      - name: Corpus, held to the invariants a release may not break
+        run: |
+          set -eu
+          # The percentages are calibration and are deliberately not gates. A
+          # dropped statement or a crash is a different thing: it means the
+          # tool lost part of somebody's program or fell over on it.
+          go run ./cmd/score -no-write -json > scorecard.json
+          jq '{entries: .total.entries, stages: .total.stages, quality: .quality, environment: .environment}' scorecard.json
+          jq -e '.environment.perl and .environment.go_toolchain' scorecard.json > /dev/null ||
+            { echo "the corpus ran without one of its tools, so its numbers prove nothing" >&2; exit 1; }
+          jq -e '.quality.dropped == 0 and .quality.crashes == 0' scorecard.json > /dev/null ||
+            { echo "the corpus lost a statement or crashed on one, which no release may do" >&2; exit 1; }
+
+  publish:
+    name: archives
+    needs: suite
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out the tagged source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install the Go the module asks for
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          check-latest: true
+
+      - name: Build one archive per target
+        run: |
+          set -eu
+          version="${GITHUB_REF_NAME#v}"
+          mkdir -p dist stage
+          for target in linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 windows/arm64; do
+            goos="${target%/*}"
+            goarch="${target#*/}"
+            name="perl2golang_${version}_${goos}_${goarch}"
+            binary=perl2golang
+            if [ "$goos" = windows ]; then binary=perl2golang.exe; fi
+            mkdir -p "stage/$name"
+            # No cgo, so the binary carries its own runtime and needs nothing
+            # installed beside it. -trimpath keeps build paths out of it, and
+            # the commit is stamped in because a downloaded binary has no
+            # repository to be asked which one it came from.
+            CGO_ENABLED=0 GOOS="$goos" GOARCH="$goarch" go build \
+              -trimpath \
+              -ldflags "-s -w -X perl2golang/internal/cli.buildCommit=${GITHUB_SHA}" \
+              -o "stage/$name/$binary" ./cmd/perl2golang
+            cp LICENSE README.md "stage/$name/"
+            if [ "$goos" = windows ]; then
+              (cd stage && zip -q -r "../dist/$name.zip" "$name")
+            else
+              tar -czf "dist/$name.tar.gz" -C stage "$name"
+            fi
+          done
+          (cd dist && sha256sum perl2golang_* > SHA256SUMS)
+          ls -l dist
+          cat dist/SHA256SUMS
+
+      - name: Run the one binary this runner can run
+        run: |
+          set -eu
+          version="${GITHUB_REF_NAME#v}"
+          bin="stage/perl2golang_${version}_linux_amd64/perl2golang"
+          "$bin" --version
+          "$bin" -e 'my @w = map { uc } qw(a b); print "@w\n";' --stdout > snippet.txt
+          grep -q '^package main$' snippet.txt
+
+      - name: Write the release notes
+        run: |
+          set -eu
+          version="${GITHUB_REF_NAME#v}"
+          cat > release-notes.md <<NOTES
+          Self-contained binaries for Linux, macOS and Windows, on 64-bit Intel
+          and on ARM. Running one needs no Go toolchain and no Perl.
+
+          Unpack the archive for your system and put \`perl2golang\` on your PATH:
+
+              tar xzf perl2golang_${version}_linux_amd64.tar.gz
+
+          \`SHA256SUMS\` covers every archive here:
+
+              sha256sum --ignore-missing -c SHA256SUMS
+
+          The suite and the corpus run on Linux. The other archives are built
+          from the same source in this release.
+          NOTES
+          cat release-notes.md
+
+      - name: Attach the archives to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          tag="$GITHUB_REF_NAME"
+          if gh release view "$tag" > /dev/null 2>&1; then
+            # A moved tag reruns this, so replace what is already attached
+            # rather than failing on a release that exists.
+            gh release upload "$tag" dist/* --clobber
+          else
+            gh release create "$tag" \
+              --verify-tag \
+              --title "perl2golang ${tag#v}" \
+              --notes-file release-notes.md \
+              dist/*
+          fi
+          gh release view "$tag"
