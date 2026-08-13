@@ -949,6 +949,34 @@ func (l *Lowerer) methodCall(n *ast.MethodCall) ir.Expr {
 	}
 
 	if bw, ok := n.Invocant.(*ast.FileHandle); ok {
+		// The package may well be declared and still not be a type: what it
+		// blesses, or fails to bless, decided that. Saying it was not
+		// declared would be false, so each shape gets its own true reason.
+		if c, known := l.classes[bw.Name]; known && !c.IsType {
+			if c.ArrayBacked {
+				return l.todoExpr(n, "P2G7051", bw.Name+"->"+method,
+					"this class blesses an array reference",
+					"`package "+bw.Name+"` is declared in this file, but its objects "+
+						"are arrays: bless is applied to an array reference, so an "+
+						"element means whatever its position means. A Go struct is "+
+						"built from named fields, and positions give the converter no "+
+						"names to build them from.",
+					"Rewrite the class around a hash reference, whose keys become the "+
+						"struct's fields, and convert again. Or write the Go type by "+
+						"hand, as a struct or as a named slice type with methods.",
+					"structs-and-embedding", "methods-and-receivers")
+			}
+			return l.todoExpr(n, "P2G7041", bw.Name+"->"+method,
+				"this package did not become a type",
+				"`package "+bw.Name+"` is declared in this file, but nothing in it "+
+					"reads like a class to the converter: nothing blesses into it and "+
+					"no sub reads an object. Its subs were converted as plain "+
+					"functions.",
+				"Call the sub directly. If it really is a class, convert the file "+
+					"that blesses into it together with this one, so the evidence "+
+					"lands in one place.",
+				"methods-and-receivers", "packages-and-exported-names")
+		}
 		return l.todoExpr(n, "P2G7041", bw.Name+"->"+method,
 			"this class was not declared in this file",
 			"The call names "+bw.Name+" as a class, and no `package "+bw.Name+"` appears "+

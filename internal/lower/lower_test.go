@@ -175,6 +175,7 @@ func TestLowerReportsRefusals(t *testing.T) {
 		{"lookahead", `my $s = "x"; print 1 if $s =~ /(?=foo)/;`, "P2G4004"},
 		{"backreference", `my $s = "x"; print 1 if $s =~ /(a)\1/;`, "P2G4001"},
 		{"bless on an array", `my $o = bless [1, 2], "C"; print $o->[0];`, "P2G7001"},
+		{"array-backed class", `package V; sub new { bless [1], shift } package main; my $o = V->new; print 1;`, "P2G7051"},
 		{"overload", `package M; use overload '+' => sub { 1 }; sub new { bless {}, shift }`, "P2G7025"},
 		{"AUTOLOAD", `package M; sub new { bless {}, shift } our $AUTOLOAD; sub AUTOLOAD { 1 }`, "P2G7035"},
 		{"DESTROY", `package M; sub new { bless {}, shift } sub DESTROY { my $s = shift; $s->{n} }`, "P2G7030"},

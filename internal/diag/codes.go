@@ -520,6 +520,9 @@ const (
 	AccessorReadOnly Code = "P2G7049"
 	// ClassAlias: `ref($proto) || $proto` has one answer in Go.
 	ClassAlias Code = "P2G7050"
+	// ArrayBackedClass: the class blesses an array reference, and positions
+	// give a struct no field names to be built from.
+	ArrayBackedClass Code = "P2G7051"
 	// Autoload: `AUTOLOAD` catches calls to methods that were never written.
 	Autoload Code = "P2G7035"
 	// Overload: `use overload` makes an operator a method call.
@@ -2180,6 +2183,14 @@ var catalogue = map[Code]Entry{
 		Short:    "an instance method needs a receiver",
 		Advice:   "build the object first and call the method on it",
 		Concepts: []string{"methods-and-receivers"},
+	},
+	ArrayBackedClass: {
+		Severity: report.Warn,
+		Message:  "`%s` blesses an array reference, and positions give a struct no field names",
+		Short:    "an array-backed class has no field names",
+		Advice:   "rewrite the class around a hash reference, whose keys become struct fields, or write the Go type by hand",
+		Cost:     "calls on the class are left as refusals",
+		Concepts: []string{"structs-and-embedding", "methods-and-receivers"},
 	},
 	ConstructorArgs: {
 		Severity: report.Warn,
