@@ -3,7 +3,7 @@ package src
 import (
 	"io/fs"
 	"os"
-	"syscall"
+	"reflect"
 	"time"
 )
 
@@ -15,6 +15,13 @@ import (
 // A Go program asks os.Stat for an fs.FileInfo and calls the one method it
 // wants: fi.Size(), fi.Mode(), fi.ModTime(), fi.IsDir(). Nothing hands back a
 // list, and nothing has to remember which index is which.
+//
+// Mode, size and modification time come from that fs.FileInfo and are the same
+// everywhere. The rest live in the operating system's own status record, which
+// fi.Sys() returns as a different type on every system, so they are read by
+// field name and left alone where the running system has no field by that
+// name. On Windows most of them are, which is the same answer the original
+// gives there.
 func fileStat(path string, follow bool) []int {
 	var fi os.FileInfo
 	var err error
@@ -32,19 +39,46 @@ func fileStat(path string, follow bool) []int {
 	out[9] = int(fi.ModTime().Unix())
 	out[8], out[10] = out[9], out[9]
 	out[3] = 1
-	if sys, ok := fi.Sys().(*syscall.Stat_t); ok {
-		out[0] = int(sys.Dev)
-		out[1] = int(sys.Ino)
-		out[3] = int(sys.Nlink)
-		out[4] = int(sys.Uid)
-		out[5] = int(sys.Gid)
-		out[6] = int(sys.Rdev)
-		out[8] = int(sys.Atim.Sec)
-		out[10] = int(sys.Ctim.Sec)
-		out[11] = int(sys.Blksize)
-		out[12] = int(sys.Blocks)
+	sys := reflect.Indirect(reflect.ValueOf(fi.Sys()))
+	if sys.Kind() != reflect.Struct {
+		return out
 	}
+	statField(sys, "Dev", &out[0])
+	statField(sys, "Ino", &out[1])
+	statField(sys, "Nlink", &out[3])
+	statField(sys, "Uid", &out[4])
+	statField(sys, "Gid", &out[5])
+	statField(sys, "Rdev", &out[6])
+	statTime(sys, &out[8], "Atim", "Atimespec")
+	statTime(sys, &out[10], "Ctim", "Ctimespec")
+	statField(sys, "Blksize", &out[11])
+	statField(sys, "Blocks", &out[12])
 	return out
+}
+
+// statField copies one whole number out of the system's status record into
+// dst, and leaves dst as it found it when there is no field by that name or it
+// holds something other than a number.
+func statField(sys reflect.Value, name string, dst *int) {
+	f := sys.FieldByName(name)
+	switch f.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		*dst = int(f.Int())
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		*dst = int(f.Uint())
+	}
+}
+
+// statTime copies the whole seconds of one timestamp into dst, trying each
+// spelling in turn because the systems disagree about the name: a timestamp is
+// Atim on Linux and Atimespec on macOS and the BSDs.
+func statTime(sys reflect.Value, dst *int, names ...string) {
+	for _, name := range names {
+		if ts := sys.FieldByName(name); ts.Kind() == reflect.Struct {
+			statField(ts, "Sec", dst)
+			return
+		}
+	}
 }
 
 // modeBits turns the type part of a Go file mode back into the bits a status

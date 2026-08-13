@@ -343,6 +343,18 @@ var notes = map[string]string{
 		"index is which, and the ones that are not portable are simply not " +
 		"there.",
 
+	"statField": "The record fi.Sys() hands back is the operating system's " +
+		"own, and it is a different type on Linux, on macOS and the BSDs, and " +
+		"on Windows, so code that names its fields directly builds on one " +
+		"system and not on the next. Reading them by name keeps one copy of " +
+		"the code and leaves whatever the running system does not publish at " +
+		"the value the portable fs.FileInfo already gave.",
+
+	"statTime": "The same record spells a timestamp Atim on Linux and " +
+		"Atimespec on macOS and the BSDs, so both names are tried in turn, " +
+		"and a system that publishes neither keeps the modification time " +
+		"rather than reporting a zero it did not measure.",
+
 	"modeBits": "Go splits a file mode into permission bits and type bits, " +
 		"and asks about the type with named constants rather than with a " +
 		"mask: fi.Mode()&fs.ModeSymlink != 0 is the readable form of what a " +

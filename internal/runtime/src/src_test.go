@@ -721,6 +721,83 @@ func TestFileExists(t *testing.T) {
 	}
 }
 
+// TestFileStat checks the numbers every system publishes and the shape of the
+// rest. Device, inode, owner and block counts come out of a record whose type
+// differs from system to system, so the test asks only what is true
+// everywhere: a file has a type and a size, two files in one directory sit on
+// one device, and a number that was read at all was read into the right slot.
+func TestFileStat(t *testing.T) {
+	const typeBits = 0o170000
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "five")
+	if err := os.WriteFile(path, []byte("hello"), 0o640); err != nil {
+		t.Fatal(err)
+	}
+	fi, err := os.Stat(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	got := fileStat(path, true)
+	if len(got) != 13 {
+		t.Fatalf("fileStat returned %d numbers, want 13", len(got))
+	}
+	if got[7] != 5 {
+		t.Errorf("size = %d, want 5", got[7])
+	}
+	if want := int(fi.Mode().Perm()) | 0o100000; got[2] != want {
+		t.Errorf("mode = %#o, want %#o", got[2], want)
+	}
+	if want := int(fi.ModTime().Unix()); got[9] != want {
+		t.Errorf("modification time = %d, want %d", got[9], want)
+	}
+	// Access and change time are read from the system's record where it has
+	// them and fall back to the modification time where it does not, so the
+	// one thing true everywhere is that neither is left at zero.
+	for _, tt := range []struct {
+		index int
+		what  string
+	}{{8, "access time"}, {10, "change time"}} {
+		if got[tt.index] <= 0 {
+			t.Errorf("%s = %d, want a time", tt.what, got[tt.index])
+		}
+	}
+	if got[3] < 1 {
+		t.Errorf("link count = %d, want at least 1", got[3])
+	}
+
+	second := filepath.Join(dir, "other")
+	if err := os.WriteFile(second, []byte("x"), 0o640); err != nil {
+		t.Fatal(err)
+	}
+	other := fileStat(second, true)
+	if got[0] != other[0] {
+		t.Errorf("two files in one directory report devices %d and %d", got[0], other[0])
+	}
+	if got[1] != 0 && got[1] == other[1] {
+		t.Errorf("two files share inode %d", got[1])
+	}
+
+	if d := fileStat(dir, true); d[2]&typeBits != 0o040000 {
+		t.Errorf("directory mode = %#o, want the directory bits", d[2])
+	}
+	if missing := fileStat(filepath.Join(dir, "gone"), true); missing != nil {
+		t.Errorf("stat of a missing path = %v, want nothing", missing)
+	}
+
+	link := filepath.Join(dir, "link")
+	if err := os.Symlink(path, link); err != nil {
+		t.Skipf("symlinks are unavailable here: %v", err)
+	}
+	if l := fileStat(link, false); l[2]&typeBits != 0o120000 {
+		t.Errorf("unfollowed link mode = %#o, want the link bits", l[2])
+	}
+	if l := fileStat(link, true); l[7] != 5 {
+		t.Errorf("followed link size = %d, want the target's 5", l[7])
+	}
+}
+
 func TestMagicStr(t *testing.T) {
 	tests := []struct {
 		in   string
