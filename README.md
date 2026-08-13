@@ -19,14 +19,38 @@ with `--ai`.
 
 ## Install
 
-Requires a Go toolchain, 1.24 or newer. The Go it generates needs 1.23.
+Download the archive for your system from the releases page, unpack it, and put
+the `perl2golang` binary on your `PATH`. It is one static binary with nothing
+beside it: no Go toolchain, no Perl, no libraries to install first. Each
+release also carries a `SHA256SUMS` file to check the download against.
+
+To build it yourself instead, with Go 1.24 or newer:
 
 ```
 make build      # builds ./bin/perl2golang
 make install    # installs perl2golang into ~/.local/bin (set BINDIR for elsewhere)
 ```
 
-`make help` lists every target.
+`make help` lists every target. Either way, building the Go the tool writes
+needs a toolchain of 1.23 or newer.
+
+## Platforms
+
+Binaries are published for Linux, macOS and Windows, on 64-bit Intel and on
+ARM. Every one of them is built from the same source in the same release. The
+project is developed and tested on Linux, which is where the test suite and the
+corpus run, so that is the platform the tool is exercised hardest on.
+
+Three things differ away from Unix, all of them stated where they apply:
+
+- The optional model mode reads the machine through Linux interfaces, so
+  elsewhere `perl2golang ai status` says the hardware could not be inspected
+  and reports the rest.
+- The session falls back to reading whole lines where a terminal cannot be put
+  into raw mode, which includes Windows. See "Known limitations".
+- A converted program that runs a command written as one string hands it to
+  `sh`, which is what the original did and what a Unix-shaped script expects.
+  On Windows that needs a POSIX shell to be present.
 
 ## Use
 
@@ -289,12 +313,13 @@ These are real and current, not oversights:
   say so when you turn them on. The concept lessons and the conversion report
   are never touched by a model at all.
 - **The session's line editing needs a terminal that supports raw mode**, which
-  covers Linux, macOS and the BSDs. Anywhere else the session falls back to
-  reading whole lines: everything still works, but the arrow keys, history and
-  `Ctrl-R` do not, and the session says so once when it starts. Given a pipe
-  rather than a terminal it reads whole lines too, and says nothing, because a
-  transcript should hold the session and not a note about the session. There is
-  no readline dependency to install, because there is no dependency at all.
+  covers Linux, macOS and the BSDs. On Windows, and anywhere else without it,
+  the session falls back to reading whole lines: everything still works, but
+  the arrow keys, history and `Ctrl-R` do not, and the session says so once
+  when it starts. Given a pipe rather than a terminal it reads whole lines too,
+  and says nothing, because a transcript should hold the session and not a note
+  about the session. There is no readline dependency to install, because there
+  is no dependency at all.
 - **Coverage is aimed at ordinary script-shaped Perl:** scalars, arrays, hashes,
   subroutines, references, control flow, regular expressions, string and list
   builtins, file reading and writing, command-line options, classes, and the
@@ -346,7 +371,11 @@ this list:
   by a model, for the reason given under known limitations: a small local
   model states falsehoods about your code with complete confidence. The
   optional model names things, and that is the ceiling by design.
-- **Windows.** Linux, macOS and the BSDs are the targets.
+- **Reworking a script's Unix assumptions for Windows.** Windows gets a binary
+  and the Go the tool writes is ordinary portable Go, but where a script leans
+  on a POSIX shell, on file modes or on process semantics, the translation
+  carries that assumption across rather than inventing a Windows equivalent
+  for it.
 
 ## Working on perl2golang
 
