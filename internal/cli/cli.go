@@ -237,16 +237,35 @@ func (e *env) internalError(r any) int {
 	return ExitFailed
 }
 
+// buildCommit is the commit a published binary was built from. A release
+// stamps it in with -ldflags, because a downloaded binary has no repository to
+// ask; left empty, the commit comes from the build information the toolchain
+// records, which is what a build from a clone has. Either way the banner reads
+// the same.
+var buildCommit string
+
 // versionLine is the one-line version banner, with enough build detail to
 // identify a binary in a bug report.
 func versionLine() string {
 	parts := []string{runtime.Version(), runtime.GOOS + "/" + runtime.GOARCH}
+	if c := shortCommit(); c != "" {
+		parts = append([]string{c}, parts...)
+	}
+	return fmt.Sprintf("perl2golang %s (%s)", convert.Version, strings.Join(parts, ", "))
+}
+
+// shortCommit is the abbreviated commit this binary was built from, or the
+// empty string when neither source of it has one.
+func shortCommit() string {
+	if len(buildCommit) >= 7 {
+		return buildCommit[:7]
+	}
 	if info, ok := debug.ReadBuildInfo(); ok {
 		for _, s := range info.Settings {
 			if s.Key == "vcs.revision" && len(s.Value) >= 7 {
-				parts = append([]string{s.Value[:7]}, parts...)
+				return s.Value[:7]
 			}
 		}
 	}
-	return fmt.Sprintf("perl2golang %s (%s)", convert.Version, strings.Join(parts, ", "))
+	return ""
 }
