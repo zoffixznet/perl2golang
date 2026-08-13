@@ -41,16 +41,16 @@ ARM. Every one of them is built from the same source in the same release. The
 project is developed and tested on Linux, which is where the test suite and the
 corpus run, so that is the platform the tool is exercised hardest on.
 
-Three things differ away from Unix, all of them stated where they apply:
+Three things do not work the same everywhere:
 
 - The optional model mode reads the machine through Linux interfaces, so
-  elsewhere `perl2golang ai status` says the hardware could not be inspected
-  and reports the rest.
-- The session falls back to reading whole lines where a terminal cannot be put
-  into raw mode, which includes Windows. See "Known limitations".
+  anywhere else `perl2golang ai status` says the hardware could not be
+  inspected and reports what it can.
+- On Windows the session reads whole lines instead, because it cannot put the
+  terminal into raw mode. See "Known limitations".
 - A converted program that runs a command written as one string hands it to
-  `sh`, which is what the original did and what a Unix-shaped script expects.
-  On Windows that needs a POSIX shell to be present.
+  `sh`, which is what the original did. On Windows that needs a POSIX shell to
+  be present.
 
 ## Use
 
