@@ -1,7 +1,7 @@
 {
   "format_version": 2,
-  "tool_version": "0.1.0",
-  "recorded": "2026-08-16T02:24:00Z",
+  "tool_version": "1.0.0",
+  "recorded": "2026-08-16T02:45:25Z",
   "filter": {},
   "environment": {
     "perl": true,
@@ -6649,7 +6649,7 @@
         },
         "equivalent": {
           "outcome": "fail",
-          "reason": "stdout differs: line 1, byte 2: got \" j= v=\\ni+j = 0\\nv-i = 0\\n-v  = 0\\nv...\", wanted \"(1, 0, 0) j=(0, 1, 0) v=(3, -4, ...\"; stderr differs: unexpected \"TODO P2G7041: this class was not declared in this file ...\""
+          "reason": "stdout differs: line 1, byte 2: got \" j= v=\\ni+j = 0\\nv-i = 0\\n-v  = 0\\nv...\", wanted \"(1, 0, 0) j=(0, 1, 0) v=(3, -4, ...\"; stderr differs: unexpected \"TODO P2G7051: this class blesses an array reference ...\""
         },
         "honest": {
           "outcome": "n/a"
@@ -6665,7 +6665,7 @@
       },
       "equivalent_annotated": {
         "outcome": "fail",
-        "reason": "stdout differs: line 1, byte 2: got \" j= v=\\ni+j = 0\\nv-i = 0\\n-v  = 0\\nv...\", wanted \"(1, 0, 0) j=(0, 1, 0) v=(3, -4, ...\"; stderr differs: unexpected \"TODO P2G7041: this class was not declared in this file ...\""
+        "reason": "stdout differs: line 1, byte 2: got \" j= v=\\ni+j = 0\\nv-i = 0\\n-v  = 0\\nv...\", wanted \"(1, 0, 0) j=(0, 1, 0) v=(3, -4, ...\"; stderr differs: unexpected \"TODO P2G7051: this class blesses an array reference ...\""
       },
       "quality": {
         "todos": 16,

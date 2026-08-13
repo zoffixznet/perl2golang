@@ -28,7 +28,7 @@ import (
 )
 
 // Version is the tool's version, stamped into generated documents.
-const Version = "0.1.0"
+const Version = "1.0.0"
 
 // utf8ErrorOffset finds the first byte where the input stops being UTF-8.
 func utf8ErrorOffset(src []byte) int {
