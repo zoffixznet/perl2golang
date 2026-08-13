@@ -10,12 +10,12 @@ Alongside them it writes a set of documents: a walkthrough tying regions of your
 script to regions of the output, a lesson for every Go concept your code
 actually touched, and an honest account of anything it could not translate.
 
-The conversion is the excuse. The point is that you finish reading knowing Go.
+The conversion is not meant to be a 100% complete, as there are many concepts and behaviors that don't translate very well and would require human judgement to translate into applicable Go variants. The point is to produce something that is usable while also educating the user about Golang to facilitate their learning of the language.
 
 Everything runs locally. No account, no API key, and your Perl is never
 executed. By default nothing opens a socket either; the one feature that talks
-to anything talks to a model on your own machine, and only when you ask for it
-with `--ai`.
+to anything talks to an AI model on *your own machine*, and only when you ask for it
+with explicitly `--ai`.
 
 ## Install
 
