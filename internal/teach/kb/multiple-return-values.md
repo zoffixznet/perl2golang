@@ -7,7 +7,7 @@ severity: info
 prerequisites: [var-vs-short-declaration]
 ---
 
-Go functions return a fixed, typed tuple — `(int, error)` is the canonical shape — and the caller must account for every value: taking one value from a two-value function is a compile error, not a silent scalar-context conversion. This kills `wantarray` and the entire notion of context-sensitive returns: a Go function returns the same things to every caller, and if you do not want one of them, you discard it *visibly* with `_`.
+Go functions return a fixed, typed tuple - `(int, error)` is the canonical shape - and the caller must account for every value: taking one value from a two-value function is a compile error, not a silent scalar-context conversion. This kills `wantarray` and the entire notion of context-sensitive returns: a Go function returns the same things to every caller, and if you do not want one of them, you discard it *visibly* with `_`.
 
 ## The Perl you know
 
@@ -18,7 +18,7 @@ my $count = () = minmax(4, 9);        # context tricks
 
 sub ctx { return wantarray ? "list" : "scalar" }
 my @a = ctx();   # "list"
-my $s = ctx();   # "scalar"    — one sub, two behaviours
+my $s = ctx();   # "scalar"    - one sub, two behaviours
 ```
 
 ## The Go you write
@@ -151,6 +151,6 @@ a type.
 
 ## The mismatch
 
-`my ($x, $y) = f()` translates directly to `x, y := f()`, but the resemblance is syntactic only: Perl's list assignment tolerates any length mismatch, Go's tolerates none — the arity is part of the function's type. `wantarray`-driven subs must be split into two named functions (or return the richer shape and let callers ignore parts with `_`); there is no way, and deliberately so, for a Go function to know how it is being called. On *named returns* (`(lo, hi int)` above): they pre-declare zero-valued result variables and permit a bare `return`, which reads nicely in ten-line functions and turns hostile in fifty-line ones — a naked `return` forces readers to reconstruct the current state of mutable variables, and a mid-function `return` that forgets to set one of them returns a silent zero. House style in most Go shops: use named returns for documentation (especially two same-typed results like `(latitude, longitude float64)`) or when a deferred function must modify the result (`panic-and-recover`), but always `return lo, hi` explicitly. Also note what does not exist: no returning a list that flattens into caller context, no `return;` meaning empty-list-or-undef — a bare `return` is only legal with named results or a void function.
+`my ($x, $y) = f()` translates directly to `x, y := f()`, but the resemblance is syntactic only: Perl's list assignment tolerates any length mismatch, Go's tolerates none - the arity is part of the function's type. `wantarray`-driven subs must be split into two named functions (or return the richer shape and let callers ignore parts with `_`); there is no way, and deliberately so, for a Go function to know how it is being called. On *named returns* (`(lo, hi int)` above): they pre-declare zero-valued result variables and permit a bare `return`, which reads nicely in ten-line functions and turns hostile in fifty-line ones - a naked `return` forces readers to reconstruct the current state of mutable variables, and a mid-function `return` that forgets to set one of them returns a silent zero. House style in most Go shops: use named returns for documentation (especially two same-typed results like `(latitude, longitude float64)`) or when a deferred function must modify the result (`panic-and-recover`), but always `return lo, hi` explicitly. Also note what does not exist: no returning a list that flattens into caller context, no `return;` meaning empty-list-or-undef - a bare `return` is only legal with named results or a void function.
 
 Further reading: https://go.dev/doc/effective_go#multiple-returns

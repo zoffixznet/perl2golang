@@ -1,11 +1,11 @@
 # 06-prototypes: prototypes that alter parsing and argument passing
 
-Group: **A — genuinely impossible without an interpreter** (the parse-changing
+Group: **A - genuinely impossible without an interpreter** (the parse-changing
 aspect; the individual calls ARE convertible once the prototype is honoured)
 
 ## Construct
 Three prototypes, each changing the CALL SITE, not just the sub:
-- `sub apply (&@)` (line 8): makes `apply { ... } 1, 2, 3` legal — a bare block
+- `sub apply (&@)` (line 8): makes `apply { ... } 1, 2, 3` legal - a bare block
   becomes a code ref.
 - `sub zipfirst (\@\@)` (line 15): the caller writes `zipfirst(@x, @y)` but the
   sub receives TWO ARRAY REFS, not four flattened scalars.

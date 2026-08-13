@@ -332,7 +332,7 @@ func sentence(text string) string {
 	// A sentence that runs long usually has a clause break before the cap,
 	// and ending at one reads as a summary where a mid-phrase ellipsis reads
 	// as an accident.
-	if i := strings.Index(trimmed, " — "); i >= minCut {
+	if i := strings.Index(trimmed, " - "); i >= minCut {
 		head := strings.TrimRight(trimmed[:i], " ,;:")
 		if !strings.HasSuffix(head, ".") {
 			head += "."

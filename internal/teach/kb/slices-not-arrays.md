@@ -7,7 +7,7 @@ severity: warning
 prerequisites: [static-types-and-zero-values]
 ---
 
-Perl's `@array` maps to Go's *slice* (`[]int`), not Go's array (`[3]int`) — an array in Go has its length baked into its type, is copied wholesale on assignment, and you will rarely declare one on purpose. A slice is a three-word header — pointer into a backing array, length, capacity — and that "capacity" concept has no Perl equivalent but drives real behaviour: `append` mutates in place while there is room and *reallocates to somewhere new* when there is not, which is why `append`'s result must always be assigned back and why two slices can unexpectedly share storage (`slice-aliasing-and-copy`).
+Perl's `@array` maps to Go's *slice* (`[]int`), not Go's array (`[3]int`) - an array in Go has its length baked into its type, is copied wholesale on assignment, and you will rarely declare one on purpose. A slice is a three-word header - pointer into a backing array, length, capacity - and that "capacity" concept has no Perl equivalent but drives real behaviour: `append` mutates in place while there is room and *reallocates to somewhere new* when there is not, which is why `append`'s result must always be assigned back and why two slices can unexpectedly share storage (`slice-aliasing-and-copy`).
 
 ## The Perl you know
 
@@ -18,7 +18,7 @@ push @a, 4;          # grows invisibly, no result to assign
 my $n = scalar @a;   # length; capacity is not a concept you have
 ```
 
-Perl arrays grow implicitly and assignment copies contents — closer, ironically, to Go's *arrays* than to its slices.
+Perl arrays grow implicitly and assignment copies contents - closer, ironically, to Go's *arrays* than to its slices.
 
 ## The Go you write
 
@@ -65,7 +65,7 @@ len=8 cap=8
 len=9 cap=16
 ```
 
-(The exact growth pattern is a runtime implementation detail — never depend on it; depend only on "amortised constant append".) Forgetting to use `append`'s result does not even compile:
+(The exact growth pattern is a runtime implementation detail - never depend on it; depend only on "amortised constant append".) Forgetting to use `append`'s result does not even compile:
 
 ```go-invalid
 package main
@@ -205,6 +205,6 @@ One more thing Perl hid in that loop: `0 .. @a` puts an array in *numeric contex
 
 ## The mismatch
 
-The porting table: `push @a, $x` → `a = append(a, x)` (assignment mandatory — within capacity `append` writes in place and returns the same header; past capacity it copies everything to a bigger array and returns a *different* header, and code keeping the old one holds stale data); `pop` → `x := a[len(a)-1]; a = a[:len(a)-1]`; `shift`/`unshift` → re-slicing `a[1:]` or `append([]T{x}, a...)`, both of which should make you pause, because O(n) front operations that Perl hides are visible in Go — a genuine queue wants a different structure. `scalar @a` and `$#a` → `len(a)` and `len(a)-1`; there is no separate "last index" spelling and *negative indices do not exist* — `a[len(a)-1]`, never `a[-1]`, which is a compile error for constants and a runtime panic otherwise. `splice` has no single equivalent; the `slices` package (`slices.Insert`, `slices.Delete`) covers most uses. Pre-size with `make([]T, 0, n)` when you know `n` — the Perl habit of just pushing is fine, but this is the cheap optimisation Go reviewers expect in hot paths. Finally, when you see `[3]int` in real code it is usually deliberate value semantics or a fixed-size key (`maps-of-slices`); default to slices everywhere else.
+The porting table: `push @a, $x` → `a = append(a, x)` (assignment mandatory - within capacity `append` writes in place and returns the same header; past capacity it copies everything to a bigger array and returns a *different* header, and code keeping the old one holds stale data); `pop` → `x := a[len(a)-1]; a = a[:len(a)-1]`; `shift`/`unshift` → re-slicing `a[1:]` or `append([]T{x}, a...)`, both of which should make you pause, because O(n) front operations that Perl hides are visible in Go - a genuine queue wants a different structure. `scalar @a` and `$#a` → `len(a)` and `len(a)-1`; there is no separate "last index" spelling and *negative indices do not exist* - `a[len(a)-1]`, never `a[-1]`, which is a compile error for constants and a runtime panic otherwise. `splice` has no single equivalent; the `slices` package (`slices.Insert`, `slices.Delete`) covers most uses. Pre-size with `make([]T, 0, n)` when you know `n` - the Perl habit of just pushing is fine, but this is the cheap optimisation Go reviewers expect in hot paths. Finally, when you see `[3]int` in real code it is usually deliberate value semantics or a fixed-size key (`maps-of-slices`); default to slices everywhere else.
 
 Further reading: https://go.dev/blog/slices-intro

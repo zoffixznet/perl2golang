@@ -7,7 +7,7 @@ severity: trap
 prerequisites: [nil-vs-undef, slices-not-arrays]
 ---
 
-In Perl, `my @list` and `my %hash` are both immediately usable. In Go, their zero values are both `nil` but behave completely differently: a nil slice is fully usable — `append`, `len`, `range` all work and allocation happens lazily — while a nil map supports reads but *panics on the first write*. Since `var m map[string]int` looks exactly as innocent as `my %hash`, the direct transliteration of any Perl sub that declares a hash and fills it crashes at runtime. This asymmetry is arbitrary-feeling, permanent, and must simply be memorised.
+In Perl, `my @list` and `my %hash` are both immediately usable. In Go, their zero values are both `nil` but behave completely differently: a nil slice is fully usable - `append`, `len`, `range` all work and allocation happens lazily - while a nil map supports reads but *panics on the first write*. Since `var m map[string]int` looks exactly as innocent as `my %hash`, the direct transliteration of any Perl sub that declares a hash and fills it crashes at runtime. This asymmetry is arbitrary-feeling, permanent, and must simply be memorised.
 
 ## The Perl you know
 
@@ -23,7 +23,7 @@ Declaration and readiness are the same thing.
 
 ## The Go you write
 
-One program, run as shown — everything works until the map write:
+One program, run as shown - everything works until the map write:
 
 ```go-fails
 package main
@@ -62,7 +62,7 @@ main.main()
 exit status 2
 ```
 
-The fix is one of two initialisations: `m := make(map[string]int)` or a literal `m := map[string]int{}`. For slices, `var s []T` is *preferred* over `s := []T{}` — the nil slice is idiomatic precisely because it works.
+The fix is one of two initialisations: `m := make(map[string]int)` or a literal `m := map[string]int{}`. For slices, `var s []T` is *preferred* over `s := []T{}` - the nil slice is idiomatic precisely because it works.
 
 ## Writing several entries at once, which Go cannot say
 
@@ -75,7 +75,7 @@ delete @conf{qw(pass debug)}; # several keys removed, and the values handed back
 
 Go has nothing of the kind, and not because the feature was forgotten: an assignment's left side is a fixed list of places written into the source, and `@header` is not known until the program runs. So the construct becomes a loop, and the loop is where two rules Perl kept out of sight become lines you can read.
 
-The first is padding. Perl pairs the two lists by position and leaves the extra keys holding `undef` when the values run out — *holding* undef, not missing, which is a different answer to `exists` than to `defined`. Keeping those apart is exactly what a pointer value type is for.
+The first is padding. Perl pairs the two lists by position and leaves the extra keys holding `undef` when the values run out - *holding* undef, not missing, which is a different answer to `exists` than to `defined`. Keeping those apart is exactly what a pointer value type is for.
 
 ```go
 package main
@@ -120,10 +120,10 @@ E003: city present=true set=false
 
 Where the values are known to reach as far as the keys, none of that is needed and `map[string]string` is the better type: the pointer is there to carry an absence, and an absence that cannot happen is not worth a dereference on every read.
 
-The second rule is `delete`. Perl's takes a slice and answers with what it removed; Go's takes one key and answers with nothing. Both halves become the loop — `removed = append(removed, conf[k])` and then `delete(conf, k)` — and the order inside it is forced rather than chosen: read the value first, because after the delete there is nothing left to read. If nothing looks at what was removed, leave that line out entirely; Go will not compile a variable nobody reads, which is a small nudge towards writing only the work you meant.
+The second rule is `delete`. Perl's takes a slice and answers with what it removed; Go's takes one key and answers with nothing. Both halves become the loop - `removed = append(removed, conf[k])` and then `delete(conf, k)` - and the order inside it is forced rather than chosen: read the value first, because after the delete there is nothing left to read. If nothing looks at what was removed, leave that line out entirely; Go will not compile a variable nobody reads, which is a small nudge towards writing only the work you meant.
 
 ## The mismatch
 
-The porting rule: every Perl `my %h` that is subsequently written to becomes `make(map[...]...)`, no exceptions — including maps nested inside maps (`nil-vs-undef` shows the nested variant) and map fields inside structs, whose zero value is nil and which need a constructor or lazy `if m == nil` guard. Meanwhile resist "fixing" nil slices: `var s []T` appends fine, and the only observable difference from `[]T{}` is `s == nil` and JSON encoding (`null` versus `[]` — a real API-contract concern, see `encoding-json`). Why the asymmetry? `append` returns a new slice value, so it can replace nil with a freshly allocated backing array in the caller's variable; a map write mutates in place through the map reference, and a nil map has no place to mutate — Go chose a panic over hidden allocation. Unsatisfying, coherent, and memorable after your first crash, which this file has now given you for free.
+The porting rule: every Perl `my %h` that is subsequently written to becomes `make(map[...]...)`, no exceptions - including maps nested inside maps (`nil-vs-undef` shows the nested variant) and map fields inside structs, whose zero value is nil and which need a constructor or lazy `if m == nil` guard. Meanwhile resist "fixing" nil slices: `var s []T` appends fine, and the only observable difference from `[]T{}` is `s == nil` and JSON encoding (`null` versus `[]` - a real API-contract concern, see `encoding-json`). Why the asymmetry? `append` returns a new slice value, so it can replace nil with a freshly allocated backing array in the caller's variable; a map write mutates in place through the map reference, and a nil map has no place to mutate - Go chose a panic over hidden allocation. Unsatisfying, coherent, and memorable after your first crash, which this file has now given you for free.
 
 Further reading: https://go.dev/blog/maps

@@ -7,7 +7,7 @@ POD.
 
 ## What it exercises
 
-- `if ( EXPR, )` — the comma operator with a trailing comma, in boolean
+- `if ( EXPR, )` - the comma operator with a trailing comma, in boolean
   context. The test sees the expression's value; the comma adds nothing.
 - A trailing comma in a `for` list, the common list spelling.
 - An `__END__` marker with text under it that is data, not code.

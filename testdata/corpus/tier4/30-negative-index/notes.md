@@ -1,6 +1,6 @@
 # 30-negative-index: negative indices, negative substr length, tolerant OOB
 
-Group: **C — convertible, but the naive conversion is subtly wrong**
+Group: **C - convertible, but the naive conversion is subtly wrong**
 
 ## Construct
 `$a[-1]` reads and `$a[-1] = 99` WRITES the last element (lines 9-11).
@@ -12,7 +12,7 @@ off the end" (lines 15-17). `$a[10]` past the end is undef, not a panic
 ## Why the naive conversion is subtly wrong
 Go slices/strings panic on negative indices and out-of-range access, and Go
 has no negative-length substring convention. The naive `a[i]` / `s[i:j]`
-translation compiles and then either panics at runtime (crash — at least
+translation compiles and then either panics at runtime (crash - at least
 loud) or, worse, a converter "fixes" negative constants by clamping to 0,
 silently reading the FIRST element instead of the LAST. The undef-on-OOB
 read must also not become a panic, because the Perl program's logic (the

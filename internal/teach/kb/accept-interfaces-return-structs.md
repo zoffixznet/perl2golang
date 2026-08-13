@@ -7,7 +7,7 @@ severity: info
 prerequisites: [implicit-interfaces, io-reader-writer]
 ---
 
-This is Go's API-design proverb, and it answers a question Perl never made you ask because everything was dynamically substitutable anyway: which side of a function signature should be abstract? Answer: parameters accept interfaces (so callers can pass a file, a network stream, or a five-byte test string), while return values are concrete structs (so callers get the full documented API without guessing what they really received). Following it gives you, for free, the testability Perl needed `Test::MockObject` and monkey-patching to achieve — a test double in Go is just another type with the right methods.
+This is Go's API-design proverb, and it answers a question Perl never made you ask because everything was dynamically substitutable anyway: which side of a function signature should be abstract? Answer: parameters accept interfaces (so callers can pass a file, a network stream, or a five-byte test string), while return values are concrete structs (so callers get the full documented API without guessing what they really received). Following it gives you, for free, the testability Perl needed `Test::MockObject` and monkey-patching to achieve - a test double in Go is just another type with the right methods.
 
 ## The Perl you know
 
@@ -23,7 +23,7 @@ open my $fh, '<', \"first\nsecond\n";
 say first_line($fh);
 ```
 
-Perl gets substitutability implicitly. Go must *choose* it in the signature — and this idiom is that choice made consistently.
+Perl gets substitutability implicitly. Go must *choose* it in the signature - and this idiom is that choice made consistently.
 
 ## The Go you write
 
@@ -73,10 +73,10 @@ first <nil>
 Q3 1
 ```
 
-Had `firstLine` taken `*os.File`, testing it would require a real file on disk; taking `io.Reader`, the test passes a `strings.Reader` and the production caller passes the file — same function, zero mocking framework.
+Had `firstLine` taken `*os.File`, testing it would require a real file on disk; taking `io.Reader`, the test passes a `strings.Reader` and the production caller passes the file - same function, zero mocking framework.
 
 ## The mismatch
 
-Why each half. Accepting interfaces: an interface parameter documents the *minimum* capability the function needs (`io.Reader` says "I only read"), widens the caller's options, and is the entire Go substitute for Perl's mock/monkey-patch testing culture — dependency injection here means "the constructor takes a small interface", e.g. a `Storer` interface with `Save`/`Load` implemented by both the real database type and a ten-line in-memory map type in tests. Returning structs: a concrete return exposes all methods and fields, lets the library *add* methods later without breaking anyone, and keeps godoc useful; returning an interface hides capabilities behind the narrowest contract and, done reflexively, resurrects `typed-nil-interface` bugs. The proverb has honest exceptions you should recognise rather than fight: `error` is an interface and is always returned as one; constructors in plugin-style architectures return interfaces deliberately; and do not *over*-abstract parameters either — a function needing five methods of `*os.File` should just take `*os.File`. The smell to avoid from day one: defining a fat interface that mirrors your struct's whole method list and returning that — it is Java import duty, not Go, and reviewers will say so.
+Why each half. Accepting interfaces: an interface parameter documents the *minimum* capability the function needs (`io.Reader` says "I only read"), widens the caller's options, and is the entire Go substitute for Perl's mock/monkey-patch testing culture - dependency injection here means "the constructor takes a small interface", e.g. a `Storer` interface with `Save`/`Load` implemented by both the real database type and a ten-line in-memory map type in tests. Returning structs: a concrete return exposes all methods and fields, lets the library *add* methods later without breaking anyone, and keeps godoc useful; returning an interface hides capabilities behind the narrowest contract and, done reflexively, resurrects `typed-nil-interface` bugs. The proverb has honest exceptions you should recognise rather than fight: `error` is an interface and is always returned as one; constructors in plugin-style architectures return interfaces deliberately; and do not *over*-abstract parameters either - a function needing five methods of `*os.File` should just take `*os.File`. The smell to avoid from day one: defining a fat interface that mirrors your struct's whole method list and returning that - it is Java import duty, not Go, and reviewers will say so.
 
 Further reading: https://go.dev/wiki/CodeReviewComments#interfaces

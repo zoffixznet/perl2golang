@@ -7,7 +7,7 @@ severity: info
 prerequisites: [strings-are-bytes, structs-and-embedding]
 ---
 
-`pack` and `unpack` are one function each, driven by a template string that is a little language: `a3 N n4` says three raw bytes, a big-endian 32, four big-endian 16s. Go has no counterpart to the template. It splits the job into parts you already know: a fixed-width text field is a slice expression, an integer field is one call into `encoding/binary` with the byte order written at the call, and a whole record can be read in one go by declaring a struct — the struct *is* the template, and unlike the string it is checked by the compiler.
+`pack` and `unpack` are one function each, driven by a template string that is a little language: `a3 N n4` says three raw bytes, a big-endian 32, four big-endian 16s. Go has no counterpart to the template. It splits the job into parts you already know: a fixed-width text field is a slice expression, an integer field is one call into `encoding/binary` with the byte order written at the call, and a whole record can be read in one go by declaring a struct - the struct *is* the template, and unlike the string it is checked by the compiler.
 
 ## The Perl you know
 
@@ -20,7 +20,7 @@ my $rec = pack 'a3 n N', 'TXN', $seq, $cents;
 my ($t, $s, $c) = unpack 'a3 n N', $rec;
 ```
 
-The template carries the whole layout in one string, `A` quietly strips the padding, and the native-width codes (`s`, `l`, `q`) mean whatever the machine that wrote the file meant — which is exactly the property that makes files written on one box unreadable on another.
+The template carries the whole layout in one string, `A` quietly strips the padding, and the native-width codes (`s`, `l`, `q`) mean whatever the machine that wrote the file meant - which is exactly the property that makes files written on one box unreadable on another.
 
 ## The Go you write
 
@@ -91,6 +91,6 @@ The slice expressions in `parseTxn` are byte offsets, which for a fixed-width fi
 
 ## The mismatch
 
-The byte order is the big one. Perl's native codes made the machine's endianness an invisible default, and a program could work for years before meeting a file from the other kind of machine. Go makes the order part of every call, so the decision is in the code and in the diff. Second, a slice expression panics where `unpack` shrugged: `line[33:43]` on a 40-byte line stops the program, so length-check lines that come from outside (`len(line) >= 43`) before slicing them — the crash is loud where Perl's quiet empty fields let short records slip through as zeros. Third, `binary.Read` fills exported fields in declaration order with no padding or alignment, which is almost always what a wire format wants but is *not* what a C compiler laid out in a struct with mixed field sizes; for reading C structs, add explicit padding fields. Fourth, reading an exact number of bytes from a stream is `io.ReadFull`, not `Read` — `Read` may return fewer bytes than the buffer holds and no error, which works on your test file and fails on a pipe. And where the record layout genuinely lives in data — templates read from a config, say — there is no shame in an interpreter: that is what the `unpackTemplate` helper emitted with converted programs is, a documented loop over the codes, and reading it is a fair tour of everything above.
+The byte order is the big one. Perl's native codes made the machine's endianness an invisible default, and a program could work for years before meeting a file from the other kind of machine. Go makes the order part of every call, so the decision is in the code and in the diff. Second, a slice expression panics where `unpack` shrugged: `line[33:43]` on a 40-byte line stops the program, so length-check lines that come from outside (`len(line) >= 43`) before slicing them - the crash is loud where Perl's quiet empty fields let short records slip through as zeros. Third, `binary.Read` fills exported fields in declaration order with no padding or alignment, which is almost always what a wire format wants but is *not* what a C compiler laid out in a struct with mixed field sizes; for reading C structs, add explicit padding fields. Fourth, reading an exact number of bytes from a stream is `io.ReadFull`, not `Read` - `Read` may return fewer bytes than the buffer holds and no error, which works on your test file and fails on a pipe. And where the record layout genuinely lives in data - templates read from a config, say - there is no shame in an interpreter: that is what the `unpackTemplate` helper emitted with converted programs is, a documented loop over the codes, and reading it is a fair tour of everything above.
 
 Further reading: https://pkg.go.dev/encoding/binary and https://pkg.go.dev/io#ReadFull

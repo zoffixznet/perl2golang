@@ -7,7 +7,7 @@ severity: warning
 prerequisites: [waitgroup-and-mutex]
 ---
 
-A data race — two goroutines touching the same memory, at least one writing, with no synchronisation — is undefined behaviour in Go: not "last write wins" but "the compiler and CPU may do anything, including things no interleaving explains". The evil part, demonstrated below with real output: racy code frequently *produces the correct answer anyway*, so testing cannot clear you. Go's answer is mechanical, not heroic: `go run -race` (or `go test -race`) instruments the binary and reports races that actually occur at runtime, with both stack traces. A Perl background is a specific liability here — fifteen years of process isolation means your instincts have never once flagged a shared write as dangerous.
+A data race - two goroutines touching the same memory, at least one writing, with no synchronisation - is undefined behaviour in Go: not "last write wins" but "the compiler and CPU may do anything, including things no interleaving explains". The evil part, demonstrated below with real output: racy code frequently *produces the correct answer anyway*, so testing cannot clear you. Go's answer is mechanical, not heroic: `go run -race` (or `go test -race`) instruments the binary and reports races that actually occur at runtime, with both stack traces. A Perl background is a specific liability here - fifteen years of process isolation means your instincts have never once flagged a shared write as dangerous.
 
 ## The Perl you know
 
@@ -25,7 +25,7 @@ The bug class does not exist, which is why you have no reflex for it.
 
 ## The Go you write
 
-This program is *wrong on purpose* — yet observe the plain run:
+This program is *wrong on purpose* - yet observe the plain run:
 
 ```go
 package main
@@ -88,6 +88,6 @@ Both access sites, both goroutines' birthplaces, and a nonzero exit code for CI.
 
 ## The mismatch
 
-Operating knowledge: the detector only reports races that *happen during that run* — it proves presence, never absence — so its home is `go test -race` in CI, where your test suite's concurrency exercises the code paths on every commit; the 2-20x slowdown and extra memory are why it is not the default build. What counts as a race is broader than Perl intuition suggests: concurrent map access panics outright even when reads and writes touch different keys (maps are not internally locked); appending to a shared slice races on the header (`slices-not-arrays`); lazily initialising a shared field ("check if nil, then fill") is the classic racy singleton, fixed by `sync.Once`. What does *not* race: data published through a channel send (the send happens-before the receive — `channels-and-select`), values written before `go` starts the goroutine, and anything guarded consistently by one mutex. The porting rule distilled: every package-level variable and every captured local that more than one goroutine can see is guilty until synchronised — and since `fork` never taught you to run that audit, let `-race` run it for you, always, in CI.
+Operating knowledge: the detector only reports races that *happen during that run* - it proves presence, never absence - so its home is `go test -race` in CI, where your test suite's concurrency exercises the code paths on every commit; the 2-20x slowdown and extra memory are why it is not the default build. What counts as a race is broader than Perl intuition suggests: concurrent map access panics outright even when reads and writes touch different keys (maps are not internally locked); appending to a shared slice races on the header (`slices-not-arrays`); lazily initialising a shared field ("check if nil, then fill") is the classic racy singleton, fixed by `sync.Once`. What does *not* race: data published through a channel send (the send happens-before the receive - `channels-and-select`), values written before `go` starts the goroutine, and anything guarded consistently by one mutex. The porting rule distilled: every package-level variable and every captured local that more than one goroutine can see is guilty until synchronised - and since `fork` never taught you to run that audit, let `-race` run it for you, always, in CI.
 
 Further reading: https://go.dev/blog/race-detector and https://go.dev/doc/articles/race_detector

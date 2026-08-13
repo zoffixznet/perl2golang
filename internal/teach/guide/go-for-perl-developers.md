@@ -7,13 +7,13 @@ directory.
 
 Go is a much smaller language than Perl: no context, no `tie`, no runtime symbol table,
 no operator overloading worth the name, one loop keyword, one formatter. Most of what
-follows is subtraction. What Go added instead is not syntax — it is a compiler that
+follows is subtraction. What Go added instead is not syntax - it is a compiler that
 refuses to build a program containing an unused variable, a race detector that finds bugs
 your tests never will, and a deployment story in which "which Perl is on the box" is not
 a question.
 
 Alongside this document sit short single-concept lessons in `concepts/`, chosen by what
-your script actually does. Where a topic here has a lesson it is named in backticks —
+your script actually does. Where a topic here has a lesson it is named in backticks -
 "see the `slice-aliasing-and-copy` lesson". The ones your code pulled in are links; for
 any other, `perl2golang explain <name>` prints it. Those lessons go deep on one thing; this
 is the map.
@@ -23,7 +23,7 @@ is the map.
 **Types are checked before the program runs, and there is no coercion.** A Perl scalar is
 a container holding a string, an integer, a float or a reference, converting on demand. A
 Go variable has one type, fixed at compile time, and the language converts nothing for
-you — not `string` to `int`, not even `int` to `int64`. Zero values, the death of
+you - not `string` to `int`, not even `int` to `int64`. Zero values, the death of
 `"10" + 5`, two comparison operator sets collapsing into one, and `if $x` not compiling
 all fall out of this.
 
@@ -85,7 +85,7 @@ The cultural instruction is "make the zero value useful": design structs so all-
 sensible default and half your constructors disappear. `var buf bytes.Buffer` and
 `var mu sync.Mutex` are ready to use with no `new`. The cost is that "declared but never
 set" and "explicitly set to zero" are the same state. Perl code distinguishing `undef`
-from `0` or `""` — tri-state flags, optional record fields, cache-negative entries — must
+from `0` or `""` - tri-state flags, optional record fields, cache-negative entries - must
 model that deliberately: a `*string` field where nil means absent, a second boolean
 return, or a comma-ok map lookup. See `static-types-and-zero-values` and `comma-ok-idiom`.
 
@@ -145,7 +145,7 @@ Atoi(""     ) = 0   err=strconv.Atoi: parsing "": invalid syntax
 
 No leading whitespace, no float syntax, no numeric prefix: an error, not a best-effort
 number. `strconv.ParseFloat("1e1", 64)` does return `10`, because that *is* a valid float
-literal — a different question from "what number does this string most resemble". Going
+literal - a different question from "what number does this string most resemble". Going
 the other way never fails: `strconv.Itoa(42)`, `strconv.FormatFloat(3.5, 'f', -1, 64)`,
 `fmt.Sprintf("%d apples", 42)`.
 
@@ -162,7 +162,7 @@ does not compile. See `explicit-conversions-no-coercion` and `strconv-parsing`.
 
 ### Truthiness does not exist either
 
-Perl's rule: false iff `undef`, numeric zero, `""`, or the string `"0"` — so `"0.0"`,
+Perl's rule: false iff `undef`, numeric zero, `""`, or the string `"0"` - so `"0.0"`,
 `"00"`, `"0E0"` and `" "` are all true.
 
 ```perl
@@ -232,7 +232,7 @@ character semantics have no equivalent; you convert to `[]rune` when you mean ch
 "é"
 ```
 
-Ranging a string gives *byte offsets* rather than indexes — `for i, r := range "héllo"`
+Ranging a string gives *byte offsets* rather than indexes - `for i, r := range "héllo"`
 yields `i` values `0 1 3 4 5`. See `strings-are-bytes`; this matters for every `length`,
 `substr`, `reverse` and character loop in your converted code.
 
@@ -260,7 +260,7 @@ the path built by hand.
 
 ### The typed-nil trap
 
-This one catches everybody once and has no Perl analogue — it is the single place where
+This one catches everybody once and has no Perl analogue - it is the single place where
 Go's nil is *stranger* than `undef`. An interface value is a pair, a type and a value; an
 interface holding a nil pointer is not a nil interface, because the type half is populated.
 
@@ -300,8 +300,8 @@ literally, never a nil variable of a concrete error type. See `typed-nil-interfa
 
 An **array** is `[3]int`: fixed length, length part of the type, and a *value*. Assigning
 copies, passing to a function copies, and `[3]int` and `[4]int` are different types. This
-is what Perl gives you with `@b = @a`. A **slice** is `[]int`: a three-word header —
-pointer, length, capacity — pointing into a backing array elsewhere. Assigning copies the
+is what Perl gives you with `@b = @a`. A **slice** is `[]int`: a three-word header -
+pointer, length, capacity - pointing into a backing array elsewhere. Assigning copies the
 *header*, not the data.
 
 ```go
@@ -411,7 +411,7 @@ fig=1 pear=0
 ```
 
 `delete` returns nothing, so `my $v = delete $h{k}` becomes two statements. And
-`counts["fig"]++` works from nothing — the one crumb of autovivification Go gives you, and
+`counts["fig"]++` works from nothing - the one crumb of autovivification Go gives you, and
 why word-count loops still look almost like Perl. See `comma-ok-idiom`.
 
 **A nil map reads fine and panics on write.** `var m map[string]int` is a usable read-only
@@ -428,8 +428,8 @@ empty map right up until you assign to it:
 panic: assignment to entry in nil map
 ```
 
-Always create maps with `make(map[K]V)` or a literal. The asymmetry with slices — where a
-nil slice appends happily — is the subject of `nil-slices-vs-nil-maps`.
+Always create maps with `make(map[K]V)` or a literal. The asymmetry with slices - where a
+nil slice appends happily - is the subject of `nil-slices-vs-nil-maps`.
 
 **Iteration order is randomised on every loop.** Perl randomised hash order per hash per
 process in 5.18 for HashDoS resistance, so `keys %h` twice in one program gives the same
@@ -455,8 +455,8 @@ pass 3: b c d e a
 ```
 
 This is a design decision, not an implementation accident: code depending on map order is
-broken *today*, not on some future release. When you need deterministic output — reports,
-diffs, tests — sort the keys, the exact analogue of `for my $k (sort keys %h)`. See
+broken *today*, not on some future release. When you need deterministic output - reports,
+diffs, tests - sort the keys, the exact analogue of `for my $k (sort keys %h)`. See
 `map-iteration-order`.
 
 Finally, keys are typed and can be structs. Perl stringifies every key, which is why `$h{1}`
@@ -480,7 +480,7 @@ print "alive\n";                    # prints: caught: boom / alive
 Everything about that Perl is invisible from outside: nothing in the sub's signature says
 it can die, `$@` is fragile global state any later `eval` can clobber, and forgetting the
 `eval` crashes the program. The Go equivalent contains no `eval` at all, because there is
-nothing to intercept — the error arrived in a variable.
+nothing to intercept - the error arrived in a variable.
 
 ```go
 // Each fallible step is followed by its own decision. This is the shape of
@@ -522,7 +522,7 @@ finding. See `if-err-nil-rhythm`.
 
 ### Wrapping, sentinels, and inspection
 
-`error` is a one-method interface — `Error() string` — and that is the whole type.
+`error` is a one-method interface - `Error() string` - and that is the whole type.
 `errors.New` makes an opaque one, `fmt.Errorf` formats one, and `%w` *wraps* another so the
 chain stays inspectable.
 
@@ -575,7 +575,7 @@ errors.As reached a *ParseError with Line=7
 errors.Is(err, os.ErrNotExist): true
 ```
 
-That message is built the way Perl builds `open ... or die "opening $f: $!"` — except every
+That message is built the way Perl builds `open ... or die "opening $f: $!"` - except every
 layer stays machine-inspectable, and both `errors.Is` and `errors.As` see straight through
 the `load config:` wrapper. `Is` asks about identity; `As` asks about type and hands you
 the concrete value. Go errors carry no file and line: the idiom is to add *operation*
@@ -588,13 +588,13 @@ out of panic and recover**: it compiles, and the community reads it as not knowi
 language.
 
 Conventions: sentinels are `ErrSomething` at package scope; custom types are
-`SomethingError` implementing `Error() string`, usually on the pointer receiver — which is
+`SomethingError` implementing `Error() string`, usually on the pointer receiver - which is
 why `errors.As` targets are declared `var pe *ParseError`. See `errors-are-values`,
 `error-wrapping`, `sentinel-and-custom-errors`.
 
 ## `defer`, `panic`, and `recover`
 
-`defer` schedules a call for when the enclosing *function* returns, however it returns —
+`defer` schedules a call for when the enclosing *function* returns, however it returns -
 normal, early, or panicking. It is `local`'s restore guarantee, `DESTROY`'s cleanup and
 `finally` in one keyword. Deferred calls run last-in-first-out, and their **arguments are
 evaluated at `defer` time**:
@@ -620,7 +620,7 @@ demo returned: returned value (amended by defer)
 `B` runs before `A` (LIFO). `A` printed `1` because its argument was evaluated when the
 `defer` statement ran, while `B` printed `2` because a closure reads the variable later.
 And the third deferred function modified the *named* return value after `return` had
-already chosen it — which is exactly how `recover` turns a panic into an error.
+already chosen it - which is exactly how `recover` turns a panic into an error.
 
 The scope is the function, not the block. `defer f.Close()` inside a loop does not close
 each iteration; it queues one close per iteration and runs them all at the end, which is
@@ -642,7 +642,7 @@ func slurp() {
 ```
 
 The differences from `local`: restoration happens at function exit rather than block exit,
-and callees see the change only because it is a package-level variable — there is no
+and callees see the change only because it is a package-level variable - there is no
 dynamic scoping. Most real uses of `local` (`local $/`, `local $_`, `local $SIG{...}`,
 `local %ENV`) disappear in Go anyway, because those things are passed as explicit values
 rather than stashed in globals.
@@ -666,7 +666,7 @@ exit status 2
 
 A Go function that panics because a file is missing is considered broken. File-missing is a
 condition; it gets an `error`. Panic is for invariants you believe cannot be violated, and
-for the `Must` convention — `regexp.MustCompile`, `template.Must` — where the argument is a
+for the `Must` convention - `regexp.MustCompile`, `template.Must` - where the argument is a
 compile-time constant and failure means the source is wrong.
 
 `recover()` does something only when called directly inside a deferred function during a
@@ -694,7 +694,7 @@ still running
 The named return values are what let the deferred function set `err`. And note the one
 thing `recover` categorically cannot do: there is no cross-goroutine `$@`. A panic in a
 goroutine you started cannot be recovered by the goroutine that started it, even with a
-deferred `recover` in `main` — it takes down the process:
+deferred `recover` in `main` - it takes down the process:
 
 ```go
 	defer func() {
@@ -725,7 +725,7 @@ Every goroutine that can panic needs its own deferred recover, or none of them d
 
 ## Interfaces are satisfied implicitly
 
-An interface is a set of method signatures. A type satisfies it by having those methods —
+An interface is a set of method signatures. A type satisfies it by having those methods -
 no `implements`, no registration, no base class. This is `$obj->can('read')`, decided at
 compile time at every assignment rather than hoped for at runtime.
 
@@ -782,8 +782,8 @@ filename gains stdin support for free and becomes testable with `strings.NewRead
 of a temporary file. See `accept-interfaces-return-structs` and `io-reader-writer`.
 
 The dynamic escape hatch is `any` (the alias for `interface{}`) with type assertions and
-type switches, which is what `ref($x)` becomes. It is occasionally right — decoding
-arbitrary JSON, mainly — but reaching for it by default because Perl scalars were
+type switches, which is what `ref($x)` becomes. It is occasionally right - decoding
+arbitrary JSON, mainly - but reaching for it by default because Perl scalars were
 polymorphic is the most common way converted code stays un-Go. See `implicit-interfaces` and
 `type-assertions-and-switches`.
 
@@ -792,12 +792,12 @@ polymorphic is the most common way converted code stays un-Go. See `implicit-int
 `go f(x)` runs `f(x)` concurrently in the same process, same address space, sharing every
 variable. That is the whole difference from `fork`: no copy-on-write isolation, no separate
 memory, no `waitpid`, no serialising results back through a pipe. It is not ithreads
-either — nothing is cloned. Goroutines start with a couple of kilobytes of stack and grow;
+either - nothing is cloned. Goroutines start with a couple of kilobytes of stack and grow;
 hundreds of thousands are unremarkable.
 
 Two consequences arrive immediately. **`main` waits for nobody**: when `main` returns the
 process exits and every running goroutine dies mid-statement. **Everything is shared**, so
-unsynchronised access to one variable from two goroutines is a data race — a bug even when
+unsynchronised access to one variable from two goroutines is a data race - a bug even when
 the output looks right.
 
 Channels are typed pipes carrying values rather than bytes:
@@ -845,15 +845,15 @@ habit: if your program starts a goroutine, run its tests with `-race`.
 
 Every `.go` file in a directory belongs to the same package, and a name is exported if and
 only if it starts with a capital letter. `Parse` is public, `parse` is private. No
-`Exporter`, no `@EXPORT_OK`, no underscore convention — and no reaching in: unexported means
+`Exporter`, no `@EXPORT_OK`, no underscore convention - and no reaching in: unexported means
 genuinely inaccessible outside the package, not merely impolite.
 
 ```
 report/
   go.mod                     module example.com/report
-  cmd/report/main.go         package main       — the binary
-  format/format.go           package format     — importable by anyone
-  internal/parse/parse.go    package parse      — importable only within this module
+  cmd/report/main.go         package main       - the binary
+  format/format.go           package format     - importable by anyone
+  internal/parse/parse.go    package parse      - importable only within this module
 ```
 
 ```go
@@ -871,7 +871,7 @@ func normalise(s string) string { return strings.TrimSpace(s) }
 ```
 
 Reaching for the private name from another package in the same module is a compile error,
-not a lint warning; and `internal/` is enforced by the toolchain, not by convention — a
+not a lint warning; and `internal/` is enforced by the toolchain, not by convention - a
 package under `internal/` may be imported only by code rooted at `internal/`'s parent:
 
 ```
@@ -907,7 +907,7 @@ that satisfies": Go uses minimal version selection, so you get the highest versi
 *explicitly required* by anything in the graph, and it does not change until you change it.
 
 Two more things worth knowing early. The standard library is unusually large and is the
-first place to look — `net/http`, `encoding/json`, `database/sql`, `crypto/*`,
+first place to look - `net/http`, `encoding/json`, `database/sql`, `crypto/*`,
 `text/template`, `os/exec` are all in the box, and the cultural default is to add a
 dependency reluctantly (see `small-stdlib-philosophy`). And `go build` produces a single
 statically linked binary with no runtime and no interpreter:
@@ -961,7 +961,7 @@ Tabs for indentation, aligned struct fields and trailing comments, one import pe
 `gofmt -l` lists files that differ from canonical form and `gofmt -d` shows the diff, which
 is what CI runs. Two things to internalise rather than resent. The alignment is computed,
 not typed: you do not maintain those columns, and a longer field name re-aligns the block
-for you. And the opening brace must be on the same line as the `func` or `if` — not a style
+for you. And the opening brace must be on the same line as the `func` or `if` - not a style
 preference but a consequence of automatic semicolon insertion, which would otherwise
 terminate the statement.
 
@@ -976,7 +976,7 @@ because unformatted Go reads as foreign. See `toolchain-gofmt-godoc`.
 Tests are ordinary Go files named `*_test.go`, in the same directory and usually the same
 package as the code they test. No TAP, no `prove`, no test library to choose: `testing` is
 in the standard library and `go test` is the harness. The house style is the table-driven
-test — a slice of case structs and a loop of subtests, the `@cases`-loop half of
+test - a slice of case structs and a loop of subtests, the `@cases`-loop half of
 `Test::More` culture, standardised:
 
 ```go
@@ -1030,7 +1030,7 @@ Notes that matter in practice:
   and continues; `t.Fatalf` stops that subtest. For deep comparisons,
   `github.com/google/go-cmp/cmp.Diff` is the community standard; `testify` is contested.
 - Subtests are selectable by name: `go test -run 'TestCount/only_whitespace' ./...`.
-- `t.TempDir()` gives a directory cleaned up automatically — `File::Temp` built into the
+- `t.TempDir()` gives a directory cleaned up automatically - `File::Temp` built into the
   harness. `t.Cleanup(fn)` is the general form.
 - `go test ./...` runs every package in the module; results are cached, and an unchanged
   package prints `(cached)`. `-cover` needs no extra tooling.
@@ -1075,7 +1075,7 @@ vetbait/main.go:12:14: fmt.Printf format %d has arg c.Name of wrong type string
 vetbait/main.go:13:14: fmt.Printf format %s reads arg #1, but call has 0 args
 ```
 
-Run it anyway and `fmt` tells you in its own way — usefully, but much later:
+Run it anyway and `fmt` tells you in its own way - usefully, but much later:
 `%!d(string=web) listening on %!s(int=8080)` followed by `%!s(MISSING)`. A subset of vet
 runs automatically as part of `go test`, and it fails the build rather than warning:
 
@@ -1090,7 +1090,7 @@ is the usual next step. See `vet-and-staticcheck`.
 
 ### `go doc`
 
-Documentation is the comment immediately above a declaration — no POD, no separate file, no
+Documentation is the comment immediately above a declaration - no POD, no separate file, no
 markup beyond a few conventions. `go doc` reads it offline, from source, for the standard
 library and your own packages alike:
 
@@ -1121,7 +1121,7 @@ so much weight.
 
 The tool with no Perl equivalent, and the reason to reach for it is that concurrent bugs do
 not reproduce on demand. A counter incremented from 1000 goroutines with no synchronisation,
-run three times, printed `972`, `990`, `972` — plausibly wrong, and on a smaller loop it
+run three times, printed `972`, `990`, `972` - plausibly wrong, and on a smaller loop it
 would print the right answer most of the time. With `-race`:
 
 ```
@@ -1146,7 +1146,7 @@ exit status 66
 
 It names both goroutines, the line each was executing and where each was created, and exits
 non-zero so CI notices. It reports only races it actually observes, so it finds nothing in
-code paths your tests do not exercise — but it has almost no false positives, which makes
+code paths your tests do not exercise - but it has almost no false positives, which makes
 any report worth stopping for. It costs roughly five to ten times the CPU and a lot of
 memory, so it is a test-and-staging tool, not a production flag. Correct output proves
 nothing about a concurrent program; a clean `-race` run over a good suite is the closest
@@ -1267,13 +1267,13 @@ msg = "disk almost full"
 WARN: disk almost full
 ```
 
-Practical notes. Write patterns in backquoted raw strings so backslashes stay single — the
+Practical notes. Write patterns in backquoted raw strings so backslashes stay single - the
 analogue of choosing a Perl delimiter to avoid escaping. `MustCompile` panics on a bad
 pattern, correct for a literal and wrong for a runtime-built pattern, where you want
 `regexp.Compile` and its error. Compile at package scope, not inside a loop: a `MustCompile`
 in a hot path is the most common Go regex performance bug. `\d`, `\w` and `\b` are
 ASCII-only. `$1` in a replacement is greedy about name characters, so `"$1x"` looks for a
-group named `1x` and expands to nothing — write `"${1}x"`. When a pattern genuinely needs
+group named `1x` and expands to nothing - write `"${1}x"`. When a pattern genuinely needs
 backreferences or lookaround, `dlclark/regexp2` provides them, at the cost of the
 linear-time guarantee and with no match timeout unless you set one. See `regexp-is-re2`,
 `mustcompile-pattern`, `submatch-and-named-groups`, `replace-and-expansion`.
@@ -1287,12 +1287,12 @@ print "$a[0] $s\n";     # prints: list scalar
 ```
 
 One Perl sub serves three callers from one body. A Go function has one signature, so a
-context-polymorphic sub becomes two functions with names that say what they do — `Lines()`
+context-polymorphic sub becomes two functions with names that say what they do - `Lines()`
 and `LineCount()`, `Hostname()` and `HostnameAll()`. That is documentation Perl never had,
 and `my ($first) = f()` versus `my $count = f()` bugs become unwritable.
 
 Two related losses. Lists do not flatten: `f(@a, @b)` passed one merged list, whereas Go has
-no list type and a variadic call takes at most one trailing `slice...` — combine first with
+no list type and a variadic call takes at most one trailing `slice...` - combine first with
 `slices.Concat(a, b)`. And multiple return values are not a first-class list:
 `func f() (int, error)` returns two values that must be assigned, discarded with `_`, or
 passed straight to a call taking exactly those types. You cannot store them together and you
@@ -1315,7 +1315,7 @@ cannot splice them into a longer argument list.
 Intermediate levels have types, and a type has to come from somewhere, so it cannot be
 implicit. The better answer is usually to stop nesting: a struct with real fields, or a flat
 map with a struct key, beats `map[string]map[string]map[string]int` every time. You gain
-something too — Perl's autovivification fires on some *reads*, so `exists $h{x}{y}` silently
+something too - Perl's autovivification fires on some *reads*, so `exists $h{x}{y}` silently
 creates `$h{x}`, while Go's reads never mutate anything. See `nil-vs-undef` and
 `maps-of-slices`.
 
@@ -1323,7 +1323,7 @@ creates `$h{x}`, while Go's reads never mutate anything. See `nil-vs-undef` and
 
 Covered above under `defer`: save the old value, assign the new, `defer` the restore.
 Restoration happens at function exit rather than block exit, and there is no dynamic scoping
-at all — callees see the change only because the variable is package-level. Across
+at all - callees see the change only because the variable is package-level. Across
 goroutines the idea is meaningless, and a `local`-style global mutated while goroutines run
 is a data race.
 
@@ -1440,7 +1440,7 @@ everywhere in existing code. See `sort-slice`.
 - **No default arguments and no overloading.** One name, one signature. The
   named-arguments-hash idiom becomes an options struct; see `variadic-and-no-defaults`.
 - **No `tie`, no `AUTOLOAD`, no runtime symbol table.** Where Perl installs a sub into a
-  package at runtime, Go passes a function value or an interface — same wiring, moved from
+  package at runtime, Go passes a function value or an interface - same wiring, moved from
   the symbol table into explicit parameters.
 - **`switch` breaks by default.** No `last` needed; `fallthrough` is the explicit rarity.
   Cases can be arbitrary expressions, so `switch { case x > 10: ... }` replaces an if/elsif
@@ -1455,24 +1455,24 @@ everywhere in existing code. See `sort-slice`.
 ahead to "Methods and interfaces". [Effective Go](https://go.dev/doc/effective_go) is dated
 in places and still the best statement of *why* Go code looks the way it does.
 [Go Code Review Comments](https://go.dev/wiki/CodeReviewComments) is the checklist real
-reviewers use — short, and it will change how you name things.
+reviewers use - short, and it will change how you name things.
 
 **The topics above, in depth.**
 
 - [Go Slices: usage and internals](https://go.dev/blog/slices-intro) and
   [Arrays, slices (and strings): The mechanics of 'append'](https://go.dev/blog/slices)
-- [Go maps in action](https://go.dev/blog/maps) —
+- [Go maps in action](https://go.dev/blog/maps) -
   [Strings, bytes, runes and characters in Go](https://go.dev/blog/strings)
 - [Error handling and Go](https://go.dev/blog/error-handling-and-go),
   [Errors are values](https://go.dev/blog/errors-are-values), and
   [Working with Errors in Go 1.13](https://go.dev/blog/go1.13-errors) for `%w`, `errors.Is`
   and `errors.As`
-- [Defer, Panic, and Recover](https://go.dev/blog/defer-panic-and-recover) —
+- [Defer, Panic, and Recover](https://go.dev/blog/defer-panic-and-recover) -
   [Go Concurrency Patterns: Pipelines and cancellation](https://go.dev/blog/pipelines)
 - [Organizing a Go module](https://go.dev/doc/modules/layout) and
   [Managing dependencies](https://go.dev/doc/modules/managing-dependencies)
-- [go fmt your code](https://go.dev/blog/gofmt) —
-  [Data Race Detector](https://go.dev/doc/articles/race_detector) —
+- [go fmt your code](https://go.dev/blog/gofmt) -
+  [Data Race Detector](https://go.dev/doc/articles/race_detector) -
   [Go Doc Comments](https://go.dev/doc/comment)
 
 **Reference.** [The specification](https://go.dev/ref/spec) is short enough to read end to

@@ -7,7 +7,7 @@ severity: info
 prerequisites: [compile-time-mindset]
 ---
 
-Every Go workflow runs through one binary: `go build` compiles, `go run` compiles-and-executes, `go test` finds and runs tests, `go vet` finds suspicious-but-compilable code, `go doc` is your `perldoc`, and `gofmt` reformats source into the one true style. There is no Makefile.PL, no prove, no ExtUtils anything — and, culturally the biggest shock, there is no `.perltidyrc`, because formatting is not configurable. Fifteen years of TMTOWTDI instincts meet a community that decided There Is Only One Way To Format It, and the payoff is that every Go file you will ever read looks the same.
+Every Go workflow runs through one binary: `go build` compiles, `go run` compiles-and-executes, `go test` finds and runs tests, `go vet` finds suspicious-but-compilable code, `go doc` is your `perldoc`, and `gofmt` reformats source into the one true style. There is no Makefile.PL, no prove, no ExtUtils anything - and, culturally the biggest shock, there is no `.perltidyrc`, because formatting is not configurable. Fifteen years of TMTOWTDI instincts meet a community that decided There Is Only One Way To Format It, and the payoff is that every Go file you will ever read looks the same.
 
 ## The Perl you know
 
@@ -48,7 +48,7 @@ func main() {
 }
 ```
 
-Tabs, brace placement, spacing: all decided for you. Editors run it on save; CI rejects unformatted code; nobody argues, because there is nothing to argue about. Semicolons exist in the grammar but are inserted automatically at line ends, which is why the opening brace *must* be on the same line as `func` or `if` — moving it to the next line is a syntax error, not a style choice.
+Tabs, brace placement, spacing: all decided for you. Editors run it on save; CI rejects unformatted code; nobody argues, because there is nothing to argue about. Semicolons exist in the grammar but are inserted automatically at line ends, which is why the opening brace *must* be on the same line as `func` or `if` - moving it to the next line is a syntax error, not a style choice.
 
 `go vet` catches what compiles but is wrong. This program builds and runs:
 
@@ -88,10 +88,10 @@ func (b *Builder) Grow(n int)
 ...
 ```
 
-Documentation is plain comments directly above declarations (`// Distance returns ...`) — no POD, no `=cut`, and https://pkg.go.dev renders the same comments for the whole ecosystem.
+Documentation is plain comments directly above declarations (`// Distance returns ...`) - no POD, no `=cut`, and https://pkg.go.dev renders the same comments for the whole ecosystem.
 
 ## The mismatch
 
-The tools you will actually run daily: `go run .` while iterating (compilation is fast enough that it feels interpreted), `go build` to produce a single static binary you can `scp` to a server with no interpreter or module tree waiting there — deployment is one file, the single biggest operational difference from shipping Perl — `go test ./...` before committing (the `./...` wildcard means "this package and everything below", and `table-driven-tests` covers what goes in the files it finds), and `go vet ./...` in CI. Adopt gofmt on day one and never format by hand; fighting it marks code as written by an outsider more surely than any other habit.
+The tools you will actually run daily: `go run .` while iterating (compilation is fast enough that it feels interpreted), `go build` to produce a single static binary you can `scp` to a server with no interpreter or module tree waiting there - deployment is one file, the single biggest operational difference from shipping Perl - `go test ./...` before committing (the `./...` wildcard means "this package and everything below", and `table-driven-tests` covers what goes in the files it finds), and `go vet ./...` in CI. Adopt gofmt on day one and never format by hand; fighting it marks code as written by an outsider more surely than any other habit.
 
 Further reading: https://go.dev/blog/gofmt and https://pkg.go.dev/cmd/go

@@ -12,11 +12,11 @@ Perl's scalar is simultaneously a number and a string and converts on demand; Go
 ## The Perl you know
 
 ```perl
-say "5" + 2;           # 7    — string numified
-say "10 apples" + 2;   # 12   — leading digits win (warns under warnings)
-say 7 / 2;             # 3.5  — division is floating-point, always
+say "5" + 2;           # 7    - string numified
+say "10 apples" + 2;   # 12   - leading digits win (warns under warnings)
+say 7 / 2;             # 3.5  - division is floating-point, always
 my $n = 3; my $r = 1.5;
-say $n * $r;           # 4.5  — int/float distinction doesn't exist
+say $n * $r;           # 4.5  - int/float distinction doesn't exist
 ```
 
 The output is `7`, `12`, `3.5`, `4.5`. One scalar type, one numeric tower, `==` for numbers and `eq` for strings doing the disambiguation work.
@@ -151,13 +151,13 @@ func main() {
 
 `(n + page - 1) / page` is the round-up idiom, and it only reads correctly when the division truncates; written with floating-point division it needs a `math.Ceil` and a conversion back. That is the whole reason the pragma exists, and it is the shape to reach for in Go whenever a count of fixed-size chunks is wanted.
 
-The pragma is lexical, which means it governs the text it encloses and not the calls that text makes: a sub declared outside it keeps floating-point arithmetic even when called from inside. Go has nothing that changes an operator's meaning over a region of source, and does not need it — the operand types say what the operator does, once, at the declaration, and every line downstream follows. `use integer` is Perl asking for the thing Go gives by default.
+The pragma is lexical, which means it governs the text it encloses and not the calls that text makes: a sub declared outside it keeps floating-point arithmetic even when called from inside. Go has nothing that changes an operator's meaning over a region of source, and does not need it - the operand types say what the operator does, once, at the declaration, and every line downstream follows. `use integer` is Perl asking for the thing Go gives by default.
 
-One trap on the way across, and it is a compile error rather than a wrong answer. Perl's `int($n / $d)` is floating-point division followed by truncation, and where both operands are constants the Go that comes out is `int(-7.0 / 2.0)` — which Go rejects outright, because a constant with a fractional part cannot be converted to `int` at all. The fix is to work the constant out and write the number: `int(-7 / 2)` in Go, with both operands untyped integer constants, is `-3` and compiles.
+One trap on the way across, and it is a compile error rather than a wrong answer. Perl's `int($n / $d)` is floating-point division followed by truncation, and where both operands are constants the Go that comes out is `int(-7.0 / 2.0)` - which Go rejects outright, because a constant with a fractional part cannot be converted to `int` at all. The fix is to work the constant out and write the number: `int(-7 / 2)` in Go, with both operands untyped integer constants, is `-3` and compiles.
 
 ## The mismatch
 
-Four rules replace the coercion instinct. One: `T(v)` is the universal conversion syntax, and *even `int` to `int64` requires it* — same-shaped integer types are still distinct types, which matters constantly because `len()` returns `int` while `time.Duration` and file sizes are `int64`. Prefer plain `int` (64-bit on modern platforms) unless an API or a serialisation format dictates otherwise. Two: `/` on two integers is integer division — `7 / 2` is `3`, and Perl's answer needs `float64(a) / float64(b)`; this is the single most common numeric porting bug. Three: string-to-number never happens implicitly and never partially — `strconv.Atoi("10 apples")` returns an *error*, not `10` (see `strconv-parsing`), and `==` works for both numbers and strings because types, not operators, disambiguate — the `==`/`eq` split is gone. Four: untyped *constants* are the one place Go feels Perl-flexible — `7.0 / 2` works, and `const k = 1 << 20` can initialise an `int64` or a `float64` — but a constant that cannot be represented exactly is a compile error (`int(2.99)` with a constant literal refuses to compile), so the flexibility never becomes coercion.
+Four rules replace the coercion instinct. One: `T(v)` is the universal conversion syntax, and *even `int` to `int64` requires it* - same-shaped integer types are still distinct types, which matters constantly because `len()` returns `int` while `time.Duration` and file sizes are `int64`. Prefer plain `int` (64-bit on modern platforms) unless an API or a serialisation format dictates otherwise. Two: `/` on two integers is integer division - `7 / 2` is `3`, and Perl's answer needs `float64(a) / float64(b)`; this is the single most common numeric porting bug. Three: string-to-number never happens implicitly and never partially - `strconv.Atoi("10 apples")` returns an *error*, not `10` (see `strconv-parsing`), and `==` works for both numbers and strings because types, not operators, disambiguate - the `==`/`eq` split is gone. Four: untyped *constants* are the one place Go feels Perl-flexible - `7.0 / 2` works, and `const k = 1 << 20` can initialise an `int64` or a `float64` - but a constant that cannot be represented exactly is a compile error (`int(2.99)` with a constant literal refuses to compile), so the flexibility never becomes coercion.
 
 ## When one variable held both
 

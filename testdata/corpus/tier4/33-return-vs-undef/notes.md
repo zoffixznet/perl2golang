@@ -1,6 +1,6 @@
 # 33-return-vs-undef: `return;` vs `return undef;` in list context
 
-Group: **C — convertible, but the naive conversion is subtly wrong**
+Group: **C - convertible, but the naive conversion is subtly wrong**
 
 ## Construct
 `return;` (line 8) yields the EMPTY LIST in list context and undef in scalar
@@ -8,7 +8,7 @@ context. `return undef;` (line 9) yields a ONE-ELEMENT list (undef) in list
 context. Assigned to arrays: 0 elements vs 1 element (lines 11-12). Inside a
 hash constructor (line 17) the empty list makes everything SHIFT:
 `(name => bare(), age => 30)` flattens to `("name", "age", 30)`, producing
-keys `name` (value "age") and `30` (value undef) — observed keys `30,name`.
+keys `name` (value "age") and `30` (value undef) - observed keys `30,name`.
 With `return undef;` the intended `age,name` keys appear. In scalar context
 the two are indistinguishable (line 24).
 
@@ -39,8 +39,8 @@ cleanly.
 > consider 'return undef;' in 'bare' or filtering the list.
 
 ## What a human should do instead
-In Perl style guides: never `return undef;` for "no result" — use `return;`
-— but when a one-element list is the contract, say so. When porting, replace
+In Perl style guides: never `return undef;` for "no result" - use `return;`
+- but when a one-element list is the contract, say so. When porting, replace
 list-shape tricks with explicit multi-value returns
 (`func f() (string, bool)`).
 

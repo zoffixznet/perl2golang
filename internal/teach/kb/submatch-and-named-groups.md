@@ -7,7 +7,7 @@ severity: warning
 prerequisites: [mustcompile-pattern, nil-slices-vs-nil-maps]
 ---
 
-There are no match variables: `$1`, `$&`, `%+`, `@-` all vanish, replaced by methods returning slices — `FindStringSubmatch` gives `[$&, $1, $2, ...]` as a `[]string`, and the family of `Find*` methods enumerates every combination of finding one/all, string/bytes, and text/index. Two gotchas hide in the transition: a failed match returns `nil` rather than an empty slice, so indexing an unchecked result panics (Perl's "if the match failed, `$1` is stale from the *previous* match" bug at least never crashed); and named groups use Python-style `(?P<name>...)` — Perl's `(?<name>...)` spelling is rejected at compile time.
+There are no match variables: `$1`, `$&`, `%+`, `@-` all vanish, replaced by methods returning slices - `FindStringSubmatch` gives `[$&, $1, $2, ...]` as a `[]string`, and the family of `Find*` methods enumerates every combination of finding one/all, string/bytes, and text/index. Two gotchas hide in the transition: a failed match returns `nil` rather than an empty slice, so indexing an unchecked result panics (Perl's "if the match failed, `$1` is stale from the *previous* match" bug at least never crashed); and named groups use Python-style `(?P<name>...)` - Perl's `(?<name>...)` spelling is rejected at compile time.
 
 ## The Perl you know
 
@@ -49,7 +49,7 @@ func main() {
 	words := regexp.MustCompile(`\w+`).FindAllString("one, two; three", -1)
 	fmt.Println(words)
 
-	// Matching is unanchored, like Perl's // — a "contains" test:
+	// Matching is unanchored, like Perl's // - a "contains" test:
 	fmt.Println(logLine.MatchString("prefix warn: disk full"))
 }
 ```
@@ -252,10 +252,10 @@ web1   AAAA  fd00::1
 
 Two things fall out of that shape and are worth taking with you. Because `m[0]` is the whole match, an anchored substitution that deletes what it matched is just a slice: `line[len(m[0]):]` copies nothing and needs no second pass over the string. And because the match happens once, the Go reads better than the Perl did: `s///` as a condition is doing two jobs at once, and here they are two lines that say which is which.
 
-`ReplaceAllString` is the right call when you want the replacement and not the groups, and it can reach the groups inside the replacement text with `$1` or `${1}` — but only inside that string, and never back in the surrounding code. If the branch after the substitution needs a group, `FindStringSubmatch` first is the whole answer.
+`ReplaceAllString` is the right call when you want the replacement and not the groups, and it can reach the groups inside the replacement text with `$1` or `${1}` - but only inside that string, and never back in the surrounding code. If the branch after the substitution needs a group, `FindStringSubmatch` first is the whole answer.
 
 ## The mismatch
 
-Decoding the method-name grammar unlocks the whole package: `Find` + optional `All` (`//g`) + optional `String` (else `[]byte`) + optional `Submatch` (captures) + optional `Index` (byte offsets, the `@-`/`@+` replacement). So `FindAllStringSubmatch(s, -1)` is `while (/.../g)` collecting captures — the `-1` means unlimited; a positive n caps the count. Gotchas in the details: a group that participated but matched empty and a group that did not participate at all *both* appear as `""` in the submatch slice (use the `Index` variants, where non-participation is `-1`, when the distinction matters — Perl distinguishes via `defined $1`); `MatchString` is unanchored like Perl's bare `//`, so anchor explicitly with `^...$` when you mean whole-string (there is no `\z`/`\A` — `\z` is spelled `$` with no multiline flag, and `(?m)` changes `^$` to per-line exactly as `/m` did); and boolean-only tests should use `MatchString` rather than a discarded `Find`, both for clarity and speed. Named groups: `(?P<name>...)` (Go also accepts `(?<name>...)` since Go 1.22, but `P` remains the dominant style you will read), retrieved via `SubexpIndex("name")` as shown — there is no `%+` hash; if you want one, build `map[string]string` by zipping `re.SubexpNames()` with the match slice, a four-line helper worth writing once.
+Decoding the method-name grammar unlocks the whole package: `Find` + optional `All` (`//g`) + optional `String` (else `[]byte`) + optional `Submatch` (captures) + optional `Index` (byte offsets, the `@-`/`@+` replacement). So `FindAllStringSubmatch(s, -1)` is `while (/.../g)` collecting captures - the `-1` means unlimited; a positive n caps the count. Gotchas in the details: a group that participated but matched empty and a group that did not participate at all *both* appear as `""` in the submatch slice (use the `Index` variants, where non-participation is `-1`, when the distinction matters - Perl distinguishes via `defined $1`); `MatchString` is unanchored like Perl's bare `//`, so anchor explicitly with `^...$` when you mean whole-string (there is no `\z`/`\A` - `\z` is spelled `$` with no multiline flag, and `(?m)` changes `^$` to per-line exactly as `/m` did); and boolean-only tests should use `MatchString` rather than a discarded `Find`, both for clarity and speed. Named groups: `(?P<name>...)` (Go also accepts `(?<name>...)` since Go 1.22, but `P` remains the dominant style you will read), retrieved via `SubexpIndex("name")` as shown - there is no `%+` hash; if you want one, build `map[string]string` by zipping `re.SubexpNames()` with the match slice, a four-line helper worth writing once.
 
 Further reading: https://pkg.go.dev/regexp#Regexp.FindStringSubmatch

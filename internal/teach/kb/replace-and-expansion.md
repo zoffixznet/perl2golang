@@ -7,7 +7,7 @@ severity: warning
 prerequisites: [submatch-and-named-groups, strings-are-bytes]
 ---
 
-`s/pat/repl/g` becomes `re.ReplaceAllString(s, repl)` — note *All* is the default and only mode; replacing just the first occurrence is the special case in Go, inverting Perl's `/g` convention. The replacement string expands `$1`-style references, but with a parsing rule that manufactures a signature bug: `$name` grabs the *longest* run of letters, digits, and underscores, so `"$1_backup"` means a group named `1_backup` — which does not exist — and silently expands to the empty string. Perl would have parsed `$1` then `_backup`; Go will not, and the output corruption is quiet. `${1}` braces are the cure and should be your reflex in any replacement where `$N` touches a following word character.
+`s/pat/repl/g` becomes `re.ReplaceAllString(s, repl)` - note *All* is the default and only mode; replacing just the first occurrence is the special case in Go, inverting Perl's `/g` convention. The replacement string expands `$1`-style references, but with a parsing rule that manufactures a signature bug: `$name` grabs the *longest* run of letters, digits, and underscores, so `"$1_backup"` means a group named `1_backup` - which does not exist - and silently expands to the empty string. Perl would have parsed `$1` then `_backup`; Go will not, and the output corruption is quiet. `${1}` braces are the cure and should be your reflex in any replacement where `$N` touches a following word character.
 
 ## The Perl you know
 
@@ -19,7 +19,7 @@ $dna  =~ tr/a/o/;                                                     # tr is no
 
 ## The Go you write
 
-Compiled and run as shown — line two is the trap firing for real:
+Compiled and run as shown - line two is the trap firing for real:
 
 ```go
 package main
@@ -145,6 +145,6 @@ Neither call has a first-match-only form, so `s///` without `/g` needs a helper 
 
 ## The mismatch
 
-The working differences, enumerated. In-place mutation is impossible — strings are immutable (`strings-are-bytes`) — so every `s///` becomes an assignment: `s = re.ReplaceAllString(s, repl)`; Perl's return-the-count behaviour has no equivalent (count separately with `FindAllString` if you need it). `ReplaceAllStringFunc` receives the *entire* match as its argument — not the captures — so a `s/(\d+)-(\d+)/$2-$1/e`-style rewrite needing groups inside the function must call `FindStringSubmatch` again inside the callback or, cleaner, use `ReplaceAllString` with `${2}-${1}` when the logic is pure rearrangement; for genuinely computed replacements over captures, `re.ReplaceAllStringFunc` plus an inner submatch is the accepted, slightly clunky pattern. `ReplaceAllLiteralString` is for replacement text from *data* — any user-supplied or config-derived replacement must go through it, or embedded `$` sequences become expansion holes. First-occurrence-only has no method; the idiom uses a counter in `ReplaceAllStringFunc` or `FindStringIndex` plus manual splicing. And `tr///` was never a regex in Perl either: character-by-character mapping is `strings.Map` (shown), fixed multi-string swaps are `strings.NewReplacer("a", "o", "b", "p")`, and counting characters (`tr///` in scalar context) is `strings.Count`.
+The working differences, enumerated. In-place mutation is impossible - strings are immutable (`strings-are-bytes`) - so every `s///` becomes an assignment: `s = re.ReplaceAllString(s, repl)`; Perl's return-the-count behaviour has no equivalent (count separately with `FindAllString` if you need it). `ReplaceAllStringFunc` receives the *entire* match as its argument - not the captures - so a `s/(\d+)-(\d+)/$2-$1/e`-style rewrite needing groups inside the function must call `FindStringSubmatch` again inside the callback or, cleaner, use `ReplaceAllString` with `${2}-${1}` when the logic is pure rearrangement; for genuinely computed replacements over captures, `re.ReplaceAllStringFunc` plus an inner submatch is the accepted, slightly clunky pattern. `ReplaceAllLiteralString` is for replacement text from *data* - any user-supplied or config-derived replacement must go through it, or embedded `$` sequences become expansion holes. First-occurrence-only has no method; the idiom uses a counter in `ReplaceAllStringFunc` or `FindStringIndex` plus manual splicing. And `tr///` was never a regex in Perl either: character-by-character mapping is `strings.Map` (shown), fixed multi-string swaps are `strings.NewReplacer("a", "o", "b", "p")`, and counting characters (`tr///` in scalar context) is `strings.Count`.
 
 Further reading: https://pkg.go.dev/regexp#Regexp.ReplaceAllString and https://pkg.go.dev/regexp#Regexp.Expand

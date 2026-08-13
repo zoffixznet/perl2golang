@@ -7,7 +7,7 @@ severity: info
 prerequisites: [goroutines-not-fork, comma-ok-idiom]
 ---
 
-Channels are typed, in-process pipes with synchronisation built in — the structured replacement for every pipe, socketpair, and results-file dance you have used to get data out of forked children. The part that surprises: an *unbuffered* channel is not a queue at all but a rendezvous — the send blocks until a receive is ready, transferring the value and synchronising the two goroutines in one act. Get blocking wrong with no partner ever coming, and the runtime tells you bluntly at runtime. `select` is the multiplexer over channel operations — `IO::Select`'s role, but for channels — and it is how timeouts and cancellation exist.
+Channels are typed, in-process pipes with synchronisation built in - the structured replacement for every pipe, socketpair, and results-file dance you have used to get data out of forked children. The part that surprises: an *unbuffered* channel is not a queue at all but a rendezvous - the send blocks until a receive is ready, transferring the value and synchronising the two goroutines in one act. Get blocking wrong with no partner ever coming, and the runtime tells you bluntly at runtime. `select` is the multiplexer over channel operations - `IO::Select`'s role, but for channels - and it is how timeouts and cancellation exist.
 
 ## The Perl you know
 
@@ -31,7 +31,7 @@ package main
 import "fmt"
 
 func main() {
-	// Unbuffered: a send blocks until someone receives — a rendezvous.
+	// Unbuffered: a send blocks until someone receives - a rendezvous.
 	ch := make(chan string)
 	go func() { ch <- "result" }()
 	fmt.Println(<-ch)
@@ -66,7 +66,7 @@ result
 0 false
 ```
 
-Blocking with no possible partner is a runtime-detected crash — run as shown:
+Blocking with no possible partner is a runtime-detected crash - run as shown:
 
 ```go-fails
 ch := make(chan int)
@@ -82,7 +82,7 @@ main.main()
 exit status 2
 ```
 
-`select` waits on several operations and takes whichever is ready first — the timeout idiom, run as shown (the query needs 200ms, the deadline is 50ms):
+`select` waits on several operations and takes whichever is ready first - the timeout idiom, run as shown (the query needs 200ms, the deadline is 50ms):
 
 ```go
 package main
@@ -119,7 +119,7 @@ func main() {
 timed out; moving on
 ```
 
-The canonical composition — a worker pool, `Parallel::ForkManager`'s job in ~30 lines, run as shown:
+The canonical composition - a worker pool, `Parallel::ForkManager`'s job in ~30 lines, run as shown:
 
 ```go
 package main
@@ -170,6 +170,6 @@ sum of squares: 55
 
 ## The mismatch
 
-Rules that have no pipe-world analogue: close is a *broadcast* ("no more values"), not a resource release — you rarely need to close channels except to end a `range`, only the *sender* may close, closing twice panics, and sending on a closed channel panics; the comma-ok receive distinguishes "zero value sent" from "channel closed", the same two-state pattern as map lookups (`comma-ok-idiom`). Buffering is not a performance knob to sprinkle: unbuffered channels give you synchronisation guarantees; a buffer size is a semantic statement about decoupling (and `make(chan T, 1)` in the timeout example lets the abandoned `slowQuery` complete its send instead of leaking — a real pattern, not an accident). `select` with a `default` branch makes operations non-blocking; `select` over a `ctx.Done()` case is how cancellation reaches you (`context-cancellation`). And the proverb that organises all of it: *share memory by communicating* — send the data itself through the channel and let one goroutine own it at a time, rather than sharing a structure and locking around it (`waitgroup-and-mutex` covers when a mutex is still the simpler tool).
+Rules that have no pipe-world analogue: close is a *broadcast* ("no more values"), not a resource release - you rarely need to close channels except to end a `range`, only the *sender* may close, closing twice panics, and sending on a closed channel panics; the comma-ok receive distinguishes "zero value sent" from "channel closed", the same two-state pattern as map lookups (`comma-ok-idiom`). Buffering is not a performance knob to sprinkle: unbuffered channels give you synchronisation guarantees; a buffer size is a semantic statement about decoupling (and `make(chan T, 1)` in the timeout example lets the abandoned `slowQuery` complete its send instead of leaking - a real pattern, not an accident). `select` with a `default` branch makes operations non-blocking; `select` over a `ctx.Done()` case is how cancellation reaches you (`context-cancellation`). And the proverb that organises all of it: *share memory by communicating* - send the data itself through the channel and let one goroutine own it at a time, rather than sharing a structure and locking around it (`waitgroup-and-mutex` covers when a mutex is still the simpler tool).
 
 Further reading: https://go.dev/doc/effective_go#channels and https://go.dev/blog/pipelines

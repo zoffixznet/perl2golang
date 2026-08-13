@@ -1,10 +1,10 @@
 # 10-format-write: `format` / `write` report DSL
 
-Group: **A — genuinely impossible without an interpreter**
+Group: **A - genuinely impossible without an interpreter**
 
 ## Construct
-Two compile-time format declarations — `format STDOUT_TOP` (line 9, the
-per-page header) and `format STDOUT` (line 14, the row picture) — rendered by
+Two compile-time format declarations - `format STDOUT_TOP` (line 9, the
+per-page header) and `format STDOUT` (line 14, the row picture) - rendered by
 `write` (line 21). Picture lines (`@<<<<<<<<<<`, `@>>`) declare left/right
 justification and width; the line after each picture names the package variables
 to fill it; `write` also maintains per-filehandle pagination state (`$%`, `$=`,
@@ -39,7 +39,7 @@ format engine.
 > widths ('%-11s %3s  %6s'), which this tool can convert.
 
 ## What a human should do instead
-Rewrite as `printf "%-11s %3d  %6s\n"` rows plus an explicit header print —
+Rewrite as `printf "%-11s %3d  %6s\n"` rows plus an explicit header print -
 mechanical, and it converts. Pagination, if actually used, becomes an explicit
 line counter.
 

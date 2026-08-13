@@ -23,11 +23,11 @@ like once it has been made relative again.
 | `tier1/` | 45 | Language fundamentals: scalars, numbers, arrays, hashes, control flow, sorting, strings, output, context, exit status. Small programs, one topic each. |
 | `tier2/` | 80 | Script-shaped programs: subroutines, references, nested data, closures, regex, file and stdin I/O, command-line handling, error handling, core modules. |
 | `tier3/` | 33 | Full programs of the kind that decide whether the converter is any good: object systems, operator overloading, parsers, schedulers, template engines, process control. Several span more than one file. |
-| `tier4/` | 36 | Adversarial constructs. These exist to prove the converter **fails honestly** — see below. |
+| `tier4/` | 36 | Adversarial constructs. These exist to prove the converter **fails honestly** - see below. |
 | `domain/` | 25 | Sysadmin, text-wrangling, bioinformatics and release-engineering scripts, each reading fixtures under its own `files/` directory. |
 
 Tiers 1-3 and `domain/` are conversion targets: the converter should produce
-Go that reproduces the recorded output. Tier 4 is different — an entry there
+Go that reproduces the recorded output. Tier 4 is different - an entry there
 passes when the tool says the right true thing about the file, which may be a
 refusal.
 
@@ -72,8 +72,8 @@ create files clean up after themselves or write under a temporary directory.
 
 ## How the expectations were produced
 
-`expected_stdout` and `expected_exit` are captured from a run of real perl —
-5.42.2 on x86_64 Linux — never written by hand. Each program is run twice and
+`expected_stdout` and `expected_exit` are captured from a run of real perl -
+5.42.2 on x86_64 Linux - never written by hand. Each program is run twice and
 the two runs compared byte for byte, which is what makes the recorded output a
 fact rather than a guess.
 
@@ -136,15 +136,15 @@ translation compiles and then quietly gives wrong answers.
 Every tier 4 entry has an `expectation.md` stating what the tool must do, in
 one of six categories:
 
-- `refuse-file` — decline the whole file, with a diagnostic explaining why.
-- `refuse-statement` — convert the rest; replace the construct with a stub
+- `refuse-file` - decline the whole file, with a diagnostic explaining why.
+- `refuse-statement` - convert the rest; replace the construct with a stub
   that panics if reached, and diagnose each site.
-- `todo` — emit compilable Go plus a marked TODO at the site and a report
+- `todo` - emit compilable Go plus a marked TODO at the site and a report
   entry; behaviour knowingly diverges until a human acts.
-- `shim` — emit or call a runtime helper that reproduces the Perl semantics
+- `shim` - emit or call a runtime helper that reproduces the Perl semantics
   exactly, and note the shim in the report.
-- `approximate` — convert with a documented, reported difference in meaning.
-- `convert-verify` — full conversion expected; passes only if the built
+- `approximate` - convert with a documented, reported difference in meaning.
+- `convert-verify` - full conversion expected; passes only if the built
   program reproduces `expected_stdout` and `expected_exit`.
 
 `expectation.md` also lists the tripwires: the specific output lines that

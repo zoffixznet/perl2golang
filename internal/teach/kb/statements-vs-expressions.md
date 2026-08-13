@@ -109,7 +109,7 @@ sub total { $_[0]{n} }                             # value: a field
 sub twice { double( double( $_[0] ) ) }            # value: a call's result
 ```
 
-Go has no such rule anywhere: a function with results must reach a `return`, and a function without results has no value to give. So each of those grows a `return`, and the type it returns becomes part of the function's signature — which is the point, because that signature is now the documentation the Perl never had.
+Go has no such rule anywhere: a function with results must reach a `return`, and a function without results has no value to give. So each of those grows a `return`, and the type it returns becomes part of the function's signature - which is the point, because that signature is now the documentation the Perl never had.
 
 The constructor is worth reading closely, because it is the one shape Perl developers expect Go to have and it does not. Go has no constructors, no `new` keyword for your own types, and no way to hook object creation. A plain function returning `*T`, named `New` followed by the type name, is the entire convention:
 

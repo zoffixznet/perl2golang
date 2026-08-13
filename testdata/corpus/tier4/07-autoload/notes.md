@@ -1,6 +1,6 @@
 # 07-autoload: AUTOLOAD dispatch on arbitrary method names
 
-Group: **A — genuinely impossible without an interpreter**
+Group: **A - genuinely impossible without an interpreter**
 
 ## Construct
 `Record::AUTOLOAD` (line 11) intercepts every call to an undefined method, parses
@@ -23,7 +23,7 @@ fly.
   site so the rest of the file compiles.
 - Documented narrowing it MAY implement: when the AUTOLOAD body is a total
   function of the name over a statically enumerable call set (here:
-  `get_color`, `set_size`, `get_size`, `launch_missiles` — all literal), the
+  `get_color`, `set_size`, `get_size`, `launch_missiles` - all literal), the
   converter may specialize each name by symbolically applying the regexes, and
   must then reproduce `expected_stdout` exactly, including the death message for
   `launch_missiles` being caught by the surrounding `eval {}`.

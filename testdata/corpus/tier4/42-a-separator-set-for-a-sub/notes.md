@@ -1,6 +1,6 @@
 # 42-a-separator-set-for-a-sub: a global assignment changing a compiled sub
 
-Group: **B — convertible only with a runtime that models the punctuation
+Group: **B - convertible only with a runtime that models the punctuation
 globals**
 
 ## Construct

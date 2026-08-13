@@ -1,7 +1,7 @@
 # Pass criteria
 
 - category: `refuse-statement`
-- report-must-contain: `glob` — a refusal naming the construct, for the
+- report-must-contain: `glob` - a refusal naming the construct, for the
   writes at input.pl lines 17, 18 and 26 and the reads at 22 and 30
 - report-must-contain: `symbol table`
 - every one of those five lines must produce either code or a diagnostic of

@@ -5,5 +5,5 @@
   parse-dependent call)
 - diagnostic-must-contain: `BEGIN`, `compile`, `parse`
 - must-not: emit any Go translation of line 20; must-not pick one prototype
-  silently (note: default run prints `[a]|b`, TAG_GREEDY=1 prints `[a,b]` —
+  silently (note: default run prints `[a]|b`, TAG_GREEDY=1 prints `[a,b]` -
   emitting either unconditionally is a fail)

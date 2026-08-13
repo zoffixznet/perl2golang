@@ -1,16 +1,16 @@
 # 31-array-autoextend: assignment past the end; `$#a` truncation/extension
 
-Group: **C — convertible, but the naive conversion is subtly wrong**
+Group: **C - convertible, but the naive conversion is subtly wrong**
 
 ## Construct
 `$a[7] = 8` on a three-element array (line 9) silently grows it to length 8,
 filling indices 3-6 with undef. Assigning to `$#a` truncates (`$#a = 1`,
 line 17) or re-extends with undefs (`$#a = 4`, line 20). The gap elements are
-UNDEF — distinct from `""` and from 0 (they stringify empty under
+UNDEF - distinct from `""` and from 0 (they stringify empty under
 `no warnings`, line 14's join shows `1,2,3,,,,,8`).
 
 ## Why the naive conversion is subtly wrong
-Go's `a[7] = 8` on a len-3 slice PANICS. The obvious fix — `append` — appends
+Go's `a[7] = 8` on a len-3 slice PANICS. The obvious fix - `append` - appends
 at index 3, not 7: silently different layout. A converter using
 `make`+`copy` growth but filling with zero values conflates undef with 0/""
 (observable through `defined`, line 11, and join output). `$#a = 1`
@@ -35,7 +35,7 @@ old values 3 and undef... whatever memory retained).
 > input.pl:9: note P2G-W407: '$a[7] = 8' extends the 3-element array to
 > length 8 with undef gaps; converted via perlrt.AvSet (native Go indexing
 > would panic). 'defined $a[5]' on line 11 distinguishes those gaps from
-> zero values — the scalar model preserves undef.
+> zero values - the scalar model preserves undef.
 
 ## What a human should do instead
 Size the slice up front (`make([]T, 8)`) or restructure to append-only

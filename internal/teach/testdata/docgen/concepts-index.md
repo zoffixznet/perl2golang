@@ -12,7 +12,7 @@ Something in `summarise.pl` triggered each of these directly. Each lesson says a
 2. [nil is not undef, and nothing autovivifies](nil-vs-undef.md) (trap). `undef` is a universal value any scalar can hold.
 3. [range gives you the index first, and the element is a copy](range-is-not-foreach.md) (easy to get wrong). Two habits from `foreach` will produce wrong Go on day one.
 4. [Sorting is a function call, and the default is numeric-aware](sort-slice.md). Perl's `sort` is a builtin that returns a new list and defaults to string comparison, which is why `sort { $a <=> $b }` is muscle memory for every Perl programmer alive.
-5. [Map order is randomised per loop, on purpose](map-iteration-order.md) (easy to get wrong). You already know hashes are unordered — Perl has randomised per-process since 5.18 — but Go goes a step further that will break a specific class of ported code.
+5. [Map order is randomised per loop, on purpose](map-iteration-order.md) (easy to get wrong). You already know hashes are unordered - Perl has randomised per-process since 5.18 - but Go goes a step further that will break a specific class of ported code.
 6. [Errors are return values, not exceptions](errors-are-values.md). Go has no exceptions in the working sense.
 7. [strconv turns strings into numbers, and refuses to guess](strconv-parsing.md). Every place your Perl relied on a string quietly becoming a number.
 8. [FindStringSubmatch replaces $1, and no-match returns nil](submatch-and-named-groups.md) (easy to get wrong). There are no match variables: `$1`, `$&`, `%+`, `@-` all vanish, replaced by methods returning slices.
@@ -26,14 +26,14 @@ Nothing in your file triggered them directly. They are here because the lessons 
 
 1. [Every variable has a type and is never uninitialised](static-types-and-zero-values.md). In Perl, a freshly declared variable holds `undef` and its "type" is whatever you use it as next.
 2. [Capitalisation is the entire privacy system](packages-and-exported-names.md). Go has no `Exporter`, no `@EXPORT_OK`, no `use Pkg qw(func)`, and no convention-only privacy.
-3. [Structs replace hashrefs, and embedding is not inheritance](structs-and-embedding.md). The blessed hashref — Perl's universal object — becomes a struct.
+3. [Structs replace hashrefs, and embedding is not inheritance](structs-and-embedding.md). The blessed hashref - Perl's universal object - becomes a struct.
 4. [Slices are views with capacity, arrays are values](slices-not-arrays.md) (easy to get wrong). Perl's `@array` maps to Go's *slice* (`[]int`), not Go's array (`[3]int`).
 5. [A nil slice works; writing to a nil map panics](nil-slices-vs-nil-maps.md) (trap). In Perl, `my @list` and `my %hash` are both immediately usable.
 6. [Comma-ok replaces exists, and defined has no seat at the table](comma-ok-idiom.md). A Go map lookup always succeeds: `m[k]` on a missing key quietly returns the zero value, so `visits["bob"]` is `0` whether bob visited zero times or was never seen at all.
 7. [Declaring variables, := versus var, and the shadowing trap](var-vs-short-declaration.md) (easy to get wrong). Go has two ways to declare a variable, and picking between them is mechanical, not stylistic.
-8. [Multiple returns replace both list-return and wantarray](multiple-return-values.md). Go functions return a fixed, typed tuple — `(int, error)` is the canonical shape — and the caller must account for every value.
+8. [Multiple returns replace both list-return and wantarray](multiple-return-values.md). Go functions return a fixed, typed tuple - `(int, error)` is the canonical shape - and the caller must account for every value.
 9. [No coercion, ever - numbers and strings never blur](explicit-conversions-no-coercion.md) (easy to get wrong). Perl's scalar is simultaneously a number and a string and converts on demand.
-10. [Compile once at package level with MustCompile](mustcompile-pattern.md). Perl compiles a literal regex once, transparently, no matter how many times execution passes over it — the interpreter caches it, and `qr//` exists only for the dynamic cases.
+10. [Compile once at package level with MustCompile](mustcompile-pattern.md). Perl compiles a literal regex once, transparently, no matter how many times execution passes over it - the interpreter caches it, and `qr//` exists only for the dynamic cases.
 11. [Pointers are explicit references, and nothing aliases @_](pointers-vs-references.md). Go pointers are Perl references with the training wheels *and* the magic removed.
 12. [Pointer versus value receivers, and the method set rules](methods-and-receivers.md) (trap). Every Perl method gets `$self` as a reference, so mutating `$self->{field}` always sticks.
 13. [Interfaces are satisfied implicitly - duck typing, checked](implicit-interfaces.md). Go's interface is Perl duck typing with the runtime risk removed.

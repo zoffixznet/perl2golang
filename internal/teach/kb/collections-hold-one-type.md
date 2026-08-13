@@ -125,7 +125,7 @@ func describe() (string, int) {
 
 What you gain is not only speed. `m["sesc"]` is a valid expression that returns nil; `job.Sesc` does not compile. The type is documentation that cannot go stale, and `job.Secs + 30` needs no conversion where `m["secs"].(int) + 30` did.
 
-What you give up is worth knowing before you commit to it. A struct has no keys to enumerate, so `keys %$job` becomes a list you write out and keep in step by hand. `delete` has no counterpart at all: a field that can be absent is a pointer, or a zero value with a separate flag, decided when the type is declared. And a field cannot be reached by a name computed at run time — the honest replacement is a `switch` over the names, which is faster than reflection and says out loud which names are allowed:
+What you give up is worth knowing before you commit to it. A struct has no keys to enumerate, so `keys %$job` becomes a list you write out and keep in step by hand. `delete` has no counterpart at all: a field that can be absent is a pointer, or a zero value with a separate flag, decided when the type is declared. And a field cannot be reached by a name computed at run time - the honest replacement is a `switch` over the names, which is faster than reflection and says out loud which names are allowed:
 
 ```go
 type Task struct {
@@ -148,7 +148,7 @@ If you find yourself writing that switch for most of the fields, the data was a 
 
 ## The mismatch
 
-The reflex to build is: decide the element type at the declaration and keep it. Reaching for `[]any` "so it can hold anything" is the Perl habit, and it costs you the compiler's help at every use, an assertion at every read, and a copy at every boundary where something wants a concrete type. `[]any` is right for genuinely heterogeneous data — a decoded JSON document, a row of database values, `fmt.Println`'s own parameter — and wrong for a list that happens to have been built out of strings.
+The reflex to build is: decide the element type at the declaration and keep it. Reaching for `[]any` "so it can hold anything" is the Perl habit, and it costs you the compiler's help at every use, an assertion at every read, and a copy at every boundary where something wants a concrete type. `[]any` is right for genuinely heterogeneous data - a decoded JSON document, a row of database values, `fmt.Println`'s own parameter - and wrong for a list that happens to have been built out of strings.
 
 When the elements really differ but share behaviour, the Go answer is not `any` but an interface: declare `[]Shape` and let each element be whatever implements it (`implicit-interfaces`). When they differ only in numeric width, pick the wider one at the declaration rather than converting later, since `[]int` to `[]float64` is a copy too. When one function wants `[]int` and another wants `[]any`, change the declaration rather than converting at the call, because every conversion is a fresh slice and the two stop tracking each other from that moment on (`slice-aliasing-and-copy`).
 

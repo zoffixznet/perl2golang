@@ -1,6 +1,6 @@
 # 16-goto-sub: `goto &sub` frame replacement
 
-Group: **B — convertible only with an approximation that changes semantics**
+Group: **B - convertible only with an approximation that changes semantics**
 
 ## Construct
 `goto &real_work` (line 15) REPLACES the current call frame: `real_work` runs
@@ -11,9 +11,9 @@ call through `normal_call` shows an extra frame (`main::normal_call`).
 ## Why naive Go conversion changes semantics
 Go has no tail-call frame replacement. The approximation
 `return real_work(args...)` preserves the VALUE and control flow but not the
-stack: anything observing the stack — `caller()`, stack traces in panics,
+stack: anything observing the stack - `caller()`, stack traces in panics,
 `Carp::croak`-style blame assignment, and AUTOLOAD idioms that use `goto` to
-hide themselves — behaves differently.
+hide themselves - behaves differently.
 
 ## What the converter should do
 - Category: **approximate**. Translate `goto &real_work` as
@@ -43,5 +43,5 @@ argument.
 `expected_stdout` (exit 0). The discriminator pair:
 `real_work(1 2): frame above me: top-level` (goto path) vs
 `real_work(1 2): frame above me: main::normal_call` (normal path). The naive
-tail-call conversion prints `main::trampoline`-equivalent for the first —
+tail-call conversion prints `main::trampoline`-equivalent for the first -
 i.e. the two lines stop differing in the way Perl's do.

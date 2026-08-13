@@ -7,7 +7,7 @@ severity: info
 prerequisites: [static-types-and-zero-values, nil-slices-vs-nil-maps]
 ---
 
-A Go map lookup always succeeds: `m[k]` on a missing key quietly returns the zero value, so `visits["bob"]` is `0` whether bob visited zero times or was never seen at all. The comma-ok form — `v, ok := m[k]` — is the *only* way to tell those apart, and it replaces `exists`. What it does not replace is `defined`: Perl's three-state world (absent / present-but-undef / present-with-value) collapses to two states in Go, and if ported code relied on the middle state, you must redesign, not transliterate.
+A Go map lookup always succeeds: `m[k]` on a missing key quietly returns the zero value, so `visits["bob"]` is `0` whether bob visited zero times or was never seen at all. The comma-ok form - `v, ok := m[k]` - is the *only* way to tell those apart, and it replaces `exists`. What it does not replace is `defined`: Perl's three-state world (absent / present-but-undef / present-with-value) collapses to two states in Go, and if ported code relied on the middle state, you must redesign, not transliterate.
 
 ## The Perl you know
 
@@ -63,7 +63,7 @@ bob has never visited
 false
 ```
 
-`delete(m, k)` is the `delete $h{k}` equivalent — a no-op on missing keys, no return value worth having. The `if _, ok := ...; !ok` line shows the idiomatic one-statement scoping from `var-vs-short-declaration`.
+`delete(m, k)` is the `delete $h{k}` equivalent - a no-op on missing keys, no return value worth having. The `if _, ok := ...; !ok` line shows the idiomatic one-statement scoping from `var-vs-short-declaration`.
 
 ## Carrying "there was nothing" out of a function
 
@@ -121,6 +121,6 @@ Prefer `(T, bool)` when the caller will test the answer immediately, which is mo
 
 ## The mismatch
 
-Mappings to retrain: `exists $h{k}` → `_, ok := m[k]`; `exists $ENV{X}` → `_, ok := os.LookupEnv("X")`, because `os.Getenv` returns `""` for unset and set-to-empty alike; `defined $h{k}` → *does not exist*; `$h{k} // $default` → `if v, ok := m[k]; ok { use v } else { use default }` (there is no `//` operator, and no `||`-returns-value either — Go's `||` yields only bool, so the entire `$x || $y` default-value idiom is dead; write the if-statement). When Perl code genuinely uses all three states — a config hash where `key => undef` means "explicitly disabled" as distinct from "not mentioned" — the honest Go translation is `map[string]*string` (nil value = present-but-valueless) or a small struct value with a validity flag. The comma-ok shape is not map-specific; it is a language-wide convention you will meet three more times: type assertions `v, ok := x.(T)` (`type-assertions-and-switches`), channel receives `v, ok := <-ch` (`channels-and-select`), and it is deliberately echoed by `v, err :=` returns. One caution: comma-ok is a special *assignment form*, not an expression — you cannot pass `m[k]`'s ok-ness inline to a function; it must land in variables first.
+Mappings to retrain: `exists $h{k}` → `_, ok := m[k]`; `exists $ENV{X}` → `_, ok := os.LookupEnv("X")`, because `os.Getenv` returns `""` for unset and set-to-empty alike; `defined $h{k}` → *does not exist*; `$h{k} // $default` → `if v, ok := m[k]; ok { use v } else { use default }` (there is no `//` operator, and no `||`-returns-value either - Go's `||` yields only bool, so the entire `$x || $y` default-value idiom is dead; write the if-statement). When Perl code genuinely uses all three states - a config hash where `key => undef` means "explicitly disabled" as distinct from "not mentioned" - the honest Go translation is `map[string]*string` (nil value = present-but-valueless) or a small struct value with a validity flag. The comma-ok shape is not map-specific; it is a language-wide convention you will meet three more times: type assertions `v, ok := x.(T)` (`type-assertions-and-switches`), channel receives `v, ok := <-ch` (`channels-and-select`), and it is deliberately echoed by `v, err :=` returns. One caution: comma-ok is a special *assignment form*, not an expression - you cannot pass `m[k]`'s ok-ness inline to a function; it must land in variables first.
 
 Further reading: https://go.dev/blog/maps and https://go.dev/ref/spec#Index_expressions

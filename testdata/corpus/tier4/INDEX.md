@@ -1,8 +1,8 @@
-# Tier 4 corpus — adversarial entries
+# Tier 4 corpus - adversarial entries
 
 Tier 4 entries verify the converter FAILS HONESTLY. An entry passes when the
-tool says the right true thing about it — a precise diagnostic, a correct
-report entry, a specific TODO — not when it emits Go. Each entry directory
+tool says the right true thing about it - a precise diagnostic, a correct
+report entry, a specific TODO - not when it emits Go. Each entry directory
 contains `input.pl`, `notes.md` (the behavioural specification), and
 `expectation.md` (pass criteria). Where the Perl has a runnable meaning,
 `expected_stdout` and `expected_exit` were captured by running the real perl
@@ -10,32 +10,32 @@ contains `input.pl`, `notes.md` (the behavioural specification), and
 hash keys in per-process random order on purpose, so it has an
 `expected_exit` but no `expected_stdout` and is checked against invariants
 instead; `35-buffering` writes to both streams on purpose (hence its
-`allow_stderr` marker), and its `expected_stdout` holds stdout only — the
+`allow_stderr` marker), and its `expected_stdout` holds stdout only - the
 merged-stream order that makes the entry interesting is described in its
 notes and checked by replaying the program under `2>&1`.
 
 ## Category vocabulary (used in every expectation.md)
 
-- `refuse-file` — decline the whole file; diagnostic explains why.
-- `refuse-statement` — convert the rest; replace the construct with a stub
+- `refuse-file` - decline the whole file; diagnostic explains why.
+- `refuse-statement` - convert the rest; replace the construct with a stub
   that panics if reached; diagnostic per site.
-- `todo` — emit compilable Go plus a `// TODO:` comment at the site and a
+- `todo` - emit compilable Go plus a `// TODO:` comment at the site and a
   report entry; behaviour knowingly diverges until a human acts.
-- `shim` — emit/use a runtime helper reproducing Perl semantics exactly;
+- `shim` - emit/use a runtime helper reproducing Perl semantics exactly;
   report entry notes the shim.
-- `approximate` — convert with a documented, reported semantic difference.
-- `convert-verify` — full conversion expected; passes only if the built
+- `approximate` - convert with a documented, reported semantic difference.
+- `convert-verify` - full conversion expected; passes only if the built
   program reproduces `expected_stdout`/`expected_exit` (Group C).
 
 ## Entries
 
-### Group A — genuinely impossible without an interpreter
+### Group A - genuinely impossible without an interpreter
 
 | Entry | Construct | The tool must... |
 |---|---|---|
 | 01-string-eval | `eval EXPR` of a computed string | refuse both eval statements with panicking stubs and per-site diagnostics; never guess the evaluated code. |
 | 02-symbolic-refs | `$$name`, `${computed}`, `&{"sub_$x"}()` | refuse each symbolic lookup unless it proves the name set closed and generates an explicit dispatch map. |
-| 03-glob-aliasing | `*glob = \@array` / `\&sub` / `sub {}` | refuse glob assignments (or lower unconditional top-level ones to true sharing — never copies) and diagnose each site. |
+| 03-glob-aliasing | `*glob = \@array` / `\&sub` / `sub {}` | refuse glob assignments (or lower unconditional top-level ones to true sharing - never copies) and diagnose each site. |
 | 04-monkey-patch | `*Other::method = sub {...}` at runtime | refuse the patch site so later calls cannot silently use the original implementation. |
 | 05-begin-parse | BEGIN block choosing a prototype from %ENV | refuse the FILE: the parse of later lines depends on compile-time execution; no single AST exists. |
 | 06-prototypes | `(&@)`, `(\@\@)`, `($)` altering call parsing | honour prototypes when parsing (proving `one=3`) or refuse any file containing one; never mis-parse quietly. |
@@ -46,7 +46,7 @@ notes and checked by replaying the program under `2>&1`.
 | 11-destroy-timing | DESTROY at refcount-zero instants | convert to explicit Destroy() calls at statically known death points; finalizers are forbidden. |
 | 12-wantarray | context-polymorphic returns | refuse the sub, or split into per-context variants with context propagated through wrappers, documented per call site. |
 
-### Group B — convertible only with a semantics-changing approximation
+### Group B - convertible only with a semantics-changing approximation
 
 | Entry | Construct | The tool must... |
 |---|---|---|
@@ -63,7 +63,7 @@ notes and checked by replaying the program under `2>&1`.
 | 23-sprintf-formats | `%vd`, `%s`-of-float (%.15g), `%#b`, `%d` clamp | route formatting through Perl-semantics helpers (floats stringify as %.15g everywhere); refuse `%vd` on runtime strings. |
 | 24-flipflop | scalar `..` stateful toggle with E0 values | generate independent per-site state (flag + counter, E0 suffix when the value is observed); never a range. |
 
-### Group C — convertible, but the naive conversion is subtly wrong
+### Group C - convertible, but the naive conversion is subtly wrong
 
 | Entry | Construct | The tool must... |
 |---|---|---|
@@ -87,12 +87,12 @@ notes and checked by replaying the program under `2>&1`.
 | 42-a-separator-set-for-a-sub | a plain assignment to $, changing what a sub already lowered prints | warn at each assignment a sub written above it could still be carrying the old separator past, and stay quiet where the fold is complete. |
 | 43-a-glob-slot-on-a-handle | a handle keeping its fields in the HASH slot of a glob | refuse each read and write, naming the symbol table and the struct that replaces it; the data model, not the expression, is what does not carry across. |
 
-## Priority ranking — what matters for real scripts
+## Priority ranking - what matters for real scripts
 
 Invest effort top-down. "Silently wrong" beats "loudly impossible": the
 constructs that compile-and-misbehave cost users the most.
 
-**Tier 1 — will bite ordinary scripts silently (do these first).**
+**Tier 1 - will bite ordinary scripts silently (do these first).**
 Group C's arithmetic/coercion cluster and the two aliasing entries:
 27-negative-modulus, 28-int-division, 29-str2num-coercion, 32-undef-context,
 14-args-aliasing, 33-return-vs-undef, 30-negative-index, 31-array-autoextend,
@@ -100,19 +100,19 @@ Group C's arithmetic/coercion cluster and the two aliasing entries:
 alone touches nearly every numeric print). These appear in ordinary
 workaday Perl, produce no crash, and diff only in output values.
 
-**Tier 2 — common constructs needing a correct mechanical strategy.**
+**Tier 2 - common constructs needing a correct mechanical strategy.**
 34-open-unchecked, 13-deep-autoviv, 15-local-dynamic, 19-regex-nonre2
 (lookaround/backrefs are everywhere), 24-flipflop, 21-string-increment,
 35-buffering, 11-destroy-timing (guard objects are pervasive in OO Perl),
 12-wantarray (context-polymorphic returns are a standard module idiom).
 
-**Tier 3 — must be DETECTED reliably, conversion can wait.**
+**Tier 3 - must be DETECTED reliably, conversion can wait.**
 01-string-eval, 02-symbolic-refs, 07-autoload, 17-overload, 03-glob-aliasing,
 04-monkey-patch, 18-mro-c3, 08-tie. Real code containing these is usually
 framework/plugin machinery; the converter's job is a crisp refusal that names
 the construct and the manual rewrite.
 
-**Curiosities — low frequency, keep as honesty tests.**
+**Curiosities - low frequency, keep as honesty tests.**
 05-begin-parse (parse-time environment dependence), 06-prototypes
 (parse-altering prototypes beyond `(&@)`), 10-format-write, 16-goto-sub,
 20-regex-code-recursion, 09-local-special-var. Rare in the wild, but each is

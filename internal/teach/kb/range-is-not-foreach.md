@@ -7,7 +7,7 @@ severity: warning
 prerequisites: [slices-not-arrays]
 ---
 
-Two habits from `foreach` will produce wrong Go on day one. First: `for x := range items` binds the *index*, not the element — the direct transliteration of `for my $x (@list)` quietly iterates over `0, 1, 2, ...` instead of your data, and if the elements are ints it even type-checks. Second: the two-variable form's element is a *copy*, so assigning to it modifies nothing — where Perl's `foreach` famously aliases `$_` (and the loop variable) to the real element, making mutate-in-loop a standard Perl idiom that ports to a silent no-op.
+Two habits from `foreach` will produce wrong Go on day one. First: `for x := range items` binds the *index*, not the element - the direct transliteration of `for my $x (@list)` quietly iterates over `0, 1, 2, ...` instead of your data, and if the elements are ints it even type-checks. Second: the two-variable form's element is a *copy*, so assigning to it modifies nothing - where Perl's `foreach` famously aliases `$_` (and the loop variable) to the real element, making mutate-in-loop a standard Perl idiom that ports to a silent no-op.
 
 ## The Perl you know
 
@@ -139,7 +139,7 @@ The second loop is why the idiom exists and why `range` cannot replace it: `rang
 
 ## The mismatch
 
-The mechanical translations: `for my $f (@list)` → `for _, f := range list` (the `_` discards the index you did not ask for — writing `for f := range list` is the classic conversion bug); `for my $i (0..$#list)` → `for i := range list`; `for (1..10)` → `for i := 1; i <= 10; i++` or `for range 10` when the counter is unused (Go's only loop keyword is `for`; it plays `while` as `for cond {}` and `until`/`loop` as `for {}`). Mutation in place is always by index: `fruits[i] = ...`. For `grep`/`map`/`first`, the append-loop above is the culturally accepted answer — Go deliberately shipped no map/grep over slices even after generics made it possible, though `slices.ContainsFunc`, `slices.IndexFunc`, and `slices.DeleteFunc` cover common `grep`-adjacent cases; chains of transformations become sequential loops, more lines and measurably clearer stack traces. Ranging over a map gives key (one variable) or key, value (two) in random order (`map-iteration-order`); over a string, byte-offset and rune (`strings-are-bytes`); there is no `each`-style stateful iterator to leak state between loops.
+The mechanical translations: `for my $f (@list)` → `for _, f := range list` (the `_` discards the index you did not ask for - writing `for f := range list` is the classic conversion bug); `for my $i (0..$#list)` → `for i := range list`; `for (1..10)` → `for i := 1; i <= 10; i++` or `for range 10` when the counter is unused (Go's only loop keyword is `for`; it plays `while` as `for cond {}` and `until`/`loop` as `for {}`). Mutation in place is always by index: `fruits[i] = ...`. For `grep`/`map`/`first`, the append-loop above is the culturally accepted answer - Go deliberately shipped no map/grep over slices even after generics made it possible, though `slices.ContainsFunc`, `slices.IndexFunc`, and `slices.DeleteFunc` cover common `grep`-adjacent cases; chains of transformations become sequential loops, more lines and measurably clearer stack traces. Ranging over a map gives key (one variable) or key, value (two) in random order (`map-iteration-order`); over a string, byte-offset and rune (`strings-are-bytes`); there is no `each`-style stateful iterator to leak state between loops.
 
 ## The third keyword, and the shape it forces
 

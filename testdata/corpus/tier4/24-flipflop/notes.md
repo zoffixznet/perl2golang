@@ -1,6 +1,6 @@
 # 24-flipflop: scalar-context `..` (flip-flop) operator
 
-Group: **B — convertible only with an approximation that changes semantics**
+Group: **B - convertible only with an approximation that changes semantics**
 (exactly convertible with a generated-state shim; wrong under any "range"
 reading)
 
@@ -17,7 +17,7 @@ with `/E0/` to detect the last line of a block.
 There is no Go operator with per-callsite persistent state. A converter that
 reads `..` as a range (or as `left && right`) selects nothing or one line.
 The state must survive across loop iterations but belong to the OPERATOR
-OCCURRENCE, not the loop — two textual `..` sites in this file need two
+OCCURRENCE, not the loop - two textual `..` sites in this file need two
 independent state variables (they do: the file runs the same scan twice).
 
 ## What the converter should do
@@ -29,8 +29,8 @@ independent state variables (they do: the file runs the same scan twice).
   with the documented flip-flop update rule inlined, including the `E0`
   suffix on the final value if the program observes the VALUE (this one
   prints it). If only truthiness is observed, the counter/suffix may be
-  elided — the report must say which form was emitted.
-- `...` (three dots — not in this file) differs: it does not test the right
+  elided - the report must say which form was emitted.
+- `...` (three dots - not in this file) differs: it does not test the right
   operand on the turn-on iteration; the shim must keep the two distinct.
 - Forbidden: converting as a numeric range, or sharing one state variable
   between distinct `..` sites.
@@ -44,7 +44,7 @@ independent state variables (they do: the file runs the same scan twice).
 
 ## What a human should do instead
 Write the state machine explicitly: an `$in_block` flag set on /^BEGIN/,
-cleared after processing /^END/ — which is precisely what the shim generates,
+cleared after processing /^END/ - which is precisely what the shim generates,
 and clearer to Go reviewers.
 
 ## Observed with perl 5.42.2 (x86_64-linux)

@@ -1,18 +1,18 @@
 # 28-int-division: `/` is float division; `use integer` flips the rules
 
-Group: **C — convertible, but the naive conversion is subtly wrong**
+Group: **C - convertible, but the naive conversion is subtly wrong**
 
 ## Construct
-`7 / 2` is 3.5 — Perl's `/` is ALWAYS floating point (lines 7-8). Truncation
+`7 / 2` is 3.5 - Perl's `/` is ALWAYS floating point (lines 7-8). Truncation
 is explicit via `int()` (line 9, toward zero). Inside `use integer`
 (lines 11-14) the SAME operators switch to C semantics lexically: `/`
 truncates, and `%` changes to C behaviour too (`-7 % 2` is `-1` inside,
-`1` outside — line 16). The average idiom on line 18 is where real scripts
+`1` outside - line 16). The average idiom on line 18 is where real scripts
 get burned.
 
 ## Why the naive conversion is subtly wrong
 Two ints dividing in Go is integer division: a converter that maps `$a / $b`
-onto Go `a / b` for int-typed operands turns 3.5 into 3 silently — averages,
+onto Go `a / b` for int-typed operands turns 3.5 into 3 silently - averages,
 percentages and rates all shift. The inverse trap: inside `use integer`,
 float division would be the wrong translation. The pragma is LEXICAL, so
 correctness requires scope tracking, not file-level flags.
@@ -22,9 +22,9 @@ correctness requires scope tracking, not file-level flags.
   - Outside `use integer`: every `/` produces float64 (convert operands),
     regardless of operand types. `int(expr)` maps to explicit truncation
     toward zero (`int64(expr)` conversion in Go truncates toward zero for
-    positive and negative — matching).
+    positive and negative - matching).
   - Inside `use integer`: `/` maps to native Go integer division and `%` to
-    native Go `%` (C semantics — see entry 27 for the outside-`use integer`
+    native Go `%` (C semantics - see entry 27 for the outside-`use integer`
     helper).
   - The report must note each `use integer` scope and the operator semantics
     switch.

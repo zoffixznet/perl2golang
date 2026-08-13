@@ -1187,7 +1187,7 @@ func (p *parser) parsePrint() ast.Expr {
 	n := &ast.Call{Name: name}
 	paren := false
 	if p.kind() == token.LParen {
-		// Could be print(...) or print (LIST) — treat as call parens.
+		// Could be print(...) or print (LIST) - treat as call parens.
 		paren = true
 		p.next()
 	}

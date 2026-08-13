@@ -1,7 +1,7 @@
 # Pass criteria
 
-- category: `convert-verify` (NOTE: `expected_stdout` holds stdout only —
-  `out 1`, `out 2`, `out 3` — and the entry carries `allow_stderr` because
+- category: `convert-verify` (NOTE: `expected_stdout` holds stdout only -
+  `out 1`, `out 2`, `out 3` - and the entry carries `allow_stderr` because
   `err 1`, `err 2` go to stderr on purpose; the merged order is a separate
   check, replayed with `> file 2>&1`)
 - with the buffered-stdout model: merged output must be `err 1`, `err 2`,

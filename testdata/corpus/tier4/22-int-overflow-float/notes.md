@@ -1,6 +1,6 @@
 # 22-int-overflow-float: silent IV → UV → NV promotion
 
-Group: **B — convertible only with an approximation that changes semantics**
+Group: **B - convertible only with an approximation that changes semantics**
 
 ## Construct
 Perl numbers escalate representation silently: `IVmax + 1` (line 10) promotes
@@ -25,7 +25,7 @@ Perl's behaviour; every choice is an approximation.
 - `**` must convert to `math.Pow` (float) even for integer literals, or the
   report must state the divergence in stringification (`9.00719925474099e+15`
   vs `9007199254740992`).
-- Forbidden: converting to int64 with NO overflow diagnostics — the wrap is
+- Forbidden: converting to int64 with NO overflow diagnostics - the wrap is
   silent data corruption in accounting/ID scripts.
 
 ## Ideal diagnostic (word for word)
@@ -40,7 +40,7 @@ Money: integers of the smallest unit. Scientific values: float64 and accept
 what that implies. Perl's auto-promotion was hiding this decision.
 
 ## Observed with perl 5.42.2 (x86_64-linux)
-`expected_stdout` (exit 0): `IVmax+1: 9223372036854775808` (exact, positive —
+`expected_stdout` (exit 0): `IVmax+1: 9223372036854775808` (exact, positive -
 int64 wrap gives a NEGATIVE number here), `UVmax+1: 1.84467440737096e+19`,
 `absorbs +1000? YES`, `2**53: 9.00719925474099e+15`, `2**53+1 == 2**53? YES`.
 Note the exact stringifications: Perl prints integral UVs in full digits but

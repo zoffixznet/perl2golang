@@ -1,6 +1,6 @@
 # 12-wantarray: context-polymorphic returns
 
-Group: **A — genuinely impossible without an interpreter** (in general; this
+Group: **A - genuinely impossible without an interpreter** (in general; this
 file is the statically-analyzable special case)
 
 ## Construct
@@ -12,7 +12,7 @@ into `pieces()`.
 
 ## Why it resists conversion to Go
 Go functions have ONE return shape. The Perl sub's behaviour depends on an
-implicit hidden argument — the caller's context — which propagates through
+implicit hidden argument - the caller's context - which propagates through
 plain-looking wrappers. In general the context at a call site is not statically
 knowable (calls through code refs, `&$f()`, method dispatch, `return f()` from
 subs whose own context is unknown), so a single translation of the sub does not
@@ -29,7 +29,7 @@ exist.
     if the body treats undef/scalar identically; here `ctx()` distinguishes
     VOID, so a third variant (or an explicit ctx argument) is required.
 - If any call site's context cannot be proven, refuse the sub with a diagnostic
-  naming that call site — never default to one context silently.
+  naming that call site - never default to one context silently.
 
 ## Ideal diagnostic (word for word)
 > input.pl:9: error P2G-E109: sub 'pieces' uses wantarray to return a list or a

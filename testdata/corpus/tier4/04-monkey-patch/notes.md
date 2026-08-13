@@ -1,6 +1,6 @@
 # 04-monkey-patch: runtime replacement of another package's method
 
-Group: **A — genuinely impossible without an interpreter**
+Group: **A - genuinely impossible without an interpreter**
 
 ## Construct
 `*Greeter::hello = sub { ... }` (line 20) overwrites `Greeter`'s `hello` method
@@ -39,6 +39,6 @@ implementation that upcases and appends `!`. Wrapping-by-symbol-table becomes
 wrapping-by-composition.
 
 ## Observed with perl 5.42.2 (x86_64-linux)
-`expected_stdout` (exit 0): `before: hello` then `after:  HELLO!` — the same
+`expected_stdout` (exit 0): `before: hello` then `after:  HELLO!` - the same
 object, the same call site, two behaviours. Any conversion that prints `hello`
 twice is silently wrong.

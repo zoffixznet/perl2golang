@@ -7,7 +7,7 @@ severity: info
 prerequisites: [implicit-interfaces]
 ---
 
-Perl unified I/O around the filehandle, and `open my $fh, '<', \$string` let scalars impersonate files. Go unified it around two one-method interfaces — `io.Reader` (`Read(p []byte) (n int, err error)`) and `io.Writer` (`Write(p []byte) (n int, err error)`) — and essentially *everything* speaks them: files, network connections, HTTP bodies, compression, hashing, buffers, string readers. Internalise this and half the standard library becomes guessable; write functions against `*os.File` instead, and you will rewrite them the first time a test or an HTTP handler needs to call them.
+Perl unified I/O around the filehandle, and `open my $fh, '<', \$string` let scalars impersonate files. Go unified it around two one-method interfaces - `io.Reader` (`Read(p []byte) (n int, err error)`) and `io.Writer` (`Write(p []byte) (n int, err error)`) - and essentially *everything* speaks them: files, network connections, HTTP bodies, compression, hashing, buffers, string readers. Internalise this and half the standard library becomes guessable; write functions against `*os.File` instead, and you will rewrite them the first time a test or an HTTP handler needs to call them.
 
 ## The Perl you know
 
@@ -21,7 +21,7 @@ print {$out} "log line\n";
 
 ## The Go you write
 
-One counting function, three unrelated sources — compiled and run as shown:
+One counting function, three unrelated sources - compiled and run as shown:
 
 ```go
 package main
@@ -73,15 +73,15 @@ func main() {
 copied straight through
 ```
 
-The manual `Read` loop above is deliberately educational — note its two quirks: `Read` gives you *up to* `len(buf)` bytes with no line awareness, and `io.EOF` arrives as an error value you check by identity (a sanctioned sentinel — `sentinel-and-custom-errors`). In daily code you reach for the composers instead: `io.Copy`, `io.ReadAll`, `bufio.Scanner` for line-by-line (`bufio-scanner-limit`), `fmt.Fprintf` for formatted writes to anything.
+The manual `Read` loop above is deliberately educational - note its two quirks: `Read` gives you *up to* `len(buf)` bytes with no line awareness, and `io.EOF` arrives as an error value you check by identity (a sanctioned sentinel - `sentinel-and-custom-errors`). In daily code you reach for the composers instead: `io.Copy`, `io.ReadAll`, `bufio.Scanner` for line-by-line (`bufio-scanner-limit`), `fmt.Fprintf` for formatted writes to anything.
 
 ## The mismatch
 
-The translations: `open my $fh, '<', \$string` → `strings.NewReader(s)`; capture-into-scalar → `&bytes.Buffer{}` as the writer, then `buf.String()`; `print {$fh} ...` → `fmt.Fprintf(w, ...)`; `STDOUT`/`STDERR` → `os.Stdout`/`os.Stderr`, which are simply values satisfying `io.Writer` — there is no special print-to-default-filehandle machinery, `fmt.Printf` is literally `Fprintf(os.Stdout, ...)`. The design lesson runs deeper than translation: because the interfaces are tiny, they *stack* — `gzip.NewReader` wraps any reader and is one, `io.TeeReader` splits a stream, `io.MultiWriter` fans out, `http.Request.Body` is a reader — so Perl patterns involving temp files or slurp-transform-write become pipelines of wrapped readers with no intermediate storage. When writing your own code: take `io.Reader`/`io.Writer` parameters at function boundaries and let `main` decide it was a file (`accept-interfaces-return-structs`); implement `Write` on your own type when you want to *be* a destination (a test log sink is four lines). One warning for the transition: there is no line-oriented `<$fh>` operator at this layer — reaching for `Read` to get "a line" is the mistake `bufio` exists to fix.
+The translations: `open my $fh, '<', \$string` → `strings.NewReader(s)`; capture-into-scalar → `&bytes.Buffer{}` as the writer, then `buf.String()`; `print {$fh} ...` → `fmt.Fprintf(w, ...)`; `STDOUT`/`STDERR` → `os.Stdout`/`os.Stderr`, which are simply values satisfying `io.Writer` - there is no special print-to-default-filehandle machinery, `fmt.Printf` is literally `Fprintf(os.Stdout, ...)`. The design lesson runs deeper than translation: because the interfaces are tiny, they *stack* - `gzip.NewReader` wraps any reader and is one, `io.TeeReader` splits a stream, `io.MultiWriter` fans out, `http.Request.Body` is a reader - so Perl patterns involving temp files or slurp-transform-write become pipelines of wrapped readers with no intermediate storage. When writing your own code: take `io.Reader`/`io.Writer` parameters at function boundaries and let `main` decide it was a file (`accept-interfaces-return-structs`); implement `Write` on your own type when you want to *be* a destination (a test log sink is four lines). One warning for the transition: there is no line-oriented `<$fh>` operator at this layer - reaching for `Read` to get "a line" is the mistake `bufio` exists to fix.
 
 ## Positions and exact lengths
 
-`seek`, `tell` and fixed-length `read` live one interface over: `io.Seeker`, which `*os.File` and even `strings.Reader` satisfy. The whence argument is a named constant — `io.SeekStart`, `io.SeekCurrent`, `io.SeekEnd` are what `0`, `1`, `2` meant — and there is no `Tell` at all: a seek of zero bytes from the current position moves nothing and reports where it stayed. The other habit to swap out is `read($fh, $buf, $n)`: the Go call that means "exactly n bytes" is `io.ReadFull`, because a plain `Read` may return fewer bytes than the buffer holds with *no error*, which works on a small file and quietly breaks on a pipe.
+`seek`, `tell` and fixed-length `read` live one interface over: `io.Seeker`, which `*os.File` and even `strings.Reader` satisfy. The whence argument is a named constant - `io.SeekStart`, `io.SeekCurrent`, `io.SeekEnd` are what `0`, `1`, `2` meant - and there is no `Tell` at all: a seek of zero bytes from the current position moves nothing and reports where it stayed. The other habit to swap out is `read($fh, $buf, $n)`: the Go call that means "exactly n bytes" is `io.ReadFull`, because a plain `Read` may return fewer bytes than the buffer holds with *no error*, which works on a small file and quietly breaks on a pipe.
 
 ```go
 package main
@@ -123,9 +123,9 @@ at byte 3
 trailer TRL
 ```
 
-One caution when mixing layers: a position belongs to the underlying file, and a `bufio.Scanner` or `bufio.Reader` reads ahead of what you have consumed. Seek the `*os.File` first, then wrap it — seeking under an active buffered reader leaves the buffer describing bytes from the old position.
+One caution when mixing layers: a position belongs to the underlying file, and a `bufio.Scanner` or `bufio.Reader` reads ahead of what you have consumed. Seek the `*os.File` first, then wrap it - seeking under an active buffered reader leaves the buffer describing bytes from the old position.
 
-The same read-ahead is why a program that reads one handle in several shapes needs **one buffered reader per handle, made once and used everywhere**. Perl let you write `my $header = <$fh>` and then `while (<$fh>)` and then a slurp of the rest, and every read continued exactly where the last stopped, because the position was the handle's own. Wrap the same `*os.File` in a fresh `bufio.Reader` or `Scanner` at each of those sites and each wrapper reads ahead into its private buffer: the header read buffers 4KB, the loop's scanner starts from wherever the file position really is, and lines silently vanish into the first buffer. The shape that works is to make the `bufio.Reader` next to the `Open` and pass *it* around — it is an `io.Reader` too, so everything downstream accepts it — and to read single lines with `r.ReadString('\n')`, which keeps the newline the way `<$fh>` did and returns what it has plus an error at the end of input.
+The same read-ahead is why a program that reads one handle in several shapes needs **one buffered reader per handle, made once and used everywhere**. Perl let you write `my $header = <$fh>` and then `while (<$fh>)` and then a slurp of the rest, and every read continued exactly where the last stopped, because the position was the handle's own. Wrap the same `*os.File` in a fresh `bufio.Reader` or `Scanner` at each of those sites and each wrapper reads ahead into its private buffer: the header read buffers 4KB, the loop's scanner starts from wherever the file position really is, and lines silently vanish into the first buffer. The shape that works is to make the `bufio.Reader` next to the `Open` and pass *it* around - it is an `io.Reader` too, so everything downstream accepts it - and to read single lines with `r.ReadString('\n')`, which keeps the newline the way `<$fh>` did and returns what it has plus an error at the end of input.
 
 ## A handle is a value, so put it wherever values go
 

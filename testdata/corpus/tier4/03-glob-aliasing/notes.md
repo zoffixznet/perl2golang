@@ -1,6 +1,6 @@
 # 03-glob-aliasing: typeglob assignment and aliasing
 
-Group: **A — genuinely impossible without an interpreter**
+Group: **A - genuinely impossible without an interpreter**
 
 ## Construct
 `*jobs = \@queue` (line 11) makes `@jobs` and `@queue` two names for the SAME
@@ -9,7 +9,7 @@ array; `*total = \$count` (line 12) does it for scalars; `*fake = \&real`
 into the symbol table at runtime.
 
 ## Why it resists conversion to Go
-Globs mutate the package symbol table — the mapping from names to storage — while
+Globs mutate the package symbol table - the mapping from names to storage - while
 the program runs. Go's name-to-storage binding is fixed at compile time. Scalar
 and array aliasing could in principle become shared pointers, but only if the
 converter proves the aliasing is unconditional and total (every later use of
@@ -23,7 +23,7 @@ makes the binding of every subsequent use undecidable.
   unconditionally at top level, before any use of the aliased name, can be
   lowered to sharing (`jobs := &queue`, `fake := real` as a function value), with
   a report entry. That covers all four sites in this file, so a converter with
-  the narrowing must reproduce `expected_stdout` exactly — in particular
+  the narrowing must reproduce `expected_stdout` exactly - in particular
   `queue=1 2 3 4 total=42`, which proves real sharing, not a copy.
 - Copying instead of aliasing is the failure mode this entry exists to catch.
 

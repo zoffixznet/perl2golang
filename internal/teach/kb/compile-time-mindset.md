@@ -7,7 +7,7 @@ severity: info
 prerequisites: []
 ---
 
-Errors you are used to discovering in production at 3 a.m. — a typoed function name, a call into a module that never loaded, a variable you meant to use but did not — do not exist in a running Go program, because the program never runs until they are gone. The flip side: Go refuses to compile things Perl happily tolerates, including *unused* variables and imports, so your first hour with Go will feel like arguing with a linter that has root. It is not being pedantic for style; it is the language's replacement for `use strict`, `use warnings`, `perl -c`, and a chunk of your test suite, and it is non-negotiable.
+Errors you are used to discovering in production at 3 a.m. - a typoed function name, a call into a module that never loaded, a variable you meant to use but did not - do not exist in a running Go program, because the program never runs until they are gone. The flip side: Go refuses to compile things Perl happily tolerates, including *unused* variables and imports, so your first hour with Go will feel like arguing with a linter that has root. It is not being pedantic for style; it is the language's replacement for `use strict`, `use warnings`, `perl -c`, and a chunk of your test suite, and it is non-negotiable.
 
 ## The Perl you know
 
@@ -90,6 +90,6 @@ When you genuinely need to keep a value around while debugging, assign it to the
 
 ## The mismatch
 
-Perl's model is "compile as little as possible, resolve at runtime, trust the tests" — that is what makes `AUTOLOAD`, `can()`, string eval, and symbol-table surgery possible. Go's model is "resolve everything before the program exists". You lose runtime flexibility (there is no `eval "..."`, no monkey-patching, no loading code by computed name) and gain a guarantee: if it compiled, every identifier in it resolves. Retrain one reflex: the edit-save-run loop becomes edit-save-*compile*-run, and a compile error is the tool doing its job, not an obstacle. Unused-variable errors will annoy you for a week; they exist because an unused variable is very often a bug (you computed the wrong thing, or forgot to use the right one), and Go's authors decided a warning nobody reads is worth less than an error everybody fixes.
+Perl's model is "compile as little as possible, resolve at runtime, trust the tests" - that is what makes `AUTOLOAD`, `can()`, string eval, and symbol-table surgery possible. Go's model is "resolve everything before the program exists". You lose runtime flexibility (there is no `eval "..."`, no monkey-patching, no loading code by computed name) and gain a guarantee: if it compiled, every identifier in it resolves. Retrain one reflex: the edit-save-run loop becomes edit-save-*compile*-run, and a compile error is the tool doing its job, not an obstacle. Unused-variable errors will annoy you for a week; they exist because an unused variable is very often a bug (you computed the wrong thing, or forgot to use the right one), and Go's authors decided a warning nobody reads is worth less than an error everybody fixes.
 
 Further reading: https://go.dev/doc/faq#unused_variables_and_imports

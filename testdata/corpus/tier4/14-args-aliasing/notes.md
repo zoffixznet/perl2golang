@@ -1,6 +1,6 @@
 # 14-args-aliasing: `@_` aliases the caller's variables
 
-Group: **B — convertible only with an approximation that changes semantics**
+Group: **B - convertible only with an approximation that changes semantics**
 
 ## Construct
 `sub bump { $_[0]++; $_[1] .= "!" }` (line 7) mutates its CALLER's `$n` and
@@ -11,7 +11,7 @@ modifies the caller's string.
 ## Why naive Go conversion changes semantics
 Go arguments are copies. The obvious translation
 (`func bump(a int, b string)`) silently loses every mutation: `n` stays 5, `s`
-stays `hi`, the row stays `a b c`, the line keeps its newline. Nothing crashes —
+stays `hi`, the row stays `a b c`, the line keeps its newline. Nothing crashes -
 the program is just wrong, which makes this one of the most dangerous silent
 traps in real scripts.
 
@@ -43,4 +43,4 @@ so the conversion is mechanical.
 ## Observed with perl 5.42.2 (x86_64-linux)
 `expected_stdout` (exit 0): `n=6 s=hi!`, `row=[  ]` (three blanked elements),
 `line=<text>` (newline chomped in the caller). A value-parameter conversion
-prints `n=5 s=hi`, `row=[a b c]`, `line=<text\n...>` — every line differs.
+prints `n=5 s=hi`, `row=[a b c]`, `line=<text\n...>` - every line differs.

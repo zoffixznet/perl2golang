@@ -1,6 +1,6 @@
 # 01-string-eval: `eval EXPR` of a computed string
 
-Group: **A — genuinely impossible without an interpreter**
+Group: **A - genuinely impossible without an interpreter**
 
 ## Construct
 `eval $code` where `$code` is a string assembled at runtime (lines 11 and 18 of

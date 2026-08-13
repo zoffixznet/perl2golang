@@ -1,6 +1,6 @@
 # 17-overload: overloaded operators
 
-Group: **B — convertible only with an approximation that changes semantics**
+Group: **B - convertible only with an approximation that changes semantics**
 
 ## Construct
 Package `Money` overloads `+`, `*`, `""` (stringification) and `==` (line 8).
@@ -13,7 +13,7 @@ Go has no operator overloading. A converter that translates `$a + $b`
 numerically will add ADDRESSES or zero-values; one that stringifies an object
 with `%v` prints a struct dump instead of `$4.00`. Both are silent corruption.
 The conversion is only possible by resolving, at every operator site, whether an
-operand can be an overloading object — a type-inference problem, undecidable in
+operand can be an overloading object - a type-inference problem, undecidable in
 general (values flow through untyped containers).
 
 ## What the converter should do
@@ -22,8 +22,8 @@ general (values flow through untyped containers).
     method calls: `a.Add(b)`, `a.MulInt(3)`, `sum.String()` in interpolation,
     `sum.EqNum(4.00)`.
   - Where an operand's type cannot be proven (could be object or number at
-    runtime), the converter must refuse that statement — a diagnostic naming
-    the expression — rather than pick numeric or object semantics.
+    runtime), the converter must refuse that statement - a diagnostic naming
+    the expression - rather than pick numeric or object semantics.
 - The `""` overload must also apply anywhere the object reaches print/concat/
   hash-key position; the report must list each rewritten site.
 - Forbidden: converting any arithmetic on a possibly-overloaded value with

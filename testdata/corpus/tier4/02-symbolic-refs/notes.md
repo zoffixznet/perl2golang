@@ -1,6 +1,6 @@
 # 02-symbolic-refs: symbolic references (`$$name`, `&{"sub_$x"}()`)
 
-Group: **A — genuinely impossible without an interpreter**
+Group: **A - genuinely impossible without an interpreter**
 
 ## Construct
 Under `no strict 'refs'`, a string is used as a variable name (`$$name`, line 14),

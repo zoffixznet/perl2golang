@@ -1,6 +1,6 @@
 # 11-destroy-timing: DESTROY with load-bearing deterministic timing
 
-Group: **A — genuinely impossible without an interpreter** (impossible to
+Group: **A - genuinely impossible without an interpreter** (impossible to
 reproduce implicitly; convertible only by making destruction explicit)
 
 ## Construct
@@ -12,7 +12,7 @@ Real code uses this for lock guards, temp-file cleanup, and flush-on-drop.
 ## Why it resists conversion to Go
 Go finalizers (`runtime.SetFinalizer`) run at an unspecified time, possibly
 never. There is no destructor tied to scope exit. Any conversion that maps
-DESTROY to a finalizer silently changes WHEN (and whether) the release happens —
+DESTROY to a finalizer silently changes WHEN (and whether) the release happens -
 for a lock guard, that is a correctness bug, not a style issue.
 
 ## What the converter should do
@@ -20,7 +20,7 @@ for a lock guard, that is a correctness bug, not a style issue.
   - Where a blessed object's lifetime is a single lexical scope (the `{ my $g =
     ...; }` block), convert DESTROY to an explicit method and emit
     `defer g.Destroy()` at the ACQUISITION point. `defer` runs at function exit,
-    not block exit — if the object's scope is an inner block (as here), the
+    not block exit - if the object's scope is an inner block (as here), the
     converter must either introduce a function literal wrapping the block or
     place an explicit `g.Destroy()` call at the block's end, and must say which
     it did.

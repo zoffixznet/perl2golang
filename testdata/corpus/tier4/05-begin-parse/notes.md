@@ -1,10 +1,10 @@
 # 05-begin-parse: BEGIN block that changes how later code parses
 
-Group: **A — genuinely impossible without an interpreter**
+Group: **A - genuinely impossible without an interpreter**
 
 ## Construct
-The `BEGIN` block (lines 8-16) runs DURING compilation and — based on
-`$ENV{TAG_GREEDY}` — defines `tag` either with a `($)` prototype or without one.
+The `BEGIN` block (lines 8-16) runs DURING compilation and - based on
+`$ENV{TAG_GREEDY}` - defines `tag` either with a `($)` prototype or without one.
 The call `my @out = ( tag "a", "b" )` on line 20 then parses as either
 `(tag("a"), "b")` or `(tag("a", "b"))`. One source text, two parse trees, chosen
 by the environment at compile time.
@@ -41,6 +41,6 @@ behavioural switch INSIDE the sub body (`if ($ENV{TAG_GREEDY}) { ... }`); then
 the file has one parse and converts normally.
 
 ## Observed with perl 5.42.2 (x86_64-linux)
-Default (TAG_GREEDY unset): `[a]|b` — captured in `expected_stdout` (exit 0).
+Default (TAG_GREEDY unset): `[a]|b` - captured in `expected_stdout` (exit 0).
 With `TAG_GREEDY=1` the SAME file prints `[a,b]`. Those two outputs are the
 proof that no single translation is faithful.

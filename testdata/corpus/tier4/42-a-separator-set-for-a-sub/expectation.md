@@ -2,9 +2,9 @@
 
 - category: `approximate` (the separator is folded into each call, stated at
   every assignment that a sub could still be carrying the old value past)
-- report-must-contain: `separator` — for the assignments at input.pl lines
+- report-must-contain: `separator` - for the assignments at input.pl lines
   18, 22 and 26
-- report-must-contain: `sub` — the divergence is about the sub, not about
+- report-must-contain: `sub` - the divergence is about the sub, not about
   the assignment on its own
 - diagnostics reference the assignments rather than the sub, because the
   assignment is the line a reader can act on

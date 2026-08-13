@@ -1,6 +1,6 @@
 # 29-str2num-coercion: string-to-number coercion rules
 
-Group: **C — convertible, but the naive conversion is subtly wrong**
+Group: **C - convertible, but the naive conversion is subtly wrong**
 
 ## Construct
 Eleven strings coerced with `$s + 0` (line 10). Perl parses the longest
@@ -9,12 +9,12 @@ NOT recognized in numeric context), `"010"` is 10 (no octal either),
 `" 12 "` is 12 (leading whitespace skipped, trailing junk ignored), `"1e3"`
 is 1000, `"1_000"` is 1 (underscores only work in literals), `"inf"`/`"nan"`
 ARE recognized (Inf/NaN), `""` is 0. `hex()` and `oct()` (lines 13-14) are
-the explicit converters — `oct()` handles 0x/0/0b prefixes.
+the explicit converters - `oct()` handles 0x/0/0b prefixes.
 
 ## Why the naive conversion is subtly wrong
 `strconv.Atoi`/`ParseFloat` ERROR on almost all of these; a converter that
 uses them and ignores the error gets 0 for `"3abc"` (Perl: 3) and 0 for
-`" 12 "` (Perl: 12 — ParseFloat rejects the trailing space). One that uses
+`" 12 "` (Perl: 12 - ParseFloat rejects the trailing space). One that uses
 `ParseInt(s, 0, 64)` gets 16 for `"0x10"` (Perl: 0!) and octal 8 for `"010"`
 (Perl: 10). Every easy Go choice disagrees with Perl on some row; scripts
 that parse loosely formatted data (log scraping, config reading) hit these
@@ -50,5 +50,5 @@ decision, not an accident.
 `expected_stdout` (exit 0) is the shim's conformance table. Highlight rows:
 `'3abc' -> 3`, `'0x10' -> 0`, `'010' -> 10`, `' 12 ' -> 12`, `'1_000' -> 1`,
 `'inf' -> Inf`, `'nan' -> NaN`, `'' -> 0`, and `oct()` yielding `16 8 5`.
-Note the capitalization Perl prints for Inf/NaN — the shim's stringification
+Note the capitalization Perl prints for Inf/NaN - the shim's stringification
 must match it (see also entry 23).

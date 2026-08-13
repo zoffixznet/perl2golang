@@ -1,13 +1,13 @@
 # 32-undef-context: undef in numeric, string, and boolean context
 
-Group: **C — convertible, but the naive conversion is subtly wrong**
+Group: **C - convertible, but the naive conversion is subtly wrong**
 
 ## Construct
 A missing hash key yields undef, not a panic (line 10). undef is 0 in
 numeric context (line 11), "" in string context (line 12), false in boolean
-context — but `defined` distinguishes it from all of them (line 13). The
+context - but `defined` distinguishes it from all of them (line 13). The
 truthiness table (lines 16-19): `0`, `"0"`, `""` are FALSE; `"00"`, `"0.0"`,
-`"0E0"` are TRUE — Perl's boolean test is "empty string or the exact string
+`"0E0"` are TRUE - Perl's boolean test is "empty string or the exact string
 '0'", not "numerically zero".
 
 ## Why the naive conversion is subtly wrong
@@ -26,7 +26,7 @@ the flag values.
   zero. Map reads lower to comma-ok with undef on miss.
 - `no warnings 'uninitialized'` (line 7) tells the converter warnings need
   not be reproduced; WITHOUT that pragma a faithful conversion would also
-  emit "Use of uninitialized value" on stderr — the report should state
+  emit "Use of uninitialized value" on stderr - the report should state
   whether warning emission is modelled at all, once per file.
 - Forbidden: truthiness as `!= 0` or `!= ""`, or a scalar model where
   `defined` cannot be answered.

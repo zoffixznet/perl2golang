@@ -7,7 +7,7 @@ severity: warning
 prerequisites: [comma-ok-idiom, sort-slice]
 ---
 
-You already know hashes are unordered — Perl has randomised per-process since 5.18 — but Go goes a step further that will break a specific class of ported code: iteration order is randomised *per range loop*, so two loops over the same untouched map in the same process can visit keys in different orders. Perl code that iterates `keys %h` twice and relies on getting the same sequence both times (building parallel arrays, pairing output across loops) is subtly broken in Go even though it happens to work in any single Perl process.
+You already know hashes are unordered - Perl has randomised per-process since 5.18 - but Go goes a step further that will break a specific class of ported code: iteration order is randomised *per range loop*, so two loops over the same untouched map in the same process can visit keys in different orders. Perl code that iterates `keys %h` twice and relies on getting the same sequence both times (building parallel arrays, pairing output across loops) is subtly broken in Go even though it happens to work in any single Perl process.
 
 ## The Perl you know
 
@@ -22,7 +22,7 @@ for my $k (sort keys %inv) { ... }      # the stable-output reflex you already h
 
 ## The Go you write
 
-Compiled and run as shown — note run 1 versus runs 2 and 3:
+Compiled and run as shown - note run 1 versus runs 2 and 3:
 
 ```go
 package main
@@ -61,9 +61,9 @@ run 3: apples pears plums figs dates limes
 apples=5 dates=7 figs=1 limes=3 pears=2 plums=9 
 ```
 
-Randomised means randomised — identical consecutive orders can occur by chance, as runs 2 and 3 show; the differing run 1 is the guarantee you cannot rely on any of them. `slices.Sorted(maps.Keys(m))` (Go 1.23+) is the modern one-liner for the `sort keys %h` reflex; on older codebases you will see the collect-keys-then-`sort.Strings` loop spelled out.
+Randomised means randomised - identical consecutive orders can occur by chance, as runs 2 and 3 show; the differing run 1 is the guarantee you cannot rely on any of them. `slices.Sorted(maps.Keys(m))` (Go 1.23+) is the modern one-liner for the `sort keys %h` reflex; on older codebases you will see the collect-keys-then-`sort.Strings` loop spelled out.
 
-Deleting while iterating, the other half of this topic, is explicitly legal and does what you hope — run as shown:
+Deleting while iterating, the other half of this topic, is explicitly legal and does what you hope - run as shown:
 
 ```go
 package main
@@ -85,7 +85,7 @@ func main() {
 2 map[a:true c:true]
 ```
 
-The spec's exact contract: entries deleted during iteration will not be produced later; entries *added* during iteration may or may not be — so mutate-while-ranging is fine for deletion, hazardous for insertion. (Go 1.21+ also has `maps.DeleteFunc(m, f)` for exactly this pattern; `clear(m)` empties a map outright.)
+The spec's exact contract: entries deleted during iteration will not be produced later; entries *added* during iteration may or may not be - so mutate-while-ranging is fine for deletion, hazardous for insertion. (Go 1.21+ also has `maps.DeleteFunc(m, f)` for exactly this pattern; `clear(m)` empties a map outright.)
 
 ## What happened to each
 
@@ -208,6 +208,6 @@ Prefer sorting. The captured order is the honest translation of a program that w
 
 ## The mismatch
 
-The Go runtime randomises order specifically so nobody can ship code that accidentally depends on it — it is a deliberate compatibility-protection device, the same reasoning as Perl 5.18's hash randomisation but applied per iteration rather than per process. Practical audit list for ported code: any test asserting on the serialised form of a ranged map (fix: sort keys, or rely on `encoding/json`, which sorts map keys itself — `encoding-json`); any pair of loops assumed to align; any "first key" grab (`(keys %h)[0]`) — meaningless in Go, and its randomness will faithfully expose that it was meaningless in Perl too. When insertion order itself must be preserved, a map cannot do it: keep a companion `[]string` of keys in insertion order, the honest equivalent of `Tie::IxHash`.
+The Go runtime randomises order specifically so nobody can ship code that accidentally depends on it - it is a deliberate compatibility-protection device, the same reasoning as Perl 5.18's hash randomisation but applied per iteration rather than per process. Practical audit list for ported code: any test asserting on the serialised form of a ranged map (fix: sort keys, or rely on `encoding/json`, which sorts map keys itself - `encoding-json`); any pair of loops assumed to align; any "first key" grab (`(keys %h)[0]`) - meaningless in Go, and its randomness will faithfully expose that it was meaningless in Perl too. When insertion order itself must be preserved, a map cannot do it: keep a companion `[]string` of keys in insertion order, the honest equivalent of `Tie::IxHash`.
 
 Further reading: https://go.dev/blog/maps and https://go.dev/ref/spec#For_statements

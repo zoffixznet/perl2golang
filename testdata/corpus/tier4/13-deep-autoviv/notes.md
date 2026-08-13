@@ -1,6 +1,6 @@
 # 13-deep-autoviv: autovivification through several levels
 
-Group: **B — convertible only with an approximation that changes semantics**
+Group: **B - convertible only with an approximation that changes semantics**
 
 ## Construct
 Reading `$h{a}{b}{c}` in a boolean test (line 8) CREATES `$h{a}` and
@@ -12,7 +12,7 @@ Reading `$h{a}{b}{c}` in a boolean test (line 8) CREATES `$h{a}` and
 A Go `map[string]map[string]map[string]V` read does NOT create intermediate
 maps; a naive translation of line 8 either panics (indexing a nil inner map is
 fine for reads in Go, but a 3-level read yields zero values, creating nothing)
-or — the common bug — the converter adds vivification only on WRITES. Then
+or - the common bug - the converter adds vivification only on WRITES. Then
 `exists $h{a}` after the read reports false where Perl reports true. The
 observable difference is exactly what this file prints.
 
@@ -27,7 +27,7 @@ observable difference is exactly what this file prints.
 - Report entry required per vivification site, because the emitted code differs
   from the "obvious" map indexing a reviewer expects.
 - Acceptable alternative for a converter without a runtime: convert reads
-  non-vivifying and emit a warning per site admitting the divergence — but then
+  non-vivifying and emit a warning per site admitting the divergence - but then
   this entry's run comparison MUST be reported as failed, not passed.
 
 ## Ideal diagnostic (word for word)

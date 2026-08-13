@@ -7,7 +7,7 @@ severity: info
 prerequisites: [errors-are-values, io-reader-writer]
 ---
 
-`system("ls $dir")` and `` `ls $dir` `` hand a *string* to `/bin/sh`, which is why quoting bugs and shell injection are a permanent Perl hazard. `exec.Command("ls", dir)` takes an argv *list* and calls the program directly — no shell, no word splitting, no glob expansion, and no injection risk from `dir` no matter what it contains. That one difference reshapes every ported command invocation: the parts of your command line that the shell used to do (pipes, redirection, `*` globs, `&&`) are now either Go code or an explicit `sh -c`, and choosing the latter deliberately re-opens the door you just closed.
+`system("ls $dir")` and `` `ls $dir` `` hand a *string* to `/bin/sh`, which is why quoting bugs and shell injection are a permanent Perl hazard. `exec.Command("ls", dir)` takes an argv *list* and calls the program directly - no shell, no word splitting, no glob expansion, and no injection risk from `dir` no matter what it contains. That one difference reshapes every ported command invocation: the parts of your command line that the shell used to do (pipes, redirection, `*` globs, `&&`) are now either Go code or an explicit `sh -c`, and choosing the latter deliberately re-opens the door you just closed.
 
 ## The Perl you know
 
@@ -62,7 +62,7 @@ exit code: 1
 true
 ```
 
-Note the first line: `$HOME` came back untouched and the doubled spaces survived, because nothing interpreted the argument. Streaming instead of capturing is a matter of assigning the process's pipes — an `io.Writer` for output, an `io.Reader` for input:
+Note the first line: `$HOME` came back untouched and the doubled spaces survived, because nothing interpreted the argument. Streaming instead of capturing is a matter of assigning the process's pipes - an `io.Writer` for output, an `io.Reader` for input:
 
 ```go
 package main
@@ -172,6 +172,6 @@ There is no `fork`. Go's runtime is multi-threaded from the first line, and fork
 
 ## The mismatch
 
-The translations, with their traps. `system(LIST)` → `cmd.Run()`, and success is `err == nil`; there is no `$?` to shift, and a non-zero exit arrives as an `*exec.ExitError` whose `ExitCode()` you read (`error-wrapping` explains `errors.As`). Backticks → `cmd.Output()`, which returns only stdout as `[]byte`; stderr lands in `ExitError.Stderr` on failure, and `CombinedOutput()` is the merged-stream variant. `open '-|'` → `StdoutPipe()` plus `Start()`, read to EOF, then `Wait()` — calling `Wait` before you finish reading closes the pipe under you, the one ordering rule that bites everybody once. `exec` (the replace-this-process builtin) is `syscall.Exec` and is almost never what you want. Shell features are opt-in and explicit: to get a pipeline or a redirect, either build it in Go (two `exec.Cmd`s with one's `Stdout` connected to the other's `StdinPipe`, or simply `cmd.Stdout = file`) or run `exec.Command("sh", "-c", script)` and accept that every value you interpolate into `script` is now an injection risk — pass data through arguments or the environment instead. Two more differences worth knowing on day one: `cmd.Env` replaces the entire environment when you set it (append to `os.Environ()` rather than assigning a bare slice), and `exec.CommandContext(ctx, ...)` kills the child when the context expires, which is the well-behaved version of the `alarm`-plus-`kill` dance (`context-cancellation`).
+The translations, with their traps. `system(LIST)` → `cmd.Run()`, and success is `err == nil`; there is no `$?` to shift, and a non-zero exit arrives as an `*exec.ExitError` whose `ExitCode()` you read (`error-wrapping` explains `errors.As`). Backticks → `cmd.Output()`, which returns only stdout as `[]byte`; stderr lands in `ExitError.Stderr` on failure, and `CombinedOutput()` is the merged-stream variant. `open '-|'` → `StdoutPipe()` plus `Start()`, read to EOF, then `Wait()` - calling `Wait` before you finish reading closes the pipe under you, the one ordering rule that bites everybody once. `exec` (the replace-this-process builtin) is `syscall.Exec` and is almost never what you want. Shell features are opt-in and explicit: to get a pipeline or a redirect, either build it in Go (two `exec.Cmd`s with one's `Stdout` connected to the other's `StdinPipe`, or simply `cmd.Stdout = file`) or run `exec.Command("sh", "-c", script)` and accept that every value you interpolate into `script` is now an injection risk - pass data through arguments or the environment instead. Two more differences worth knowing on day one: `cmd.Env` replaces the entire environment when you set it (append to `os.Environ()` rather than assigning a bare slice), and `exec.CommandContext(ctx, ...)` kills the child when the context expires, which is the well-behaved version of the `alarm`-plus-`kill` dance (`context-cancellation`).
 
 Further reading: https://pkg.go.dev/os/exec

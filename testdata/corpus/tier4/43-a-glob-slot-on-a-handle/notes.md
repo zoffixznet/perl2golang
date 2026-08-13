@@ -1,6 +1,6 @@
 # 43-a-glob-slot-on-a-handle: a filehandle carrying its own fields
 
-Group: **B — convertible only by rewriting the data model**
+Group: **B - convertible only by rewriting the data model**
 
 ## Construct
 

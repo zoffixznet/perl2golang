@@ -7,7 +7,7 @@ severity: warning
 prerequisites: [implicit-interfaces, comma-ok-idiom]
 ---
 
-`any` (alias for `interface{}`) is Go's "could be anything" type — the closest thing to an untyped Perl scalar — but unlike a scalar you can do *nothing* with an `any` except find out what it really is and get it back out. The tool for that is the type assertion `v.(T)`, and it has a safety catch you must respect: the one-result form *panics* on mismatch, while the comma-ok form reports failure gently. Perl's `ref($x) eq 'ARRAY'` dispatch becomes the type switch, which is `ref()` with compiler support: each branch gives you the value *already at its concrete type*, no casting after the check.
+`any` (alias for `interface{}`) is Go's "could be anything" type - the closest thing to an untyped Perl scalar - but unlike a scalar you can do *nothing* with an `any` except find out what it really is and get it back out. The tool for that is the type assertion `v.(T)`, and it has a safety catch you must respect: the one-result form *panics* on mismatch, while the comma-ok form reports failure gently. Perl's `ref($x) eq 'ARRAY'` dispatch becomes the type switch, which is `ref()` with compiler support: each branch gives you the value *already at its concrete type*, no casting after the check.
 
 ## The Perl you know
 
@@ -24,7 +24,7 @@ sub describe {
 
 ## The Go you write
 
-Compiled and run as shown — including the deliberate panic at the end:
+Compiled and run as shown - including the deliberate panic at the end:
 
 ```go-fails
 package main
@@ -80,7 +80,7 @@ main.main()
 	/.../typeswitch.go:35 +0x2ea
 ```
 
-Inside each `case`, `x` has that branch's static type — `len(x)` on the `[]string` branch compiles because the compiler *knows*. A `case error:` matches interface satisfaction, not just concrete types; `%T` prints the dynamic type and is your best debugging friend (`typed-nil-interface`).
+Inside each `case`, `x` has that branch's static type - `len(x)` on the `[]string` branch compiles because the compiler *knows*. A `case error:` matches interface satisfaction, not just concrete types; `%T` prints the dynamic type and is your best debugging friend (`typed-nil-interface`).
 
 ## When a wrong guess must not be fatal
 
@@ -148,6 +148,6 @@ Prefer the type switch. Reach for the tolerant read when the surrounding code ha
 
 ## The mismatch
 
-The cultural instruction comes first: `any` is a last resort, not a convenience. Perl programs are built on polymorphic scalars; Go programs that pass `any` around lose the compiler and gain assertions at every use site — legitimate uses cluster around true dynamism (JSON of unknown shape (`encoding-json`), `fmt`-style APIs, caches), and generics (`func f[T any](x T)`) took over the "same logic, many types" cases, so post-1.18 code reaching for `any` for that purpose is dated style. Mechanics: assertions work *only* on interface types (asserting on a concrete `int` variable is a compile error — no downcasting of non-interfaces exists, because a concrete type is never anything else); the panicking single-result form is correct only when a mismatch genuinely means a programmer bug, so default to comma-ok. Mapping from Perl: `ref` eq 'ARRAY'/'HASH' → `case []T:` / `case map[K]V:` — note you match *specific* element types (`[]string`, not "any slice"; matching all slices needs reflection, a door better left closed); `blessed($v) && $v->isa('X')` → `case *X:`; `reftype` has no equivalent because Go types do not have an underlying "kind" you dispatch on in ordinary code. And the assert-to-capability-interface trick — `v.(interface{ Flush() error })` — is the typed `can()` (`implicit-interfaces`).
+The cultural instruction comes first: `any` is a last resort, not a convenience. Perl programs are built on polymorphic scalars; Go programs that pass `any` around lose the compiler and gain assertions at every use site - legitimate uses cluster around true dynamism (JSON of unknown shape (`encoding-json`), `fmt`-style APIs, caches), and generics (`func f[T any](x T)`) took over the "same logic, many types" cases, so post-1.18 code reaching for `any` for that purpose is dated style. Mechanics: assertions work *only* on interface types (asserting on a concrete `int` variable is a compile error - no downcasting of non-interfaces exists, because a concrete type is never anything else); the panicking single-result form is correct only when a mismatch genuinely means a programmer bug, so default to comma-ok. Mapping from Perl: `ref` eq 'ARRAY'/'HASH' → `case []T:` / `case map[K]V:` - note you match *specific* element types (`[]string`, not "any slice"; matching all slices needs reflection, a door better left closed); `blessed($v) && $v->isa('X')` → `case *X:`; `reftype` has no equivalent because Go types do not have an underlying "kind" you dispatch on in ordinary code. And the assert-to-capability-interface trick - `v.(interface{ Flush() error })` - is the typed `can()` (`implicit-interfaces`).
 
 Further reading: https://go.dev/ref/spec#Type_assertions and https://go.dev/ref/spec#Type_switches

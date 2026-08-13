@@ -1,17 +1,17 @@
 # 19-regex-nonre2: backreferences, lookahead, lookbehind, atomic groups
 
-Group: **B — convertible only with an approximation that changes semantics**
+Group: **B - convertible only with an approximation that changes semantics**
 
 ## Construct
 Four regex features RE2 (Go's `regexp`) cannot express, each on its own line:
-- `\1` backreference (line 8) — doubled words;
-- `(?=...)` lookahead (line 12) — password policy conjunction;
-- `(?<=...)` lookbehind (line 15) — anchored extraction;
+- `\1` backreference (line 8) - doubled words;
+- `(?=...)` lookahead (line 12) - password policy conjunction;
+- `(?<=...)` lookbehind (line 15) - anchored extraction;
 - `\1` matching an HTML closing tag (line 19);
 - `(?>...)` atomic group (line 22).
 
 ## Why naive Go conversion changes semantics
-`regexp.MustCompile` REJECTS all of these at compile time — that failure is
+`regexp.MustCompile` REJECTS all of these at compile time - that failure is
 loud, which is fine. The silent failure this entry guards against is a
 converter that "cleans up" the pattern: dropping `(?= )` wrappers, turning
 `\1` into `\\1` or a literal, or replacing lookbehind with a capture-and-shift
@@ -30,7 +30,7 @@ with different matches.
      rewritten pattern. Backreferences have no exact RE2 rewrite: refuse the
      statement if strategy 1 is unavailable.
 - Forbidden: emitting a syntactically "similar" RE2 pattern (dropped
-  assertions, escaped backrefs) — a compile error is honest, a changed pattern
+  assertions, escaped backrefs) - a compile error is honest, a changed pattern
   is not.
 
 ## Ideal diagnostic (word for word)
@@ -48,7 +48,7 @@ Prefer restructuring: duplicate detection with a capture + string compare in
 code; password policy as three separate `regexp.MatchString` calls ANDed;
 lookbehind as a capture group. Atomic groups usually exist for performance and
 can simply be dropped ONLY after confirming the pattern cannot backtrack-match
-differently — that confirmation is a human job, not the converter's.
+differently - that confirmation is a human job, not the converter's.
 
 ## Observed with perl 5.42.2 (x86_64-linux)
 `expected_stdout` (exit 0): `doubled: ab cd`, `strong: yes`, `price: 42`,

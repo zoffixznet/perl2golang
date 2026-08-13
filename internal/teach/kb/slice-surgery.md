@@ -85,7 +85,7 @@ Four things in there are worth naming.
 
 **They panic on bad bounds.** There is no negative index, no clipping at the end, and no forgiveness: `q[len(q)+1]` is a runtime panic, not an empty result. Perl's tolerance has to become explicit arithmetic before the call.
 
-**`take` needs a pointer, and that is not fussiness.** A slice value is a header — a pointer to an array, a length, and a capacity — passed by value like everything else in Go. A function can write through the pointer into the same elements, which is why `func clear(xs []int)` works, but assigning a shorter slice to its own parameter changes nothing the caller can see. When the length has to change, either return the new slice or take a `*[]T`.
+**`take` needs a pointer, and that is not fussiness.** A slice value is a header - a pointer to an array, a length, and a capacity - passed by value like everything else in Go. A function can write through the pointer into the same elements, which is why `func clear(xs []int)` works, but assigning a shorter slice to its own parameter changes nothing the caller can see. When the length has to change, either return the new slice or take a `*[]T`.
 
 ## The mismatch
 

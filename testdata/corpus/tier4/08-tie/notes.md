@@ -1,11 +1,11 @@
-# 08-tie: tied variables — reads and writes run methods
+# 08-tie: tied variables - reads and writes run methods
 
-Group: **A — genuinely impossible without an interpreter**
+Group: **A - genuinely impossible without an interpreter**
 
 ## Construct
 `tie my $x, 'UpperScalar'` (line 14) attaches a class to a scalar. From then on,
-`$x = "quiet"` calls `STORE`, and EVERY read — including string interpolation in
-`"value: $x\n"` — calls `FETCH`. The observed output proves the ordering: the
+`$x = "quiet"` calls `STORE`, and EVERY read - including string interpolation in
+`"value: $x\n"` - calls `FETCH`. The observed output proves the ordering: the
 `(FETCH ran)` line prints BEFORE the `value:` line, because FETCH fires while
 the argument string is being built.
 
@@ -14,7 +14,7 @@ After `tie`, the plain syntax `$x` no longer means "read a variable"; every
 mention of the variable anywhere in the program, including inside string
 interpolation and in code that has no idea the variable is tied, is a method
 call. Converting faithfully requires rewriting every access to every possibly-
-tied variable into a call through an accessor — and whether a variable is tied
+tied variable into a call through an accessor - and whether a variable is tied
 can be decided at runtime (`tie` inside an `if`). Perl's own semantics make this
 a whole-program, dynamic property.
 
