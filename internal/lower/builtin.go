@@ -1136,11 +1136,11 @@ func (l *Lowerer) keysCall(n *ast.Call, wantValues bool) ir.Expr {
 // nothing, because there is nothing left to say.
 func (l *Lowerer) hashOrderNote(n ast.Node) {
 	l.inform(n, "P2G5550", "an unsorted iteration over a hash",
-		"the iteration order of a hash is randomised in both languages, and randomised "+
+		"The iteration order of a hash is randomised in both languages, and randomised "+
 			"differently: Perl fixes an order once per process, so two passes over an "+
 			"unchanged hash agree with each other, and Go picks a fresh order for every "+
 			"iteration, so they do not. Wherever that order reaches the output, sorting "+
-			"the keys is what makes the output the same twice",
+			"the keys is what makes the output the same twice.",
 		"map-iteration-order", "sort-slice")
 }
 

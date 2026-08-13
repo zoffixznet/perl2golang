@@ -431,7 +431,9 @@ func (b *bundle) honesty() string {
 
 	if s.Symbols > 0 {
 		dynamic := s.Symbols - s.SymbolsTyped
-		if dynamic > 0 {
+		if dynamic == 1 {
+			parts = append(parts, fmt.Sprintf("Type inference gave a concrete Go type to %d of the %d variables it tracked; the other one falls back to a dynamic value, which works but is not the Go you would write by hand.", s.SymbolsTyped, s.Symbols))
+		} else if dynamic > 1 {
 			parts = append(parts, fmt.Sprintf("Type inference gave a concrete Go type to %d of the %d variables it tracked; the other %d fall back to a dynamic value, which works but is not the Go you would write by hand.", s.SymbolsTyped, s.Symbols, dynamic))
 		} else if s.Symbols == 1 {
 			parts = append(parts, "The one variable it tracked was given a concrete Go type, so there is no dynamic fallback anywhere in the output.")
@@ -595,7 +597,14 @@ func (b *bundle) entrySummarySection(m *md, sev report.Severity, title, intro st
 	}
 
 	grouped := groupEntries(group)
-	m.h(2, "%s (%d)", title, len(grouped))
+	// The summary table counts places; this section groups the places into
+	// kinds. Where the two differ, saying both keeps the counts from reading
+	// like a contradiction.
+	if len(group) != len(grouped) {
+		m.h(2, "%s (%d kinds, %d places)", title, len(grouped), len(group))
+	} else {
+		m.h(2, "%s (%d)", title, len(grouped))
+	}
 	m.p("%s", intro)
 	for _, g := range grouped {
 		construct := g.Construct
@@ -627,7 +636,14 @@ func (b *bundle) entrySection(m *md, from string, sev report.Severity, title, in
 	}
 
 	grouped := groupEntries(group)
-	m.h(2, "%s (%d)", title, len(grouped))
+	// The summary table counts places; this section groups the places into
+	// kinds. Where the two differ, saying both keeps the counts from reading
+	// like a contradiction.
+	if len(group) != len(grouped) {
+		m.h(2, "%s (%d kinds, %d places)", title, len(grouped), len(group))
+	} else {
+		m.h(2, "%s (%d)", title, len(grouped))
+	}
 	m.p("%s", intro)
 	for _, g := range grouped {
 		b.entryBody(m, from, g, 3)
