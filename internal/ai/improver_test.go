@@ -26,7 +26,7 @@ func artifact(name, content string, pkg map[string][]byte) convert.Artifact {
 // one set of names, applied to both renderings.
 func TestImproverGivesBothRenderingsTheSameNames(t *testing.T) {
 	m := newMockRuntime(t, goodAnswer)
-	c := testClient(t, m, DefaultJobs())
+	c := testClient(t, m, namingJobs())
 	im := NewImprover(c)
 
 	clean, err := im.Improve(context.Background(), artifact("main.go", sampleGo, nil))
@@ -61,7 +61,7 @@ func TestImproverGivesBothRenderingsTheSameNames(t *testing.T) {
 // is nothing to improve in it and every reason not to try.
 func TestImproverLeavesHelpersAlone(t *testing.T) {
 	m := newMockRuntime(t, goodAnswer)
-	im := NewImprover(testClient(t, m, DefaultJobs()))
+	im := NewImprover(testClient(t, m, namingJobs()))
 
 	helpers := `package main
 
@@ -88,7 +88,7 @@ func toNum(v any) float64 {
 // A document is not this pass's business.
 func TestImproverIgnoresDocuments(t *testing.T) {
 	m := newMockRuntime(t, goodAnswer)
-	im := NewImprover(testClient(t, m, DefaultJobs()))
+	im := NewImprover(testClient(t, m, namingJobs()))
 
 	a := convert.Artifact{Kind: convert.ArtifactMarkdown, Name: "docs/start-here.md", Content: []byte("# Start here\n")}
 	got, err := im.Improve(context.Background(), a)
@@ -139,7 +139,7 @@ func TestImproverDegradesOnce(t *testing.T) {
 // package can notice.
 func TestImproverCompileGateCatchesACrossFileBreak(t *testing.T) {
 	m := newMockRuntime(t, `{"renames":[],"types":[{"name":"row","new_name":"Reading","fields":[]}],"comments":[]}`)
-	im := NewImprover(testClient(t, m, DefaultJobs()))
+	im := NewImprover(testClient(t, m, namingJobs()))
 
 	main := `package main
 
@@ -179,7 +179,7 @@ func describe(r row) string { return strconv.Itoa(r.Field1) }
 // is kept, so the gate is not simply refusing everything.
 func TestImproverCompileGateKeepsGoodWork(t *testing.T) {
 	m := newMockRuntime(t, `{"renames":[{"old":"item4","new":"word"}],"comments":[]}`)
-	im := NewImprover(testClient(t, m, DefaultJobs()))
+	im := NewImprover(testClient(t, m, namingJobs()))
 
 	main := `package main
 
@@ -267,7 +267,7 @@ func main() { fmt.Printf("%d\n", "not a number") }
 // could not confirm them.
 func TestImproverAcceptsWhenTheBaselineIsAlreadyBroken(t *testing.T) {
 	m := newMockRuntime(t, `{"renames":[{"old":"c","new":"total"}],"comments":[]}`)
-	im := NewImprover(testClient(t, m, DefaultJobs()))
+	im := NewImprover(testClient(t, m, namingJobs()))
 
 	broken := `package main
 
@@ -334,7 +334,7 @@ func TestImproverProseJobIsOptIn(t *testing.T) {
 		Report:  &report.Report{},
 	}
 
-	off := NewImprover(testClient(t, m, DefaultJobs()))
+	off := NewImprover(testClient(t, m, namingJobs()))
 	got, err := off.Improve(context.Background(), doc)
 	if err != nil {
 		t.Fatal(err)

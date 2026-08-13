@@ -8,54 +8,56 @@ import (
 
 // Job names one thing the local model is used for.
 //
-// The two group names, [JobImproveCode] and [JobEnrichDocs], are what the
-// command line offers by default; the fine-grained names below them exist so a
-// single job can be turned off or dropped under a time budget without losing
-// the rest of its group.
+// The group names, [JobImproveCode], [JobNaming] and [JobEnrichDocs], are
+// shorthand for their members; the fine-grained names below them exist so a
+// single job can be turned off without losing the rest of its group.
 type Job string
 
 // The group names. A [JobSet] never stores these - [ParseJobs] expands them -
 // but [JobSet.Has] answers for them, so Has(JobImproveCode) reports whether any
 // code job is enabled.
 const (
-	JobImproveCode Job = "code" // improve generated Go idiomaticity
-	JobEnrichDocs  Job = "docs" // enrich the teaching documents
+	JobImproveCode Job = "code"  // improve the conversion itself: repair + idioms
+	JobNaming      Job = "names" // the naming trio: rename + shapes + comments
+	JobEnrichDocs  Job = "docs"  // enrich the teaching documents
 )
 
 // The fine-grained jobs. Each belongs to exactly one group.
 const (
+	JobRepair      Job = "repair"      // write Go for what the converter refused or approximated
+	JobIdiomReview Job = "idioms"      // findings against the antipattern checklist
 	JobRename      Job = "rename"      // better names for weak local names
 	JobShapeNaming Job = "shapes"      // type and field names for inferred shapes
 	JobDocComments Job = "comments"    // doc comments for exported identifiers
-	JobIdiomReview Job = "idioms"      // findings against the antipattern checklist
 	JobWalkthrough Job = "walkthrough" // per-file tutorial prose
 )
 
-// codeJobs and docJobs are the members of the two groups, in the order they
-// appear in a normalised [JobSet].
+// The members of the three groups, in the order they appear in a normalised
+// [JobSet].
 var (
-	codeJobs = []Job{JobRename, JobShapeNaming, JobDocComments, JobIdiomReview}
+	codeJobs = []Job{JobRepair, JobIdiomReview}
+	nameJobs = []Job{JobRename, JobShapeNaming, JobDocComments}
 	docJobs  = []Job{JobWalkthrough}
 )
 
 // allJobs is every fine-grained job, in canonical order.
-var allJobs = slices.Concat(codeJobs, docJobs)
+var allJobs = slices.Concat(codeJobs, nameJobs, docJobs)
 
 // defaultJobs is what a bare --ai runs.
 //
-// The three here are the narrow, structural, schema-constrained jobs: the tool
-// picks the targets, the model returns names and nothing else, and the worst
-// outcome is a mediocre name. Measured on a 7B code model they answer in about
-// a second each and their JSON needs no repair.
+// Both defaults aim at the conversion itself. The repair job shows the model
+// the original Perl beside the generated Go and asks it to write the Go the
+// converter could not: every proposed change is spliced by this tool, checked
+// against the structural rules, and compiled and vetted before it is kept. The
+// idiom review asks for the smaller kind of fix, a hand-rolled loop that is a
+// standard library call, under stricter rules still.
 //
-// The other two are deliberately absent. The idiom review has the model author
-// real Go rather than a name, and the walkthrough job has it write teaching
-// text, which is where a model this size stops being reliable: it writes
-// thinner explanations than the lessons already in the knowledge base and will
-// name a package function that does not exist. Neither is removed, because both
-// are useful to someone willing to read what comes out; both have to be asked
-// for.
-var defaultJobs = []Job{JobRename, JobShapeNaming, JobDocComments}
+// The naming trio is deliberately absent. The source already has the names its
+// author chose, so renaming is the least valuable thing a model can do here;
+// it is kept for whoever wants it, behind --ai-jobs names. The walkthrough job
+// has the model write teaching text, which a model this size gets confidently
+// wrong, so it too has to be asked for.
+var defaultJobs = []Job{JobRepair, JobIdiomReview}
 
 // proseJobs are the jobs whose product is English rather than a name. They are
 // opt-in and labelled wherever they appear.
@@ -66,10 +68,12 @@ var proseJobs = []Job{JobWalkthrough}
 // else.
 func (j Job) Group() Job {
 	switch {
-	case j == JobImproveCode || j == JobEnrichDocs:
+	case j == JobImproveCode || j == JobNaming || j == JobEnrichDocs:
 		return j
 	case slices.Contains(codeJobs, j):
 		return JobImproveCode
+	case slices.Contains(nameJobs, j):
+		return JobNaming
 	case slices.Contains(docJobs, j):
 		return JobEnrichDocs
 	}
@@ -109,7 +113,7 @@ func (js JobSet) Experimental() JobSet {
 // reports whether any member of that group is enabled, so a caller can ask
 // "is the model improving code at all?" without listing the members.
 func (js JobSet) Has(j Job) bool {
-	if j == JobImproveCode || j == JobEnrichDocs {
+	if j == JobImproveCode || j == JobNaming || j == JobEnrichDocs {
 		for _, have := range js {
 			if have.Group() == j {
 				return true
@@ -130,12 +134,12 @@ func (js JobSet) String() string {
 }
 
 // ParseJobs turns a comma-separated job list into a [JobSet]. It accepts the
-// group names "code" and "docs", "default" for the jobs a bare --ai runs, the
-// convenience name "all" (and "both", which means the same thing) for every
-// job including the experimental ones, "none" for an empty set, and any
-// fine-grained job name. Groups are expanded to their members, so the result is
-// always fine-grained and in canonical order. An empty string means the
-// default set.
+// group names "code", "names" and "docs", "default" for the jobs a bare --ai
+// runs, the convenience name "all" (and "both", which means the same thing)
+// for every job including the experimental ones, "none" for an empty set, and
+// any fine-grained job name. Groups are expanded to their members, so the
+// result is always fine-grained and in canonical order. An empty string means
+// the default set.
 func ParseJobs(csv string) (JobSet, error) {
 	csv = strings.TrimSpace(csv)
 	if csv == "" {
@@ -161,6 +165,8 @@ func ParseJobs(csv string) (JobSet, error) {
 			add(defaultJobs...)
 		case JobImproveCode:
 			add(codeJobs...)
+		case JobNaming:
+			add(nameJobs...)
 		case JobEnrichDocs:
 			add(docJobs...)
 		case "none":
@@ -168,7 +174,7 @@ func ParseJobs(csv string) (JobSet, error) {
 		default:
 			j := Job(name)
 			if !slices.Contains(allJobs, j) {
-				return nil, fmt.Errorf("unknown AI job %q: choose from %s, or the group names default, code, docs, all", raw, JobSet(allJobs).String())
+				return nil, fmt.Errorf("unknown AI job %q: choose from %s, or the group names default, code, names, docs, all", raw, JobSet(allJobs).String())
 			}
 			add(j)
 		}

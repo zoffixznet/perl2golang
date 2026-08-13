@@ -1,6 +1,7 @@
 package ai
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -42,6 +43,21 @@ type Improver struct {
 	// as applied, so writing the same names into two renderings of one program
 	// is reported once.
 	counted map[string]bool
+	// repairs caches one file's accepted repair under its base name. The
+	// repair is decided once, on the clean rendering with the annotated one
+	// alongside, and the annotated rendering collects its copy from here, so
+	// the two can never disagree about what the program does.
+	repairs map[string]repairOutcome
+	// repairFailed records a base name whose repair already failed or found
+	// nothing, so the annotated rendering does not ask again.
+	repairFailed map[string]bool
+}
+
+// repairOutcome is one program file's accepted repair: both renderings, ready
+// to use.
+type repairOutcome struct {
+	clean     string
+	annotated string
 }
 
 // NewImprover returns the improvement pass for a client. Constructing one
@@ -49,10 +65,12 @@ type Improver struct {
 // artefact.
 func NewImprover(c *Client) *Improver {
 	return &Improver{
-		client:  c,
-		decided: map[string]Decisions{},
-		failed:  map[string]bool{},
-		counted: map[string]bool{},
+		client:       c,
+		decided:      map[string]Decisions{},
+		failed:       map[string]bool{},
+		counted:      map[string]bool{},
+		repairs:      map[string]repairOutcome{},
+		repairFailed: map[string]bool{},
 	}
 }
 
@@ -63,9 +81,14 @@ const helpersFile = "helpers.go"
 
 // Improve satisfies [convert.Improver].
 //
-// It returns the artefact unchanged, and a nil error, in every case where
-// there is nothing to do. An error means the model was asked and its answer was
-// not usable, which the converter turns into a note in the report.
+// The passes run in value order: first the repair, which writes Go for what
+// the converter refused or approximated; then the naming jobs, when they were
+// asked for; then the idiom review. A pass that fails is noted and costs only
+// itself, so a dead runtime halfway through a run never takes back what an
+// earlier pass already earned.
+//
+// It returns a non-nil error only when nothing was changed at all, which the
+// converter turns into a note in the report.
 func (im *Improver) Improve(ctx context.Context, a convert.Artifact) ([]byte, error) {
 	if a.Kind == convert.ArtifactMarkdown {
 		return im.improveDoc(ctx, a)
@@ -78,17 +101,216 @@ func (im *Improver) Improve(ctx context.Context, a convert.Artifact) ([]byte, er
 		return a.Content, nil
 	}
 
-	decisions, err := im.decisionsFor(ctx, base, a)
-	if err != nil {
-		return a.Content, err
-	}
 	content := a.Content
-	if !decisions.Empty() {
-		if content, err = im.gated(ctx, a, decisions); err != nil {
-			return a.Content, err
+	var firstErr error
+	if im.client.Jobs().Has(JobRepair) {
+		repaired, err := im.repairPass(ctx, base, a)
+		if err != nil {
+			im.noteFailure(a, err)
+			firstErr = err
+		} else {
+			content = repaired
 		}
 	}
-	return im.reviewed(ctx, a, content)
+
+	if decisions, err := im.decisionsFor(ctx, base, a, content); err != nil {
+		if firstErr == nil {
+			firstErr = err
+		}
+	} else if !decisions.Empty() {
+		if next, err := im.gated(ctx, a, content, decisions); err == nil {
+			content = next
+		} else if firstErr == nil {
+			firstErr = err
+		}
+	}
+
+	content, err := im.reviewed(ctx, a, content)
+	if err != nil && firstErr == nil {
+		firstErr = err
+	}
+	if bytes.Equal(content, a.Content) && firstErr != nil {
+		return a.Content, firstErr
+	}
+	return content, nil
+}
+
+// repairPass returns the artefact's content with the accepted repair applied.
+//
+// The decision is made once per program file, when the clean rendering comes
+// through, with the annotated rendering alongside so every fix is known to fit
+// both. The annotated rendering then collects its copy from the cache.
+func (im *Improver) repairPass(ctx context.Context, base string, a convert.Artifact) ([]byte, error) {
+	annotatedRendering := strings.Contains(a.Name, "/")
+
+	im.mu.Lock()
+	outcome, decided := im.repairs[base]
+	failed := im.repairFailed[base]
+	im.mu.Unlock()
+
+	if annotatedRendering {
+		if !decided || outcome.annotated == "" {
+			return a.Content, nil
+		}
+		return []byte(outcome.annotated), nil
+	}
+	if decided {
+		return []byte(outcome.clean), nil
+	}
+	if failed {
+		return a.Content, nil
+	}
+
+	deviations := deviationsFor(a)
+	if len(deviations) == 0 {
+		return a.Content, nil
+	}
+
+	res, err := im.client.RepairCode(ctx, RepairRequest{
+		Path:        a.Name,
+		Source:      string(a.Content),
+		Counterpart: string(a.Counterpart),
+		PerlSource:  string(a.Perl),
+		Deviations:  deviations,
+	})
+	if err != nil {
+		im.mu.Lock()
+		im.repairFailed[base] = true
+		im.mu.Unlock()
+		return a.Content, err
+	}
+	im.noteRepairRejections(a, res.Rejected)
+	if !res.Changed {
+		im.mu.Lock()
+		im.repairFailed[base] = true
+		im.mu.Unlock()
+		return a.Content, nil
+	}
+
+	// The compile gate runs on the clean rendering against the rest of its
+	// package. The annotated rendering carries the exact same fixes to the
+	// exact same code, so its own parse check is what it needs; compiling it
+	// again would prove nothing new.
+	if err := im.compileGate(ctx, a, string(a.Content), res.Source); err != nil {
+		gate, reason := gateOf(err)
+		im.client.NoteRepairNotApplied(a.Name, res.Applied, gate, reason)
+		im.mu.Lock()
+		im.repairFailed[base] = true
+		im.mu.Unlock()
+		im.noteRepairRejections(a, rejectedAll(res.Applied, gate, reason))
+		return a.Content, nil
+	}
+
+	im.mu.Lock()
+	im.repairs[base] = repairOutcome{clean: res.Source, annotated: res.Counterpart}
+	im.mu.Unlock()
+	im.client.NoteRepairApplied(base, res.Applied)
+	im.noteRepairs(a, res)
+	return []byte(res.Source), nil
+}
+
+// rejectedAll wraps a set of applied fixes as rejections, for the case where a
+// whole-file gate turned them down together.
+func rejectedAll(fixes []Fix, gate, reason string) []RejectedFix {
+	out := make([]RejectedFix, len(fixes))
+	for i, f := range fixes {
+		out[i] = RejectedFix{Fix: f, Gate: gate, Reason: reason}
+	}
+	return out
+}
+
+// deviationsFor collects the report entries that describe this file's known
+// shortfalls: every refusal whose stand-in call is in the file, then the
+// approximations, newest last, up to the cap. Refusals come first because a
+// refusal is a hole where an approximation is a known wrinkle.
+func deviationsFor(a convert.Artifact) []Deviation {
+	if a.Report == nil {
+		return nil
+	}
+	content := string(a.Content)
+	var out []Deviation
+	for _, e := range a.Report.BySeverity(report.Refuse) {
+		if e.Code == "" || !strings.Contains(content, `"`+e.Code+`"`) {
+			continue
+		}
+		out = append(out, deviation(e, "refused"))
+		if len(out) == maxDeviations {
+			return out
+		}
+	}
+	// Approximations have no marker in the code, so they are offered with the
+	// program's main file, where nearly all of them land.
+	if path.Base(a.Name) != "main.go" {
+		return out
+	}
+	for _, e := range a.Report.BySeverity(report.Warn) {
+		out = append(out, deviation(e, "approximated"))
+		if len(out) == maxDeviations {
+			break
+		}
+	}
+	return out
+}
+
+func deviation(e report.Entry, kind string) Deviation {
+	return Deviation{
+		Code:      e.Code,
+		Kind:      kind,
+		Construct: e.Construct,
+		Message:   e.Message,
+		Advice:    e.Advice,
+		Perl:      e.Perl,
+		Line:      e.Line,
+	}
+}
+
+// noteRepairs records what the model wrote into the program, one report entry
+// per accepted fix, so the honest account stays honest about authorship.
+func (im *Improver) noteRepairs(a convert.Artifact, res RepairResult) {
+	if a.Report == nil {
+		return
+	}
+	for _, f := range res.Applied {
+		why := strings.TrimSpace(f.Why)
+		if why != "" && !strings.HasSuffix(why, ".") {
+			why += "."
+		}
+		a.Report.Add(report.Entry{
+			Code:      string(diag.AIGapFilled),
+			Severity:  report.Note,
+			Construct: a.Name,
+			Short:     "a local model wrote code the converter could not",
+			Message: "The local model replaced code in " + a.Name + ". Its own reason: " + why +
+				" The result parses, compiles and passes go vet alongside the rest of the program, " +
+				"in both the clean and the annotated rendering.",
+			Advice: "Read the change before trusting it. The checks prove it builds, not that it " +
+				"does what the Perl did.",
+		})
+	}
+}
+
+// noteRepairRejections records the fixes that were turned down, so a reader
+// sees that a guard did something rather than that nothing happened.
+func (im *Improver) noteRepairRejections(a convert.Artifact, rejected []RejectedFix) {
+	if a.Report == nil || len(rejected) == 0 {
+		return
+	}
+	var lines []string
+	for _, r := range rejected {
+		lines = append(lines, fmt.Sprintf("%s: %s", r.Gate, r.Reason))
+	}
+	if len(lines) > 6 {
+		lines = append(lines[:6], fmt.Sprintf("and %d more", len(rejected)-6))
+	}
+	a.Report.Add(report.Entry{
+		Code:      string(diag.AIRewriteRejectedBuild),
+		Severity:  report.Note,
+		Construct: a.Name,
+		Short:     fmt.Sprintf("%d proposed repair%s did not pass the checks", len(rejected), plural(len(rejected))),
+		Message: "The local model proposed repairs for " + a.Name + " that were not used: " +
+			strings.Join(lines, "; ") + ".",
+		Advice: "Nothing needs doing. Each of these kept the deterministic output.",
+	})
 }
 
 // reviewed runs the opt-in idiom review, which is the one job here that has the
@@ -188,8 +410,9 @@ func mustMention(r *report.Report) []string {
 }
 
 // decisionsFor returns the naming decisions for one program file, asking the
-// model the first time and reusing the answer afterwards.
-func (im *Improver) decisionsFor(ctx context.Context, base string, a convert.Artifact) (Decisions, error) {
+// model the first time and reusing the answer afterwards. content is the
+// file's text as the earlier passes left it.
+func (im *Improver) decisionsFor(ctx context.Context, base string, a convert.Artifact, content []byte) (Decisions, error) {
 	im.mu.Lock()
 	if d, ok := im.decided[base]; ok {
 		im.mu.Unlock()
@@ -203,7 +426,7 @@ func (im *Improver) decisionsFor(ctx context.Context, base string, a convert.Art
 
 	res, err := im.client.ImproveStructure(ctx, StructureRequest{
 		Path:       base,
-		Source:     string(a.Content),
+		Source:     string(content),
 		PerlSource: string(a.Perl),
 	})
 	im.mu.Lock()
@@ -224,25 +447,25 @@ func (im *Improver) decisionsFor(ctx context.Context, base string, a convert.Art
 
 // gated applies decisions to one file and keeps the result only when it
 // survives the whole gate.
-func (im *Improver) gated(ctx context.Context, a convert.Artifact, d Decisions) ([]byte, error) {
-	source := string(a.Content)
+func (im *Improver) gated(ctx context.Context, a convert.Artifact, content []byte, d Decisions) ([]byte, error) {
+	source := string(content)
 	candidate, err := Apply(a.Name, source, d)
 	if err != nil {
-		return a.Content, err
+		return content, err
 	}
 	if candidate == source {
-		return a.Content, nil
+		return content, nil
 	}
 	if err := VerifyGo(candidate); err != nil {
-		return a.Content, err
+		return content, err
 	}
 	if err := checkRenamed(source, candidate); err != nil {
-		return a.Content, err
+		return content, err
 	}
 	if err := im.compileGate(ctx, a, source, candidate); err != nil {
 		gate, reason := gateOf(err)
 		im.client.NoteNotApplied(a.Name, d, gate, reason)
-		return a.Content, err
+		return content, err
 	}
 	im.countOnce(path.Base(a.Name), d)
 	return []byte(candidate), nil

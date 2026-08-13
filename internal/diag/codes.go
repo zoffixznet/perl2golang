@@ -719,6 +719,9 @@ const (
 	AIModelTooLarge Code = "P2G9020"
 	// AIPartialImprovement: AI mode improved some files and not others.
 	AIPartialImprovement Code = "P2G9030"
+	// AIGapFilled: the model wrote Go for a construct the converter refused
+	// or approximated, and the result passed the checks.
+	AIGapFilled Code = "P2G9040"
 )
 
 // REPL.
@@ -2915,6 +2918,13 @@ var catalogue = map[Code]Entry{
 		Short:     "AI mode improved some of the files",
 		Advice:    "read the per-file result in the conversion report",
 		Converted: "each file carries whichever version passed the guards",
+	},
+	AIGapFilled: {
+		Severity:  report.Note,
+		Message:   "the local model wrote Go for `%s`, and the result parses, compiles and vets alongside the rest of the program",
+		Short:     "a local model closed a conversion gap",
+		Advice:    "read the change before trusting it; the checks prove it builds, not that it does what the Perl did",
+		Converted: "the model's code was kept in both the clean and the annotated program",
 	},
 
 	// -- REPL ---------------------------------------------------------------

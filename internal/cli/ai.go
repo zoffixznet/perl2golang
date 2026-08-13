@@ -327,9 +327,10 @@ func aiHelp() string {
 	      --yes               run the printed commands instead of only printing them
 
 	AI mode is optional in the strongest sense: with no --ai flag perl2golang
-	opens no socket at all. When it is on, it talks to a runtime you already have,
-	uses a model you already have where possible, and never removes, moves or
-	copies one. Models are shared with the rest of the machine.
+	makes no network connection of any kind and nothing you convert goes anywhere.
+	When it is on, it talks to a runtime on your own machine, uses a model you
+	already have where possible, and never removes, moves or copies one. Models
+	are shared with the rest of the machine.
 
 	environment:
 	  OLLAMA_HOST      the runtime endpoint, honoured as the runtime's own tools do
@@ -344,19 +345,21 @@ func aiHelp() string {
 func aiConvertHelp() string {
 	return dedent(`
 	optional local model (off by default):
-	      --ai             let a local model improve the names in the generated Go.
-	                       Without this flag perl2golang makes no network connection.
+	      --ai             let a local model improve the conversion: it is shown
+	                       your Perl beside the generated Go and asked to write
+	                       the Go the converter could not. Without this flag
+	                       perl2golang makes no network connection of any kind.
 	      --ai-model TAG   which model to use (default: a code model the runtime
 	                       already has)
 	      --ai-endpoint U  the runtime's base URL (default: $OLLAMA_HOST, or
 	                       http://localhost:11434)
 	      --ai-timeout D   how long one request may take (default: 2m)
-	      --ai-jobs LIST   which jobs to run. Default: rename,shapes,comments, the
-	                       three that only ever produce names. Also accepts idioms,
-	                       walkthrough, hints, the group names code and docs, all,
-	                       and none.
+	      --ai-jobs LIST   which jobs to run. Default: repair,idioms. Also accepts
+	                       rename, shapes, comments, walkthrough, the group names
+	                       code, names and docs, all, and none.
 
-	Anything the model produces has to parse, compile and pass go vet alongside the
+	Anything the model produces has to parse, keep the program's declarations and
+	error handling, add no dependency, and compile and pass go vet alongside the
 	rest of its package before it is used. When it does not, the deterministic
 	output is written and the report says what was turned down.
 	`)

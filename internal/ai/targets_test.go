@@ -35,7 +35,7 @@ func TestWeakName(t *testing.T) {
 }
 
 func TestScanTargetsPicksGeneratedNames(t *testing.T) {
-	tg, err := scanTargets("main.go", sampleGo, DefaultJobs())
+	tg, err := scanTargets("main.go", sampleGo, namingJobs())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -70,7 +70,7 @@ func main() {
 	}
 }
 `
-	tg, err := scanTargets("main.go", src, DefaultJobs())
+	tg, err := scanTargets("main.go", src, namingJobs())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -89,7 +89,7 @@ func TestScanTargetsSkipsShadowedNames(t *testing.T) {
 func a() { x := 1; _ = x }
 func b() { x := 2; _ = x }
 `
-	tg, err := scanTargets("main.go", src, DefaultJobs())
+	tg, err := scanTargets("main.go", src, namingJobs())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -101,7 +101,7 @@ func b() { x := 2; _ = x }
 }
 
 func TestCheckNewName(t *testing.T) {
-	tg, err := scanTargets("main.go", sampleGo, DefaultJobs())
+	tg, err := scanTargets("main.go", sampleGo, namingJobs())
 	if err != nil {
 		t.Fatal(err)
 	}

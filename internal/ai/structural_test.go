@@ -19,7 +19,7 @@ const goodAnswer = `{"renames":[
 
 func TestImproveStructureAppliesNames(t *testing.T) {
 	m := newMockRuntime(t, goodAnswer)
-	c := testClient(t, m, DefaultJobs())
+	c := testClient(t, m, namingJobs())
 
 	res, err := c.ImproveStructure(context.Background(), StructureRequest{
 		Path: "main.go", Source: sampleGo,
@@ -54,7 +54,7 @@ func TestImproveStructureAppliesNames(t *testing.T) {
 // minute against about a second warm, so the call count is what a user feels.
 func TestImproveStructureMakesOneCall(t *testing.T) {
 	m := newMockRuntime(t, goodAnswer)
-	c := testClient(t, m, DefaultJobs())
+	c := testClient(t, m, namingJobs())
 
 	if _, err := c.ImproveStructure(context.Background(), StructureRequest{
 		Path: "main.go", Source: sampleGo,
@@ -71,7 +71,7 @@ func TestImproveStructureMakesOneCall(t *testing.T) {
 // being a bare request for JSON.
 func TestImproveStructureSendsASchema(t *testing.T) {
 	m := newMockRuntime(t, goodAnswer)
-	c := testClient(t, m, DefaultJobs())
+	c := testClient(t, m, namingJobs())
 
 	if _, err := c.ImproveStructure(context.Background(), StructureRequest{
 		Path: "main.go", Source: sampleGo,
@@ -93,7 +93,7 @@ func TestImproveStructureSendsASchema(t *testing.T) {
 // A file with nothing weak in it costs no call at all.
 func TestImproveStructureSkipsCleanFiles(t *testing.T) {
 	m := newMockRuntime(t, goodAnswer)
-	c := testClient(t, m, DefaultJobs())
+	c := testClient(t, m, namingJobs())
 
 	src := `package main
 
@@ -124,7 +124,7 @@ func TestImproveStructureRejectsPerName(t *testing.T) {
 	  {"old":"byKey","new":"strings"},
 	  {"old":"notInTheFile","new":"whatever"}
 	],"comments":[]}`)
-	c := testClient(t, m, DefaultJobs())
+	c := testClient(t, m, namingJobs())
 
 	res, err := c.ImproveStructure(context.Background(), StructureRequest{Path: "main.go", Source: sampleGo})
 	if err != nil {
@@ -182,7 +182,7 @@ func TestImproveStructureDegrades(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			m := newMockRuntime(t, goodAnswer)
 			tt.set(m)
-			c := testClient(t, m, DefaultJobs())
+			c := testClient(t, m, namingJobs())
 
 			res, err := c.ImproveStructure(context.Background(), StructureRequest{Path: "main.go", Source: sampleGo})
 			if err == nil {
@@ -209,7 +209,7 @@ func TestUnavailableRuntime(t *testing.T) {
 	m.Close()
 
 	t.Setenv("OLLAMA_HOST", "")
-	c := New(Options{Endpoint: url, Model: "qwen2.5-coder:7b"})
+	c := New(Options{Endpoint: url, Model: "qwen2.5-coder:7b", Jobs: namingJobs()})
 	if _, err := c.Available(context.Background()); !errors.As(err, new(*UnavailableError)) {
 		t.Fatalf("error is %T (%v), want *UnavailableError", err, err)
 	}
@@ -223,7 +223,7 @@ func TestTimeout(t *testing.T) {
 	m := newMockRuntime(t, goodAnswer)
 	m.stall(t)
 	t.Setenv("OLLAMA_HOST", "")
-	c := New(Options{Endpoint: m.URL, Model: "qwen2.5-coder:7b", Timeout: 100 * time.Millisecond})
+	c := New(Options{Endpoint: m.URL, Model: "qwen2.5-coder:7b", Timeout: 100 * time.Millisecond, Jobs: namingJobs()})
 
 	_, err := c.ImproveStructure(context.Background(), StructureRequest{Path: "main.go", Source: sampleGo})
 	if err == nil {
@@ -249,14 +249,14 @@ func TestEndpointHonoursEnvironment(t *testing.T) {
 	}
 }
 
-func TestDefaultJobsAreTheStructuralOnes(t *testing.T) {
+func TestDefaultJobsImproveTheConversion(t *testing.T) {
 	jobs := DefaultJobs()
-	for _, want := range []Job{JobRename, JobShapeNaming, JobDocComments} {
+	for _, want := range []Job{JobRepair, JobIdiomReview} {
 		if !jobs.Has(want) {
-			t.Errorf("%s is not on by default, and the measured evidence says it should be", want)
+			t.Errorf("%s is not on by default, and it is the job this mode exists for", want)
 		}
 	}
-	for _, unwanted := range []Job{JobWalkthrough, JobIdiomReview} {
+	for _, unwanted := range []Job{JobRename, JobShapeNaming, JobDocComments, JobWalkthrough} {
 		if jobs.Has(unwanted) {
 			t.Errorf("%s is on by default, and it should have to be asked for", unwanted)
 		}
@@ -274,12 +274,13 @@ func TestParseJobs(t *testing.T) {
 		want string
 		bad  bool
 	}{
-		{in: "", want: "rename,shapes,comments"},
-		{in: "default", want: "rename,shapes,comments"},
+		{in: "", want: "repair,idioms"},
+		{in: "default", want: "repair,idioms"},
 		{in: "rename", want: "rename"},
-		{in: "code", want: "rename,shapes,comments,idioms"},
+		{in: "code", want: "repair,idioms"},
+		{in: "names", want: "rename,shapes,comments"},
 		{in: "docs", want: "walkthrough"},
-		{in: "all", want: "rename,shapes,comments,idioms,walkthrough"},
+		{in: "all", want: "repair,idioms,rename,shapes,comments,walkthrough"},
 		{in: "none", want: ""},
 		{in: "comments,rename", want: "rename,comments"},
 		{in: "nonsense", bad: true},

@@ -45,7 +45,7 @@ func rootHelp() string {
 	  perl2golang repl                              explore Perl to Go interactively
 	  perl2golang explain slice-aliasing-and-copy   read one teaching concept
 	  perl2golang explain P2G4004                   what a diagnostic code means
-	  perl2golang report.pl --ai                    let a local model name things
+	  perl2golang report.pl --ai                    let a local model improve the Go
 	  perl2golang ai status                         what the optional model needs
 
 	exit status:
@@ -103,23 +103,28 @@ func convertHelp() string {
 	                       is still written, and the exit status becomes 1.
 
 	optional local model (off by default):
-	      --ai             let a local model choose better names in the generated
-	                       Go. Without this flag perl2golang opens no socket at all.
+	      --ai             let a local model improve the conversion. It is shown
+	                       your Perl beside the generated Go and asked to write
+	                       the Go the converter could not: closing refusals,
+	                       fixing known approximations, and tidying unidiomatic
+	                       shapes. Without this flag perl2golang makes no network
+	                       connection of any kind.
 	      --ai-model TAG   which model to use (default: a code model the runtime
 	                       already has; nothing is ever downloaded to convert)
 	      --ai-endpoint U  the runtime's base URL (default: $OLLAMA_HOST, or
 	                       http://localhost:11434)
 	      --ai-timeout D   how long one request may take (default: 2m)
-	      --ai-jobs LIST   which jobs to run. Default rename,shapes,comments: the
-	                       three that only ever produce names. Also accepts idioms,
-	                       walkthrough, the group names code and docs, all,
-	                       and none. The idioms and walkthrough jobs are
-	                       experimental and say so when you turn them on.
+	      --ai-jobs LIST   which jobs to run. Default repair,idioms. Also accepts
+	                       rename, shapes, comments (the naming trio, off by
+	                       default), walkthrough (experimental prose), the group
+	                       names code, names and docs, all, and none.
 
-	                       Anything the model produces has to parse, compile and
-	                       pass go vet alongside the rest of its package before it
-	                       is used. When it does not, the deterministic output is
-	                       written and the report says what was turned down.
+	                       Anything the model produces has to parse, keep the
+	                       program's declarations and error handling, add no
+	                       dependency, and compile and pass go vet alongside the
+	                       rest of its package before it is used. When it does
+	                       not, the deterministic output is written and the
+	                       report says what was turned down.
 
 	output control:
 	  -v, --verbose        show every diagnostic in full, with its source line and
@@ -150,8 +155,8 @@ func convertHelp() string {
 	      convert something that is not on disk
 
 	  perl2golang convert report.pl --ai
-	      the same conversion, with a local model naming what the converter had to
-	      invent names for
+	      the same conversion, with a local model attempting what the converter
+	      refused and tidying what it emitted, under the checks
 
 	environment:
 	  NO_COLOR             set to anything to turn colour off

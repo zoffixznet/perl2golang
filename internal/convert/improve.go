@@ -51,6 +51,11 @@ type Artifact struct {
 	// file that calls a helper cannot be checked on its own. It is nil for a
 	// document.
 	Package map[string][]byte
+	// Counterpart is the same file in the other rendering: for a clean file,
+	// the annotated one, and the other way around. A change that alters what
+	// the program does has to land in both renderings or in neither, because
+	// the two are promised to behave identically.
+	Counterpart []byte
 	// Module is the generated module's path, so a candidate can be checked in
 	// a module that looks like the one being written.
 	Module string
@@ -82,13 +87,15 @@ func (r *Result) improveCode(ctx context.Context, imp Improver) {
 	for _, name := range slices.Sorted(maps.Keys(r.Clean)) {
 		r.Clean[name] = r.accept(ctx, imp, Artifact{
 			Kind: ArtifactGo, Name: name, Content: r.Clean[name], Perl: r.PerlSource,
-			Report: r.Report, Package: siblings(r.Clean, name), Module: r.Module,
+			Report: r.Report, Package: siblings(r.Clean, name),
+			Counterpart: r.Annotated[name], Module: r.Module,
 		})
 	}
 	for _, name := range slices.Sorted(maps.Keys(r.Annotated)) {
 		r.Annotated[name] = r.accept(ctx, imp, Artifact{
 			Kind: ArtifactGo, Name: annotatedDir + "/" + name, Content: r.Annotated[name], Perl: r.PerlSource,
-			Report: r.Report, Package: siblings(r.Annotated, name), Module: r.Module,
+			Report: r.Report, Package: siblings(r.Annotated, name),
+			Counterpart: r.Clean[name], Module: r.Module,
 		})
 	}
 }

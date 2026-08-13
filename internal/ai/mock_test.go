@@ -158,6 +158,10 @@ func writeJSON(w http.ResponseWriter, v any) {
 	_ = json.NewEncoder(w).Encode(v)
 }
 
+// namingJobs is the naming trio, which most of these tests exercise. It was
+// the default job set before the repair job existed and is opt-in now.
+func namingJobs() JobSet { return JobSet{JobRename, JobShapeNaming, JobDocComments} }
+
 // testClient returns a client pointed at a mock runtime.
 func testClient(t *testing.T, m *mockRuntime, jobs JobSet) *Client {
 	t.Helper()
