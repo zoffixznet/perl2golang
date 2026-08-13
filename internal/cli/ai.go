@@ -204,7 +204,11 @@ func aiStatus(e *env, args []string) int {
 	}
 
 	hw, err := ai.Probe(ai.DefaultModelStore())
-	if err == nil {
+	if err != nil {
+		// Saying nothing here would read as "nothing to report" rather than
+		// "not measured", and the two lead to different next steps.
+		fmt.Fprintf(e.stdout, "hardware    not inspected: %v\n", err)
+	} else {
 		fmt.Fprintln(e.stdout)
 		for _, line := range hw.Describe() {
 			fmt.Fprintln(e.stdout, line)

@@ -12,7 +12,6 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 )
 
@@ -238,8 +237,15 @@ func probeCPU() (model string, physical int) {
 }
 
 // probeMemory reads total and available memory in MB.
+//
+// The reading comes from /proc/meminfo, which is a Linux interface. A system
+// without it is told so plainly rather than shown a file error, because the
+// answer there is "this cannot be measured here", not "something went wrong".
 func probeMemory() (totalMB, freeMB int, err error) {
 	f, err := os.Open("/proc/meminfo")
+	if errors.Is(err, fs.ErrNotExist) {
+		return 0, 0, errors.New("this system has no /proc/meminfo, so the memory a model would need cannot be measured here")
+	}
 	if err != nil {
 		return 0, 0, fmt.Errorf("reading system memory: %w", err)
 	}
@@ -462,15 +468,17 @@ func runTool(name string, args ...string) (string, bool) {
 // freeDiskMB reports what an unprivileged user can still write on the
 // filesystem holding path. When the directory does not exist yet, the nearest
 // existing parent is measured, because that is where it will be created.
+//
+// The measurement itself is a system call with a different name on every
+// family of operating system, so it lives in a file of its own per platform.
+// Where there is no such call at all it reports zero, which every caller reads
+// as unknown rather than as full.
 func freeDiskMB(path string) (int64, error) {
 	probe := path
 	for {
-		var st syscall.Statfs_t
-		err := syscall.Statfs(probe, &st)
+		avail, err := availableBytes(probe)
 		if err == nil {
-			// Bavail, not Bfree: the difference is the root reserve, which
-			// a model download cannot use.
-			return int64(uint64(st.Bavail)*uint64(st.Bsize)) / mib, nil
+			return int64(avail / mib), nil
 		}
 		parent := filepath.Dir(probe)
 		if parent == probe {
