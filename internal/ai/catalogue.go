@@ -61,14 +61,6 @@ func (m ModelSpec) DiskNeedMB() int { return m.DownloadMB*5/4 + 2048 }
 // DownloadSize renders the download the way a person reads it.
 func (m ModelSpec) DownloadSize() string { return formatMB(m.DownloadMB) }
 
-// formatMB renders a size in binary units, one decimal place past a gigabyte.
-func formatMB(mb int) string {
-	if mb < 1024 {
-		return fmt.Sprintf("%d MB", mb)
-	}
-	return fmt.Sprintf("%.1f GB", float64(mb)/1024)
-}
-
 // FitsGPU reports whether the model runs on a card with the given memory.
 func (m ModelSpec) FitsGPU(vramMB int) bool { return vramMB > 0 && m.MinVRAMMB <= vramMB }
 
@@ -308,4 +300,57 @@ func ExcludedReason(name string) string {
 		}
 	}
 	return ""
+}
+
+// Recommend returns the models this machine can actually run, best first.
+//
+// A model qualifies when it fits the graphics memory that was measured, or the
+// system memory when there is no usable GPU, and when there is room on the
+// model store's filesystem to download it. Without a GPU the order changes as
+// well as the list: sparse models move up, because they read a fraction of
+// their weights per token, and large dense models move down, because on a CPU
+// they are slower than they are worth.
+func Recommend(hw Hardware) []ModelSpec {
+	vram := hw.BestVRAMMB()
+	var fits []ModelSpec
+	for _, m := range catalogue {
+		if hw.DiskFreeMB > 0 && hw.DiskFreeMB < int64(m.DiskNeedMB()) {
+			continue
+		}
+		if vram > 0 {
+			if !m.FitsGPU(vram) {
+				continue
+			}
+		} else if !m.FitsCPU(hw.RAMTotalMB) {
+			continue
+		}
+		fits = append(fits, m)
+	}
+	slices.SortStableFunc(fits, func(a, b ModelSpec) int {
+		if d := recommendScore(b, vram > 0) - recommendScore(a, vram > 0); d != 0 {
+			return d
+		}
+		if d := a.DownloadMB - b.DownloadMB; d != 0 {
+			return d
+		}
+		return strings.Compare(a.Name, b.Name)
+	})
+	return fits
+}
+
+// recommendScore ranks a model for the machine in front of it.
+func recommendScore(m ModelSpec, onGPU bool) int {
+	score := m.Rank
+	if onGPU {
+		return score
+	}
+	switch {
+	case m.MoE():
+		score += 15
+	case m.ParamsB > 15:
+		score -= 20
+	case m.ParamsB > 8:
+		score -= 10
+	}
+	return score
 }
