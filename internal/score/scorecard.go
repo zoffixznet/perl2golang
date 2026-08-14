@@ -47,6 +47,10 @@ type Scorecard struct {
 	// recorded output no longer matches what perl prints.
 	Notes []string `json:"notes,omitempty"`
 
+	// AIModel names the model when the run carried the with-and-without-AI
+	// comparison, and is empty otherwise.
+	AIModel string `json:"ai_model,omitempty"`
+
 	// Elapsed is how long the run took. It is a fact about the machine
 	// rather than about the conversion, so it is left out of the saved file.
 	Elapsed time.Duration `json:"elapsed_ns,omitempty"`
@@ -164,6 +168,10 @@ type EntryResult struct {
 	// the manifest and the entry's directory, or perl no longer printing
 	// what the entry recorded.
 	Notes []string `json:"notes,omitempty"`
+
+	// AI holds the second, model-assisted conversion's results when the run
+	// asked for the comparison, and is nil otherwise.
+	AI *AIEntry `json:"ai,omitempty"`
 
 	Elapsed time.Duration `json:"elapsed_ns,omitempty"`
 }

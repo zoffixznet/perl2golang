@@ -20,6 +20,7 @@ import (
 	"syscall"
 	"time"
 
+	"perl2golang/internal/ai"
 	"perl2golang/internal/score"
 )
 
@@ -32,16 +33,21 @@ func main() {
 
 func run() error {
 	var (
-		tier    = flag.String("tier", "", "score one tier only (tier1, tier2, tier3, tier4, domain)")
-		only    = flag.String("only", "", "score only entries whose name contains this substring")
-		asJSON  = flag.Bool("json", false, "print the scorecard as JSON instead of a table")
-		out     = flag.String("out", "", "where to write the results file (default testdata/scorecard.json)")
-		short   = flag.Bool("short", false, "skip the equivalence stage, which is the slow one")
-		verbose = flag.Bool("v", false, "print a line per entry and the full failure list")
-		jobs    = flag.Int("jobs", runtime.NumCPU(), "how many entries to work on at once")
-		timeout = flag.Duration("timeout", score.DefaultTimeout, "how long one program may run before it is killed")
-		corpus  = flag.String("corpus", "", "corpus manifest to read, listing entry paths relative to the repository root (default testdata/corpus/MANIFEST.json)")
-		noWrite = flag.Bool("no-write", false, "do not write the results file")
+		tier      = flag.String("tier", "", "score one tier only (tier1, tier2, tier3, tier4, domain)")
+		only      = flag.String("only", "", "score only entries whose name contains this substring")
+		asJSON    = flag.Bool("json", false, "print the scorecard as JSON instead of a table")
+		out       = flag.String("out", "", "where to write the results file (default testdata/scorecard.json)")
+		short     = flag.Bool("short", false, "skip the equivalence stage, which is the slow one")
+		verbose   = flag.Bool("v", false, "print a line per entry and the full failure list")
+		jobs      = flag.Int("jobs", runtime.NumCPU(), "how many entries to work on at once")
+		timeout   = flag.Duration("timeout", score.DefaultTimeout, "how long one program may run before it is killed")
+		corpus    = flag.String("corpus", "", "corpus manifest to read, listing entry paths relative to the repository root (default testdata/corpus/MANIFEST.json)")
+		noWrite   = flag.Bool("no-write", false, "do not write the results file")
+		withAI    = flag.Bool("ai", false, "also convert every entry with the local model in the loop and print the comparison")
+		aiModel   = flag.String("ai-model", "", "model tag for -ai (default: a code model the runtime already has)")
+		aiEnd     = flag.String("ai-endpoint", "", "runtime base URL for -ai (default: $OLLAMA_HOST, or http://localhost:11434)")
+		aiTimeout = flag.Duration("ai-timeout", 5*time.Minute, "ceiling on one model request under -ai")
+		aiJobs    = flag.String("ai-jobs", "", "which AI jobs to run under -ai (default: the tool's own default set)")
 	)
 	flag.Usage = usage
 	flag.Parse()
@@ -80,6 +86,17 @@ func run() error {
 	if !*asJSON {
 		opts.Progress = progress(os.Stderr)
 	}
+	if *withAI {
+		// A run with the model in the loop queues every worker's requests on
+		// one local runtime, so a few workers keep it busy and more of them
+		// only make each other wait past their deadlines.
+		if !flagGiven("jobs") {
+			opts.Jobs = 2
+		}
+		if err := configureAI(ctx, &opts, *aiModel, *aiEnd, *aiTimeout, *aiJobs); err != nil {
+			return err
+		}
+	}
 
 	sc, err := score.Run(ctx, opts)
 	if err != nil {
@@ -93,8 +110,20 @@ func run() error {
 		}
 	} else {
 		score.Render(os.Stdout, sc, delta, score.RenderOptions{Verbose: *verbose})
+		if *withAI {
+			score.RenderAI(os.Stdout, sc)
+		}
 	}
 
+	if *withAI && *out == "" {
+		// The committed results file records the deterministic conversion.
+		// A comparison run prints its findings and leaves the record alone,
+		// unless a different file was asked for by name.
+		if !*asJSON {
+			fmt.Printf("this was a with-and-without-ai comparison, so %s was left alone\n", display(root, outPath))
+		}
+		return nil
+	}
 	if *noWrite {
 		return nil
 	}
@@ -117,6 +146,57 @@ func run() error {
 			fmt.Printf("results written to %s\n", display(root, outPath))
 		} else {
 			fmt.Printf("%s already holds these results and was left alone\n", display(root, outPath))
+		}
+	}
+	return nil
+}
+
+// flagGiven reports whether a flag appeared on the command line, as opposed to
+// holding its default.
+func flagGiven(name string) bool {
+	given := false
+	flag.Visit(func(f *flag.Flag) {
+		if f.Name == name {
+			given = true
+		}
+	})
+	return given
+}
+
+// configureAI checks the local runtime is actually there, picks the model, and
+// wires the per-entry AI session into the run. A comparison against a runtime
+// that is not running would measure nothing and take an hour to say so.
+func configureAI(ctx context.Context, opts *score.Options, model, endpoint string, timeout time.Duration, jobsCSV string) error {
+	jobs, err := ai.ParseJobs(jobsCSV)
+	if err != nil {
+		return err
+	}
+	probe := ai.New(ai.Options{Endpoint: endpoint})
+	installed, err := probe.Available(ctx)
+	if err != nil {
+		return fmt.Errorf("-ai needs the local runtime: %w", err)
+	}
+	if model == "" {
+		model = ai.PreferredModel(installed)
+	}
+	if model == "" {
+		return fmt.Errorf("the runtime at %s has no models; pull one first", probe.Endpoint())
+	}
+
+	opts.AILabel = model
+	opts.AISession = func() score.AISession {
+		client := ai.New(ai.Options{
+			Endpoint: endpoint,
+			Model:    model,
+			Timeout:  timeout,
+			Jobs:     jobs,
+		})
+		return score.AISession{
+			Improver: ai.NewImprover(client),
+			Stats: func() (int, int) {
+				s := client.Summary()
+				return s.Accepted, s.Rejected
+			},
 		}
 	}
 	return nil
