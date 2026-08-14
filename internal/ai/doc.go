@@ -48,7 +48,7 @@
 // Progress text is written only to the [Options.Progress] writer supplied by
 // the caller. This package writes nothing to the standard streams.
 //
-// The hardware probe ([Probe]), the model catalogue ([Catalogue], [Recommend])
-// and the setup planner ([PlanSetup]) target Debian-like Linux and degrade
-// silently when an optional tool is missing.
+// The model catalogue ([Catalogue], [Lookup], [PreferredModel]) records which
+// freely licensed models are worth measuring against and why some are
+// excluded, so a future re-run starts from the same footing.
 package ai

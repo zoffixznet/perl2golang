@@ -66,7 +66,7 @@ func (e *RuntimeError) OutOfMemory() bool {
 }
 
 // ModelNotFoundError reports that the runtime is running but does not have the
-// configured model. The caller can offer [PlanSetup] to download it.
+// configured model.
 type ModelNotFoundError struct {
 	Model    string
 	Endpoint string
