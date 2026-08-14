@@ -539,8 +539,9 @@ func litString(e ast.Expr) string {
 //
 // The rule is careful on purpose: only comment runs introduced by "// TODO:"
 // are candidates, only when their text names a gap that was closed, and only
-// when the code line that follows no longer calls notImplemented. Everything
-// else is left exactly as it was.
+// when the stretch of code the run explains, everything up to the next TODO
+// run or the end of the file, no longer calls notImplemented. Everything else
+// is left exactly as it was.
 func removeStaleTodos(src string, before, after []gapCall) string {
 	closed := closedGaps(before, after)
 	if len(closed) == 0 {
@@ -560,21 +561,29 @@ func removeStaleTodos(src string, before, after []gapCall) string {
 		for end+1 < len(lines) && strings.HasPrefix(strings.TrimSpace(lines[end+1]), "//") {
 			end++
 		}
-		next := ""
-		for j := end + 1; j < len(lines); j++ {
-			if strings.TrimSpace(lines[j]) != "" {
-				next = lines[j]
-				break
-			}
-		}
-		if strings.Contains(next, "notImplemented") {
-			// The gap below this comment is still open; the comment stands.
+		if gapStillOpenBelow(lines[end+1:]) {
 			keep = append(keep, lines[i])
 			continue
 		}
 		i = end
 	}
 	return strings.Join(keep, "\n")
+}
+
+// gapStillOpenBelow reports whether the code a TODO run explains still calls
+// notImplemented: the lines after the run, up to the next TODO run, which
+// begins whatever explanation comes next.
+func gapStillOpenBelow(rest []string) bool {
+	for _, line := range rest {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "// TODO:") {
+			return false
+		}
+		if !strings.HasPrefix(trimmed, "//") && strings.Contains(line, "notImplemented") {
+			return true
+		}
+	}
+	return false
 }
 
 // closedGaps is the multiset difference of the gaps before and after a repair:

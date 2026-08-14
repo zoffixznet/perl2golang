@@ -370,6 +370,33 @@ func notImplemented[T any](code, what string) T {
 	}
 }
 
+// A TODO whose gap is still open keeps its comment, even when the open call
+// sits a few lines below the statement the comment introduces, and even when
+// another gap with the same code and message was closed.
+func TestStaleTodoRemovalKeepsLiveGaps(t *testing.T) {
+	src := `package main
+
+import "fmt"
+
+func main() {
+	// TODO: P2G4110: the first gap, now closed.
+	fmt.Println("fixed")
+	// TODO: P2G4110: the second gap, still open, inside the if below.
+	if len("x") > 0 {
+		fmt.Println(notImplemented[any]("P2G4110", "this capture is read where no match is in scope"))
+	}
+}
+`
+	gap := gapCall{code: "P2G4110", message: "this capture is read where no match is in scope"}
+	got := removeStaleTodos(src, []gapCall{gap, gap}, []gapCall{gap})
+	if strings.Contains(got, "the first gap") {
+		t.Errorf("the closed gap's TODO survived:\n%s", got)
+	}
+	if !strings.Contains(got, "the second gap") {
+		t.Errorf("the open gap lost its TODO:\n%s", got)
+	}
+}
+
 // gapCalls has to see through both spellings of the stand-in.
 func TestGapCalls(t *testing.T) {
 	src := `package main
