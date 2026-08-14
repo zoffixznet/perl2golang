@@ -84,7 +84,7 @@ type env struct {
 // commands is the closed set of first words that name a subcommand. Anything
 // else in first position is a file for convert, which is what makes
 // `perl2golang script.pl` shorthand for `perl2golang convert script.pl`.
-var commands = []string{"convert", "repl", "explain", "ai", "version", "help"}
+var commands = []string{"convert", "repl", "explain", "version", "help"}
 
 // dispatch routes one invocation to its command.
 func dispatch(e *env, args []string) int {
@@ -115,8 +115,6 @@ func dispatch(e *env, args []string) int {
 		return runRepl(e, rest)
 	case "explain":
 		return runExplain(e, rest)
-	case "ai":
-		return runAI(e, rest)
 	case "version":
 		return runVersion(e, rest)
 	case "help":
@@ -173,8 +171,6 @@ func (e *env) commandHelp(name string) int {
 		return e.print(replHelp())
 	case "explain":
 		return e.print(explainHelp())
-	case "ai":
-		return e.print(aiHelp())
 	case "version":
 		return e.print(versionHelp())
 	case "help":
