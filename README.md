@@ -12,10 +12,10 @@ actually touched, and an honest account of anything it could not translate.
 
 The conversion is not meant to be a 100% complete, as there are many concepts and behaviors that don't translate very well and would require human judgement to translate into applicable Go variants. The point is to produce something that is usable while also educating the user about Golang to facilitate their learning of the language.
 
-Everything runs locally. No account, no API key, and your Perl is never
-executed. By default nothing opens a socket either; the one feature that talks
-to anything talks to an AI model on *your own machine*, and only when you ask for it
-with explicitly `--ai`.
+Everything runs on your machine and nothing you convert goes anywhere. There
+is no external service, no account, no API key, no telemetry, and no network
+connection of any kind; your Perl is read, never executed, and never sent
+anywhere.
 
 ## Install
 
@@ -41,11 +41,8 @@ ARM. Every one of them is built from the same source in the same release. The
 project is developed and tested on Linux, which is where the test suite and the
 corpus run, so that is the platform the tool is exercised hardest on.
 
-Three things do not work the same everywhere:
+Two things do not work the same everywhere:
 
-- The optional model mode reads the machine through Linux interfaces, so
-  anywhere else `perl2golang ai status` says the hardware could not be
-  inspected and reports what it can.
 - On Windows the session reads whole lines instead, because it cannot put the
   terminal into raw mode. See "Known limitations".
 - A converted program that runs a command written as one string hands it to
@@ -89,51 +86,239 @@ benchmarks, coverage, the race detector, `go vet`). Every Go sample in them is
 compiled and run by this repository's test suite, and the output each lesson
 shows is the output its code actually produces.
 
-## The optional local model
+## What the output looks like
 
-Everything above works with no model, no account, no network and no
-configuration, and that is the mode the tool is built around. `--ai` is an
-extra: it hands the finished Go to a model running on your own machine and asks
-it to name the things the converter had to invent names for.
+Three short scripts and the Go this tool writes for them. Each Go program
+below is the tool's real output, pasted unedited, and each pair was run side
+by side and printed identical bytes.
 
+A word count, the classic hash-and-sort shape:
+
+```perl
+my %count;
+while (my $line = <STDIN>) {
+    chomp $line;
+    $count{lc $_}++ for split /\W+/, $line;
+}
+delete $count{''};
+
+for my $word (sort { $count{$b} <=> $count{$a} || $a cmp $b } keys %count) {
+    printf "%5d %s\n", $count{$word}, $word;
+}
 ```
-perl2golang ai status          what is configured, and what this machine can run
-perl2golang report.pl --ai     convert, and let the model name things
+
+```go
+package main
+
+import (
+	"bufio"
+	"cmp"
+	"fmt"
+	"maps"
+	"os"
+	"regexp"
+	"slices"
+	"strings"
+)
+
+// pattern2 matches the pattern \W+.
+var pattern2 = regexp.MustCompile("\\W+")
+
+// main is the program's entry point.
+func main() {
+	count := map[string]int{}
+	scanner := bufio.NewScanner(os.Stdin)
+	scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)
+	for scanner.Scan() {
+		line := scanner.Text()
+		for _, item := range splitPattern(pattern2, line, 0) {
+			count[strings.ToLower(item)]++
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(255)
+	}
+	delete(count, "")
+	sorted := slices.Clone(slices.Collect(maps.Keys(count)))
+	slices.SortStableFunc(sorted, func(a string, b string) int {
+		return cmp.Or(cmp.Compare(count[b], count[a]), strings.Compare(a, b))
+	})
+	for _, word := range sorted {
+		fmt.Printf("%5d %s\n", count[word], word)
+	}
+}
 ```
 
-Without `--ai`, perl2golang opens no socket at all. There is no telemetry, no
-update check and no hosted service anywhere in it.
+`splitPattern` is one of the small helpers the tool writes into `helpers.go`
+when the program needs it, because Perl's `split` drops trailing empty fields
+and Go's `regexp.Split` does not.
 
-What the model is asked for is narrow on purpose:
+A log scan: arguments, `open or die` with the right exit status, a capture:
 
-- better names for short locals, worked out from how they are used
-- names for struct types and their fields
-- doc comments on declarations that have none
+```perl
+my $file = shift @ARGV or die "usage: $0 LOGFILE\n";
+open my $fh, '<', $file or die "cannot open $file: $!\n";
 
-That is all, by default. The model returns names, never code, and this tool does
-the rewriting. Every name has to be a valid Go identifier in the surrounding style,
-must not collide with anything already in the file, and must leave the file
-parsing, compiling and passing `go vet` alongside the rest of its package. A
-name that fails any of those is dropped and the converter's own name is kept.
-`--ai` can improve the result or leave it alone; it cannot damage it.
+my %seen;
+while (<$fh>) {
+    next unless /ERROR\s+\[(\w+)\]/;
+    $seen{$1}++;
+}
+close $fh;
 
-It needs a local runtime speaking the Ollama API, which perl2golang talks to and
-does not manage. Models are a machine-wide resource shared with everything else
-you run, so perl2golang uses a model you already have, never downloads one to
-convert a file, and never removes, moves or copies one. `OLLAMA_HOST` and
-`OLLAMA_MODELS` are honoured as the runtime's own tools honour them.
+print "$_: $seen{$_}\n" for sort keys %seen;
+```
 
-`perl2golang ai setup` inspects the machine, reports what it found, lists the
-freely licensed models that fit it with their real download sizes, and prints
-the exact commands it would run. It stops there unless you add `--yes`.
+```go
+package main
 
-If the runtime is not running, is missing the model, is out of memory or is too
-slow, the conversion is the deterministic one, the exit status is normal, and a
-line on standard error says which of those happened.
+import (
+	"bufio"
+	"fmt"
+	"maps"
+	"os"
+	"regexp"
+	"slices"
+)
 
-A conversion costs one request per generated program. Loading a model that is
-not resident dominates that, so the first conversion after a reboot is slower
-than the rest by a wide margin.
+// errorValPattern2 matches the pattern ERROR\s+\[(\w+)\].
+var errorValPattern2 = regexp.MustCompile("ERROR\\s+\\[(\\w+)\\]")
+
+// args holds the command line arguments, without the program name.
+var args = os.Args[1:]
+
+// main is the program's entry point.
+func main() {
+	var first string
+	if len(args) > 0 {
+		first, args = args[0], args[1:]
+	}
+	file := first
+	if !truthy(file) {
+		fmt.Fprint(os.Stderr, "usage: "+os.Args[0]+" LOGFILE\n")
+		os.Exit(255)
+	}
+	fh, err := os.Open(file)
+	if err != nil {
+		fmt.Fprint(os.Stderr, "cannot open "+file+": "+errnoText(err)+"\n")
+		os.Exit(255)
+	}
+	seen := map[string]int{}
+	scanner := bufio.NewScanner(fh)
+	scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)
+	for scanner.Scan() {
+		line := scanner.Text() + "\n"
+		_ = line
+		m := errorValPattern2.FindStringSubmatch(line)
+		if m == nil {
+			continue
+		}
+		seen[m[1]]++
+	}
+	if err := scanner.Err(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(255)
+	}
+	fh.Close()
+	for _, item := range slices.Sorted(maps.Keys(seen)) {
+		fmt.Printf("%s: %d\n", item, seen[item])
+	}
+}
+```
+
+A `bless`-based class, which becomes a struct with methods:
+
+```perl
+package Tally;
+
+sub new {
+    my ($class, %args) = @_;
+    my $self = { name => $args{name}, total => 0 };
+    return bless $self, $class;
+}
+
+sub add {
+    my ($self, $amount) = @_;
+    $self->{total} += $amount;
+    return $self;
+}
+
+sub report {
+    my $self = shift;
+    return sprintf "%s: %d", $self->{name}, $self->{total};
+}
+
+package main;
+
+my $t = Tally->new(name => 'widgets');
+$t->add($_) for 1 .. 4;
+print $t->report, "\n";
+```
+
+```go
+package main
+
+import "fmt"
+
+// Tally is one Tally and everything it knows about itself.
+type Tally struct {
+	Name  string
+	Total int
+}
+
+// NewTally builds a Tally.
+func NewTally(name string) *Tally {
+	self := &Tally{Name: name, Total: 0}
+	return self
+}
+
+func (t *Tally) Add(amount int) *Tally {
+	t.Total += amount
+	return t
+}
+
+func (t *Tally) Report() string {
+	return fmt.Sprintf("%s: %d", t.Name, t.Total)
+}
+
+// main is the program's entry point.
+func main() {
+	t := NewTally("widgets")
+	for i := 1; i <= 4; i++ {
+		t.Add(i)
+	}
+	fmt.Print(t.Report(), "\n")
+}
+```
+
+The output is not always this clean. A script leaning on nested references,
+context tricks or code generation comes out with `any`-typed values, helper
+calls and TODO markers, and the report says so entry by entry. These three
+are honest examples of the ordinary case, not the worst one.
+
+## Why there is no AI mode
+
+An earlier version had one: a local model, shown your Perl beside the
+generated Go and the converter's own notes, was asked to write the Go the
+converter could not, under hard checks (every change spliced by the tool,
+declarations and error handling preserved, standard library only, compiled
+and vetted before acceptance). It was measured over this repository's whole
+corpus, where the right output of every program is recorded, so a modified
+program could be run and compared against real perl byte for byte.
+
+The result: of 228 measured programs, the model improved zero. Its accepted
+changes broke five programs that were correct before it touched them, four of
+those by silently changing what the program prints, and only the corpus's
+recorded outputs caught them. Converting your own script, no such check can
+exist, because this tool never executes your Perl. A feature whose measured
+best case never happened, and whose worst case is confidently corrupting
+correct output, is not worth a multi-gigabyte model download, so it was
+removed rather than shipped off by default.
+
+The measurement harness is still in the repository (`make score-ai`), so the
+question gets re-asked as local models improve. The numbers above are from
+qwen2.5-coder:7b, the largest model the reference hardware runs well.
 
 ## The interactive session
 
@@ -302,16 +487,6 @@ not, and says why.
 
 These are real and current, not oversights:
 
-- **By default the optional local model names things and nothing else.** It is
-  not asked to write the tutorials, and that is a measured decision rather than
-  caution: a 7B model writes thinner explanations than the ones in the knowledge
-  base, and it will state something false about your own code with complete
-  confidence. Naming is a job whose worst outcome is a mediocre name, and every
-  name is checked before it is used. The two jobs that go further, an idiom
-  review that has the model rewrite Go and a rewrite of the walkthrough
-  document, are reachable through `--ai-jobs`, are labelled experimental, and
-  say so when you turn them on. The concept lessons and the conversion report
-  are never touched by a model at all.
 - **The session's line editing needs a terminal that supports raw mode**, which
   covers Linux, macOS and the BSDs. On Windows, and anywhere else without it,
   the session falls back to reading whole lines: everything still works, but
@@ -367,10 +542,11 @@ this list:
   by name rather than approximated into something that matches different
   text, and the generated project stays dependency-free rather than take on
   an engine that provides them.
-- **Model-written explanations.** The lessons and reports are never generated
-  by a model, for the reason given under known limitations: a small local
-  model states falsehoods about your code with complete confidence. The
-  optional model names things, and that is the ceiling by design.
+- **AI-assisted conversion.** Built, measured against the corpus, and removed
+  on the evidence; the section "Why there is no AI mode" above has the
+  numbers. The lessons and the conversion report were never model-written and
+  never will be: a small local model states falsehoods about your code with
+  complete confidence, and prose has no mechanical check that can tell.
 - **Reworking a script's Unix assumptions for Windows.** Windows gets a binary
   and the Go the tool writes is ordinary portable Go, but where a script leans
   on a POSIX shell, on file modes or on process semantics, the translation
@@ -383,6 +559,7 @@ this list:
 make test       # the full suite
 make test-short # skips the toolchain-heavy tests
 make score      # runs the corpus and prints the conversion scorecard
+make score-ai   # runs the corpus with and without the model and compares
 make lint       # go vet plus a gofmt check
 make explain    # list the teaching concepts; TOPIC=<id> reads one
 make repl       # start the interactive session
@@ -396,6 +573,14 @@ make deps       # checks for the system tools the other targets need
 for byte against what real `perl` produces. It writes the numbers to a file and
 prints the change since the previous run. `ARGS` narrows it, so
 `make score ARGS="-tier tier2 -v"` scores one tier and shows every entry.
+
+`make score-ai` re-runs the question answered under "Why there is no AI mode":
+it converts every corpus entry twice, once deterministically and once with a
+local model proposing repairs, and prints how many entries improved, how many
+were rejected for no longer matching perl's output, and what the model time
+cost. It needs a local Ollama runtime and a code model (several gigabytes;
+`ollama pull qwen2.5-coder:7b` is the reference), which nothing else in this
+repository needs.
 
 The corpus is tiered by difficulty: tiers 1 and 2 are ordinary Perl, tier 3
 is object systems, parsers and process control, `domain/` is realistic
