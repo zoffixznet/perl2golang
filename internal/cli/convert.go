@@ -80,6 +80,7 @@ type convertFlags struct {
 	verbose bool
 	color   string
 	inputs  []string
+	ai      aiFlags
 }
 
 // runConvert is the convert command, and the default command.
@@ -113,8 +114,17 @@ func runConvert(e *env, args []string) int {
 		}
 	}
 
+	// AI mode is prepared here, after the command line has been understood and
+	// before anything is converted, so that a runtime that is not there costs
+	// one probe and one clear sentence rather than a failure per file. With no
+	// --ai flag this returns nil without touching anything.
+	session, code := startAI(e, &f.ai)
+	if code != ExitOK {
+		return code
+	}
+
 	for _, r := range runs {
-		r.convert(f, stream)
+		r.convert(f, stream, session)
 	}
 
 	if f.json {
@@ -141,6 +151,7 @@ func runConvert(e *env, args []string) int {
 		out = e.stderr
 	}
 	writeSummary(out, runs, stream, f.verbose)
+	session.finish(out, f.verbose)
 	for _, r := range runs {
 		if r.strictEntry != nil {
 			e.diagnose(*r.strictEntry, r.in.display, nil, color)
@@ -168,6 +179,7 @@ func parseConvertFlags(e *env, args []string) (*convertFlags, int) {
 	fs.BoolVar(&f.verbose, "v", false, "")
 	fs.BoolVar(&f.verbose, "verbose", false, "")
 	fs.StringVar(&f.color, "color", "auto", "")
+	f.ai.register(fs)
 
 	positional, err := parseInterspersed(fs, args)
 	if err != nil {
@@ -382,12 +394,16 @@ type run struct {
 
 // convert runs the pipeline over one input and, unless the artifacts are going
 // to standard output, writes the bundle.
-func (r *run) convert(f *convertFlags, stream streamMode) {
+func (r *run) convert(f *convertFlags, stream streamMode, session *aiSession) {
 	if r.err != nil {
 		return
 	}
 	start := time.Now()
 
+	var improve convert.Improver
+	if session != nil {
+		improve = session.improver
+	}
 	res, err := convert.Convert(r.in.src, convert.Options{
 		Path: r.in.path,
 		// A script that pulls in a module beside it is one program, so the
@@ -397,7 +413,8 @@ func (r *run) convert(f *convertFlags, stream streamMode) {
 		// The compact case asks for the Go and the notes, not a documentation
 		// tree it has nowhere to put. --json is the exception: it promises
 		// every artifact, so it always asks for the documents.
-		NoDocs: stream == streamBare && !f.json,
+		NoDocs:  stream == streamBare && !f.json,
+		Improve: improve,
 	})
 	r.elapsed = time.Since(start)
 	if err != nil {

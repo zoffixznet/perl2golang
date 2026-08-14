@@ -569,7 +569,7 @@ func (im *Improver) noteFailure(a convert.Artifact, err error) {
 			Short:     "the model did not fit in memory",
 			Message: "The local runtime ran out of memory loading " + im.client.Model() +
 				", so nothing was changed: " + runtimeErr.Message,
-			Advice: "Choose a smaller model, or free the memory the larger one needs.",
+			Advice: "Run `perl2golang ai status` to see what fits, or choose a smaller model with --ai-model.",
 		})
 		return
 	}

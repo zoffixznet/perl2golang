@@ -2889,7 +2889,7 @@ var catalogue = map[Code]Entry{
 		Severity:  report.Warn,
 		Message:   "no inference runtime answered at `%s`, and the deterministic output was kept",
 		Short:     "no inference runtime answered",
-		Advice:    "start the local runtime, or run without the model in the loop",
+		Advice:    "start the runtime, or run `perl2golang ai status` to see what is configured",
 		Converted: "the conversion is the deterministic one, unchanged",
 	},
 	AIRewriteRejectedBuild: {
@@ -2910,7 +2910,7 @@ var catalogue = map[Code]Entry{
 		Severity: report.Warn,
 		Message:  "`%s` needs about %s of VRAM and %s is free",
 		Short:    "model does not fit in free VRAM",
-		Advice:   "choose a smaller model, or free the memory the larger one needs",
+		Advice:   "run `perl2golang ai setup`, which lists the models that fit the free VRAM",
 	},
 	AIPartialImprovement: {
 		Severity:  report.Note,

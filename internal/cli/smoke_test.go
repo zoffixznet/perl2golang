@@ -115,11 +115,13 @@ func TestConversionRunsNothing(t *testing.T) {
 // pipeline cannot open a network connection, because nothing it links in knows
 // how.
 //
-// The check is on the pipeline packages themselves: nothing the converter
-// links in can open a connection, however the code is called. The one package
-// that can, internal/ai, is the measurement instrument behind cmd/score -ai,
-// and nothing in this binary imports it. TestNoNetworkWithoutTheFlag covers
-// the running program from the other side.
+// The check is on the pipeline rather than on the whole binary. AI mode is an
+// HTTP client and the binary that offers it necessarily links one, so the
+// stronger claim stopped being true the moment --ai existed. What is still
+// true, and is what matters, is that converting a file cannot reach the
+// network however the code is called: everything that can is behind the flag,
+// in one package, that the converter does not import. TestNoNetworkWithoutTheFlag
+// covers the running program from the other side.
 func TestNoNetworkPackages(t *testing.T) {
 	goCmd := requireToolchain(t)
 
