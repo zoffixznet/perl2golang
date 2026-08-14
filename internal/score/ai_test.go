@@ -1,6 +1,7 @@
 package score
 
 import (
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -80,16 +81,23 @@ func TestAIOutcome(t *testing.T) {
 
 func TestSummarizeAI(t *testing.T) {
 	entries := []EntryResult{
-		{AI: &AIEntry{Outcome: "improved", Accepted: 2}},
-		{AI: &AIEntry{Outcome: "rejected", Rejected: 1}},
-		{AI: &AIEntry{Outcome: "unchanged"}},
-		{AI: &AIEntry{Outcome: "changed", Accepted: 1}},
+		{AI: &AIEntry{Outcome: "improved", Accepted: 2, HitsBefore: 4, HitsAfter: 4}},
+		{AI: &AIEntry{Outcome: "rejected", Rejected: 1,
+			Gates: []GateCount{{Job: "idioms", Gate: "literals", Count: 1}}}},
+		{AI: &AIEntry{Outcome: "unchanged", HitsBefore: 7, HitsAfter: 7}},
+		{AI: &AIEntry{Outcome: "changed", Accepted: 1, HitsBefore: 9, HitsAfter: 5,
+			Gates: []GateCount{{Job: "idioms", Gate: "literals", Count: 2}, {Job: "repair", Gate: "grounding", Count: 1}}}},
 		{}, // an entry the comparison skipped
 	}
 	got := SummarizeAI(entries)
 	want := AITotals{Entries: 5, Improved: 1, Changed: 1, Unchanged: 1, Rejected: 1,
-		Skipped: 1, Accepted: 3, RejectedChanges: 1}
-	if got != want {
+		Skipped: 1, Accepted: 3, RejectedChanges: 1,
+		HitsBefore: 20, HitsAfter: 16, Tidier: 1}
+	want.Gates = []GateCount{
+		{Job: "idioms", Gate: "literals", Count: 3},
+		{Job: "repair", Gate: "grounding", Count: 1},
+	}
+	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("SummarizeAI = %+v, want %+v", got, want)
 	}
 }

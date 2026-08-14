@@ -64,6 +64,10 @@ type Options struct {
 	// AIConvertTimeout bounds one conversion with the model in the loop.
 	// Zero means [DefaultAIConvertTimeout].
 	AIConvertTimeout time.Duration
+	// AIDumpDir, when set, receives the deterministic and the model-assisted
+	// clean renderings of every entry the model changed, side by side, so a
+	// person can read the diffs rather than trust a count.
+	AIDumpDir string
 }
 
 func (o *Options) withDefaults() error {

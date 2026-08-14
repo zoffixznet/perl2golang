@@ -16,6 +16,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"strings"
 	"syscall"
 	"time"
@@ -48,6 +49,7 @@ func run() error {
 		aiEnd     = flag.String("ai-endpoint", "", "runtime base URL for -ai (default: $OLLAMA_HOST, or http://localhost:11434)")
 		aiTimeout = flag.Duration("ai-timeout", 5*time.Minute, "ceiling on one model request under -ai")
 		aiJobs    = flag.String("ai-jobs", "", "which AI jobs to run under -ai (default: the tool's own default set)")
+		aiDump    = flag.String("ai-dump", "", "directory to write both conversions of every entry the model changed, for reading the diffs")
 	)
 	flag.Usage = usage
 	flag.Parse()
@@ -93,6 +95,7 @@ func run() error {
 		if !flagGiven("jobs") {
 			opts.Jobs = 2
 		}
+		opts.AIDumpDir = *aiDump
 		if err := configureAI(ctx, &opts, *aiModel, *aiEnd, *aiTimeout, *aiJobs); err != nil {
 			return err
 		}
@@ -193,9 +196,24 @@ func configureAI(ctx context.Context, opts *score.Options, model, endpoint strin
 		})
 		return score.AISession{
 			Improver: ai.NewImprover(client),
-			Stats: func() (int, int) {
+			Activity: func() score.AIActivity {
 				s := client.Summary()
-				return s.Accepted, s.Rejected
+				a := score.AIActivity{Proposed: s.Proposed, Accepted: s.Accepted, Rejected: s.Rejected}
+				gates := map[score.GateCount]int{}
+				for _, r := range s.Rejections {
+					gates[score.GateCount{Job: r.Job.String(), Gate: r.Gate}]++
+				}
+				for g, n := range gates {
+					g.Count = n
+					a.Gates = append(a.Gates, g)
+				}
+				sort.Slice(a.Gates, func(i, j int) bool {
+					if a.Gates[i].Job != a.Gates[j].Job {
+						return a.Gates[i].Job < a.Gates[j].Job
+					}
+					return a.Gates[i].Gate < a.Gates[j].Gate
+				})
+				return a
 			},
 		}
 	}
