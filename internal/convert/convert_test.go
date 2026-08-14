@@ -71,6 +71,31 @@ print "greeted $count people\n";
 // and the current one are named here so that renaming the tool again cannot
 // quietly leak it into the output: it must appear nowhere in the clean program,
 // string literals included, unless the script itself already said it.
+// A script named after a standard library package must not produce a module
+// that shadows it: a module with the path "errors" makes the program's own
+// `import "errors"` ambiguous, and the build fails.
+func TestModuleNameStepsAsideForTheStandardLibrary(t *testing.T) {
+	res, err := convert.Convert([]byte("print \"hi\\n\";\n"), convert.Options{Path: "errors.pl"})
+	if err != nil {
+		t.Fatalf("Convert: %v", err)
+	}
+	if res.Name != "errors" {
+		t.Errorf("program name = %q, want errors", res.Name)
+	}
+	if res.Module != "errors-go" {
+		t.Errorf("module = %q, want errors-go so the standard library stays reachable", res.Module)
+	}
+
+	// An explicit module choice is the caller's own business.
+	res, err = convert.Convert([]byte("print \"hi\\n\";\n"), convert.Options{Path: "errors.pl", Module: "errors"})
+	if err != nil {
+		t.Fatalf("Convert: %v", err)
+	}
+	if res.Module != "errors" {
+		t.Errorf("module = %q, want the explicit choice kept", res.Module)
+	}
+}
+
 func TestCleanOutputSaysNothingAboutPerl(t *testing.T) {
 	banned := []string{"perl", "convert", "translat", "generated", "transpil"}
 	toolNames := []string{"perl2go", "perl2golang"}

@@ -136,6 +136,13 @@ func Convert(src []byte, opts Options) (result *Result, err error) {
 	module := opts.Module
 	if module == "" {
 		module = name
+		// A module named like a standard library package shadows that
+		// package inside its own build: a program converted from errors.pl
+		// would make its own `import "errors"` ambiguous. The program keeps
+		// its name; only the module path steps aside.
+		if reservedModulePaths[module] {
+			module += "-go"
+		}
 	}
 
 	parsed := parser.Parse(src)
@@ -343,6 +350,22 @@ func (r *Result) Bundle() map[string][]byte {
 func GoMod(module string) string {
 	return "module " + module + "\n\ngo 1.23\n"
 }
+
+// reservedModulePaths are the single-element import paths of the standard
+// library, plus "main". A generated module must not take one of these as its
+// path, because inside that module the name would resolve to the module
+// itself rather than to the standard library.
+var reservedModulePaths = func() map[string]bool {
+	names := strings.Fields(`main bufio bytes cmp context crypto embed encoding errors expvar
+	flag fmt hash html image io iter log maps math mime net os path plugin reflect regexp
+	runtime slices sort strconv strings structs sync syscall testing time unicode unique
+	unsafe weak`)
+	set := make(map[string]bool, len(names))
+	for _, n := range names {
+		set[n] = true
+	}
+	return set
+}()
 
 // programName turns an input path into an identifier-safe program name.
 func programName(p string) string {
