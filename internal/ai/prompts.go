@@ -16,9 +16,9 @@ import (
 // checks in verify.go, so an instruction hidden in a Perl comment can waste one
 // call and nothing else.
 
-// repairSystemPrompt drives the repair job, the one this mode exists for. The
-// model sees the Perl and the Go side by side, plus the converter's own notes
-// on what it refused or approximated, and is asked to write the missing Go.
+// repairSystemPrompt drives the repair job. The model sees the Perl and the
+// Go side by side, plus the converter's own notes on what it refused, and is
+// asked to write the missing Go.
 const repairSystemPrompt = `You finish Go programs that a deterministic converter produced from Perl.
 
 You are shown the Perl original, the Go conversion, and the converter's notes on

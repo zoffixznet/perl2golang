@@ -88,8 +88,8 @@ const helpersFile = "helpers.go"
 
 // Improve satisfies [convert.Improver].
 //
-// The passes run in value order: first the repair, which writes Go for what
-// the converter refused or approximated; then the naming jobs, when they were
+// The passes run in value order: first the repair, which writes Go for the
+// constructs the converter refused; then the naming jobs, when they were
 // asked for; then the idiom review. A pass that fails is noted and costs only
 // itself, so a dead runtime halfway through a run never takes back what an
 // earlier pass already earned.
@@ -227,9 +227,16 @@ func rejectedAll(fixes []Fix, gate, reason string) []RejectedFix {
 }
 
 // deviationsFor collects the report entries that describe this file's known
-// shortfalls: every refusal whose stand-in call is in the file, then the
-// approximations, newest last, up to the cap. Refusals come first because a
-// refusal is a hole where an approximation is a known wrinkle.
+// holes: every refusal whose stand-in call is in the file, up to the cap.
+//
+// Approximations are deliberately not offered. An approximation is working
+// code whose difference from the Perl is documented for a person; measured
+// over the whole corpus, handing those notes to the model repaired nothing
+// and produced every silent corruption the corpus oracle caught, because the
+// model reads "the converter approximated Perl's floor modulo" and responds
+// by removing the shim the note is about. A refusal is a hole where nothing
+// works yet, so a repair there can only add behaviour, never quietly change
+// behaviour that was right.
 func deviationsFor(a convert.Artifact) []Deviation {
 	if a.Report == nil {
 		return nil
@@ -241,17 +248,6 @@ func deviationsFor(a convert.Artifact) []Deviation {
 			continue
 		}
 		out = append(out, deviation(e, "refused"))
-		if len(out) == maxDeviations {
-			return out
-		}
-	}
-	// Approximations have no marker in the code, so they are offered with the
-	// program's main file, where nearly all of them land.
-	if path.Base(a.Name) != "main.go" {
-		return out
-	}
-	for _, e := range a.Report.BySeverity(report.Warn) {
-		out = append(out, deviation(e, "approximated"))
 		if len(out) == maxDeviations {
 			break
 		}

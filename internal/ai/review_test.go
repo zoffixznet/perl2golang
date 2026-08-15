@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+
+	"perl2golang/internal/report"
 )
 
 // These tests pin down what the idiom review may and may not do. The job
@@ -311,6 +313,23 @@ func main() {
 		if kinds[i] != want[i] {
 			t.Fatalf("kinds = %v, want %v", kinds, want)
 		}
+	}
+}
+
+func TestRepairIsOfferedRefusalsOnly(t *testing.T) {
+	// An approximation is documented working code. Measured over the corpus,
+	// offering approximations for repair fixed nothing and produced the only
+	// silent corruptions, so the work list is refusals alone.
+	a := artifact("main.go", "package main\n\nfunc main() {\n\tnotImplemented[string](\"P2G4110\", \"tr///\")\n}\n", nil)
+	a.Report.Add(report.Entry{Code: "P2G4110", Severity: report.Refuse, Construct: "tr///"})
+	a.Report.Add(report.Entry{Code: "P2G5502", Severity: report.Warn, Construct: "numeric coercion"})
+
+	got := deviationsFor(a)
+	if len(got) != 1 {
+		t.Fatalf("deviations = %d, want the refusal alone: %+v", len(got), got)
+	}
+	if got[0].Code != "P2G4110" || got[0].Kind != "refused" {
+		t.Fatalf("the one deviation should be the refusal, got %+v", got[0])
 	}
 }
 

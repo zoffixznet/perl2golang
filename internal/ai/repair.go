@@ -10,11 +10,14 @@ import (
 	"strings"
 )
 
-// The repair job is the reason AI mode exists: the model is shown the original
-// Perl and the generated Go together and asked to write the Go the converter
-// could not. Everything the converter refused stands in the code as a call to
-// notImplemented, and everything it knowingly approximated is in the report;
-// both are handed to the model as its work list.
+// The repair job has the model write the Go the converter could not: it is
+// shown the original Perl and the generated Go together, plus the report
+// entries for everything the converter refused, each of which stands in the
+// code as a call to notImplemented. Refusals are the whole work list. The
+// converter's approximations are documented working code, and measured over
+// the corpus a model set loose on them fixed nothing and quietly broke
+// programs that were right, so they stay with the person the report was
+// written for.
 //
 // What makes the job safe is the same rule as everywhere else in this package:
 // the model proposes text, and this tool splices, checks, compiles and vets it
@@ -33,8 +36,7 @@ const maxFixes = 12
 const maxRepairWhyChars = 300
 
 // maxDeviations caps how many report entries are put in front of the model.
-// Refusals come first because a refusal is a hole where an approximation is
-// merely a wrinkle; past a dozen the file needs a person, not a model.
+// Past a dozen the file needs a person, not a model.
 const maxDeviations = 12
 
 // Deviation is one place the conversion is known to fall short, taken from the
@@ -43,8 +45,8 @@ type Deviation struct {
 	// Code is the diagnostic code, for example "P2G4110". For a refusal the
 	// same code appears in the notImplemented call standing in the code.
 	Code string
-	// Kind is "refused" when nothing was generated for the construct, and
-	// "approximated" when the generated Go is known to differ.
+	// Kind labels the shortfall for the prompt. The improver only offers
+	// "refused" entries; the field stays open for callers with other sources.
 	Kind string
 	// Construct names the Perl construct.
 	Construct string

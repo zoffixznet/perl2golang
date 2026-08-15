@@ -24,7 +24,7 @@ const (
 
 // The fine-grained jobs. Each belongs to exactly one group.
 const (
-	JobRepair      Job = "repair"      // write Go for what the converter refused or approximated
+	JobRepair      Job = "repair"      // write Go for the constructs the converter refused
 	JobIdiomReview Job = "idioms"      // findings against the antipattern checklist
 	JobRename      Job = "rename"      // better names for weak local names
 	JobShapeNaming Job = "shapes"      // type and field names for inferred shapes
