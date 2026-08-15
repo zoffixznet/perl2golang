@@ -289,6 +289,42 @@ func TestReviewCodeEndToEnd(t *testing.T) {
 	}
 }
 
+func TestReviewRollsBackWhenTheWholeFileFailsToCompile(t *testing.T) {
+	// The finding parses and passes every structural check, but applying it
+	// leaves `found` declared and unused, which only the compiler can see.
+	// The whole file is then rolled back, and the summary has to agree with
+	// what was written: nothing.
+	payload := map[string]any{"findings": []any{map[string]any{
+		"line": 12, "kind": "other",
+		"old_code": "fmt.Println(found)",
+		"new_code": "fmt.Println(names)",
+		"imports":  []string{},
+		"why":      "print the slice instead",
+	}}}
+	answer, err := json.Marshal(payload)
+	if err != nil {
+		t.Fatal(err)
+	}
+	m := newMockRuntime(t, string(answer))
+	c := testClient(t, m, JobSet{JobIdiomReview})
+	im := NewImprover(c)
+
+	got, _ := im.Improve(context.Background(), artifact("main.go", containsLoopGo, nil))
+	if string(got) != containsLoopGo {
+		t.Fatalf("a file that does not compile was handed back:\n%s", got)
+	}
+	s := c.Summary()
+	if s.Accepted != 0 {
+		t.Errorf("accepted = %d after a whole-file rollback, want 0", s.Accepted)
+	}
+	if s.Rejected != 1 || len(s.Rejections) != 1 {
+		t.Fatalf("rejected = %d with %d recorded rejections, want 1 and 1", s.Rejected, len(s.Rejections))
+	}
+	if s.Rejections[0].Gate != "compile" {
+		t.Errorf("gate = %q, want compile", s.Rejections[0].Gate)
+	}
+}
+
 func TestReviewKindsComeFromTheDeterministicScan(t *testing.T) {
 	src := []byte(`package main
 

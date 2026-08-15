@@ -345,6 +345,8 @@ func (im *Improver) reviewed(ctx context.Context, a convert.Artifact, content []
 		return content, nil
 	}
 	if err := im.compileGate(ctx, a, string(content), res.Source); err != nil {
+		gate, reason := gateOf(err)
+		im.client.rejectRolledBack(a.Name, gate, reason, len(res.Applied))
 		return content, err
 	}
 	return []byte(res.Source), nil

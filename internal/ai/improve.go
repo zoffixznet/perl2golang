@@ -176,7 +176,7 @@ func (c *Client) ReviewCode(ctx context.Context, req CodeRequest) (CodeResult, e
 			if errors.As(err, &re) {
 				gate, reason = re.Gate, re.Reason
 			}
-			c.rollBack(req.Path, len(result.Applied))
+			c.rejectRolledBack(req.Path, gate, reason, len(result.Applied))
 			result.Rejected = append(result.Rejected, RejectedFinding{Gate: gate, Reason: reason})
 			result.Applied = nil
 			return CodeResult{Source: req.Source, Rejected: result.Rejected}, nil
@@ -223,6 +223,21 @@ func (c *Client) rollBack(target string, n int) {
 		}
 	}
 	c.summary.Changes = kept
+}
+
+// rejectRolledBack rolls back a file's accepted findings and records each of
+// them as a rejection under the gate that failed the whole file, so the
+// summary's counts and its rejection detail stay in step. The findings were
+// already counted as proposed when they were accepted, so nothing here touches
+// that number.
+func (c *Client) rejectRolledBack(target, gate, reason string, n int) {
+	c.rollBack(target, n)
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	for i := 0; i < n; i++ {
+		c.summary.Rejections = append(c.summary.Rejections,
+			Rejection{Job: JobIdiomReview, Target: target, Gate: gate, Reason: reason})
+	}
 }
 
 // applyFinding checks one finding and splices it in, returning the whole
