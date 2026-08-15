@@ -289,7 +289,10 @@ func applyFix(clean, annotated, baseline string, f Fix, prior []string) (string,
 		}
 	}
 
-	candidate := strings.Replace(clean, f.OldCode, f.NewCode, 1)
+	// The marker rides on the splice: whatever the model wrote is labelled
+	// where it lands, in both renderings, before any TODO housekeeping runs.
+	replacement := fillMarker + f.NewCode
+	candidate := strings.Replace(clean, f.OldCode, replacement, 1)
 	candidate, err = addImports(candidate, imports)
 	if err != nil {
 		return "", "", nil, err
@@ -307,7 +310,7 @@ func applyFix(clean, annotated, baseline string, f Fix, prior []string) (string,
 	}
 
 	if annotated != "" {
-		annotated = strings.Replace(annotated, f.OldCode, f.NewCode, 1)
+		annotated = strings.Replace(annotated, f.OldCode, replacement, 1)
 		if annotated, err = addImports(annotated, imports); err != nil {
 			return "", "", nil, &RejectedError{Gate: "counterpart", Reason: "the fix could not be applied to the annotated rendering"}
 		}
@@ -672,23 +675,21 @@ func litString(e ast.Expr) string {
 	return s
 }
 
-// modelFillMarker is written where a closed gap's TODO stood. A stub says
-// plainly that a construct was not converted; code that replaces it must say
-// just as plainly where it came from and what the checks did and did not
-// prove, because the reader has no other way to know which lines to read
-// hardest. The report carries the same fact with the model's own reasoning.
-var modelFillMarker = []string{
-	"// The code below was written by a local model, not by the converter: the",
-	"// construct here was one the converter refused. It compiles and passes go",
-	"// vet with the rest of the program, which proves it builds, not that it",
-	"// does what the Perl did. Read it before trusting it; the conversion",
-	"// report has the model's own reasoning.",
-}
+// fillMarker is spliced in above every accepted fix. A stub says plainly
+// that a construct was not converted; code that replaces one must say just
+// as plainly where it came from and what the checks did not prove, because
+// the reader has no other way to know which lines to read hardest. It rides
+// on the splice itself rather than on the TODO above the gap, so a fill is
+// marked even when a neighbouring gap under the same TODO stays open. The
+// report carries the same fact with the model's own reasoning.
+const fillMarker = "// Written by a local model where the converter refused to guess. It compiles\n" +
+	"// and vets; that does not prove it does what the Perl did. Verify it; the\n" +
+	"// conversion report has the model's reasoning.\n"
 
-// removeStaleTodos replaces the TODO comments that explained gaps the repair
-// closed with a marker saying a model wrote the code below. A TODO left above
-// working code would be a false statement in the most trusted place there is,
-// the code itself; unmarked model output one step below it.
+// removeStaleTodos removes the TODO comments that explained gaps the repair
+// closed. A TODO left above working code would be a false statement in the
+// most trusted place there is, the code itself; the fill itself carries its
+// own marker, spliced in with it.
 //
 // The rule is careful on purpose: only comment runs introduced by "// TODO:"
 // are candidates, only when their text names a gap that was closed, and only
@@ -709,18 +710,17 @@ func removeStaleTodos(src string, before, after []gapCall) string {
 			continue
 		}
 		// The run is this comment line and every comment line after it, up to
-		// the first non-comment line.
+		// the first non-comment line. A fill's own marker sits directly under
+		// the TODO it answers and is not part of the run: it belongs to the
+		// code below it, which is staying.
 		end := i
-		for end+1 < len(lines) && strings.HasPrefix(strings.TrimSpace(lines[end+1]), "//") {
+		for end+1 < len(lines) && strings.HasPrefix(strings.TrimSpace(lines[end+1]), "//") &&
+			!strings.HasPrefix(strings.TrimSpace(lines[end+1]), "// Written by a local model") {
 			end++
 		}
 		if gapStillOpenBelow(lines[end+1:]) {
 			keep = append(keep, lines[i])
 			continue
-		}
-		indent := lines[i][:len(lines[i])-len(strings.TrimLeft(lines[i], " \t"))]
-		for _, m := range modelFillMarker {
-			keep = append(keep, indent+m)
 		}
 		i = end
 	}

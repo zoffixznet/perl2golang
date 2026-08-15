@@ -103,7 +103,7 @@ func TestRepairClosesAGapInBothRenderings(t *testing.T) {
 		if strings.Contains(src, "TODO") {
 			t.Errorf("the %s rendering keeps a TODO above working code:\n%s", name, src)
 		}
-		if !strings.Contains(src, "written by a local model") {
+		if !strings.Contains(src, "Written by a local model") {
 			t.Errorf("the %s rendering does not mark the model's code:\n%s", name, src)
 		}
 	}
@@ -400,8 +400,8 @@ func main() {
 	if !strings.Contains(got, "the second gap") {
 		t.Errorf("the open gap lost its TODO:\n%s", got)
 	}
-	if strings.Count(got, "written by a local model") != 1 {
-		t.Errorf("the closed gap should carry exactly one model marker:\n%s", got)
+	if strings.Contains(got, "local model") {
+		t.Errorf("the marker rides on the splice, not on the TODO housekeeping:\n%s", got)
 	}
 }
 
