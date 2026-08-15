@@ -113,17 +113,20 @@ func TestImproverDegradesOnce(t *testing.T) {
 	c := New(Options{Endpoint: url, Model: "qwen2.5-coder:7b"})
 	im := NewImprover(c)
 
-	a := artifact("main.go", sampleGo, nil)
+	// The default job set is the repair alone, so the file needs a refusal in
+	// it for the model to be consulted at all.
+	a := artifact("main.go", gappedGo, nil)
+	a.Report.Add(report.Entry{Code: "P2G4110", Severity: report.Refuse, Message: gapDeviation.Message})
 	if _, err := im.Improve(context.Background(), a); err == nil {
 		t.Fatal("a dead runtime produced no error")
 	}
-	b := artifact("annotated/main.go", sampleGo, nil)
+	b := artifact("annotated/main.go", gappedAnnotated, nil)
 	b.Report = a.Report
 	got, err := im.Improve(context.Background(), b)
 	if err != nil {
 		t.Fatalf("the second rendering tried again and failed again: %v", err)
 	}
-	if string(got) != sampleGo {
+	if string(got) != gappedAnnotated {
 		t.Error("a failed run changed the file anyway")
 	}
 	if len(a.Report.Entries) == 0 {

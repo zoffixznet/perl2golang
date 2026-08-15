@@ -166,9 +166,11 @@ func TestRepairRejects(t *testing.T) {
 			wantGate: "control flow",
 		},
 		{
+			// The signature line is converted code, so the positional gate
+			// refuses this before the declaration comparison ever runs.
 			name:     "a dropped declaration",
 			fix:      Fix{OldCode: "func main() {\n\tfmt.Print(\"start\\n\")", NewCode: "func other() {\n\tfmt.Print(\"start\\n\")"},
-			wantGate: "declarations",
+			wantGate: "containment",
 		},
 		{
 			name:     "a splice that stops the file parsing",
@@ -473,5 +475,64 @@ func main() {
 	}
 	if c.Summary().Accepted != 0 {
 		t.Errorf("accepted = %d, want 0", c.Summary().Accepted)
+	}
+}
+
+// checkRepairedFile still guards the declaration set for edits that stay
+// inside their region; the positional gate answers for everything outside.
+func TestCheckRepairedFileGuardsDeclarations(t *testing.T) {
+	baseline := "package main\n\nfunc main() {}\n\nfunc helper() {}\n"
+	candidate := "package main\n\nfunc main() {}\n\nfunc other() {}\n"
+	err := checkRepairedFile(baseline, candidate, nil)
+	if err == nil {
+		t.Fatal("a replaced declaration was accepted")
+	}
+	re, ok := err.(*RejectedError)
+	if !ok || re.Gate != "declarations" {
+		t.Fatalf("gate = %v, want declarations", err)
+	}
+}
+
+// The positional gate: the model sees the whole file and may write only
+// where the converter could not. The statement holding the stub and the TODO
+// above it are editable; the working line between gaps is not.
+func TestContainment(t *testing.T) {
+	src := `package main
+
+import "fmt"
+
+func main() {
+	fmt.Print("start\n")
+	// TODO: this capture is read where no match is in scope
+	fmt.Printf("outside: %s\n", toText(notImplemented[any]("P2G4110", "gap one")))
+	fmt.Print("between\n")
+	fmt.Printf("whole: %s\n", toText(notImplemented[any]("P2G4110", "gap two")))
+	fmt.Print("done\n")
+}
+`
+	regions := unconvertedRegions(src)
+	if len(regions) != 2 {
+		t.Fatalf("regions = %d, want the two gap statements: %+v", len(regions), regions)
+	}
+	ok := [][2]string{
+		{"whole stub statement", "fmt.Printf(\"outside: %s\\n\", toText(notImplemented[any](\"P2G4110\", \"gap one\")))"},
+		{"stub with its TODO", "// TODO: this capture is read where no match is in scope\n\tfmt.Printf(\"outside: %s\\n\", toText(notImplemented[any](\"P2G4110\", \"gap one\")))"},
+	}
+	for _, c := range ok {
+		if err := checkContainment(src, c[1], regions); err != nil {
+			t.Errorf("%s should be editable: %v", c[0], err)
+		}
+	}
+	bad := [][2]string{
+		{"a working line", "fmt.Print(\"start\\n\")"},
+		{"a working line between the gaps", "fmt.Print(\"between\\n\")"},
+		{"a span running past the region", "fmt.Printf(\"outside: %s\\n\", toText(notImplemented[any](\"P2G4110\", \"gap one\")))\n\tfmt.Print(\"between\\n\")"},
+	}
+	for _, c := range bad {
+		err := checkContainment(src, c[1], regions)
+		re, isRejected := err.(*RejectedError)
+		if !isRejected || re.Gate != "containment" {
+			t.Errorf("%s should be refused by position, got %v", c[0], err)
+		}
 	}
 }

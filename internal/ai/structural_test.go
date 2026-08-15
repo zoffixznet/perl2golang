@@ -251,12 +251,10 @@ func TestEndpointHonoursEnvironment(t *testing.T) {
 
 func TestDefaultJobsImproveTheConversion(t *testing.T) {
 	jobs := DefaultJobs()
-	for _, want := range []Job{JobRepair, JobIdiomReview} {
-		if !jobs.Has(want) {
-			t.Errorf("%s is not on by default, and it is the job this mode exists for", want)
-		}
+	if !jobs.Has(JobRepair) {
+		t.Errorf("%s is not on by default, and it is the job this mode exists for", JobRepair)
 	}
-	for _, unwanted := range []Job{JobRename, JobShapeNaming, JobDocComments, JobWalkthrough} {
+	for _, unwanted := range []Job{JobIdiomReview, JobRename, JobShapeNaming, JobDocComments, JobWalkthrough} {
 		if jobs.Has(unwanted) {
 			t.Errorf("%s is on by default, and it should have to be asked for", unwanted)
 		}
@@ -274,8 +272,8 @@ func TestParseJobs(t *testing.T) {
 		want string
 		bad  bool
 	}{
-		{in: "", want: "repair,idioms"},
-		{in: "default", want: "repair,idioms"},
+		{in: "", want: "repair"},
+		{in: "default", want: "repair"},
 		{in: "rename", want: "rename"},
 		{in: "code", want: "repair,idioms"},
 		{in: "names", want: "rename,shapes,comments"},

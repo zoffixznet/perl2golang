@@ -6,6 +6,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -275,6 +276,9 @@ func applyFix(clean, annotated, baseline string, f Fix, prior []string) (string,
 	default:
 		return "", "", nil, &RejectedError{Gate: "grounding", Reason: "the quoted code appears more than once, so the change is ambiguous"}
 	}
+	if err := checkContainment(clean, f.OldCode, unconvertedRegions(clean)); err != nil {
+		return "", "", nil, err
+	}
 	if annotated != "" {
 		switch strings.Count(annotated, f.OldCode) {
 		case 1:
@@ -485,6 +489,133 @@ func checkRepairedFile(baseline, candidate string, newImports []string) error {
 		return &RejectedError{Gate: "directives", Reason: "the compiler directives or build tags changed"}
 	}
 	return nil
+}
+
+// A span is one byte range of a file.
+type span struct{ from, to int }
+
+// unconvertedRegions lists the byte spans the converter marked as not
+// converted: every statement containing a notImplemented call, widened to
+// take in the comment run directly above it, with whitespace-adjacent spans
+// merged. These are the only spans a repair may rewrite. The whole file is
+// context; this is the permission.
+func unconvertedRegions(src string) []span {
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "candidate.go", src, parser.ParseComments)
+	if err != nil {
+		return nil
+	}
+	base := fset.File(file.Pos()).Base()
+	off := func(p token.Pos) int { return int(p) - base }
+
+	var spans []span
+	mark := func(list []ast.Stmt) {
+		for _, stmt := range list {
+			if stmtOwnsGapCall(stmt) {
+				spans = append(spans, span{off(stmt.Pos()), off(stmt.End())})
+			}
+		}
+	}
+	ast.Inspect(file, func(n ast.Node) bool {
+		switch node := n.(type) {
+		case *ast.BlockStmt:
+			mark(node.List)
+		case *ast.CaseClause:
+			mark(node.Body)
+		case *ast.CommClause:
+			mark(node.Body)
+		}
+		return true
+	})
+	if len(spans) == 0 {
+		return nil
+	}
+
+	// Take in the comment run that sits directly above each statement: the
+	// TODO explaining the gap belongs to the gap.
+	for i := range spans {
+		for _, group := range file.Comments {
+			end := off(group.End())
+			if end <= spans[i].from && strings.TrimSpace(src[end:spans[i].from]) == "" {
+				if from := off(group.Pos()); from < spans[i].from {
+					spans[i].from = from
+				}
+			}
+		}
+	}
+
+	sort.Slice(spans, func(i, j int) bool { return spans[i].from < spans[j].from })
+	merged := spans[:1]
+	for _, s := range spans[1:] {
+		last := &merged[len(merged)-1]
+		if s.from <= last.to || strings.TrimSpace(src[last.to:s.from]) == "" {
+			if s.to > last.to {
+				last.to = s.to
+			}
+			continue
+		}
+		merged = append(merged, s)
+	}
+	return merged
+}
+
+// stmtOwnsGapCall reports whether a statement contains a notImplemented call
+// without an intervening block, so the innermost statement is the one marked
+// rather than a whole if or for around it.
+func stmtOwnsGapCall(stmt ast.Stmt) bool {
+	found := false
+	ast.Inspect(stmt, func(n ast.Node) bool {
+		if found {
+			return false
+		}
+		switch node := n.(type) {
+		case *ast.BlockStmt:
+			if node != stmt {
+				return false
+			}
+		case *ast.CallExpr:
+			fun := node.Fun
+			if idx, ok := fun.(*ast.IndexExpr); ok {
+				fun = idx.X
+			}
+			if id, ok := fun.(*ast.Ident); ok && (id.Name == "notImplemented" || id.Name == "notImplementedHere") {
+				found = true
+				return false
+			}
+		}
+		return true
+	})
+	return found
+}
+
+// checkContainment proves that a fix's quoted code lies inside an unconverted
+// region. The model sees the whole file and may only write where the
+// converter could not: an edit anywhere else is refused by position, whatever
+// it says, because every measured corruption was a rewrite of code that was
+// already right. A prompt asking the model to stay inside the regions would
+// be a request; this is a guarantee.
+func checkContainment(clean, oldCode string, regions []span) error {
+	idx := strings.Index(clean, oldCode)
+	if idx < 0 {
+		return &RejectedError{Gate: "grounding", Reason: "the quoted code is not in the file"}
+	}
+	from, to := idx, idx+len(oldCode)
+	for from < to && isSpace(clean[from]) {
+		from++
+	}
+	for to > from && isSpace(clean[to-1]) {
+		to--
+	}
+	for _, r := range regions {
+		if from >= r.from && to <= r.to {
+			return nil
+		}
+	}
+	return &RejectedError{Gate: "containment", Reason: "the fix rewrites code the converter converted; only the unconverted regions may change"}
+}
+
+func isSpace(b byte) bool {
+	return b == ' ' || b == '\t' || b == '\n' || b == '\r'
 }
 
 // gapCall is one notImplemented call in a file: the diagnostic code and the

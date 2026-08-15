@@ -43,21 +43,25 @@ var (
 // allJobs is every fine-grained job, in canonical order.
 var allJobs = slices.Concat(codeJobs, nameJobs, docJobs)
 
-// defaultJobs is what a bare --ai runs.
+// defaultJobs is what a bare --ai runs: the repair job alone.
 //
-// Both defaults aim at the conversion itself. The repair job shows the model
-// the original Perl beside the generated Go and asks it to write the Go the
-// converter could not: every proposed change is spliced by this tool, checked
-// against the structural rules, and compiled and vetted before it is kept. The
-// idiom review asks for the smaller kind of fix, a hand-rolled loop that is a
-// standard library call, under stricter rules still.
+// The model is shown the whole generated program beside the original Perl,
+// and may write only inside the regions the converter marked as unconverted;
+// an edit anywhere else is refused by position. That scoping is the measured
+// lesson of this corpus: every silent corruption the equivalence oracle ever
+// caught was a model rewriting code that was already right, while at a
+// refusal site there is no correct behaviour to destroy, so the worst case
+// degrades to the honest stub staying.
 //
-// The naming trio is deliberately absent. The source already has the names its
-// author chose, so renaming is the least valuable thing a model can do here;
-// it is kept for whoever wants it, behind --ai-jobs names. The walkthrough job
-// has the model write teaching text, which a model this size gets confidently
-// wrong, so it too has to be asked for.
-var defaultJobs = []Job{JobRepair, JobIdiomReview}
+// The idiom review, which asks the model to restyle working code, is kept
+// behind --ai-jobs idioms for measurement: over the corpus it produced
+// roughly one genuine improvement per ten programs and attempted to corrupt
+// one program in four it touched, and the corpus oracle that catches those is
+// exactly what a user's own conversion does not have. The naming trio is
+// deliberately absent too: the source already has the names its author chose.
+// The walkthrough job has the model write teaching text, which a model this
+// size gets confidently wrong, so it also has to be asked for.
+var defaultJobs = []Job{JobRepair}
 
 // proseJobs are the jobs whose product is English rather than a name. They are
 // opt-in and labelled wherever they appear.

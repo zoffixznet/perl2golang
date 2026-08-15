@@ -345,18 +345,23 @@ func aiHelp() string {
 func aiConvertHelp() string {
 	return dedent(`
 	optional local model (off by default):
-	      --ai             let a local model improve the conversion: it is shown
-	                       your Perl beside the generated Go and asked to write
-	                       the Go the converter could not. Without this flag
-	                       perl2golang makes no network connection of any kind.
+	      --ai             let a local model write the Go the converter could
+	                       not. It sees your whole Perl and the whole generated
+	                       Go, and it may only change the regions the converter
+	                       marked as unconverted; an edit anywhere else is
+	                       refused by position, so code that already works is
+	                       never touched. Every line it writes is marked as
+	                       model-written, in the code and in the report.
+	                       Without this flag perl2golang makes no network
+	                       connection of any kind.
 	      --ai-model TAG   which model to use (default: a code model the runtime
 	                       already has)
 	      --ai-endpoint U  the runtime's base URL (default: $OLLAMA_HOST, or
 	                       http://localhost:11434)
 	      --ai-timeout D   how long one request may take (default: 2m)
-	      --ai-jobs LIST   which jobs to run. Default: repair,idioms. Also accepts
-	                       rename, shapes, comments, walkthrough, the group names
-	                       code, names and docs, all, and none.
+	      --ai-jobs LIST   which jobs to run. Default: repair. Also accepts
+	                       idioms, rename, shapes, comments, walkthrough, the
+	                       group names code, names and docs, all, and none.
 
 	Anything the model produces has to parse, keep the program's declarations and
 	error handling, add no dependency, and compile and pass go vet alongside the
