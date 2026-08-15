@@ -9,6 +9,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"perl2golang/internal/idioms"
 )
 
 // maxFindings caps how much one review may propose. A model that returns
@@ -317,7 +319,42 @@ func applyFinding(current, baseline string, f Finding, prior []string) (string, 
 	if err := checkIdiomRewrite(baseline, formatted, allowed); err != nil {
 		return "", nil, err
 	}
+	if err := checkTidier(current, formatted); err != nil {
+		return "", nil, err
+	}
 	return formatted, imports, nil
+}
+
+// checkTidier holds a review finding to the review's own standard: the
+// deterministic antipattern scan. A rewrite that raises the file's hit count
+// is a failed review whatever else it passes; the measured example is a model
+// respelling `any` as `interface{}`, which no gate about behaviour can object
+// to and every Go reader would.
+func checkTidier(current, candidate string) error {
+	before, err := idioms.Scan("current.go", []byte(current))
+	if err != nil {
+		return nil // the scan cannot judge, so it does not vote
+	}
+	after, err := idioms.Scan("candidate.go", []byte(candidate))
+	if err != nil {
+		return nil
+	}
+	if len(after) <= len(before) {
+		return nil
+	}
+	counts := map[string]int{}
+	for _, h := range before {
+		counts[h.Rule]--
+	}
+	worst := ""
+	for _, h := range after {
+		counts[h.Rule]++
+		if counts[h.Rule] > 0 {
+			worst = h.Rule
+		}
+	}
+	return &RejectedError{Gate: "idioms", Reason: fmt.Sprintf(
+		"the rewrite adds an antipattern hit (%s), so it makes the file less idiomatic, not more", worst)}
 }
 
 // decodeJSON turns a model's answer into a payload, tolerating exactly the two

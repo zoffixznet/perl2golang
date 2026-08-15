@@ -147,6 +147,24 @@ func TestReviewRejects(t *testing.T) {
 			wantGate: "literals",
 		},
 		{
+			name: "a rewrite that makes the file less idiomatic",
+			src: `package main
+
+import "fmt"
+
+func main() {
+	var item any
+	item = 1
+	fmt.Println(item)
+}
+`,
+			finding: Finding{Kind: "other",
+				OldCode: "var item any",
+				NewCode: "var item interface{}",
+				Why:     "spell the type out"},
+			wantGate: "idioms",
+		},
+		{
 			name: "an import outside the standard library",
 			src:  containsLoopGo,
 			finding: Finding{Kind: "stdlib_exists",
