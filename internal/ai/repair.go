@@ -168,8 +168,9 @@ func (c *Client) RepairCode(ctx context.Context, req RepairRequest) (RepairResul
 	}
 
 	clean, annotated := req.Source, req.Counterpart
+	var imported []string
 	for _, f := range payload.Fixes {
-		nextClean, nextAnnotated, err := applyFix(clean, annotated, req.Source, f)
+		nextClean, nextAnnotated, used, err := applyFix(clean, annotated, req.Source, f, imported)
 		if err != nil {
 			gate, reason := gateOf(err)
 			result.Rejected = append(result.Rejected, RejectedFix{Fix: f, Gate: gate, Reason: reason})
@@ -177,6 +178,7 @@ func (c *Client) RepairCode(ctx context.Context, req RepairRequest) (RepairResul
 			continue
 		}
 		clean, annotated = nextClean, nextAnnotated
+		imported = append(imported, used...)
 		result.Applied = append(result.Applied, f)
 	}
 	if clean == req.Source {
@@ -243,75 +245,79 @@ func (c *Client) rejectFixes(result *RepairResult, path, gate, reason string) {
 	result.GapsClosed = 0
 }
 
-// applyFix checks one fix and splices it into both renderings. Every failure
-// is a [RejectedError] naming the check that turned the fix down.
-func applyFix(clean, annotated, baseline string, f Fix) (string, string, error) {
+// applyFix checks one fix and splices it into both renderings, returning the
+// imports it brought with it. prior lists the imports earlier accepted fixes
+// already added, since the structural check compares against the baseline,
+// which has none of them. Every failure is a [RejectedError] naming the check
+// that turned the fix down.
+func applyFix(clean, annotated, baseline string, f Fix, prior []string) (string, string, []string, error) {
 	switch {
 	case strings.TrimSpace(f.OldCode) == "":
-		return "", "", &RejectedError{Gate: "shape", Reason: "the fix quotes no code"}
+		return "", "", nil, &RejectedError{Gate: "shape", Reason: "the fix quotes no code"}
 	case strings.TrimSpace(f.NewCode) == "":
-		return "", "", &RejectedError{Gate: "shape", Reason: "the fix proposes no replacement"}
+		return "", "", nil, &RejectedError{Gate: "shape", Reason: "the fix proposes no replacement"}
 	case f.OldCode == f.NewCode:
-		return "", "", &RejectedError{Gate: "shape", Reason: "the fix changes nothing"}
+		return "", "", nil, &RejectedError{Gate: "shape", Reason: "the fix changes nothing"}
 	case len(f.Why) > maxRepairWhyChars:
-		return "", "", &RejectedError{Gate: "shape", Reason: "the explanation ran past its budget"}
+		return "", "", nil, &RejectedError{Gate: "shape", Reason: "the explanation ran past its budget"}
 	}
-	imports, err := usableImports(f)
+	imports, err := usableImports(f.NewCode, f.Imports)
 	if err != nil {
-		return "", "", err
+		return "", "", nil, err
 	}
 
 	switch strings.Count(clean, f.OldCode) {
 	case 1:
 	case 0:
-		return "", "", &RejectedError{Gate: "grounding", Reason: "the quoted code is not in the file"}
+		return "", "", nil, &RejectedError{Gate: "grounding", Reason: "the quoted code is not in the file"}
 	default:
-		return "", "", &RejectedError{Gate: "grounding", Reason: "the quoted code appears more than once, so the change is ambiguous"}
+		return "", "", nil, &RejectedError{Gate: "grounding", Reason: "the quoted code appears more than once, so the change is ambiguous"}
 	}
 	if annotated != "" {
 		switch strings.Count(annotated, f.OldCode) {
 		case 1:
 		case 0:
-			return "", "", &RejectedError{Gate: "counterpart", Reason: "the quoted code has no single place in the annotated rendering, and the two renderings must stay identical"}
+			return "", "", nil, &RejectedError{Gate: "counterpart", Reason: "the quoted code has no single place in the annotated rendering, and the two renderings must stay identical"}
 		default:
-			return "", "", &RejectedError{Gate: "counterpart", Reason: "the quoted code is ambiguous in the annotated rendering"}
+			return "", "", nil, &RejectedError{Gate: "counterpart", Reason: "the quoted code is ambiguous in the annotated rendering"}
 		}
 	}
 
 	candidate := strings.Replace(clean, f.OldCode, f.NewCode, 1)
 	candidate, err = addImports(candidate, imports)
 	if err != nil {
-		return "", "", err
+		return "", "", nil, err
 	}
 	formatted, err := gofmt(candidate)
 	if err != nil {
 		if perr := VerifyGo(candidate); perr != nil {
-			return "", "", &RejectedError{Gate: "parse", Reason: perr.Error(), Err: perr}
+			return "", "", nil, &RejectedError{Gate: "parse", Reason: perr.Error(), Err: perr}
 		}
-		return "", "", err
+		return "", "", nil, err
 	}
-	if err := checkRepairedFile(baseline, formatted, imports); err != nil {
-		return "", "", err
+	allowed := append(append([]string{}, prior...), imports...)
+	if err := checkRepairedFile(baseline, formatted, allowed); err != nil {
+		return "", "", nil, err
 	}
 
 	if annotated != "" {
 		annotated = strings.Replace(annotated, f.OldCode, f.NewCode, 1)
 		if annotated, err = addImports(annotated, imports); err != nil {
-			return "", "", &RejectedError{Gate: "counterpart", Reason: "the fix could not be applied to the annotated rendering"}
+			return "", "", nil, &RejectedError{Gate: "counterpart", Reason: "the fix could not be applied to the annotated rendering"}
 		}
 		if err := VerifyGo(annotated); err != nil {
-			return "", "", &RejectedError{Gate: "counterpart", Reason: "the annotated rendering stops parsing under this fix"}
+			return "", "", nil, &RejectedError{Gate: "counterpart", Reason: "the annotated rendering stops parsing under this fix"}
 		}
 	}
-	return formatted, annotated, nil
+	return formatted, annotated, imports, nil
 }
 
-// usableImports validates a fix's requested imports and keeps only the ones
-// its new code actually reaches for, so an over-declared import cannot fail
-// the whole file as unused.
-func usableImports(f Fix) ([]string, error) {
+// usableImports validates a proposed change's requested imports and keeps
+// only the ones its new code actually reaches for, so an over-declared import
+// cannot fail the whole file as unused.
+func usableImports(newCode string, declared []string) ([]string, error) {
 	var out []string
-	for _, path := range f.Imports {
+	for _, path := range declared {
 		path = strings.TrimSpace(strings.Trim(strings.TrimSpace(path), `"`))
 		if path == "" {
 			continue
@@ -323,7 +329,7 @@ func usableImports(f Fix) ([]string, error) {
 		if i := strings.LastIndex(path, "/"); i >= 0 {
 			name = path[i+1:]
 		}
-		if strings.Contains(f.NewCode, name+".") {
+		if strings.Contains(newCode, name+".") {
 			out = append(out, path)
 		}
 	}

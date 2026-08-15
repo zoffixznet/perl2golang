@@ -41,13 +41,17 @@ type CodeRequest struct {
 }
 
 // Finding is one proposed change. OldCode is quoted from the file and must
-// appear in it verbatim; NewCode replaces it.
+// appear in it verbatim; NewCode replaces it. Imports lists the standard
+// library import paths the new code needs, because the fix this job exists
+// for, a hand-rolled loop replaced by the standard library call that does the
+// same thing, necessarily brings the call's package with it.
 type Finding struct {
-	Line    int    `json:"line"`
-	Kind    string `json:"kind"`
-	OldCode string `json:"old_code"`
-	NewCode string `json:"new_code"`
-	Why     string `json:"why"`
+	Line    int      `json:"line"`
+	Kind    string   `json:"kind"`
+	OldCode string   `json:"old_code"`
+	NewCode string   `json:"new_code"`
+	Imports []string `json:"imports"`
+	Why     string   `json:"why"`
 }
 
 // RejectedFinding is a finding that did not survive a check, with the check
@@ -139,8 +143,9 @@ func (c *Client) ReviewCode(ctx context.Context, req CodeRequest) (CodeResult, e
 	}
 
 	current := req.Source
+	var imported []string
 	for _, f := range payload.Findings {
-		candidate, err := applyFinding(current, req.Source, f)
+		candidate, used, err := applyFinding(current, req.Source, f, imported)
 		if err != nil {
 			gate, reason := "unknown", err.Error()
 			var re *RejectedError
@@ -152,6 +157,7 @@ func (c *Client) ReviewCode(ctx context.Context, req CodeRequest) (CodeResult, e
 			continue
 		}
 		current = candidate
+		imported = append(imported, used...)
 		result.Applied = append(result.Applied, f)
 		c.recordAccepted(Change{Job: JobIdiomReview, Target: req.Path, Detail: f.Kind})
 	}
@@ -220,46 +226,59 @@ func (c *Client) rollBack(target string, n int) {
 }
 
 // applyFinding checks one finding and splices it in, returning the whole
-// candidate file. Every failure is a [RejectedError] naming the check.
-func applyFinding(current, baseline string, f Finding) (string, error) {
+// candidate file and the imports the finding brought with it. prior lists the
+// imports earlier accepted findings already added, since the structural check
+// compares against the deterministic baseline, which has none of them. Every
+// failure is a [RejectedError] naming the check.
+func applyFinding(current, baseline string, f Finding, prior []string) (string, []string, error) {
 	switch {
 	case !findingKinds[f.Kind]:
-		return "", &RejectedError{Gate: "shape", Reason: fmt.Sprintf("%q is not one of the classes the review may report", f.Kind)}
+		return "", nil, &RejectedError{Gate: "shape", Reason: fmt.Sprintf("%q is not one of the classes the review may report", f.Kind)}
 	case strings.TrimSpace(f.OldCode) == "":
-		return "", &RejectedError{Gate: "shape", Reason: "the finding quotes no code"}
+		return "", nil, &RejectedError{Gate: "shape", Reason: "the finding quotes no code"}
 	case strings.TrimSpace(f.NewCode) == "":
-		return "", &RejectedError{Gate: "shape", Reason: "the finding proposes no replacement"}
+		return "", nil, &RejectedError{Gate: "shape", Reason: "the finding proposes no replacement"}
 	case f.OldCode == f.NewCode:
-		return "", &RejectedError{Gate: "shape", Reason: "the finding changes nothing"}
+		return "", nil, &RejectedError{Gate: "shape", Reason: "the finding changes nothing"}
 	case len(f.Why) > maxWhyChars:
-		return "", &RejectedError{Gate: "shape", Reason: "the explanation ran past its one-sentence budget"}
+		return "", nil, &RejectedError{Gate: "shape", Reason: "the explanation ran past its one-sentence budget"}
+	}
+
+	imports, err := usableImports(f.NewCode, f.Imports)
+	if err != nil {
+		return "", nil, err
 	}
 
 	switch strings.Count(current, f.OldCode) {
 	case 1:
 	case 0:
-		return "", &RejectedError{Gate: "grounding", Reason: "the quoted code is not in the file"}
+		return "", nil, &RejectedError{Gate: "grounding", Reason: "the quoted code is not in the file"}
 	default:
-		return "", &RejectedError{Gate: "grounding", Reason: "the quoted code appears more than once, so the change is ambiguous"}
+		return "", nil, &RejectedError{Gate: "grounding", Reason: "the quoted code appears more than once, so the change is ambiguous"}
 	}
 
 	candidate := strings.Replace(current, f.OldCode, f.NewCode, 1)
+	candidate, err = addImports(candidate, imports)
+	if err != nil {
+		return "", nil, err
+	}
 	formatted, err := gofmt(candidate)
 	if err != nil {
 		// An unformattable splice is almost always a syntax error, so say
 		// which line rather than "gofmt failed".
 		if perr := VerifyGo(candidate); perr != nil {
-			return "", &RejectedError{Gate: "parse", Reason: perr.Error(), Err: perr}
+			return "", nil, &RejectedError{Gate: "parse", Reason: perr.Error(), Err: perr}
 		}
-		return "", err
+		return "", nil, err
 	}
 	if err := VerifyGo(formatted); err != nil {
-		return "", &RejectedError{Gate: "parse", Reason: err.Error(), Err: err}
+		return "", nil, &RejectedError{Gate: "parse", Reason: err.Error(), Err: err}
 	}
-	if err := checkInvariants(baseline, formatted); err != nil {
-		return "", err
+	allowed := append(append([]string{}, prior...), imports...)
+	if err := checkIdiomRewrite(baseline, formatted, allowed); err != nil {
+		return "", nil, err
 	}
-	return formatted, nil
+	return formatted, imports, nil
 }
 
 // decodeJSON turns a model's answer into a payload, tolerating exactly the two

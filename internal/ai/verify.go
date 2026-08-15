@@ -82,6 +82,12 @@ type fileFacts struct {
 	imports    map[string]bool // import path -> present
 	importName map[string]bool // the identifier each import binds
 	literals   []string
+	// strings and numbers are the distinct literal values outside the import
+	// declaration, split by what they carry: string content is what a program
+	// prints, numeric content is how it steers. The idiom gate holds the two
+	// to different rules, so they are collected apart.
+	strings    map[string]bool
+	numbers    map[string]bool
 	qualifiers map[string]bool
 	declared   map[string]bool
 	banned     map[string]int
@@ -99,12 +105,16 @@ func factsOf(src string) (*fileFacts, error) {
 	f := &fileFacts{
 		imports:    map[string]bool{},
 		importName: map[string]bool{},
+		strings:    map[string]bool{},
+		numbers:    map[string]bool{},
 		qualifiers: map[string]bool{},
 		declared:   map[string]bool{},
 		banned:     map[string]int{},
 	}
 
+	importPaths := map[token.Pos]bool{}
 	for _, imp := range file.Imports {
+		importPaths[imp.Path.Pos()] = true
 		path := strings.Trim(imp.Path.Value, `"`)
 		f.imports[path] = true
 		name := path
@@ -159,6 +169,13 @@ func factsOf(src string) (*fileFacts, error) {
 		switch node := n.(type) {
 		case *ast.BasicLit:
 			f.literals = append(f.literals, node.Kind.String()+" "+node.Value)
+			if !importPaths[node.Pos()] {
+				if node.Kind == token.STRING {
+					f.strings[node.Value] = true
+				} else {
+					f.numbers[node.Value] = true
+				}
+			}
 		case *ast.SelectorExpr:
 			if id, ok := node.X.(*ast.Ident); ok {
 				f.qualifiers[id.Name] = true
@@ -267,15 +284,24 @@ func render(fset *token.FileSet, node ast.Node) string {
 	return strings.Join(strings.Fields(buf.String()), " ")
 }
 
-// checkInvariants proves that a candidate file differs from the baseline only
-// in ways a mechanical improvement is allowed to differ.
+// checkIdiomRewrite proves that a candidate file differs from the baseline
+// only in ways an idiom rewrite is allowed to differ.
 //
-// It is the whole of the automated diff review: the declaration set, the
-// exported surface, every string and numeric literal, the imports, the error
-// checks and the set of ways the program can end must all survive unchanged.
-// A rewrite that needs to break one of these rules is not an improvement to
-// mechanically converted code, it is a different program.
-func checkInvariants(baseline, candidate string) error {
+// The declaration set, the exported surface, the compiler directives, the
+// error checks and the set of ways the program can end must all survive
+// unchanged. What an idiom rewrite may do that a rename may not is reshape
+// expressions: replacing a hand-rolled loop with the standard library call
+// that does the same thing necessarily adds an import and drops the loop's
+// steering numbers, and forbidding either forbade the whole class of fixes
+// this job exists for. So imports may grow, by exactly the declared standard
+// library paths the new code reaches for; a numeric literal may disappear,
+// but no numeric value absent from the baseline may appear, because an
+// invented index or size is how a rewrite corrupts quietly; and strings are
+// held hardest of all, because string content is what a program prints: no
+// string value may be added or changed, and the only string that may
+// disappear entirely is a format string of nothing but %s and %v verbs,
+// which carries no text of its own.
+func checkIdiomRewrite(baseline, candidate string, newImports []string) error {
 	base, err := factsOf(baseline)
 	if err != nil {
 		return &RejectedError{Gate: "baseline", Reason: "the deterministic file does not parse", Err: err}
@@ -291,18 +317,31 @@ func checkInvariants(baseline, candidate string) error {
 	if !slices.Equal(base.exported, cand.exported) {
 		return &RejectedError{Gate: "exported surface", Reason: "the set of exported declarations changed"}
 	}
-	if !slices.Equal(base.literals, cand.literals) {
-		return &RejectedError{Gate: "literals", Reason: literalDelta(base.literals, cand.literals)}
+	for v := range cand.strings {
+		if !base.strings[v] {
+			return &RejectedError{Gate: "literals", Reason: fmt.Sprintf("the string %s is not in the deterministic file, and string content is what the program prints", short(v))}
+		}
 	}
-	for path := range cand.imports {
-		if !base.imports[path] {
-			return &RejectedError{Gate: "imports", Reason: fmt.Sprintf("the import %q is not one the converter emitted", path)}
+	for v := range base.strings {
+		if !cand.strings[v] && !verbOnlyFormat(v) {
+			return &RejectedError{Gate: "literals", Reason: fmt.Sprintf("the string %s disappeared, and string content is what the program prints", short(v))}
+		}
+	}
+	for v := range cand.numbers {
+		if !base.numbers[v] {
+			return &RejectedError{Gate: "literals", Reason: fmt.Sprintf("the number %s is not in the deterministic file, and an invented number is how an index goes wrong", short(v))}
 		}
 	}
 	for path := range base.imports {
 		if !cand.imports[path] {
 			return &RejectedError{Gate: "imports", Reason: fmt.Sprintf("the import %q was dropped", path)}
 		}
+	}
+	for path := range cand.imports {
+		if base.imports[path] || containsString(newImports, path) {
+			continue
+		}
+		return &RejectedError{Gate: "imports", Reason: fmt.Sprintf("the import %q is neither the converter's nor one the finding declared", path)}
 	}
 	for name := range cand.qualifiers {
 		if base.qualifiers[name] || cand.importName[name] || cand.declared[name] || name == "_" {
@@ -322,6 +361,23 @@ func checkInvariants(baseline, candidate string) error {
 		return &RejectedError{Gate: "directives", Reason: "the compiler directives or build tags changed"}
 	}
 	return nil
+}
+
+// verbOnlyFormat reports whether a quoted string literal is a format string
+// consisting only of %s and %v verbs. Such a string carries no text of its
+// own, so a rewrite that folds the formatting away may drop it.
+func verbOnlyFormat(quoted string) bool {
+	body := strings.Trim(quoted, "`\"")
+	if body == "" {
+		return false
+	}
+	for len(body) > 0 {
+		if !strings.HasPrefix(body, "%s") && !strings.HasPrefix(body, "%v") {
+			return false
+		}
+		body = body[2:]
+	}
+	return true
 }
 
 func declDelta(base, cand []string) string {

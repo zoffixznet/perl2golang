@@ -5,12 +5,19 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/token"
+	"maps"
 	"path"
+	"slices"
+	"sort"
 	"strings"
 	"sync"
 
 	"perl2golang/internal/convert"
 	"perl2golang/internal/diag"
+	"perl2golang/internal/idioms"
 	"perl2golang/internal/report"
 )
 
@@ -313,8 +320,10 @@ func (im *Improver) noteRepairRejections(a convert.Artifact, rejected []Rejected
 	})
 }
 
-// reviewed runs the opt-in idiom review, which is the one job here that has the
-// model write Go rather than name things.
+// reviewed runs the idiom review, which is the job that improves code that
+// already works: the model is asked where a simpler or standard spelling does
+// the same thing, and the deterministic antipattern scan tells it where to
+// look first.
 //
 // It touches the clean rendering only. An idiom rewrite is a splice quoted from
 // one particular file, and the annotated rendering is the same program with
@@ -326,9 +335,11 @@ func (im *Improver) reviewed(ctx context.Context, a convert.Artifact, content []
 		return content, nil
 	}
 	res, err := im.client.ReviewCode(ctx, CodeRequest{
-		Path:       a.Name,
-		Source:     string(content),
-		PerlSource: string(a.Perl),
+		Path:        a.Name,
+		Source:      string(content),
+		PerlSource:  string(a.Perl),
+		Skeleton:    packageSkeleton(a.Package),
+		ReviewKinds: reviewKinds(a.Name, content),
 	})
 	if err != nil {
 		im.noteFailure(a, err)
@@ -341,6 +352,74 @@ func (im *Improver) reviewed(ctx context.Context, a convert.Artifact, content []
 		return content, err
 	}
 	return []byte(res.Source), nil
+}
+
+// reviewKindFor maps a rule from the deterministic antipattern scan to the
+// finding class the review may answer with. Rules without a mapping are
+// naming or type-shape problems that belong to other jobs, so the review is
+// not pointed at them.
+var reviewKindFor = map[string]string{
+	idioms.RuleCStyleFor:         "cstyle_for",
+	idioms.RuleLegacySort:        "stdlib_exists",
+	idioms.RuleMinMaxByHand:      "stdlib_exists",
+	idioms.RuleStringAppendLoop:  "string_concat_loop",
+	idioms.RuleSprintfConcat:     "sprintf_concat",
+	idioms.RuleElseAfterExit:     "else_after_return",
+	idioms.RuleAliasCopy:         "needless_intermediate",
+	idioms.RuleReturnImmediately: "needless_intermediate",
+	idioms.RuleBlankDiscard:      "dead_code",
+}
+
+// reviewKinds runs the deterministic antipattern scan over one file and
+// returns the distinct finding classes it suspects, so the prompt can point
+// the model at what the tool already knows is there.
+func reviewKinds(name string, content []byte) []string {
+	hits, err := idioms.Scan(name, content)
+	if err != nil {
+		return nil
+	}
+	seen := map[string]bool{}
+	var out []string
+	for _, h := range hits {
+		kind := reviewKindFor[h.Rule]
+		if kind == "" || seen[kind] {
+			continue
+		}
+		seen[kind] = true
+		out = append(out, kind)
+	}
+	sort.Strings(out)
+	return out
+}
+
+// packageSkeleton renders the rest of the package as function signatures, so
+// the model knows what already exists instead of re-implementing it.
+func packageSkeleton(pkg map[string][]byte) string {
+	var b strings.Builder
+	for _, name := range slices.Sorted(maps.Keys(pkg)) {
+		if !strings.HasSuffix(name, ".go") {
+			continue
+		}
+		fset := token.NewFileSet()
+		file, err := parser.ParseFile(fset, name, pkg[name], 0)
+		if err != nil {
+			continue
+		}
+		for _, decl := range file.Decls {
+			f, ok := decl.(*ast.FuncDecl)
+			if !ok {
+				continue
+			}
+			b.WriteString("func ")
+			if f.Recv != nil && len(f.Recv.List) > 0 {
+				b.WriteString("(" + render(fset, f.Recv.List[0].Type) + ") ")
+			}
+			b.WriteString(f.Name.Name)
+			b.WriteString(strings.TrimPrefix(render(fset, f.Type), "func"))
+			b.WriteString("\n")
+		}
+	}
+	return b.String()
 }
 
 // walkthroughDoc is the one generated document a model is ever allowed near.
