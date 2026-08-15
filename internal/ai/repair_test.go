@@ -415,3 +415,57 @@ func run() {
 		t.Fatalf("gapCalls misread the calls: %v", got)
 	}
 }
+
+// The compile gate is measured against the deterministic version, but the
+// excuse only reaches as far as the baseline's own defect. A baseline that
+// builds and merely fails go vet must not excuse a candidate that does not
+// build at all: exactly that combination let a repair with redeclared
+// variables reach the output on a corpus entry whose deterministic file had
+// one unreachable statement.
+func TestCompileGateExcuseStopsAtTheBaselineDefect(t *testing.T) {
+	m := newMockRuntime(t, fixesAnswer(t, Fix{
+		OldCode: `fmt.Printf("outside: %s\n", toText(notImplemented[any]("P2G4110", "gap")))`,
+		NewCode: "count := 1\n\tcount := 2\n\tfmt.Printf(\"outside: %d\\n\", count)",
+		Why:     "redeclares a variable, which only the compiler notices",
+	}))
+	c := testClient(t, m, JobSet{JobRepair})
+	im := NewImprover(c)
+
+	helpers := map[string][]byte{"helpers.go": []byte(`package main
+
+import "fmt"
+import "os"
+
+func toText(v any) string { return fmt.Sprint(v) }
+
+func notImplemented[T any](code, what string) T {
+	fmt.Fprintln(os.Stderr, "TODO "+code+": "+what)
+	var zero T
+	return zero
+}
+`)}
+
+	// Builds clean; go vet flags the line after the return as unreachable.
+	vetGappedGo := `package main
+
+import "fmt"
+
+func main() {
+	fmt.Printf("outside: %s\n", toText(notImplemented[any]("P2G4110", "gap")))
+	return
+	fmt.Print("done\n")
+}
+`
+	rep := &report.Report{}
+	rep.Add(report.Entry{Code: "P2G4110", Severity: report.Refuse, Message: gapDeviation.Message})
+	clean := artifact("main.go", vetGappedGo, helpers)
+	clean.Report = rep
+
+	got, _ := im.Improve(context.Background(), clean)
+	if string(got) != vetGappedGo {
+		t.Fatalf("a repair that does not build was kept because the baseline fails vet:\n%s", got)
+	}
+	if c.Summary().Accepted != 0 {
+		t.Errorf("accepted = %d, want 0", c.Summary().Accepted)
+	}
+}

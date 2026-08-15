@@ -611,7 +611,7 @@ func (im *Improver) compileGate(ctx context.Context, a convert.Artifact, baselin
 	if err == nil {
 		return nil
 	}
-	if baseErr := VerifyPackage(ctx, im.packageWith(a, baseline)); baseErr != nil {
+	if baseErr := VerifyPackage(ctx, im.packageWith(a, baseline)); baseErr != nil && !worseToolchainDefect(err, baseErr) {
 		im.client.warnOnce("baseline",
 			"the converter's own output for this program does not compile, so the toolchain "+
 				"could not confirm the model's names either")
@@ -632,6 +632,28 @@ func (im *Improver) compileGate(ctx context.Context, a convert.Artifact, baselin
 		return nil
 	}
 	return err
+}
+
+// worseToolchainDefect reports whether the candidate's toolchain failure is a
+// worse class of defect than the baseline's. The gate is measured against the
+// deterministic version, not perfection, but the excuse only reaches as far
+// as the baseline's own defect: a baseline that builds and merely fails go
+// vet excuses a vet failure, never a candidate that does not build at all.
+// Without this distinction, one unreachable statement in the deterministic
+// output opened the door to rewrites with duplicated declarations that the
+// compiler rejects outright.
+func worseToolchainDefect(candErr, baseErr error) bool {
+	return toolchainDefect(candErr) > toolchainDefect(baseErr)
+}
+
+// toolchainDefect ranks a toolchain failure: not building at all is worse
+// than building with a vet complaint.
+func toolchainDefect(err error) int {
+	var re *RejectedError
+	if errors.As(err, &re) && re.Gate == "vet" {
+		return 1
+	}
+	return 2
 }
 
 // packageWith is the whole package as a module, with one file replaced.
