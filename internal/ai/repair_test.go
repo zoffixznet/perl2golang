@@ -103,6 +103,9 @@ func TestRepairClosesAGapInBothRenderings(t *testing.T) {
 		if strings.Contains(src, "TODO") {
 			t.Errorf("the %s rendering keeps a TODO above working code:\n%s", name, src)
 		}
+		if !strings.Contains(src, "written by a local model") {
+			t.Errorf("the %s rendering does not mark the model's code:\n%s", name, src)
+		}
 	}
 	// The annotated rendering keeps its explanation, minus the stale TODO.
 	if !strings.Contains(res.Counterpart, `// Perl: print "outside: $1\n"`) {
@@ -394,6 +397,9 @@ func main() {
 	}
 	if !strings.Contains(got, "the second gap") {
 		t.Errorf("the open gap lost its TODO:\n%s", got)
+	}
+	if strings.Count(got, "written by a local model") != 1 {
+		t.Errorf("the closed gap should carry exactly one model marker:\n%s", got)
 	}
 }
 

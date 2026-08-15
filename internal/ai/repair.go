@@ -541,9 +541,23 @@ func litString(e ast.Expr) string {
 	return s
 }
 
-// removeStaleTodos removes the TODO comments that explained gaps the repair
-// closed. A TODO left above working code would be a false statement in the
-// most trusted place there is, the code itself.
+// modelFillMarker is written where a closed gap's TODO stood. A stub says
+// plainly that a construct was not converted; code that replaces it must say
+// just as plainly where it came from and what the checks did and did not
+// prove, because the reader has no other way to know which lines to read
+// hardest. The report carries the same fact with the model's own reasoning.
+var modelFillMarker = []string{
+	"// The code below was written by a local model, not by the converter: the",
+	"// construct here was one the converter refused. It compiles and passes go",
+	"// vet with the rest of the program, which proves it builds, not that it",
+	"// does what the Perl did. Read it before trusting it; the conversion",
+	"// report has the model's own reasoning.",
+}
+
+// removeStaleTodos replaces the TODO comments that explained gaps the repair
+// closed with a marker saying a model wrote the code below. A TODO left above
+// working code would be a false statement in the most trusted place there is,
+// the code itself; unmarked model output one step below it.
 //
 // The rule is careful on purpose: only comment runs introduced by "// TODO:"
 // are candidates, only when their text names a gap that was closed, and only
@@ -572,6 +586,10 @@ func removeStaleTodos(src string, before, after []gapCall) string {
 		if gapStillOpenBelow(lines[end+1:]) {
 			keep = append(keep, lines[i])
 			continue
+		}
+		indent := lines[i][:len(lines[i])-len(strings.TrimLeft(lines[i], " \t"))]
+		for _, m := range modelFillMarker {
+			keep = append(keep, indent+m)
 		}
 		i = end
 	}
