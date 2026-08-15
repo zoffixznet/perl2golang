@@ -93,6 +93,12 @@ type fileFacts struct {
 	banned     map[string]int
 	errChecks  int
 	directives []string
+	// sortCalls, tiebreaks and printlns count the calls whose disappearance
+	// or appearance changes what a program prints without touching one
+	// literal: the sort family, cmp.Or in a comparator, and fmt.Println.
+	sortCalls int
+	tiebreaks int
+	printlns  int
 }
 
 // factsOf parses src and collects the facts the invariant checks need.
@@ -182,6 +188,14 @@ func factsOf(src string) (*fileFacts, error) {
 				if bannedSelector(id.Name, node.Sel.Name) {
 					f.banned[id.Name+"."+node.Sel.Name]++
 				}
+				switch {
+				case sortFamily(id.Name, node.Sel.Name):
+					f.sortCalls++
+				case id.Name == "cmp" && node.Sel.Name == "Or":
+					f.tiebreaks++
+				case id.Name == "fmt" && node.Sel.Name == "Println":
+					f.printlns++
+				}
 			}
 		case *ast.Ident:
 			if node.Name == "panic" || node.Name == "recover" {
@@ -226,6 +240,25 @@ func factsOf(src string) (*fileFacts, error) {
 	sort.Strings(f.literals)
 	sort.Strings(f.directives)
 	return f, nil
+}
+
+// sortFamily reports whether pkg.sel is one of the calls that put data in a
+// deliberate order. The family is counted as a whole, so replacing
+// sort.Slice with slices.SortFunc is fine and deleting either is not.
+func sortFamily(pkg, sel string) bool {
+	switch pkg {
+	case "sort":
+		switch sel {
+		case "Slice", "SliceStable", "Strings", "Ints", "Float64s", "Sort", "Stable":
+			return true
+		}
+	case "slices":
+		switch sel {
+		case "Sort", "SortFunc", "SortStableFunc", "Sorted", "SortedFunc", "SortedStableFunc":
+			return true
+		}
+	}
+	return false
 }
 
 // bannedSelector reports whether pkg.sel is one of the calls a mechanical
@@ -360,7 +393,111 @@ func checkIdiomRewrite(baseline, candidate string, newImports []string) error {
 	if !slices.Equal(base.directives, cand.directives) {
 		return &RejectedError{Gate: "directives", Reason: "the compiler directives or build tags changed"}
 	}
+	if err := checkBehaviourTells(base, cand); err != nil {
+		return err
+	}
 	return nil
+}
+
+// checkBehaviourTells refuses the rewrite shapes that measurably corrupt
+// programs while passing every structural check, taken straight from the
+// corpus record of what the model actually did:
+//
+//   - deleting a sort or a tiebreak, which turns deterministic output into
+//     map-order output while every literal survives;
+//   - rewriting `for _, x := range xs` as `for x := range xs`, which quietly
+//     swaps a list's values for its indices;
+//   - turning fmt.Print into fmt.Println, whose extra newline and different
+//     spacing rules change what the program prints.
+func checkBehaviourTells(base, cand *fileFacts) error {
+	if cand.sortCalls < base.sortCalls {
+		return &RejectedError{Gate: "determinism", Reason: "the rewrite removes a sort, and iteration order is part of what the program prints"}
+	}
+	if cand.tiebreaks < base.tiebreaks {
+		return &RejectedError{Gate: "determinism", Reason: "the rewrite removes a comparator's tiebreak, and tie order is part of what the program prints"}
+	}
+	if cand.printlns > base.printlns {
+		return &RejectedError{Gate: "output", Reason: "the rewrite introduces fmt.Println, whose newline and spacing rules differ from the fmt.Print the converter wrote"}
+	}
+	return nil
+}
+
+// checkRangeMisread refuses a finding that rewrites `for _, x := range xs` as
+// `for x := range xs`: the same identifier now holds indices instead of
+// values, no literal or declaration notices, and the corpus caught the model
+// doing exactly this four times in one run.
+func checkRangeMisread(oldCode, newCode string) error {
+	oldRanges := rangeForms(oldCode)
+	if len(oldRanges) == 0 {
+		return nil
+	}
+	for _, nr := range rangeForms(newCode) {
+		if nr.keyOnly {
+			for _, or := range oldRanges {
+				if !or.keyOnly && or.name == nr.name && or.subject == nr.subject {
+					return &RejectedError{Gate: "range", Reason: fmt.Sprintf(
+						"the rewrite turns `for _, %s := range %s` into `for %s := range %s`, which swaps the values for their indices", or.name, or.subject, nr.name, nr.subject)}
+				}
+			}
+		}
+	}
+	return nil
+}
+
+// rangeForm is one range statement in a code fragment: the loop variable that
+// matters, whether it is the key alone, and the ranged expression's text.
+type rangeForm struct {
+	name    string
+	keyOnly bool
+	subject string
+}
+
+// rangeForms parses a code fragment and lists its range statements. A quoted
+// fragment often opens a block it does not close, so missing closing braces
+// are appended before parsing; a fragment that still does not parse
+// contributes nothing, and the parse gates have their own say about it.
+func rangeForms(fragment string) []rangeForm {
+	depth := 0
+	for _, r := range fragment {
+		switch r {
+		case '{':
+			depth++
+		case '}':
+			depth--
+		}
+	}
+	for ; depth > 0; depth-- {
+		fragment += "\n}"
+	}
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "fragment.go", "package p\n\nfunc _fragment() {\n"+fragment+"\n}\n", 0)
+	if err != nil {
+		return nil
+	}
+	var out []rangeForm
+	ast.Inspect(file, func(n ast.Node) bool {
+		r, ok := n.(*ast.RangeStmt)
+		if !ok {
+			return true
+		}
+		key, isIdent := r.Key.(*ast.Ident)
+		if !isIdent {
+			return true
+		}
+		f := rangeForm{subject: render(fset, r.X)}
+		if r.Value == nil {
+			f.name, f.keyOnly = key.Name, true
+		} else if val, ok := r.Value.(*ast.Ident); ok && key.Name == "_" {
+			f.name = val.Name
+		} else {
+			return true
+		}
+		if f.name != "" && f.name != "_" {
+			out = append(out, f)
+		}
+		return true
+	})
+	return out
 }
 
 // verbOnlyFormat reports whether a quoted string literal is a format string

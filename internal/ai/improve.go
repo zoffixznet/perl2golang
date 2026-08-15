@@ -289,6 +289,9 @@ func applyFinding(current, baseline string, f Finding, prior []string) (string, 
 	if err != nil {
 		return "", nil, err
 	}
+	if err := checkRangeMisread(f.OldCode, f.NewCode); err != nil {
+		return "", nil, err
+	}
 
 	switch strings.Count(current, f.OldCode) {
 	case 1:

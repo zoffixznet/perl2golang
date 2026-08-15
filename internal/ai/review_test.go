@@ -221,6 +221,119 @@ func main() {
 	}
 }
 
+// The corpus caught four rewrite shapes that pass every structural check and
+// still change what the program prints. Each is refused by name now.
+func TestReviewRejectsTheMeasuredCorruptionShapes(t *testing.T) {
+	sortedGo := `package main
+
+import (
+	"cmp"
+	"fmt"
+	"maps"
+	"slices"
+	"strings"
+)
+
+func main() {
+	pop := map[string]int{"dhaka": 23, "cairo": 23}
+	keys := slices.Collect(maps.Keys(pop))
+	slices.SortStableFunc(keys, func(a string, b string) int {
+		return cmp.Or(cmp.Compare(pop[b], pop[a]), strings.Compare(a, b))
+	})
+	for _, city := range slices.Sorted(maps.Keys(pop)) {
+		fmt.Print(city, pop[city], "\n")
+	}
+	fmt.Print(keys[0], "\n")
+}
+`
+	tests := []struct {
+		name     string
+		finding  Finding
+		wantGate string
+	}{
+		{
+			name: "deleting a sorted key iteration",
+			finding: Finding{Kind: "other",
+				OldCode: "for _, city := range slices.Sorted(maps.Keys(pop)) {",
+				NewCode: "for city := range pop {",
+				Why:     "iterate the map directly"},
+			wantGate: "determinism",
+		},
+		{
+			name: "deleting a comparator's tiebreak",
+			finding: Finding{Kind: "needless_intermediate",
+				OldCode: "return cmp.Or(cmp.Compare(pop[b], pop[a]), strings.Compare(a, b))",
+				NewCode: "return cmp.Compare(pop[b], pop[a])",
+				Why:     "simplify the comparator"},
+			wantGate: "determinism",
+		},
+		{
+			name: "swapping values for indices in a range",
+			finding: Finding{Kind: "cstyle_for",
+				OldCode: "for _, city := range slices.Sorted(maps.Keys(pop)) {",
+				NewCode: "for city := range slices.Sorted(maps.Keys(pop)) {",
+				Why:     "drop the blank"},
+			wantGate: "range",
+		},
+		{
+			// The "\n" this drops still occurs elsewhere in the file, so the
+			// literal gate cannot see it; the corpus run proved that exact
+			// blind spot, and this gate is what covers it.
+			name: "turning Print into Println",
+			finding: Finding{Kind: "other",
+				OldCode: `fmt.Print(keys[0], "\n")`,
+				NewCode: `fmt.Println(keys[0])`,
+				Why:     "Println is shorter"},
+			wantGate: "output",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, _, err := applyFinding(sortedGo, sortedGo, tt.finding, nil)
+			if err == nil {
+				t.Fatal("the finding was accepted")
+			}
+			re, ok := err.(*RejectedError)
+			if !ok {
+				t.Fatalf("wanted a rejection, got %T: %v", err, err)
+			}
+			if re.Gate != tt.wantGate {
+				t.Fatalf("gate = %q (%s), want %q", re.Gate, re.Reason, tt.wantGate)
+			}
+		})
+	}
+}
+
+// Replacing one sort spelling with another is not a deletion, and removing a
+// whole loop together with its ranged values is not a misread.
+func TestBehaviourTellsAllowTheLegitimateShapes(t *testing.T) {
+	src := `package main
+
+import (
+	"fmt"
+	"sort"
+)
+
+func main() {
+	xs := []string{"b", "a"}
+	sort.Strings(xs)
+	total := 0
+	for _, n := range []int{1, 2} {
+		total += n
+	}
+	fmt.Print(xs[0], total, "\n")
+}
+`
+	swap := Finding{Kind: "stdlib_exists",
+		OldCode: "sort.Strings(xs)",
+		NewCode: "slices.Sort(xs)",
+		Imports: []string{"slices"},
+		Why:     "slices.Sort is the modern spelling"}
+	if _, _, err := applyFinding(src, src, swap, nil); err != nil {
+		t.Fatalf("replacing one sort spelling with another was rejected: %v", err)
+	}
+}
+
 func TestReviewCarriesEarlierImportsForward(t *testing.T) {
 	// Two findings, each bringing its own import. The second is checked
 	// against the deterministic baseline, which has neither, so the check
