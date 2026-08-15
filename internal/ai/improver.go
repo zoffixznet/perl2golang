@@ -345,11 +345,43 @@ func (im *Improver) reviewed(ctx context.Context, a convert.Artifact, content []
 		return content, nil
 	}
 	if err := im.compileGate(ctx, a, string(content), res.Source); err != nil {
-		gate, reason := gateOf(err)
-		im.client.rejectRolledBack(a.Name, gate, reason, len(res.Applied))
-		return content, err
+		// One finding that leaves the file uncompilable must not cost the
+		// findings that were fine. Rebuild the rewrite one finding at a time,
+		// compiling as it grows, and keep exactly the ones that survive.
+		salvaged, kept, dropped := im.salvageReview(ctx, a, string(content), res.Applied)
+		im.client.noteSalvage(a.Name, kept, dropped)
+		if len(kept) == 0 {
+			return content, err
+		}
+		return []byte(salvaged), nil
 	}
 	return []byte(res.Source), nil
+}
+
+// salvageReview re-applies a review's accepted findings one at a time against
+// the compiler, so a single bad finding costs itself rather than the file.
+// It returns the furthest source that compiles, the findings in it, and the
+// findings that were dropped with the gate that dropped each.
+func (im *Improver) salvageReview(ctx context.Context, a convert.Artifact, base string, findings []Finding) (string, []Finding, []RejectedFinding) {
+	current := base
+	var kept []Finding
+	var dropped []RejectedFinding
+	var imported []string
+	for _, f := range findings {
+		candidate, used, err := applyFinding(current, base, f, imported)
+		if err == nil {
+			err = im.compileGate(ctx, a, current, candidate)
+		}
+		if err != nil {
+			gate, reason := gateOf(err)
+			dropped = append(dropped, RejectedFinding{Finding: f, Gate: gate, Reason: reason})
+			continue
+		}
+		current = candidate
+		imported = append(imported, used...)
+		kept = append(kept, f)
+	}
+	return current, kept, dropped
 }
 
 // reviewKindFor maps a rule from the deterministic antipattern scan to the

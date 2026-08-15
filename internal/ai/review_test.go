@@ -325,6 +325,53 @@ func TestReviewRollsBackWhenTheWholeFileFailsToCompile(t *testing.T) {
 	}
 }
 
+func TestReviewSalvagesTheGoodFindingsWhenOneBreaksTheCompile(t *testing.T) {
+	// Two findings: a real improvement, and one that leaves a variable unused,
+	// which only the compiler can see. The bad one must cost itself, not the
+	// good one.
+	payload := map[string]any{"findings": []any{
+		map[string]any{
+			"line": 7, "kind": "stdlib_exists",
+			"old_code": "\tfound := false\n\tfor _, n := range names {\n\t\tif n == \"beta\" {\n\t\t\tfound = true\n\t\t}\n\t}",
+			"new_code": "\tfound := slices.Contains(names, \"beta\")",
+			"imports":  []string{"slices"},
+			"why":      "a linear search is slices.Contains",
+		},
+		map[string]any{
+			"line": 12, "kind": "other",
+			"old_code": "fmt.Println(found)",
+			"new_code": "fmt.Println(names)",
+			"imports":  []string{},
+			"why":      "print the slice instead",
+		},
+	}}
+	answer, err := json.Marshal(payload)
+	if err != nil {
+		t.Fatal(err)
+	}
+	m := newMockRuntime(t, string(answer))
+	c := testClient(t, m, JobSet{JobIdiomReview})
+	im := NewImprover(c)
+
+	got, err := im.Improve(context.Background(), artifact("main.go", containsLoopGo, nil))
+	if err != nil {
+		t.Fatalf("Improve: %v", err)
+	}
+	if !strings.Contains(string(got), "slices.Contains(names, ") {
+		t.Fatalf("the good finding was lost with the bad one:\n%s", got)
+	}
+	if strings.Contains(string(got), "fmt.Println(names)") {
+		t.Fatalf("the compile-breaking finding survived:\n%s", got)
+	}
+	s := c.Summary()
+	if s.Accepted != 1 || s.Rejected != 1 {
+		t.Fatalf("accepted %d, rejected %d after salvage, want 1 and 1", s.Accepted, s.Rejected)
+	}
+	if len(s.Rejections) != 1 || s.Rejections[0].Gate != "compile" {
+		t.Fatalf("the dropped finding should be a compile rejection, got %+v", s.Rejections)
+	}
+}
+
 func TestReviewKindsComeFromTheDeterministicScan(t *testing.T) {
 	src := []byte(`package main
 

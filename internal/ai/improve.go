@@ -240,6 +240,30 @@ func (c *Client) rejectRolledBack(target, gate, reason string, n int) {
 	}
 }
 
+// noteSalvage rewrites the summary after a partial salvage: the kept findings
+// stay accepted, and each dropped one becomes a rejection under the gate that
+// dropped it. Nothing touches the proposed count, which was right already.
+func (c *Client) noteSalvage(target string, kept []Finding, dropped []RejectedFinding) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.summary.Accepted -= len(dropped)
+	c.summary.Rejected += len(dropped)
+	changes := c.summary.Changes[:0]
+	for _, ch := range c.summary.Changes {
+		if ch.Target != target || ch.Job != JobIdiomReview {
+			changes = append(changes, ch)
+		}
+	}
+	for _, f := range kept {
+		changes = append(changes, Change{Job: JobIdiomReview, Target: target, Detail: f.Kind})
+	}
+	c.summary.Changes = changes
+	for _, r := range dropped {
+		c.summary.Rejections = append(c.summary.Rejections,
+			Rejection{Job: JobIdiomReview, Target: target, Gate: r.Gate, Reason: r.Reason})
+	}
+}
+
 // applyFinding checks one finding and splices it in, returning the whole
 // candidate file and the imports the finding brought with it. prior lists the
 // imports earlier accepted findings already added, since the structural check
