@@ -297,28 +297,49 @@ context tricks or code generation comes out with `any`-typed values, helper
 calls and TODO markers, and the report says so entry by entry. These three
 are honest examples of the ordinary case, not the worst one.
 
-## Why there is no AI mode
+## The optional AI mode
 
-An earlier version had one: a local model, shown your Perl beside the
-generated Go and the converter's own notes, was asked to write the Go the
-converter could not, under hard checks (every change spliced by the tool,
-declarations and error handling preserved, standard library only, compiled
-and vetted before acceptance). It was measured over this repository's whole
-corpus, where the right output of every program is recorded, so a modified
-program could be run and compared against real perl byte for byte.
+`--ai` lets a locally hosted model write the Go the converter could not.
+Without the flag, perl2golang makes no network connection of any kind; with
+it, the tool talks to your own Ollama daemon and never sends your code
+anywhere else.
 
-The result: of 228 measured programs, the model improved zero. Its accepted
-changes broke five programs that were correct before it touched them, four of
-those by silently changing what the program prints, and only the corpus's
-recorded outputs caught them. Converting your own script, no such check can
-exist, because this tool never executes your Perl. A feature whose measured
-best case never happened, and whose worst case is confidently corrupting
-correct output, is not worth a multi-gigabyte model download, so it was
-removed rather than shipped off by default.
+The scoping is strict on purpose. The model is shown your whole Perl and the
+whole generated Go, because a gap cannot be understood in isolation, but it
+is only allowed to change the regions the converter marked as unconverted:
+the statements holding `notImplemented` stubs, together with the TODO
+comments that explain them. An edit anywhere else is rejected by byte
+position, whatever it says, so code that already works is never touched.
+Every accepted fill must parse, keep the program's declarations and error
+handling, use only the standard library, and compile and pass `go vet`
+alongside the rest of the program. Every line the model writes is marked as
+model-written in the code itself and explained in the conversion report,
+because those checks prove the fill builds, not that it is right; you are
+expected to read it.
 
-The measurement harness is still in the repository (`make score-ai`), so the
-question gets re-asked as local models improve. The numbers above are from
-qwen2.5-coder:7b, the largest model the reference hardware runs well.
+The honest measurements, which are why the mode is scoped this way and off
+by default:
+
+- Asked to restyle working code, a local model occasionally produces a real
+  improvement and regularly rewrites correct programs into ones that print
+  the wrong thing. Measured over this repository's corpus, where every
+  program's right output is recorded, one such rewrite in four corrupted the
+  program it touched; converting your own script, no such check can exist,
+  because this tool never executes your Perl. That is why restyling
+  (`--ai-jobs idioms`) and renaming (`--ai-jobs names`) exist but are not
+  the default.
+- Asked only to fill the gaps, under the containment rule above, the model
+  cannot corrupt working code, and measured over both this corpus and a
+  sample of real-world Perl modules it almost never fills a gap either:
+  across 30 real files carrying 346 unconverted sites, qwen2.5-coder:7b
+  landed one fill (a nearly correct one), and ornith:9b landed none. Most
+  gaps in real code are calls into Perl modules that have no Go equivalent,
+  and no spliced-in fragment can supply a missing dependency.
+
+So the mode is shipped as what it is: a safe, honest instrument that today
+adds little, kept because the gates, the marking and the measurement are
+exactly the machinery that will tell you when a better local model changes
+that. `make score-ai` re-asks the question against the corpus at any time.
 
 ## The interactive session
 
@@ -542,11 +563,12 @@ this list:
   by name rather than approximated into something that matches different
   text, and the generated project stays dependency-free rather than take on
   an engine that provides them.
-- **AI-assisted conversion.** Built, measured against the corpus, and removed
-  on the evidence; the section "Why there is no AI mode" above has the
-  numbers. The lessons and the conversion report were never model-written and
-  never will be: a small local model states falsehoods about your code with
-  complete confidence, and prose has no mechanical check that can tell.
+- **AI conversion of code the converter already handles.** The optional AI
+  mode fills gaps; it does not rewrite working output, because measurement
+  showed a local model corrupting one touched program in four when invited
+  to restyle. The lessons and the conversion report are never model-written:
+  a small local model states falsehoods about your code with complete
+  confidence, and prose has no mechanical check that can tell.
 - **Reworking a script's Unix assumptions for Windows.** Windows gets a binary
   and the Go the tool writes is ordinary portable Go, but where a script leans
   on a POSIX shell, on file modes or on process semantics, the translation
@@ -574,11 +596,12 @@ for byte against what real `perl` produces. It writes the numbers to a file and
 prints the change since the previous run. `ARGS` narrows it, so
 `make score ARGS="-tier tier2 -v"` scores one tier and shows every entry.
 
-`make score-ai` re-runs the question answered under "Why there is no AI mode":
-it converts every corpus entry twice, once deterministically and once with a
-local model proposing repairs, and prints how many entries improved, how many
-were rejected for no longer matching perl's output, and what the model time
-cost. It needs a local Ollama runtime and a code model (several gigabytes;
+`make score-ai` measures the optional AI mode: it converts every corpus entry
+twice, once deterministically and once with a local model in the loop, and
+prints how many entries improved, how many antipattern hits the rewrites
+removed, how many were rejected for no longer matching perl's output, every
+turned-down proposal by the gate that refused it, and the model time cost.
+It needs a local Ollama runtime and a code model (several gigabytes;
 `ollama pull qwen2.5-coder:7b` is the reference), which nothing else in this
 repository needs.
 
