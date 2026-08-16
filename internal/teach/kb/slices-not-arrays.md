@@ -42,30 +42,30 @@ func main() {
 	t[0] = 99
 	fmt.Println(s, t)
 
-	// append grows capacity in jumps, reallocating when full:
-	var xs []int
-	for i := 0; i < 9; i++ {
+	// make sizes the backing array up front, and append fills it without
+	// allocating anything at all while the room lasts.
+	xs := make([]int, 0, 4)
+	for i := 0; i < 4; i++ {
 		xs = append(xs, i)
-		fmt.Printf("len=%d cap=%d\n", len(xs), cap(xs))
 	}
+	fmt.Println(len(xs), cap(xs), xs)
+
+	// A fifth element does not fit, so append allocates a bigger array,
+	// copies into it, and returns a header pointing at the new one.
+	room := cap(xs)
+	xs = append(xs, 4)
+	fmt.Println(len(xs), cap(xs) > room)
 }
 ```
 
 ```
 [1 2 3] [99 2 3]
 [99 2 3] [99 2 3]
-len=1 cap=4
-len=2 cap=4
-len=3 cap=4
-len=4 cap=4
-len=5 cap=8
-len=6 cap=8
-len=7 cap=8
-len=8 cap=8
-len=9 cap=16
+4 4 [0 1 2 3]
+5 true
 ```
 
-(The exact growth pattern is a runtime implementation detail - never depend on it; depend only on "amortised constant append".) Forgetting to use `append`'s result does not even compile:
+That last line prints `cap(xs) > room` rather than the new capacity itself, and the reason is worth having: how much a full `append` asks for is a runtime implementation detail, it has already changed between Go releases, and a program - or a lesson - that printed the number would be reporting the toolchain rather than the language. What you may depend on is what `make` promised and that appending is amortised constant. Forgetting to use `append`'s result does not even compile:
 
 ```go-invalid
 package main
