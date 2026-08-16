@@ -378,6 +378,27 @@ func inferImports(src string) []string {
 // and whether it holds a main package. Files declaring a library package go
 // into a subdirectory named after it, which is what Go requires and what makes
 // a two-package lesson compile as the lesson describes it.
+// projectGoDirective reads the go directive out of the repository's own go.mod.
+// A sample is documentation for people who will build it with this project, so
+// it has to compile under the version the project claims to need, not under
+// whatever happens to be installed here. Hard coding a version lets the two
+// drift apart, and the drift only shows up on a machine with an older
+// toolchain, which is the worst place to find it.
+func projectGoDirective(t *testing.T) string {
+	t.Helper()
+	src, err := os.ReadFile(filepath.Join("..", "..", "go.mod"))
+	if err != nil {
+		t.Fatalf("reading the project go.mod: %v", err)
+	}
+	for line := range strings.Lines(string(src)) {
+		if rest, ok := strings.CutPrefix(strings.TrimSpace(line), "go "); ok {
+			return strings.TrimSpace(rest)
+		}
+	}
+	t.Fatal("the project go.mod has no go directive")
+	return ""
+}
+
 func module(t *testing.T, files []string) (dir string, hasMain bool) {
 	t.Helper()
 	dir = t.TempDir()
@@ -390,7 +411,7 @@ func module(t *testing.T, files []string) (dir string, hasMain bool) {
 			t.Fatalf("writing %s: %v", name, err)
 		}
 	}
-	write("go.mod", "module "+moduleOf(files)+"\n\ngo 1.26\n")
+	write("go.mod", "module "+moduleOf(files)+"\n\ngo "+projectGoDirective(t)+"\n")
 	for i, src := range files {
 		name := fmt.Sprintf("file%d.go", i)
 		if pkg := packageName(src); pkg != "" && pkg != "main" {
