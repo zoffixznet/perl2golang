@@ -831,7 +831,8 @@ roughly the whole pattern: a channel of work, N goroutines ranging over it, a
 `sync.WaitGroup` for the join, a close to signal the end. Closing is the sender's job, never
 the receiver's; sending on a closed channel panics; receiving from a closed channel yields
 the zero value immediately, and `v, ok := <-ch` tells you which happened. (The
-`wg.Add`/`defer wg.Done()` pair also has a shorter modern form, `wg.Go(func() { ... })`.)
+`wg.Add`/`defer wg.Done()` pair also has a shorter form, `wg.Go(func() { ... })`, from Go 1.25
+onwards; the pair above is what builds everywhere.)
 
 Beyond that: `select` waits on several channel operations at once and is where timeouts
 (`case <-time.After(d)`) and cancellation (`case <-ctx.Done()`) live; `context.Context` is a

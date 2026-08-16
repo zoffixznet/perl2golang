@@ -41,11 +41,13 @@ func main() {
 	)
 
 	for i := 0; i < 1000; i++ {
-		wg.Go(func() { // Go 1.25+: bundles Add(1) and Done for you
+		wg.Add(1) // BEFORE starting the goroutine, never inside it
+		go func() {
+			defer wg.Done()
 			mu.Lock()
 			defer mu.Unlock()
 			count++
-		})
+		}()
 	}
 	wg.Wait()
 	fmt.Println(count)
@@ -56,11 +58,11 @@ func main() {
 1000
 ```
 
-`wg.Go(f)` is recent sugar; the long-standing spelling you will see everywhere is:
+Those four lines - `Add`, `go`, `defer Done`, `Wait` - are what almost all Go in the wild spells, and the discipline in them survives being wrapped in a helper:
 
 ```go
 func spawn(wg *sync.WaitGroup, work func()) {
-	wg.Add(1) // BEFORE starting the goroutine, never inside it
+	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		work()
@@ -68,7 +70,7 @@ func spawn(wg *sync.WaitGroup, work func()) {
 }
 ```
 
-`Add` must happen before `go` - inside the goroutine it races with `Wait`. The mutex pattern is equally fixed: `mu.Lock()` immediately followed by `defer mu.Unlock()` (`defer-timing`), so early returns and panics cannot leave the lock held.
+`Add` must happen before `go` - inside the goroutine it races with `Wait`. (Go 1.25 added `wg.Go(f)`, which bundles the `Add(1)`, the `go` and the `Done` into one call. It is worth recognising when you meet it, but it needs a toolchain that new, so code that has to build on anything older still writes the three lines out.) The mutex pattern is equally fixed: `mu.Lock()` immediately followed by `defer mu.Unlock()` (`defer-timing`), so early returns and panics cannot leave the lock held.
 
 ## The mismatch
 
