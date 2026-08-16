@@ -214,3 +214,17 @@ note in the lowering that cites it.
 Every Go sample in a lesson is compiled by the test suite, and a sample followed
 by an unlabelled output block is run and compared against that block byte for
 byte. Write the output by running the sample, never by hand.
+
+Two things that compiling cannot tell you, and that the suite checks separately.
+A sample may only use the standard library as of the `go` directive in `go.mod`,
+because that is the version the project asks readers to install; the compiler
+will not enforce it, since the directive gates language features rather than the
+library, so a toolchain newer than the floor builds a call to a method that did
+not exist yet and the sample breaks only for the reader who believed the floor.
+`TestSamplesStayWithinTheProjectGoVersion` runs the `stdversion` analyser to
+catch that on any toolchain. And a documented output block may not depend on
+behaviour the language does not promise: the capacity `append` picks when it
+reallocates, map iteration order, goroutine interleaving. Those differ between
+releases, so print the property the lesson is actually about - that the capacity
+grew, that the keys are all there - rather than the number a particular runtime
+happened to produce.

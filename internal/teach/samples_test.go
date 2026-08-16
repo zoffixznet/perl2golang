@@ -47,6 +47,30 @@ func TestGoSamplesCompile(t *testing.T) {
 	})
 }
 
+// TestSamplesStayWithinTheProjectGoVersion holds every sample to the Go
+// version the project's go.mod declares. Compiling the sample does not do
+// this: the go directive gates language features, not the standard library, so
+// a toolchain newer than the directive builds a call to a method that did not
+// exist in the declared version without a word of complaint. The sample then
+// breaks for exactly the reader who took the project at its word and installed
+// the version it asks for, and it breaks for them and not for whoever wrote
+// it. The stdversion analyser is the check that does read the directive, so it
+// runs here over the same throwaway module the compile checks build, and a
+// sample that has drifted ahead of the floor fails on any toolchain at all.
+func TestSamplesStayWithinTheProjectGoVersion(t *testing.T) {
+	requireToolchain(t)
+	forEachSample(t, func(t *testing.T, c *Concept, s sample) {
+		if s.lang == "go-invalid" {
+			return
+		}
+		t.Parallel()
+		if out, err := vetStdVersion(t, s.files); err != nil {
+			t.Errorf("%s sample %d reaches past go %s, the version this project asks readers to build with: %v\n%s\n%s",
+				c.ID, s.n, projectGoDirective(t), err, out, numbered(s.files[0]))
+		}
+	})
+}
+
 func TestInvalidSamplesDoNotCompile(t *testing.T) {
 	requireToolchain(t)
 	seen := 0
@@ -441,6 +465,17 @@ func build(t *testing.T, files []string) (string, error) {
 		return goCmd(dir, "build", "./...")
 	}
 	return goCmd(dir, "build", "-o", filepath.Join(dir, "sample.bin"), ".")
+}
+
+// vetStdVersion runs the stdversion analyser, and only that one, over the
+// sample. Naming an analyser turns the rest off, which is deliberate: the
+// other vet checks are about the code being right, and this one is about the
+// code being buildable by the reader, which is the property a newer local
+// toolchain silently hides.
+func vetStdVersion(t *testing.T, files []string) (string, error) {
+	t.Helper()
+	dir, _ := module(t, files)
+	return goCmd(dir, "vet", "-stdversion", "./...")
 }
 
 // run compiles and runs the sample, returning everything it wrote to stdout
