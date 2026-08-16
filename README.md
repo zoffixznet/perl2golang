@@ -448,17 +448,109 @@ until you have written the real code in its place.
 Pass `--strict` to make any refusal a nonzero exit status, which is what you
 want in a script.
 
-## What to expect
+## What the numbers mean
 
-Measured against the bundled corpus at this version: every conversion emits
-Go, 99% of it compiles, 87% of programs convert every statement, and 79% of
-the runnable ones match perl's output byte for byte. Those numbers flatter
-the tool exactly as much as the corpus resembles your code, and the corpus
-is script-shaped on purpose. On a sample of installed Perl modules and
-scripts the tool had never seen, about half compiled, because module-heavy
-code leans on export and OO machinery that is out of scope. The short
-version: an ordinary script converts and runs; a module tree mostly does
-not, and says why.
+This repository carries a corpus of 271 Perl programs whose real output has
+been recorded by running them under `perl`. `make score` converts every one of
+them, builds the Go that comes out, runs it on the same input, and compares.
+The table below is that run at this version, and it is the whole measurement:
+
+```
+  tier    entries     translated          typed         emitted        compiled     equivalent       honest
+  tier1        48    47/48 (98%)    38/48 (79%)    48/48 (100%)    48/48 (100%)    45/48 (94%)            -
+  tier2       118  109/118 (92%)   82/118 (69%)  118/118 (100%)  118/118 (100%)   88/118 (75%)            -
+  tier3        37    28/37 (76%)    14/37 (38%)    37/37 (100%)    37/37 (100%)    24/37 (65%)            -
+  tier4        43    27/43 (63%)    30/43 (70%)    43/43 (100%)     42/43 (98%)              -  41/43 (95%)
+  domain       25   25/25 (100%)    15/25 (60%)    25/25 (100%)     24/25 (96%)    23/25 (92%)            -
+  TOTAL       271  236/271 (87%)  179/271 (66%)  271/271 (100%)   269/271 (99%)  180/228 (79%)  41/43 (95%)
+```
+
+The rows are difficulty bands. Tiers 1 and 2 are ordinary Perl, tier 3 is
+object systems, parsers and process control, `domain/` is realistic sysadmin
+and data-wrangling scripts, and tier 4 is Perl this tool is not expected to
+convert at all, kept to check that it says so truthfully.
+
+Each column counts whole programs, and each one means something narrower than
+its name suggests.
+
+**translated, 87%.** Every construct in the program produced either Go code or
+a written note saying why it did not. A single refusal anywhere fails the whole
+file, which is why this number sits below `compiled`. It proves that nothing
+went missing unannounced. It proves nothing about whether the Go is right.
+
+**typed, 66%.** Every variable in the program got a real Go type, such as
+`string` or `map[string]int`. The programs that fail this column have at least
+one variable the tool could not pin down and fell back to `any` for. Such code
+still compiles and still runs, it is just further from the Go you would have
+written. Passing does not mean the types chosen are the best ones, only that
+the tool never gave up on one.
+
+**emitted, 100%.** Valid Go came out: what was written is a real Go file that
+the language's own parser accepts. This is a floor, not an achievement. A file
+can parse and still fail to compile.
+
+**compiled, 99%.** The real Go toolchain built the program, so the code is
+complete and consistent enough to produce a binary. A program can compile
+perfectly and be wrong on every line, so this column says nothing about
+behaviour.
+
+**equivalent, 79%.** The strongest column, and the one worth reading first. The
+built Go program was run on the same input as the Perl and printed exactly the
+same bytes to standard output, exited with the same status, and wrote the same
+files. The denominator is 228 rather than 271 because tier 4 is judged on
+honesty instead. What it does not prove: the two agreed on the one input this
+entry supplies. A translation that goes wrong on input the entry never feeds it
+passes clean.
+
+**honest, 95% of tier 4.** Tier 4 holds constructs with no faithful Go
+equivalent, so there is no correct conversion to compare against. Instead the
+entry states what the tool must say about it, and the column passes when the
+conversion report says it. This measures whether the report tells the truth,
+not whether it tells it well; that is a reading judgment with no column.
+
+A check that could not run counts as skipped and never as a pass. The current
+run skips none.
+
+Under the table `make score` prints counts rather than percentages:
+
+- **TODOs emitted, 120.** Markers left in the generated Go where a human has to
+  finish the job. Each one is explained in the report.
+- **dynamic fallback, 261 of 4203 symbols (6.2%).** How often type inference
+  gave up on a variable and used `any`. This is the `typed` column measured per
+  variable rather than per program.
+- **constructs refused, 121.** Places the tool declined to translate and said
+  why, in the terms described under "Honesty about what it could not do" above.
+- **constructs approximated, 1599.** Translations that are close rather than
+  exact, each one noted in the report. Perl and Go genuinely disagree about
+  numbers, sorting, iteration order and much else, and an approximation is
+  where that disagreement was crossed deliberately.
+- **statements that vanished, 0.** Statements that produced no code and no note,
+  which is the one wrong this tool promises never to commit. Zero is the only
+  acceptable value.
+- **programs that panicked, 0.** Built programs that stopped early on a Go
+  runtime panic instead of running to the end.
+
+### What these figures do not tell you
+
+They describe this project's own test corpus. Those programs were written for
+this corpus by the people who wrote the converter, so it can only ask questions
+they thought of, and it is script-shaped on purpose because scripts are what
+the tool is for.
+
+Real installed Perl compiles at a much lower rate. Pointed at 59 modules and
+scripts already installed on an ordinary Linux system, 58% of the conversions
+compiled, against 98% for the corpus at the time. Module-heavy code leans on
+export machinery, object systems and packaging conventions that are mostly out
+of scope, and the gap between those two numbers is the honest measure of how
+much the corpus flatters the tool. The short version: an ordinary script
+converts and runs, a module tree mostly does not, and says why.
+
+Two more things have no number at all. Whether the generated Go reads like Go a
+person would write is a judgment, not a measurement. And the teaching material,
+which by this project's own thesis is the point of it, is prose: the test suite
+checks that every sample in it compiles and prints what it claims, and above
+that floor the only test is whether a Perl developer actually learns Go from
+it.
 
 ## Known limitations
 
@@ -550,17 +642,11 @@ make demo       # convert a corpus script and run the result
 make deps       # checks for the system tools the other targets need
 ```
 
-`make score` is the measure of conversion quality: it converts every script in
-`testdata/corpus/`, compiles the result, runs it, and compares its output byte
-for byte against what real `perl` produces. It writes the numbers to a file and
-prints the change since the previous run. `ARGS` narrows it, so
+`make score` is the measure of conversion quality, and "What the numbers mean"
+above explains every column it prints. It writes the numbers to a file and
+prints the change since the previous run, so a diff on that file always means
+the conversion moved. `ARGS` narrows it, so
 `make score ARGS="-tier tier2 -v"` scores one tier and shows every entry.
-
-The corpus is tiered by difficulty: tiers 1 and 2 are ordinary Perl, tier 3
-is object systems, parsers and process control, `domain/` is realistic
-sysadmin and data-wrangling scripts, and tier 4 holds adversarial constructs
-judged on whether the tool tells the truth about them rather than on whether
-they convert.
 
 [docs/iterating.md](docs/iterating.md) is the guide to improving the
 conversion: how to read the scorecard, how to pick what to work on, and the
