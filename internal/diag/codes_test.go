@@ -160,7 +160,6 @@ func TestRangeAllocation(t *testing.T) {
 		{7500, 7999, "modules"},
 		{8000, 8499, "dynamic Perl"},
 		{8500, 8999, "self-verification"},
-		{9000, 9499, "AI mode"},
 		{9500, 9999, "REPL"},
 	}
 	for _, code := range Codes() {
@@ -285,7 +284,7 @@ func TestCapitalisedLeadersAllowed(t *testing.T) {
 		"`File::Find` walks in readdir order",
 		"JSON numbers decode to `float64`",
 		"Storable files have no Go reader",
-		"AI mode improved 3 of 9 files",
+		"RE2 has no lookahead, so the pattern is refused",
 		"`__DATA__` section read as 314 bytes",
 	}
 	for _, s := range ok {

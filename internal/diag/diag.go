@@ -112,8 +112,8 @@ var bannedPattern = regexp.MustCompile(`(?i)\b(` + strings.Join(bannedWords, "|"
 var bannedFirstPerson = regexp.MustCompile(`(?i)\b(we|us|our|ours|i|my|mine)\b`)
 
 // capitalisedLeaders are the words allowed to start a message in upper case
-// because that is how they are spelled. Everything all-capitals (BEGIN, JSON,
-// AI) and everything with a `::` in it (File::Find) is allowed by shape.
+// because that is how they are spelled. Everything all-capitals (BEGIN, JSON)
+// and everything with a `::` in it (File::Find) is allowed by shape.
 var capitalisedLeaders = map[string]bool{
 	"Storable": true,
 	"Perl":     true,

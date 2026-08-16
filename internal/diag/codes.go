@@ -32,7 +32,6 @@
 //	P2G7500-P2G7999  modules and the CPAN mapping table
 //	P2G8000-P2G8499  dynamic Perl: eval STRING, globs, tie, AUTOLOAD, format
 //	P2G8500-P2G8999  verification of the tool's own output
-//	P2G9000-P2G9499  AI mode
 //	P2G9500-P2G9999  REPL and interactive sessions
 //
 // The last two digits carry no meaning; gaps are left on purpose.
@@ -705,23 +704,6 @@ const (
 	CleanOutputMentionsPerl Code = "P2G8520"
 	// NoToolchain: no Go toolchain was available to build the output.
 	NoToolchain Code = "P2G8530"
-)
-
-// AI mode.
-const (
-	// AIRuntimeUnreachable: no inference runtime answered.
-	AIRuntimeUnreachable Code = "P2G9001"
-	// AIRewriteRejectedBuild: the model's rewrite did not compile.
-	AIRewriteRejectedBuild Code = "P2G9005"
-	// AIRewriteRejectedBehaviour: the model's rewrite changed behaviour.
-	AIRewriteRejectedBehaviour Code = "P2G9010"
-	// AIModelTooLarge: the model does not fit in the free VRAM.
-	AIModelTooLarge Code = "P2G9020"
-	// AIPartialImprovement: AI mode improved some files and not others.
-	AIPartialImprovement Code = "P2G9030"
-	// AIGapFilled: the model wrote Go for a construct the converter refused
-	// or approximated, and the result passed the checks.
-	AIGapFilled Code = "P2G9040"
 )
 
 // REPL.
@@ -2881,50 +2863,6 @@ var catalogue = map[Code]Entry{
 		Advice:   "install Go and run `go build ./...` in the output directory",
 		Cost:     "the strongest check the tool has on its own output did not run",
 		Concepts: []string{"toolchain-gofmt-godoc"},
-	},
-
-	// -- AI mode ------------------------------------------------------------
-
-	AIRuntimeUnreachable: {
-		Severity:  report.Warn,
-		Message:   "no inference runtime answered at `%s`, and the deterministic output was kept",
-		Short:     "no inference runtime answered",
-		Advice:    "start the runtime, or run `perl2golang ai status` to see what is configured",
-		Converted: "the conversion is the deterministic one, unchanged",
-	},
-	AIRewriteRejectedBuild: {
-		Severity:  report.Note,
-		Message:   "the model's rewrite of `%s` was rejected because it did not compile",
-		Short:     "model rewrite did not compile",
-		Advice:    "run with `--debug` to see the rejected text",
-		Converted: "the deterministic output was kept",
-	},
-	AIRewriteRejectedBehaviour: {
-		Severity:  report.Warn,
-		Message:   "the model's rewrite changed the program's output on the corpus check, and it was rejected",
-		Short:     "model rewrite changed behaviour",
-		Advice:    "nothing to do; the guard rejected the rewrite before it reached the output",
-		Converted: "the deterministic output was kept",
-	},
-	AIModelTooLarge: {
-		Severity: report.Warn,
-		Message:  "`%s` needs about %s of VRAM and %s is free",
-		Short:    "model does not fit in free VRAM",
-		Advice:   "run `perl2golang ai setup`, which lists the models that fit the free VRAM",
-	},
-	AIPartialImprovement: {
-		Severity:  report.Note,
-		Message:   "AI mode improved %d of %d files, and the rest kept their deterministic output",
-		Short:     "AI mode improved some of the files",
-		Advice:    "read the per-file result in the conversion report",
-		Converted: "each file carries whichever version passed the guards",
-	},
-	AIGapFilled: {
-		Severity:  report.Note,
-		Message:   "the local model wrote Go for `%s`, and the result parses, compiles and vets alongside the rest of the program",
-		Short:     "a local model closed a conversion gap",
-		Advice:    "read the change before trusting it; the checks prove it builds, not that it does what the Perl did",
-		Converted: "the model's code was kept in both the clean and the annotated program",
 	},
 
 	// -- REPL ---------------------------------------------------------------
