@@ -54,20 +54,6 @@ type Options struct {
 	// Progress, when set, is called once per finished entry from a single
 	// goroutine, in completion order.
 	Progress func(done, total int, r EntryResult)
-
-	// AISession, when set, converts each entry a second time with the
-	// returned improver in the loop and records the comparison on the entry.
-	// A fresh session is made per entry so its numbers are the entry's own.
-	AISession func() AISession
-	// AILabel names the model for the record and the rendering.
-	AILabel string
-	// AIConvertTimeout bounds one conversion with the model in the loop.
-	// Zero means [DefaultAIConvertTimeout].
-	AIConvertTimeout time.Duration
-	// AIDumpDir, when set, receives the deterministic and the model-assisted
-	// clean renderings of every entry the model changed, side by side, so a
-	// person can read the diffs rather than trust a count.
-	AIDumpDir string
 }
 
 func (o *Options) withDefaults() error {
@@ -167,7 +153,6 @@ func Run(ctx context.Context, opts Options) (*Scorecard, error) {
 		Total:         total,
 		Quality:       total.Quality,
 		Entries:       results,
-		AIModel:       opts.AILabel,
 		Elapsed:       time.Since(start),
 	}
 	for _, res := range results {
@@ -331,12 +316,6 @@ func (r *runner) runEntry(ctx context.Context, e Entry) EntryResult {
 		set(StageHonest, notApplicable())
 	}
 
-	// The with-and-without comparison. Tier 4's honest-failure entries are
-	// judged on what the tool said rather than on what the program did, so
-	// there is no behavioural target for a model to improve against.
-	if r.opts.AISession != nil && e.Kind != KindHonestFailure && cerr == nil {
-		res.AI = r.runAIEntry(ctx, e, fixture, conv, &res)
-	}
 	return finish()
 }
 

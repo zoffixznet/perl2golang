@@ -4,7 +4,7 @@ BIN     := perl2golang
 
 .DEFAULT_GOAL := help
 
-.PHONY: help build install test test-short score score-ai lint fmt vet clean run explain repl repl-demo demo deps corpus-add corpus-record
+.PHONY: help build install test test-short score lint fmt vet clean run explain repl repl-demo demo deps corpus-add corpus-record
 
 help: ## Show this help
 	@echo "perl2golang - convert Perl 5 scripts to Go and learn Go along the way"
@@ -28,9 +28,6 @@ test-short: ## Run the quick tests only (skips toolchain-heavy tests)
 
 score: ## Score the conversion over the corpus: ARGS='-tier tier2 -v' narrows it
 	$(GO) run ./cmd/score $(ARGS)
-
-score-ai: ## Score every entry with and without the local model and print the comparison
-	$(GO) run ./cmd/score -ai $(ARGS)
 
 lint: vet ## Run static checks (alias for vet plus gofmt check)
 	@fmtout=$$(gofmt -l . 2>/dev/null); if [ -n "$$fmtout" ]; then echo "gofmt needed on:"; echo "$$fmtout"; exit 1; fi
