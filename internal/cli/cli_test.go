@@ -294,7 +294,7 @@ func TestRun(t *testing.T) {
 			want: ExitOK,
 			check: func(t *testing.T, dir string, got outcome) {
 				for _, want := range []string{"commands:", "examples:", "exit status:", "convert one file",
-					"convert a snippet", "read one teaching concept", "--ai"} {
+					"convert a snippet", "read one teaching concept"} {
 					if !strings.Contains(got.stdout, want) {
 						t.Errorf("root help is missing %q", want)
 					}

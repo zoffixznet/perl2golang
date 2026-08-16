@@ -111,17 +111,14 @@ func TestConversionRunsNothing(t *testing.T) {
 	}
 }
 
-// TestNoNetworkPackages checks at the package level that the conversion
-// pipeline cannot open a network connection, because nothing it links in knows
-// how.
+// TestNoNetworkPackages checks at the package level that this tool cannot open
+// a network connection, because nothing it links in knows how.
 //
-// The check is on the pipeline rather than on the whole binary. AI mode is an
-// HTTP client and the binary that offers it necessarily links one, so the
-// stronger claim stopped being true the moment --ai existed. What is still
-// true, and is what matters, is that converting a file cannot reach the
-// network however the code is called: everything that can is behind the flag,
-// in one package, that the converter does not import. TestNoNetworkWithoutTheFlag
-// covers the running program from the other side.
+// The check covers the command as well as the pipeline, which is the strongest
+// form of the promise: not "the tool did not reach the network on this run"
+// but "no code path in it can", whatever flags it is given. A dependency on
+// any of the packages below would make the claim unprovable, so the test fails
+// on the import rather than on the connection.
 func TestNoNetworkPackages(t *testing.T) {
 	goCmd := requireToolchain(t)
 
@@ -130,6 +127,8 @@ func TestNoNetworkPackages(t *testing.T) {
 		"net/smtp": true, "crypto/tls": true,
 	}
 	for _, pkg := range []string{
+		"perl2golang/cmd/perl2golang",
+		"perl2golang/internal/cli",
 		"perl2golang/internal/convert",
 		"perl2golang/internal/lower",
 		"perl2golang/internal/gogen",
