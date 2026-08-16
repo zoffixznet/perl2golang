@@ -7,7 +7,6 @@
 package convert
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -66,11 +65,6 @@ type Options struct {
 	// split across several files converts as one program. Nil means only the
 	// input itself is read, which is what a snippet and the REPL want.
 	Modules ModuleResolver
-	// Improve is an optional pass over the generated artefacts. Its output is
-	// checked before it is accepted, so it can improve the result or leave it
-	// alone but never corrupt it. Nil means the deterministic output is the
-	// output, which is the default and the only behaviour v0.1 ships.
-	Improve Improver
 }
 
 // Result is one finished conversion.
@@ -195,10 +189,6 @@ func Convert(src []byte, opts Options) (result *Result, err error) {
 		res.Annotated["helpers.go"] = annotated
 	}
 
-	// The optional improvement pass runs over the code before it is checked,
-	// so verification covers whatever it produced as well. The documents are
-	// written afterwards, because they report what the checks found.
-	res.improveCode(context.Background(), opts.Improve)
 	res.verify(!opts.SkipBuild)
 	res.Walkthrough = walkthrough(low, src)
 
@@ -219,27 +209,6 @@ func Convert(src []byte, opts Options) (result *Result, err error) {
 			return nil, fmt.Errorf("generating documentation: %w", derr)
 		}
 		res.Docs = docs
-
-		// The optional pass over the documents can itself put entries in the
-		// report: a rewrite that was offered and turned down is recorded, and
-		// so is a runtime that never answered. Those entries belong in the
-		// conversion report, which has already been written by the time they
-		// arrive, so when any turn up the bundle is rendered a second time
-		// against the finished report and the rewritten documents are carried
-		// across. Nothing is rendered twice in the ordinary case, because in
-		// the ordinary case nothing was added.
-		before := len(res.Report.Entries)
-		rewritten := res.improveDocs(context.Background(), opts.Improve)
-		if len(res.Report.Entries) != before {
-			again, derr := teach.Docs(docInput)
-			if derr != nil {
-				return nil, fmt.Errorf("generating documentation: %w", derr)
-			}
-			for name, text := range rewritten {
-				again[name] = text
-			}
-			res.Docs = again
-		}
 	}
 
 	res.Report.SortEntries()

@@ -1,8 +1,6 @@
 package convert_test
 
 import (
-	"context"
-	"errors"
 	"go/ast"
 	goparser "go/parser"
 	"go/token"
@@ -263,74 +261,6 @@ func corpusFiles(t *testing.T, tier string, limit int) []string {
 		}
 	}
 	return out
-}
-
-// refusingImprover turns down every document it is offered, which is what an
-// unreachable runtime or an unusable answer looks like from the pipeline's side.
-type refusingImprover struct{ why string }
-
-func (r refusingImprover) Improve(_ context.Context, a convert.Artifact) ([]byte, error) {
-	if a.Kind != convert.ArtifactMarkdown {
-		return a.Content, nil
-	}
-	return nil, errors.New(r.why)
-}
-
-// TestRejectedDocumentRewriteReachesTheReportDocument is the ordering guard.
-//
-// A rewrite of a document is offered after the documents exist, so the note
-// saying it was turned down arrives after the conversion report was written.
-// The report document has to be rendered again so a reader of the bundle sees
-// the same thing the terminal summary and --json show.
-func TestRejectedDocumentRewriteReachesTheReportDocument(t *testing.T) {
-	src := []byte("my $n = 1;\nprint \"$n\\n\";\n")
-
-	res, err := convert.Convert(src, convert.Options{
-		Path:    "note.pl",
-		Improve: refusingImprover{why: "the runtime never answered"},
-	})
-	if err != nil {
-		t.Fatalf("Convert: %v", err)
-	}
-
-	var found bool
-	for _, e := range res.Report.Entries {
-		if e.Code == "P2G9010" {
-			found = true
-		}
-	}
-	if !found {
-		t.Fatal("the rejected rewrite was not recorded in the report at all")
-	}
-
-	doc := res.Docs["docs/conversion-report.md"]
-	if doc == "" {
-		t.Fatal("no conversion report document was generated")
-	}
-	if !strings.Contains(doc, "P2G9010") {
-		t.Errorf("the conversion report document does not mention the rejected rewrite:\n%s", doc)
-	}
-}
-
-// TestUnimprovedConversionRendersDocumentsOnce keeps the second rendering off
-// the ordinary path: with nothing added to the report there is nothing to
-// re-render, and the bundle is the one the first pass produced.
-func TestUnimprovedConversionRendersDocumentsOnce(t *testing.T) {
-	src := []byte("my $n = 1;\nprint \"$n\\n\";\n")
-
-	plain, err := convert.Convert(src, convert.Options{Path: "note.pl"})
-	if err != nil {
-		t.Fatalf("Convert: %v", err)
-	}
-	quiet, err := convert.Convert(src, convert.Options{Path: "note.pl", Improve: convert.NoImprovement{}})
-	if err != nil {
-		t.Fatalf("Convert with a no-op improver: %v", err)
-	}
-	for name, text := range plain.Docs {
-		if quiet.Docs[name] != text {
-			t.Errorf("%s differs when a no-op improver is configured", name)
-		}
-	}
 }
 
 // TestParenthesesAroundOneValueAreOnlyParentheses guards the difference
