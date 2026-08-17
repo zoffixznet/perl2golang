@@ -14,10 +14,7 @@ name: release
 on:
   push:
     tags:
-      # Release tags only. A tag like v0.1.1-some-note marks a point in the
-      # history rather than something to publish, and matching it here would
-      # start a build that can only fail the version check.
-      - "v[0-9]+.[0-9]+.[0-9]+"
+      - "v*"
 
 permissions:
   contents: read
@@ -43,7 +40,11 @@ jobs:
       - name: The tag has to name the version the tool reports
         run: |
           set -eu
-          want="${GITHUB_REF_NAME#v}"
+          # A tag may carry a prerelease suffix, as v1.2.0-rc1 does. The suffix
+          # names the build, not the version the tool reports, so the check is
+          # against the numeric part and the suffix rides along.
+          tag="${GITHUB_REF_NAME#v}"
+          want="${tag%%-*}"
           line="$(go run ./cmd/perl2golang version)"
           case "$line" in
             "perl2golang $want "*) echo "$line" ;;
@@ -180,8 +181,13 @@ jobs:
             # rather than failing on a release that exists.
             gh release upload "$tag" dist/* --clobber
           else
+            # A tag carrying a suffix, as v1.2.0-rc1 does, is a prerelease, and
+            # saying so keeps it out of the latest-release slot people land on.
+            prerelease=""
+            case "${tag#v}" in *-*) prerelease="--prerelease" ;; esac
             gh release create "$tag" \
               --verify-tag \
+              $prerelease \
               --title "perl2golang ${tag#v}" \
               --notes-file release-notes.md \
               dist/*
