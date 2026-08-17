@@ -14,7 +14,10 @@ name: release
 on:
   push:
     tags:
-      - "v*"
+      # Release tags only. A tag like v0.1.1-some-note marks a point in the
+      # history rather than something to publish, and matching it here would
+      # start a build that can only fail the version check.
+      - "v[0-9]+.[0-9]+.[0-9]+"
 
 permissions:
   contents: read
