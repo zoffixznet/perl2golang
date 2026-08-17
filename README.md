@@ -17,6 +17,22 @@ is no external service, no account, no API key, no telemetry, and no network
 connection of any kind; your Perl is read, never executed, and never sent
 anywhere.
 
+## Contents
+
+- [Install](#install)
+- [Platforms](#platforms)
+- [Use](#use)
+- [What the output looks like](#what-the-output-looks-like)
+- [The interactive session](#the-interactive-session)
+- [What you get](#what-you-get)
+- [Honesty about what it could not do](#honesty-about-what-it-could-not-do)
+- [What the numbers mean](#what-the-numbers-mean)
+  - [What these figures do not tell you](#what-these-figures-do-not-tell-you)
+- [Known limitations](#known-limitations)
+- [Out of scope](#out-of-scope)
+- [Working on perl2golang](#working-on-perl2golang)
+- [License](#license)
+
 ## Install
 
 Download the archive for your system from the releases page, unpack it, and put
